@@ -69,6 +69,7 @@ class CombIBusEngine(IBus.Engine):
         self.lookup_table = IBus.LookupTable.new(10, 0, True, True)
         self.prop_list = IBus.PropList()
         self.comb = comb
+        self.logger = logging.getLogger(__name__)
 
         debug("Create Comb engine OK")
 
@@ -217,7 +218,7 @@ class CombIBusEngine(IBus.Engine):
                     self.candidates.append(char_sequence)
                     self.lookup_table.append_candidate(candidate)
             except:
-                debug("cannot get kanji candidates %s" % (sys.exc_info()[0]))
+                self.logger.error("cannot get kanji candidates %s" % (sys.exc_info()[0]), exc_info=True)
 
         first_candidate = self.candidates[0] if len(self.candidates)>0 else self.preedit_string
 
