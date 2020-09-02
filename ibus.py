@@ -31,20 +31,16 @@ import sys
 import getopt
 import locale
 
+from comb import Comb
+
 import romkan
 
+import logging
 
 __base_dir__ = os.path.dirname(__file__)
 
-logfp = open('/tmp/ibus-comb.log', 'w')
-
-debug_on = True
 def debug(msg):
-    if debug_on:
-        logfp.write(msg + "\n")
-        logfp.flush()
-debug("bootstrap")
-
+    logging.debug(msg)
 
 # gee thank you IBus :-)
 num_keys = []
@@ -70,6 +66,7 @@ class CombIBusEngine(IBus.Engine):
         self.preedit_string = ''
         self.lookup_table = IBus.LookupTable.new(10, 0, True, True)
         self.prop_list = IBus.PropList()
+        self.comb = Comb(logging.getLogger('Comb'))
 
         debug("Create Comb engine OK")
 
@@ -141,14 +138,19 @@ class CombIBusEngine(IBus.Engine):
                 self.cursor_down()
                 return True
 
-        if keyval == IBus.space and len(self.preedit_string) == 0:
-            # Insert space if that's all you typed (so you can more easily
-            # type a bunch of emoji separated by spaces)
-            return False
+        if keyval == IBus.space:
+            if len(self.preedit_string) == 0:
+                # もし、まだなにもはいっていなければ、ただの空白をそのままいれる。
+                return False
+            else:
+                debug("cursor down")
+                self.cursor_down()
+                return True
 
         # Allow typing all ASCII letters and punctuation, except digits
-        if ord(' ') <= keyval < ord('0') or \
+        if ord('!') <= keyval < ord('0') or \
            ord('9') < keyval <= ord('~'):
+            debug("HM????")
             if state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.MOD1_MASK) == 0:
                 self.preedit_string += chr(keyval)
                 self.invalidate()
@@ -205,17 +207,15 @@ class CombIBusEngine(IBus.Engine):
         self.candidates = []
 
         if preedit_len > 0:
-            comb_results = [
-                # KANA / KANJI KOUHO
-                (romkan.to_hiragana(self.preedit_string),
-                    romkan.to_hiragana(self.preedit_string)),
-            ]
-            debug("HAHAHA %s" % self.preedit_string)
-            # self.uniemoji.find_characters(self.preedit_string)
-            for char_sequence, display_str in comb_results:
-                candidate = IBus.Text.new_from_string(display_str)
-                self.candidates.append(char_sequence)
-                self.lookup_table.append_candidate(candidate)
+            try:
+                comb_results = self.comb.convert(self.preedit_string)
+                debug("HAHAHA %s, %s" % (str(self.preedit_string), str(comb_results)))
+                for char_sequence, display_str in comb_results:
+                    candidate = IBus.Text.new_from_string(display_str)
+                    self.candidates.append(char_sequence)
+                    self.lookup_table.append_candidate(candidate)
+            except:
+                debug("cannot get kanji candidates %s" % (sys.exc_info()[0]))
 
         # にほんご ですね.
         text = IBus.Text.new_from_string(self.candidates[0] if len(self.candidates)>0 else self.preedit_string)
@@ -275,6 +275,9 @@ class IMApp:
         self.bus.connect("disconnected", self.bus_disconnected_cb)
         self.factory = IBus.Factory.new(self.bus.get_connection())
         self.factory.add_engine("comb", GObject.type_from_name("CombIBusEngine"))
+
+        logging.basicConfig(level=logging.DEBUG, filename='/tmp/ibus-comb.log', filemode='w')
+
         if exec_by_ibus:
             self.bus.request_name("org.freedesktop.IBus.Comb", 0)
         else:

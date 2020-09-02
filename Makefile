@@ -10,6 +10,10 @@ PYTHON ?= /usr/bin/python3
 
 all: comb.xml config.py
 
+check:
+	python -m py_compile ibus.py
+	python -m py_compile comb.py
+
 comb.xml: comb.xml.in
 	sed -e "s:@PYTHON@:$(PYTHON):g;" \
 	    -e "s:@DATADIR@:$(DATADIR):g" $< > $@
@@ -17,16 +21,18 @@ comb.xml: comb.xml.in
 config.py: config.py.in
 	sed -e "s:@SYSCONFDIR@:$(SYSCONFDIR):g" $< > $@
 
-install: all
+install: all check
 	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-comb $(DESTDIR)$(SYSCONFDIR)/xdg/comb $(DESTDIR)$(DATADIR)/ibus/component
 	install -m 0644 comb.svg $(DESTDIR)$(DATADIR)/ibus-comb
 	install -m 0644 ibus.py $(DESTDIR)$(DATADIR)/ibus-comb
+	install -m 0644 comb.py $(DESTDIR)$(DATADIR)/ibus-comb
 	install -m 0644 comb.xml $(DESTDIR)$(DATADIR)/ibus/component
 
 uninstall:
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb.svg
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/config.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/ibus.py
+	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb.py
 	rmdir $(DESTDIR)$(DATADIR)/ibus-comb
 	rmdir $(DESTDIR)$(SYSCONFDIR)/xdg/comb
 	rm -f $(DESTDIR)$(DATADIR)/ibus/component/comb.xml
@@ -34,3 +40,6 @@ uninstall:
 clean:
 	rm -f comb.xml
 	rm -f config.py
+
+.PHONY: all check install uninstall
+
