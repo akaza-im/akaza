@@ -65,6 +65,7 @@ class CombIBusEngine(IBus.Engine):
     def __init__(self):
         super(CombIBusEngine, self).__init__()
         self.is_invalidate = False
+        # 未変換文字列。
         self.preedit_string = ''
         self.lookup_table = IBus.LookupTable.new(10, 0, True, True)
         self.prop_list = IBus.PropList()
@@ -224,7 +225,6 @@ class CombIBusEngine(IBus.Engine):
 
         # にほんご ですね.
         text = IBus.Text.new_from_string(first_candidate)
-        # text = IBus.Text.new_from_string(self.preedit_string)
         text.set_attributes(attrs)
         self.update_auxiliary_text(text, preedit_len > 0)
 

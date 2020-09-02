@@ -2,6 +2,7 @@ import romkan
 import re
 import sys
 
+
 def parse_skkdict(path, encoding='euc-jp'):
     result = {}
 
@@ -15,9 +16,10 @@ def parse_skkdict(path, encoding='euc-jp'):
             kanjis = kanjis.lstrip('/').rstrip('/').split('/')
             kanjis = [re.sub(';.*', '', k) for k in kanjis]
 
-            result[yomi] = set(kanjis)
+            result[yomi] = kanjis
 
     return result
+
 
 class Comb:
     def __init__(self, logger):
@@ -31,7 +33,7 @@ class Comb:
             self.dictionaries.append(parse_skkdict(fname, encoding))
             self.logger.info("LOADed JISYO")
         except:
-            self.logger.info("cannot LOAD JISYO %s: %s" % (fname, sys.exc_info()[0]))
+            self.logger.error("cannot LOAD JISYO %s" % (fname), exc_info=True)
 
     def convert(self, src):
         hiragana = romkan.to_hiragana(src).replace('.', '。').replace(',', '、')
