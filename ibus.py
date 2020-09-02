@@ -55,6 +55,8 @@ for n in range(1, 10):
 numpad_keys.append(getattr(IBus, 'KP_0'))
 del n
 
+comb = Comb(logging.getLogger('Comb'))
+
 ###########################################################################
 # the engine
 class CombIBusEngine(IBus.Engine):
@@ -66,7 +68,7 @@ class CombIBusEngine(IBus.Engine):
         self.preedit_string = ''
         self.lookup_table = IBus.LookupTable.new(10, 0, True, True)
         self.prop_list = IBus.PropList()
-        self.comb = Comb(logging.getLogger('Comb'))
+        self.comb = comb
 
         debug("Create Comb engine OK")
 
@@ -217,16 +219,19 @@ class CombIBusEngine(IBus.Engine):
             except:
                 debug("cannot get kanji candidates %s" % (sys.exc_info()[0]))
 
+        first_candidate = self.candidates[0] if len(self.candidates)>0 else self.preedit_string
+
         # にほんご ですね.
-        text = IBus.Text.new_from_string(self.candidates[0] if len(self.candidates)>0 else self.preedit_string)
+        text = IBus.Text.new_from_string(first_candidate)
         # text = IBus.Text.new_from_string(self.preedit_string)
         text.set_attributes(attrs)
         self.update_auxiliary_text(text, preedit_len > 0)
 
         attrs.append(IBus.Attribute.new(IBus.AttrType.UNDERLINE,
                 IBus.AttrUnderline.SINGLE, 0, preedit_len))
-        text = IBus.Text.new_from_string(self.preedit_string)
+        text = IBus.Text.new_from_string(first_candidate)
         text.set_attributes(attrs)
+
         self.update_preedit_text(text, preedit_len, preedit_len > 0)
         self._update_lookup_table()
         self.is_invalidate = False
