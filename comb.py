@@ -22,28 +22,34 @@ def parse_skkdict(path, encoding='euc-jp'):
 class Comb:
     def __init__(self, logger):
         self.logger = logger
+        self.dictionaries = []
+        self.load_dict('/usr/share/skk/SKK-JISYO.L')
+
+    def load_dict(self, fname, encoding='euc-jp'):
         try:
-            self.l_jisyo = parse_skkdict('/usr/share/skk/SKK-JISYO.L')
+            self.logger.info("loading %s" % fname)
+            self.dictionaries.append(parse_skkdict(fname, encoding))
             self.logger.info("LOADed JISYO")
         except:
-            self.logger.debug("cannot LOAD JISYO %s" % sys.exc_info()[0])
-        if not self.l_jisyo:
-            self.l_jisyo = {}
+            self.logger.info("cannot LOAD JISYO %s: %s" % (fname, sys.exc_info()[0]))
 
     def convert(self, src):
         hiragana = romkan.to_hiragana(src).replace('.', '。').replace(',', '、')
         katakana = romkan.to_kana(src).replace('.', '。').replace(',', '、')
 
-        retval = [
-            # KANA / KANJI KOUHO
-            (hiragana, hiragana),
-            (katakana, katakana),
-        ]
-        if hiragana in self.l_jisyo:
-            got = self.l_jisyo[hiragana]
-            self.logger.debug("GOT: %s" % str(got))
-            for e in got:
-                retval.append([e, e])
+        retval = []
+
+        # TODO load user dictionary
+
+        retval.append([hiragana, hiragana])
+        retval.append([katakana, katakana])
+
+        for dictionary in self.dictionaries:
+            if hiragana in dictionary:
+                got = dictionary[hiragana]
+                self.logger.debug("GOT: %s" % str(got))
+                for e in got:
+                    retval.append([e, e])
 
         retval.append([src, src])
         return retval
