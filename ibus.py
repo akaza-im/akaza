@@ -70,9 +70,12 @@ comb = Comb(logging.getLogger('Comb'), user_dict)
 MODE_KANA = 1
 MODE_ALPHA = 2
 
+
 ###########################################################################
 # the engine
 class CombIBusEngine(IBus.Engine):
+    mode: bool
+
     __gtype_name__ = 'CombIBusEngine'
 
     def __init__(self):
@@ -117,7 +120,8 @@ class CombIBusEngine(IBus.Engine):
         try:
             return self._do_process_key_event(keyval, keycode, state)
         except:
-            self.logger.error(f"Cannot process key event: keyval={keyval} keycode={keycode} state={state}", exc_info=True)
+            self.logger.error(f"Cannot process key event: keyval={keyval} keycode={keycode} state={state}",
+                              exc_info=True)
             return False
 
     def _do_process_key_event(self, keyval, keycode, state):
