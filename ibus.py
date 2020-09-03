@@ -39,6 +39,8 @@ import pathlib
 
 __base_dir__ = os.path.dirname(__file__)
 
+logging.basicConfig(level=logging.DEBUG, filename='/tmp/ibus-comb.log', filemode='w')
+
 def debug(msg):
     logging.debug(msg)
 
@@ -300,7 +302,6 @@ class IMApp:
         self.factory = IBus.Factory.new(self.bus.get_connection())
         self.factory.add_engine("comb", GObject.type_from_name("CombIBusEngine"))
 
-        logging.basicConfig(level=logging.DEBUG, filename='/tmp/ibus-comb.log', filemode='w')
 
         if exec_by_ibus:
             self.bus.request_name("org.freedesktop.IBus.Comb", 0)
