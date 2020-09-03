@@ -92,7 +92,12 @@ class Comb:
 
         candidates.insert(0, [hiragana, hiragana])
         candidates.insert(2, [katakana, katakana])
-        candidates.append([src, src])
+        if src[0].isupper():
+            self.logger.info(f"HAHAH! starting charactger is upper!いめ")
+            candidates.insert(0, [src, src])
+        else:
+            self.logger.info(f"HAHAH! starting charactger is not upper!いめ {src[0]}")
+            candidates.append([src, src])
 
         return candidates
 
