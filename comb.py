@@ -2,6 +2,7 @@ import romkan
 import re
 import sys
 import os
+import jaconv
 
 
 def parse_skkdict(path, encoding='euc-jp'):
@@ -20,6 +21,7 @@ def parse_skkdict(path, encoding='euc-jp'):
             result[yomi] = kanjis
 
     return result
+
 
 class UserDict:
     def __init__(self, path, logger):
@@ -65,22 +67,24 @@ class Comb:
 
     def convert(self, src):
         hiragana = romkan.to_hiragana(src).replace('.', '。').replace(',', '、')
-        katakana = romkan.to_kana(src).replace('.', '。').replace(',', '、')
-
-        retval = []
+        katakana = jaconv.hira2kata(hiragana)
 
         # TODO load user dictionary
 
-        retval.append([hiragana, hiragana])
-        retval.append([katakana, katakana])
+        candidates = self.get_candidates(hiragana)
 
+        candidates.insert(0, [hiragana, hiragana])
+        candidates.insert(2, [katakana, katakana])
+        candidates.append([src, src])
+
+        return candidates
+
+    def get_candidates(self, hiragana):
+        candidates = []
         for dictionary in self.dictionaries:
             if hiragana in dictionary:
                 got = dictionary[hiragana]
                 self.logger.debug("GOT: %s" % str(got))
                 for e in got:
-                    retval.append([e, e])
-
-        retval.append([src, src])
-        return retval
-
+                    candidates.append([e, e])
+        return candidates
