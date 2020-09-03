@@ -34,8 +34,6 @@ import re
 
 from comb import Comb, UserDict
 
-import combromkan
-
 import logging
 import pathlib
 
@@ -127,7 +125,7 @@ class CombIBusEngine(IBus.Engine):
                 return True
             elif keyval == IBus.BackSpace:
                 # サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
-                self.preedit_string = re.sub('(?:[kstnhmyrwgzjdbp]?[aiueo]|.)$', '', self.preedit_string)
+                self.preedit_string = re.sub('(?:z[hjkl.-]|[kstnhmyrwgzjdbp]?[aiueo]|.)$', '', self.preedit_string)
                 self.invalidate()
                 return True
             elif keyval in num_keys:
