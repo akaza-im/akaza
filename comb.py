@@ -47,6 +47,7 @@ class UserDict:
         return candidates
 
     def add_entry(self, roma, kanji):
+        self.logger.info(f"add user_dict entry: roma='{roma}' kanji='{kanji}'")
         kana = combromkan.to_hiragana(roma)
 
         if kana in self.dict:
@@ -56,7 +57,7 @@ class UserDict:
                 e.remove(kanji)
                 e.insert(0, kanji)
             else:
-                self.dict[kana] = kanji
+                self.dict[kana].insert(0, kanji)
         else:
             self.dict[kana] = [kanji]
 
