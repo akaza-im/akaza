@@ -25,6 +25,15 @@ def parse_skkdict(path, encoding='euc-jp'):
     return result
 
 
+def write_skkdict(outfname, dictionary, encoding='utf-8'):
+    with open(outfname, 'w', encoding=encoding) as ofh:
+        for yomi in sorted(dictionary.keys()):
+
+            kanjis = dictionary[yomi]
+            if len(kanjis) != 0:
+                ofh.write("%s /%s/\n" % (yomi, '/'.join(kanjis)))
+
+
 class UserDict:
     def __init__(self, path, logger):
         self.path = path
@@ -66,7 +75,7 @@ class UserDict:
         self.logger.info("SAVED! %s" % str(self.dict))
 
     def save(self):
-        pass
+        write_skkdict(self.path, self.dict)
 
 
 class Comb:
@@ -96,12 +105,14 @@ class Comb:
         hiragana = combromkan.to_hiragana(src)
         katakana = jaconv.hira2kata(hiragana)
 
-        # TODO load user dictionary
+        user_candidates = self.user_dict.get_candidates(src, hiragana)
+        system_candidates = self.get_candidates(src, hiragana)
 
-        candidates = self.user_dict.get_candidates(src, hiragana) + self.get_candidates(src, hiragana)
+        system_candidates.insert(0, [hiragana, hiragana])
+        system_candidates.insert(2, [katakana, katakana])
 
-        candidates.insert(0, [hiragana, hiragana])
-        candidates.insert(2, [katakana, katakana])
+        candidates = user_candidates + system_candidates
+
         if src[0].isupper():
             self.logger.info(f"HAHAH! starting charactger is upper!いめ")
             candidates.insert(0, [src, src])
