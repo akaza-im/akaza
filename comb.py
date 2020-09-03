@@ -1,6 +1,7 @@
 import romkan
 import re
 import sys
+import os
 
 
 def parse_skkdict(path, encoding='euc-jp'):
@@ -19,6 +20,33 @@ def parse_skkdict(path, encoding='euc-jp'):
             result[yomi] = kanjis
 
     return result
+
+class UserDict:
+    def __init__(self, path, logger):
+        self.path = path
+        self.logger = logger
+        if os.path.isfile(path):
+            self.dict = parse_skkdict(path, encoding='utf-8')
+        else:
+            self.dict = {}
+
+    def has_entry(self, kana):
+        return kana in self.dict
+
+    def add_entry(self, kana, kanji):
+        if kana in self.dict:
+            e = self.dict[kana]
+            if kanji in e:
+                # イチバンマエにもっていく。
+                e.remove(kanji)
+                e.insert(0, kanji)
+            else:
+                self.dict[kana] = kanji
+        else:
+            self.dict[kana] = [kanji]
+
+    def save(self):
+        pass
 
 
 class Comb:
