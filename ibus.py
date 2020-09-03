@@ -72,6 +72,9 @@ class CombIBusEngine(IBus.Engine):
         self.comb = comb
         self.logger = logging.getLogger(__name__)
 
+        # カーソル変更をしたばっかりかどうかを、みるフラグ。
+        self.cursor_moved = False
+
         debug("Create Comb engine OK")
 
     def set_lookup_table_cursor_pos_in_current_page(self, index):
@@ -95,6 +98,9 @@ class CombIBusEngine(IBus.Engine):
             self.commit_candidate()
 
     def do_process_key_event(self, keyval, keycode, state):
+        return self._do_process_key_event(keyval, keycode, state)
+
+    def _do_process_key_event(self, keyval, keycode, state):
         debug("process_key_event(%04x, %04x, %04x)" % (keyval, keycode, state))
 
         # ignore key release events
@@ -154,8 +160,9 @@ class CombIBusEngine(IBus.Engine):
         # Allow typing all ASCII letters and punctuation, except digits
         if ord('!') <= keyval < ord('0') or \
            ord('9') < keyval <= ord('~'):
-            debug("HM????")
             if state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.MOD1_MASK) == 0:
+                if self.cursor_moved:
+                    self.commit_candidate()
                 self.preedit_string += chr(keyval)
                 self.invalidate()
                 return True
@@ -174,34 +181,40 @@ class CombIBusEngine(IBus.Engine):
 
     def page_up(self):
         if self.lookup_table.page_up():
+            self.cursor_moved = True
             self._update_lookup_table()
             return True
         return False
 
     def page_down(self):
         if self.lookup_table.page_down():
+            self.cursor_moved = True
             self._update_lookup_table()
             return True
         return False
 
     def cursor_up(self):
         if self.lookup_table.cursor_up():
+            self.cursor_moved = True
             self._update_lookup_table()
             return True
         return False
 
     def cursor_down(self):
         if self.lookup_table.cursor_down():
+            self.cursor_moved = True
             self._update_lookup_table()
             return True
         return False
 
     def commit_string(self, text):
+        self.cursor_moved = False
         self.commit_text(IBus.Text.new_from_string(text))
         self.preedit_string = ''
         self.update_candidates()
 
     def commit_candidate(self):
+        self.cursor_moved = False
         self.commit_string(self.candidates[self.lookup_table.get_cursor_pos()])
 
     def update_candidates(self):
