@@ -34,7 +34,7 @@ import re
 
 from comb import Comb, UserDict
 
-import romkan
+import combromkan
 
 import logging
 import pathlib
