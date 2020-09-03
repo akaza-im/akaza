@@ -21,6 +21,7 @@
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 import gi
+
 gi.require_version('IBus', '1.0')
 from gi.repository import IBus
 from gi.repository import GLib
@@ -41,8 +42,10 @@ __base_dir__ = os.path.dirname(__file__)
 
 logging.basicConfig(level=logging.DEBUG, filename='/tmp/ibus-comb.log', filemode='w')
 
+
 def debug(msg):
     logging.debug(msg)
+
 
 # gee thank you IBus :-)
 num_keys = []
@@ -61,6 +64,7 @@ comb = Comb(logging.getLogger('Comb'))
 configdir = os.path.join(GLib.get_user_config_dir(), 'ibus-comb')
 pathlib.Path(configdir).mkdir(parents=True, exist_ok=True)
 user_dict = UserDict(os.path.join(configdir, 'user-dict.txt'), logging.getLogger('UserDict'))
+
 
 ###########################################################################
 # the engine
@@ -127,7 +131,8 @@ class CombIBusEngine(IBus.Engine):
                 return True
             elif keyval == IBus.BackSpace:
                 # サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
-                self.preedit_string = re.sub('(?:z[hjkl.-]|[kstnhmyrwgzjdbp]?[aiueo]|.)$', '', self.preedit_string)
+                self.preedit_string = re.sub('(?:z[hjkl.-]|[kstnhmyrwgzjdbp]?[aiueo]|.)$', '',
+                                             self.preedit_string)
                 self.invalidate()
                 return True
             elif keyval in num_keys:
@@ -166,7 +171,7 @@ class CombIBusEngine(IBus.Engine):
 
         # Allow typing all ASCII letters and punctuation, except digits
         if ord('!') <= keyval < ord('0') or \
-           ord('9') < keyval <= ord('~'):
+                ord('9') < keyval <= ord('~'):
             if state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.MOD1_MASK) == 0:
                 if self.cursor_moved:
                     self.commit_candidate()
@@ -184,7 +189,6 @@ class CombIBusEngine(IBus.Engine):
             return
         self.is_invalidate = True
         GLib.idle_add(self.update_candidates)
-
 
     def page_up(self):
         if self.lookup_table.page_up():
@@ -241,7 +245,7 @@ class CombIBusEngine(IBus.Engine):
             except:
                 self.logger.error("cannot get kanji candidates %s" % (sys.exc_info()[0]), exc_info=True)
 
-        first_candidate = self.candidates[0] if len(self.candidates)>0 else self.preedit_string
+        first_candidate = self.candidates[0] if len(self.candidates) > 0 else self.preedit_string
 
         # にほんご ですね.
         text = IBus.Text.new_from_string(first_candidate)
@@ -249,7 +253,7 @@ class CombIBusEngine(IBus.Engine):
         self.update_auxiliary_text(text, preedit_len > 0)
 
         attrs.append(IBus.Attribute.new(IBus.AttrType.UNDERLINE,
-                IBus.AttrUnderline.SINGLE, 0, preedit_len))
+                                        IBus.AttrUnderline.SINGLE, 0, preedit_len))
         text = IBus.Text.new_from_string(first_candidate)
         text.set_attributes(attrs)
 
@@ -288,6 +292,7 @@ class CombIBusEngine(IBus.Engine):
     def do_cursor_down(self):
         return self.cursor_down()
 
+
 ###########################################################################
 # the app (main interface to ibus)
 
@@ -301,7 +306,6 @@ class IMApp:
         self.bus.connect("disconnected", self.bus_disconnected_cb)
         self.factory = IBus.Factory.new(self.bus.get_connection())
         self.factory.add_engine("comb", GObject.type_from_name("CombIBusEngine"))
-
 
         if exec_by_ibus:
             self.bus.request_name("org.freedesktop.IBus.Comb", 0)
@@ -326,11 +330,13 @@ def launch_engine(exec_by_ibus):
     IBus.init()
     IMApp(exec_by_ibus).run()
 
-def print_help(out, v = 0):
+
+def print_help(out, v=0):
     print("-i, --ibus             executed by IBus.", file=out)
     print("-h, --help             show this message.", file=out)
     print("-d, --daemonize        daemonize ibus", file=out)
     sys.exit(v)
+
 
 def main():
     try:
@@ -365,6 +371,7 @@ def main():
             sys.exit()
 
     launch_engine(exec_by_ibus)
+
 
 if __name__ == "__main__":
     main()
