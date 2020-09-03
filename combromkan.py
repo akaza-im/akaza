@@ -43,7 +43,6 @@
 from __future__ import unicode_literals
 
 import re
-from functools import cmp_to_key
 
 # This table is imported from KAKASI <http://kakasi.namazu.org/> and modified.
 
