@@ -46,11 +46,7 @@ import re
 
 # This table is imported from KAKASI <http://kakasi.namazu.org/> and modified.
 
-KUNREITAB_H = """ぁ      xa      あ      a      ぃ      xi      い      i      ぅ      xu
-う      u      う゛      vu      う゛ぁ      va      う゛ぃ      vi       う゛ぇ      ve
-う゛ぉ      vo      ぇ      xe      え      e      ぉ      xo      お      o 
-
-か      ka      が      ga      き      ki      きゃ      kya      きゅ      kyu 
+KUNREITAB_H = """か      ka      が      ga      き      ki      きゃ      kya      きゅ      kyu 
 きょ      kyo      ぎ      gi      ぎゃ      gya      ぎゅ      gyu      ぎょ      gyo 
 く      ku      ぐ      gu      け      ke      げ      ge      こ      ko
 ご      go 
@@ -201,6 +197,9 @@ HEPBURNTAB_H = """ぁ      xa      あ      a      ぃ      xi      い      i  
 てゃ	tha	てぃ	thi	てゅ	thu	てぇ	the	てょ	tho
 〜	z-	…	z.
 ←	zh	↓	zj	↑	zk	→	zl
+
+。	.	、	,
+「	[	」	]
 """
 
 
@@ -230,7 +229,9 @@ def _len_cmp(x):
     return -len(x)
 
 
-ROMPAT_H = re.compile("|".join(sorted(ROMKAN_H.keys(), key=_len_cmp)))
+ROMPAT_H = re.compile(
+    '(' + "|".join(sorted([re.escape(x) for x in ROMKAN_H.keys()], key=_len_cmp)) + ')'
+)
 
 
 def normalize_double_n(s):
@@ -254,5 +255,6 @@ def to_hiragana(s):
     s = s.lower()
     s = normalize_double_n(s)
 
-    tmp = ROMPAT_H.sub(lambda x: ROMKAN_H[x.group(0)], s)
+    # print(ROMKAN_H)
+    tmp = ROMPAT_H.sub(lambda x: ROMKAN_H[x.group(1)], s)
     return tmp
