@@ -34,8 +34,17 @@ class UserDict:
         else:
             self.dict = {}
 
-    def has_entry(self, kana):
-        return kana in self.dict
+    def get_candidates(self, src, hiragana):
+        candidates = []
+
+        for keyword in [src, hiragana]:
+            if keyword in self.dict:
+                got = self.dict[keyword]
+                self.logger.debug("GOT: %s" % str(got))
+                for e in got:
+                    candidates.append([e, e])
+
+        return candidates
 
     def add_entry(self, roma, kanji):
         kana = combromkan.to_hiragana(roma)
@@ -88,7 +97,7 @@ class Comb:
 
         # TODO load user dictionary
 
-        candidates = self.get_candidates(src, hiragana)
+        candidates = self.user_dict.get_candidates(src, hiragana) + self.get_candidates(src, hiragana)
 
         candidates.insert(0, [hiragana, hiragana])
         candidates.insert(2, [katakana, katakana])
