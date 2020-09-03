@@ -1,8 +1,8 @@
-import romkan
-import re
-import sys
-import os
 import jaconv
+import os
+import re
+
+import combromkan
 
 
 def parse_skkdict(path, encoding='euc-jp'):
@@ -66,7 +66,7 @@ class Comb:
             self.logger.error("cannot LOAD JISYO %s" % (fname), exc_info=True)
 
     def convert(self, src):
-        hiragana = romkan.to_hiragana(src).replace('.', '。').replace(',', '、')
+        hiragana = combromkan.to_hiragana(src).replace('.', '。').replace(',', '、')
         katakana = jaconv.hira2kata(hiragana)
 
         # TODO load user dictionary
