@@ -14,11 +14,12 @@ def parse_skkdict(path, encoding='euc-jp'):
                 continue
 
             m = line.strip().split(' ', 1)
-            yomi, kanjis = m
-            kanjis = kanjis.lstrip('/').rstrip('/').split('/')
-            kanjis = [re.sub(';.*', '', k) for k in kanjis]
+            if len(m) == 2:
+                yomi, kanjis = m
+                kanjis = kanjis.lstrip('/').rstrip('/').split('/')
+                kanjis = [re.sub(';.*', '', k) for k in kanjis]
 
-            result[yomi] = kanjis
+                result[yomi] = kanjis
 
     return result
 
@@ -57,6 +58,7 @@ class Comb:
         self.dictionaries = []
 
         # TODO: load configuration file.
+        self.load_dict('/home/tokuhirom/dotfiles/skk/SKK-JISYO.tokuhirom', encoding='utf-8')
         self.load_dict('/usr/share/skk/SKK-JISYO.L')
         self.load_dict('/usr/share/skk/SKK-JISYO.jinmei')
         self.load_dict('/home/tokuhirom/dotfiles/skk/SKK-JISYO.jawiki', encoding='utf-8')
@@ -64,10 +66,11 @@ class Comb:
     def load_dict(self, fname, encoding='euc-jp'):
         try:
             self.logger.info("loading dictionary: %s" % fname)
-            self.dictionaries.append(parse_skkdict(fname, encoding))
-            self.logger.info("LOADed JISYO")
+            got = parse_skkdict(fname, encoding)
+            self.dictionaries.append(got)
+            self.logger.info("LOADed JISYO: %d" % len(got))
         except:
-            self.logger.error("cannot LOAD JISYO %s" % (fname), exc_info=True)
+            self.logger.error("cannot LOAD JISYO %s" % fname, exc_info=True)
 
     def convert(self, src):
         hiragana = combromkan.to_hiragana(src).replace('.', '。').replace(',', '、')
