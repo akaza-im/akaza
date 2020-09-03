@@ -30,6 +30,7 @@ import os
 import sys
 import getopt
 import locale
+import re
 
 from comb import Comb
 
@@ -120,7 +121,8 @@ class CombIBusEngine(IBus.Engine):
                 self.update_candidates()
                 return True
             elif keyval == IBus.BackSpace:
-                self.preedit_string = self.preedit_string[:-1]
+                # サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
+                self.preedit_string = re.sub('[kstnhmyrwgzjdbp]?[aiueo]$', '', self.preedit_string)
                 self.invalidate()
                 return True
             elif keyval in num_keys:
