@@ -1,6 +1,7 @@
 import jaconv
 import os
 import re
+import time
 
 import combromkan
 
@@ -36,7 +37,9 @@ class UserDict:
     def has_entry(self, kana):
         return kana in self.dict
 
-    def add_entry(self, kana, kanji):
+    def add_entry(self, roma, kanji):
+        kana = combromkan.to_hiragana(roma)
+
         if kana in self.dict:
             e = self.dict[kana]
             if kanji in e:
@@ -48,12 +51,16 @@ class UserDict:
         else:
             self.dict[kana] = [kanji]
 
+        # 非同期でかくようにしたほうが better.
+        self.save()
+        self.logger.info("SAVED! %s" % str(self.dict))
+
     def save(self):
         pass
 
 
 class Comb:
-    def __init__(self, logger):
+    def __init__(self, logger, user_dict):
         self.logger = logger
         self.dictionaries = []
 
@@ -63,22 +70,25 @@ class Comb:
         self.load_dict('/usr/share/skk/SKK-JISYO.jinmei')
         self.load_dict('/home/tokuhirom/dotfiles/skk/SKK-JISYO.jawiki', encoding='utf-8')
 
+        self.user_dict = user_dict
+
     def load_dict(self, fname, encoding='euc-jp'):
         try:
             self.logger.info("loading dictionary: %s" % fname)
+            t0 = time.time()
             got = parse_skkdict(fname, encoding)
             self.dictionaries.append(got)
-            self.logger.info("LOADed JISYO: %d" % len(got))
+            self.logger.info("LOADed JISYO: %d in %f sec" % (len(got), time.time() - t0))
         except:
             self.logger.error("cannot LOAD JISYO %s" % fname, exc_info=True)
 
     def convert(self, src):
-        hiragana = combromkan.to_hiragana(src).replace('.', '。').replace(',', '、')
+        hiragana = combromkan.to_hiragana(src)
         katakana = jaconv.hira2kata(hiragana)
 
         # TODO load user dictionary
 
-        candidates = self.get_candidates(hiragana)
+        candidates = self.get_candidates(src, hiragana)
 
         candidates.insert(0, [hiragana, hiragana])
         candidates.insert(2, [katakana, katakana])
@@ -86,12 +96,16 @@ class Comb:
 
         return candidates
 
-    def get_candidates(self, hiragana):
+    # src は /better/ みたいな英単語を検索するためにワタシテイルです。
+    def get_candidates(self, src, hiragana):
         candidates = []
-        for dictionary in self.dictionaries:
-            if hiragana in dictionary:
-                got = dictionary[hiragana]
-                self.logger.debug("GOT: %s" % str(got))
-                for e in got:
-                    candidates.append([e, e])
+
+        for keyword in [src, hiragana]:
+            for dictionary in self.dictionaries:
+                if keyword in dictionary:
+                    got = dictionary[keyword]
+                    self.logger.debug("GOT: %s" % str(got))
+                    for e in got:
+                        candidates.append([e, e])
+
         return candidates

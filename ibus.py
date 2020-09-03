@@ -60,11 +60,15 @@ for n in range(1, 10):
 numpad_keys.append(getattr(IBus, 'KP_0'))
 del n
 
-comb = Comb(logging.getLogger('Comb'))
 configdir = os.path.join(GLib.get_user_config_dir(), 'ibus-comb')
 pathlib.Path(configdir).mkdir(parents=True, exist_ok=True)
 user_dict = UserDict(os.path.join(configdir, 'user-dict.txt'), logging.getLogger('UserDict'))
 
+comb = Comb(logging.getLogger('Comb'), user_dict)
+# TODO: ユーザー辞書の保存をbackground thread で実施するようにする
+
+MODE_KANA = 1
+MODE_ALPHA = 2
 
 ###########################################################################
 # the engine
@@ -81,6 +85,8 @@ class CombIBusEngine(IBus.Engine):
         self.comb = comb
         self.user_dict = user_dict
         self.logger = logging.getLogger(__name__)
+        self.candidates = []
+        self.mode = MODE_KANA
 
         # カーソル変更をしたばっかりかどうかを、みるフラグ。
         self.cursor_moved = False
@@ -108,7 +114,11 @@ class CombIBusEngine(IBus.Engine):
             self.commit_candidate()
 
     def do_process_key_event(self, keyval, keycode, state):
-        return self._do_process_key_event(keyval, keycode, state)
+        try:
+            return self._do_process_key_event(keyval, keycode, state)
+        except:
+            self.logger.error(f"Cannot process key event: keyval={keyval} keycode={keycode} state={state}", exc_info=True)
+            return False
 
     def _do_process_key_event(self, keyval, keycode, state):
         debug("process_key_event(%04x, %04x, %04x)" % (keyval, keycode, state))
@@ -117,6 +127,16 @@ class CombIBusEngine(IBus.Engine):
         is_press = ((state & IBus.ModifierType.RELEASE_MASK) == 0)
         if not is_press:
             return False
+
+        # 入力モードの切り替え機能。
+        if keyval == IBus.Henkan:
+            self.logger.info("Switch to kana mode")
+            self.mode = MODE_KANA
+            return True
+        elif keyval == IBus.Muhenkan:
+            self.logger.info("Switch to alpha mode")
+            self.mode = MODE_ALPHA
+            return True
 
         if self.preedit_string:
             if keyval in (IBus.Return, IBus.KP_Enter):
@@ -169,18 +189,21 @@ class CombIBusEngine(IBus.Engine):
                 self.cursor_down()
                 return True
 
-        # Allow typing all ASCII letters and punctuation, except digits
-        if ord('!') <= keyval < ord('0') or \
-                ord('9') < keyval <= ord('~'):
-            if state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.MOD1_MASK) == 0:
-                if self.cursor_moved:
-                    self.commit_candidate()
-                self.preedit_string += chr(keyval)
-                self.invalidate()
-                return True
+        if self.mode == MODE_KANA:
+            # Allow typing all ASCII letters and punctuation, except digits
+            if ord('!') <= keyval < ord('0') or \
+                    ord('9') < keyval <= ord('~'):
+                if state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.MOD1_MASK) == 0:
+                    if self.cursor_moved:
+                        self.commit_candidate()
+                    self.preedit_string += chr(keyval)
+                    self.invalidate()
+                    return True
+            else:
+                if keyval < 128 and self.preedit_string:
+                    self.commit_string(self.preedit_string)
         else:
-            if keyval < 128 and self.preedit_string:
-                self.commit_string(self.preedit_string)
+            return False
 
         return False
 
@@ -220,12 +243,12 @@ class CombIBusEngine(IBus.Engine):
 
     def commit_string(self, text):
         self.cursor_moved = False
+        self.user_dict.add_entry(self.preedit_string, text)
         self.commit_text(IBus.Text.new_from_string(text))
         self.preedit_string = ''
         self.update_candidates()
 
     def commit_candidate(self):
-        self.cursor_moved = False
         self.commit_string(self.candidates[self.lookup_table.get_cursor_pos()])
 
     def update_candidates(self):
