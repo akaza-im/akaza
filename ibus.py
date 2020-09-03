@@ -32,11 +32,12 @@ import getopt
 import locale
 import re
 
-from comb import Comb
+from comb import Comb, UserDict
 
 import romkan
 
 import logging
+import pathlib
 
 __base_dir__ = os.path.dirname(__file__)
 
@@ -57,6 +58,9 @@ numpad_keys.append(getattr(IBus, 'KP_0'))
 del n
 
 comb = Comb(logging.getLogger('Comb'))
+configdir = os.path.join(GLib.get_user_config_dir(), 'ibus-comb')
+pathlib.Path(configdir).mkdir(parents=True, exist_ok=True)
+user_dict = UserDict(os.path.join(configdir, 'user-dict.txt'), logging.getLogger('UserDict'))
 
 ###########################################################################
 # the engine
@@ -71,6 +75,7 @@ class CombIBusEngine(IBus.Engine):
         self.lookup_table = IBus.LookupTable.new(10, 0, True, True)
         self.prop_list = IBus.PropList()
         self.comb = comb
+        self.user_dict = user_dict
         self.logger = logging.getLogger(__name__)
 
         # カーソル変更をしたばっかりかどうかを、みるフラグ。
@@ -122,7 +127,7 @@ class CombIBusEngine(IBus.Engine):
                 return True
             elif keyval == IBus.BackSpace:
                 # サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
-                self.preedit_string = re.sub('[kstnhmyrwgzjdbp]?[aiueo]$', '', self.preedit_string)
+                self.preedit_string = re.sub('(?:[kstnhmyrwgzjdbp]?[aiueo]|.)$', '', self.preedit_string)
                 self.invalidate()
                 return True
             elif keyval in num_keys:
