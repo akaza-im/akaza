@@ -55,11 +55,15 @@ class Comb:
     def __init__(self, logger):
         self.logger = logger
         self.dictionaries = []
+
+        # TODO: load configuration file.
         self.load_dict('/usr/share/skk/SKK-JISYO.L')
+        self.load_dict('/usr/share/skk/SKK-JISYO.jinmei')
+        self.load_dict('/home/tokuhirom/dotfiles/skk/SKK-JISYO.jawiki', encoding='utf-8')
 
     def load_dict(self, fname, encoding='euc-jp'):
         try:
-            self.logger.info("loading %s" % fname)
+            self.logger.info("loading dictionary: %s" % fname)
             self.dictionaries.append(parse_skkdict(fname, encoding))
             self.logger.info("LOADed JISYO")
         except:
