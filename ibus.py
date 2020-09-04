@@ -33,7 +33,7 @@ import getopt
 import locale
 import re
 
-from comb import Comb, UserDict
+from comb import Comb, UserDict, SystemDict
 
 import logging
 import pathlib
@@ -43,6 +43,7 @@ __base_dir__ = os.path.dirname(__file__)
 logging.basicConfig(level=logging.DEBUG, filename='/tmp/ibus-comb.log', filemode='w')
 
 
+#  Remove this
 def debug(msg):
     logging.debug(msg)
 
@@ -64,7 +65,9 @@ configdir = os.path.join(GLib.get_user_config_dir(), 'ibus-comb')
 pathlib.Path(configdir).mkdir(parents=True, exist_ok=True)
 user_dict = UserDict(os.path.join(configdir, 'user-dict.txt'), logging.getLogger('UserDict'))
 
-comb = Comb(logging.getLogger('Comb'), user_dict)
+system_dict = SystemDict()
+
+comb = Comb(logging.getLogger('Comb'), user_dict, system_dict)
 # TODO: ユーザー辞書の保存をbackground thread で実施するようにする
 
 MODE_KANA = 1

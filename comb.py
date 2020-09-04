@@ -2,6 +2,9 @@ import jaconv
 import os
 import re
 import time
+import logging
+
+import marisa_trie
 
 import combromkan
 
@@ -34,8 +37,58 @@ def write_skkdict(outfname, dictionary, encoding='utf-8'):
                 ofh.write("%s /%s/\n" % (yomi, '/'.join(kanjis)))
 
 
+def merge_skkdict(dicts):
+    result = {}
+
+    for dic in dicts:
+        for k, v in dic.items():
+            if k not in result:
+                result[k] = []
+            result[k].extend(v)
+
+    return result
+
+
+class SystemDict:
+    def __init__(self, logger=logging.getLogger(__name__)):
+        self.logger = logger
+        self._load()
+
+    def _load(self):
+        # TODO: load configuration file.
+        dicts = [
+            ('/home/tokuhirom/dotfiles/skk/SKK-JISYO.tokuhirom', 'utf-8'),
+            ('/usr/share/skk/SKK-JISYO.L', 'euc-jp'),
+            ('/usr/share/skk/SKK-JISYO.jinmei', 'euc-jp'),
+            ('/home/tokuhirom/dotfiles/skk/SKK-JISYO.jawiki', 'utf-8'),
+        ]
+        try:
+            self.logger.info("loading dictionaries")
+            t0 = time.time()
+            t = []
+            dictionary = merge_skkdict([parse_skkdict(fname, encoding) for fname, encoding in dicts])
+            for k, v in dictionary.items():
+                t.append((k, '/'.join(v).encode('utf-8')))
+            self.trie = marisa_trie.BytesTrie(t)
+            self.logger.info(f"LOADed JISYO: in {time.time() - t0:f} sec")
+        except:
+            self.logger.error("cannot LOAD JISYO", exc_info=True)
+
+    # src は /better/ みたいな英単語を検索するためにワタシテイルです。
+    def get_candidates(self, src, hiragana):
+        if src in self.trie:
+            kanjis = self.trie[src][0].decode('utf-8').split('/')
+            for kanji in kanjis:
+                yield kanji
+
+        for prefix in reversed(self.trie.prefixes(hiragana)):
+            kanjis = self.trie[prefix][0].decode('utf-8').split('/')
+            for kanji in kanjis:
+                yield kanji + hiragana[len(prefix):]
+
+
 class UserDict:
-    def __init__(self, path, logger):
+    def __init__(self, path, logger=logging.getLogger(__name__)):
         self.path = path
         self.logger = logger
         if os.path.isfile(path):
@@ -79,62 +132,53 @@ class UserDict:
 
 
 class Comb:
-    def __init__(self, logger, user_dict):
+    def __init__(self, logger, user_dict: UserDict, system_dict: SystemDict):
         self.logger = logger
         self.dictionaries = []
-
-        # TODO: load configuration file.
-        self.load_dict('/home/tokuhirom/dotfiles/skk/SKK-JISYO.tokuhirom', encoding='utf-8')
-        self.load_dict('/usr/share/skk/SKK-JISYO.L')
-        self.load_dict('/usr/share/skk/SKK-JISYO.jinmei')
-        self.load_dict('/home/tokuhirom/dotfiles/skk/SKK-JISYO.jawiki', encoding='utf-8')
-
         self.user_dict = user_dict
-
-    def load_dict(self, fname, encoding='euc-jp'):
-        try:
-            self.logger.info("loading dictionary: %s" % fname)
-            t0 = time.time()
-            got = parse_skkdict(fname, encoding)
-            self.dictionaries.append(got)
-            self.logger.info("LOADed JISYO: %d in %f sec" % (len(got), time.time() - t0))
-        except:
-            self.logger.error("cannot LOAD JISYO %s" % fname, exc_info=True)
+        self.system_dict = system_dict
 
     def convert(self, src):
         hiragana = combromkan.to_hiragana(src)
         katakana = jaconv.hira2kata(hiragana)
 
-        user_candidates = self.user_dict.get_candidates(src, hiragana)
-        system_candidates = self.get_candidates(src, hiragana)
+        candidates = [[hiragana, hiragana]]
 
-        system_candidates.insert(0, [hiragana, hiragana])
-        system_candidates.insert(2, [katakana, katakana])
+        for e in self.user_dict.get_candidates(src, hiragana):
+            if e not in candidates:
+                candidates.append(e)
 
-        candidates = user_candidates
-        for e in system_candidates:
+        if [katakana, katakana] not in candidates:
+            candidates.insert(2, [katakana, katakana])
+
+        for e in [[x, x] for x in self.system_dict.get_candidates(src, hiragana)]:
             if e not in candidates:
                 candidates.append(e)
 
         if src[0].isupper():
-            self.logger.info(f"HAHAH! starting charactger is upper!いめ")
+            # 先頭が大文字の場合、それを先頭にもってくる。
             candidates.insert(0, [src, src])
         else:
-            self.logger.info(f"HAHAH! starting charactger is not upper!いめ {src[0]}")
+            # そうじゃなければ、末尾にいれる。
             candidates.append([src, src])
 
         return candidates
 
-    # src は /better/ みたいな英単語を検索するためにワタシテイルです。
-    def get_candidates(self, src, hiragana):
-        candidates = []
 
-        for keyword in [src, hiragana]:
-            for dictionary in self.dictionaries:
-                if keyword in dictionary:
-                    got = dictionary[keyword]
-                    self.logger.debug("GOT: %s" % str(got))
-                    for e in got:
-                        candidates.append([e, e])
+if __name__ == '__main__':
+    from gi.repository import GLib
+    import pathlib
+    import logging
 
-        return candidates
+    logging.basicConfig(level=logging.DEBUG)
+
+    configdir = os.path.join(GLib.get_user_config_dir(), 'ibus-comb')
+    pathlib.Path(configdir).mkdir(parents=True, exist_ok=True)
+    d = SystemDict()
+    u = UserDict(os.path.join(configdir, 'user-dict.txt'))
+    comb = Comb(logging.getLogger(__name__), u, d)
+    print(comb.convert('henkandekiru'))
+    # print(comb.convert('hituyoudayo'))
+    print(list(d.get_candidates('henkandekiru', 'へんかんできる')))
+    # print(list(d.get_candidates('hiragana', 'ひらがな')))
+    # print(list(d.get_candidates('buffer', 'ぶっふぇr')))
