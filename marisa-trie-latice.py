@@ -3,12 +3,14 @@ import marisa_trie
 
 dictionary = parse_skkdict('/usr/share/skk/SKK-JISYO.L', encoding='euc-jp')
 
+print("START")
+
 t = []
 for k, v in dictionary.items():
     vvv = '/'.join(v).encode('utf-8')
-    t.append((k, (vvv,)))
+    t.append((k, vvv))
 
-trie = marisa_trie.RecordTrie('@s', t)
+trie = marisa_trie.BytesTrie(t)
 
 print("LOADED")
 
@@ -20,9 +22,8 @@ def gen_latice(s):
         print(word)
 
 
-src = 'じゅうかきんぜい'
-for s in trie.prefixes('たんげつ'):
-    print(s)
-
-# f = src[0]
-# print(gen_latice(src))
+src = 'ひつようなことは'
+for prefix in reversed(trie.prefixes(src)):
+    kanjis = trie[prefix][0].decode('utf-8').split('/')
+    for kanji in kanjis:
+        print(kanji + src[len(prefix):])
