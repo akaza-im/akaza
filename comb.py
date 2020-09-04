@@ -111,7 +111,10 @@ class Comb:
         system_candidates.insert(0, [hiragana, hiragana])
         system_candidates.insert(2, [katakana, katakana])
 
-        candidates = user_candidates + system_candidates
+        candidates = user_candidates
+        for e in system_candidates:
+            if e not in candidates:
+                candidates.append(e)
 
         if src[0].isupper():
             self.logger.info(f"HAHAH! starting charactger is upper!いめ")
