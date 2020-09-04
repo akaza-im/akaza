@@ -43,11 +43,6 @@ __base_dir__ = os.path.dirname(__file__)
 logging.basicConfig(level=logging.DEBUG, filename='/tmp/ibus-comb.log', filemode='w')
 
 
-#  Remove this
-def debug(msg):
-    logging.debug(msg)
-
-
 # gee thank you IBus :-)
 num_keys = []
 for n in range(1, 10):
@@ -97,7 +92,7 @@ class CombIBusEngine(IBus.Engine):
         # カーソル変更をしたばっかりかどうかを、みるフラグ。
         self.cursor_moved = False
 
-        debug("Create Comb engine OK")
+        self.logger.debug("Create Comb engine OK")
 
     def set_lookup_table_cursor_pos_in_current_page(self, index):
         '''Sets the cursor in the lookup table to index in the current page
@@ -128,7 +123,7 @@ class CombIBusEngine(IBus.Engine):
             return False
 
     def _do_process_key_event(self, keyval, keycode, state):
-        debug("process_key_event(%04x, %04x, %04x)" % (keyval, keycode, state))
+        self.logger.debug("process_key_event(%04x, %04x, %04x)" % (keyval, keycode, state))
 
         # ignore key release events
         is_press = ((state & IBus.ModifierType.RELEASE_MASK) == 0)
@@ -192,7 +187,7 @@ class CombIBusEngine(IBus.Engine):
                 # もし、まだなにもはいっていなければ、ただの空白をそのままいれる。
                 return False
             else:
-                debug("cursor down")
+                self.logger.debug("cursor down")
                 self.cursor_down()
                 return True
 
@@ -274,7 +269,7 @@ class CombIBusEngine(IBus.Engine):
         if preedit_len > 0:
             try:
                 comb_results = self.comb.convert(self.preedit_string)
-                debug("HAHAHA %s, %s" % (str(self.preedit_string), str(comb_results)))
+                self.logger.debug("HAHAHA %s, %s" % (str(self.preedit_string), str(comb_results)))
                 for char_sequence, display_str in comb_results:
                     candidate = IBus.Text.new_from_string(display_str)
                     self.candidates.append(char_sequence)
@@ -303,19 +298,19 @@ class CombIBusEngine(IBus.Engine):
         self.update_lookup_table(self.lookup_table, visible)
 
     def do_focus_in(self):
-        debug("focus_in")
+        self.logger.debug("focus_in")
         self.register_properties(self.prop_list)
 
     def do_focus_out(self):
-        debug("focus_out")
+        self.logger.debug("focus_out")
         self.do_reset()
 
     def do_reset(self):
-        debug("reset")
+        self.logger.debug("reset")
         self.preedit_string = ''
 
     def do_property_activate(self, prop_name):
-        debug("PropertyActivate(%s)" % prop_name)
+        self.logger.debug("PropertyActivate(%s)" % prop_name)
 
     def do_page_up(self):
         return self.page_up()
