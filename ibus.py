@@ -42,7 +42,6 @@ __base_dir__ = os.path.dirname(__file__)
 
 logging.basicConfig(level=logging.DEBUG, filename='/tmp/ibus-comb.log', filemode='w')
 
-
 # gee thank you IBus :-)
 num_keys = []
 for n in range(1, 10):
@@ -256,9 +255,9 @@ class CombIBusEngine(IBus.Engine):
             self.commit_string(self.candidates[cursor_pos])
         else:
             # maybe, not happen, but happen.. why?
-            self.logger.error(f"commit_candidate failure: cursor_pos={cursor_pos}, candidates={self.candidates}")
+            self.logger.error(
+                f"commit_candidate failure: cursor_pos={cursor_pos}, candidates={self.candidates}")
             self.commit_string('')
-
 
     def update_candidates(self):
         preedit_len = len(self.preedit_string)
