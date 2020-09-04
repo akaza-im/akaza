@@ -96,7 +96,6 @@ class SystemDict:
                 else:
                     yield kana, kanjis
 
-
             def ari2nasi(src):
                 retval = {}
                 for kana, kanjis in src.items():
@@ -112,7 +111,7 @@ class SystemDict:
 
             for k, v in nasi_dictionary.items():
                 if k.startswith('わたし'):
-                    print([k,v])
+                    print([k, v])
                 t.append((k, '/'.join(v).encode('utf-8')))
             self.trie = marisa_trie.BytesTrie(t)
             self.logger.info(f"LOADed JISYO: in {time.time() - t0:f} sec")
