@@ -255,11 +255,11 @@ class CombIBusEngine(IBus.Engine):
     def commit_candidate(self):
         cursor_pos = self.lookup_table.get_cursor_pos()
         if cursor_pos < len(self.candidates):
-            self.commit_string(self.candidates)
+            self.commit_string(self.candidates[cursor_pos])
         else:
             # maybe, not happen, but happen.. why?
             self.logger.error(f"commit_candidate failure: cursor_pos={cursor_pos}, candidates={self.candidates}")
-            self.commit_string("")
+            self.commit_string('')
 
 
     def update_candidates(self):
