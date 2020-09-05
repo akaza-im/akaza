@@ -1,7 +1,6 @@
 import sys
 from typing import Dict, List
 
-import marisa_trie
 from comb import SystemDict
 
 
@@ -16,8 +15,13 @@ class Node:
         return f"<Node: start_pos={self.start_pos}, word={self.word}," \
                f" cost={self.cost}, prev={self.prev.word if self.prev else '-'}>"
 
-    def get_cost(self):
-        return - len(self.word)
+    def calc_node_cost(self):
+        if self.is_bos():
+            return 0
+        elif self.is_eos():
+            return 0
+        else:
+            return len(self.word)
 
     def is_bos(self):
         return self.word == '<S>'
@@ -58,6 +62,18 @@ class Graph:
             ary[k] = self.d[k]
         return ary[item]
 
+    def dump(self, path: str):
+        with open(path, 'w') as fp:
+            fp.write("""digraph graph_name {\n""")
+            fp.write("""  graph [\n""")
+            fp.write("""    charset="utf-8"\n""")
+            fp.write("""  ]\n""")
+            for i, nodes in self.d.items():
+                for node in nodes:
+                    fp.write(f"  {node.start_pos} -> {i} [label=\"{node.word}:"
+                             f" {node.cost}: {node.calc_node_cost()}\"]\n")
+            fp.write("""}\n""")
+
 
 def lookup(s, d: SystemDict):
     for i in range(0, len(s)):
@@ -86,63 +102,53 @@ def graph_construct(s, ht):
 
 
 def get_prev_node(graph, node: Node) -> List[Node]:
-    if node.is_eos():
-        return graph[len(graph) - 1]
-    else:
-        return graph[node.start_pos]
+    return graph[node.start_pos]
 
 
 # TODO: エッジコスト的なモノも考慮されたい。
 
-def viterbi(graph):
+def viterbi(graph: Graph):
     print("Viterbi phase 1")
     for nodes in graph[1:]:
+        print(f"fFFFF {nodes}")
         for node in nodes:
-            node_cost = node.get_cost()
+            print(f"  PPPP {node}")
+            node_cost = node.calc_node_cost()
             cost = sys.maxsize
             shortest_prev = None
             prev_nodes = get_prev_node(graph, node)
             if prev_nodes[0].is_bos():
-                pass
+                node.prev = prev_nodes[0]
+                node.cost = 0
             else:
                 for prev_node in prev_nodes:
                     tmp_cost = prev_node.cost + node_cost
                     if tmp_cost < cost:
                         cost = tmp_cost
                         shortest_prev = prev_node
+                print(f"    SSSHORTEST: {shortest_prev} in {prev_nodes}")
                 node.prev = shortest_prev
                 node.cost = cost
 
-    dump_graph(graph)
-    # sys.exit(1) # XXXXXXXXXXXXXXXX
+    print(graph)
+    graph.dump('hello.dot')
 
     print("Viterbi phase 2")
     node = graph[len(graph) - 1][0]
+    print(node)
     result = []
     while not node.is_bos():
         result.append(node)
+        if node == node.prev:
+            raise AssertionError(f"node==node.prev: {node}")
         node = node.prev
-    return reversed(result)
-
-
-def dump_graph(graph):
-    with open('hello.dot', 'w') as fp:
-        fp.write("""digraph graph_name {\n""")
-        fp.write("""  graph [\n""")
-        fp.write("""    charset="utf-8"\n""")
-        fp.write("""  ]\n""")
-        for i, nodes in graph.items():
-            for node in nodes:
-                if node.is_eos():
-                    fp.write(f"""  {i} -> {i} [label="{node.word}"]\n""")
-                else:
-                    fp.write(f"""  {node.start_pos} -> {i} [label="{node.word}"]\n""")
-        fp.write("""}\n""")
+    return list(reversed(result))
 
 
 # TODO: generate diagram via graphviz...
 def main():
     src = 'きょうは'
+    # src = 'わたしのなまえはなかのです'
     if False:
         system_dict = SystemDict()
         ht = dict(lookup(src, system_dict))
@@ -160,7 +166,8 @@ def main():
     print(ht)
     graph = graph_construct(src, ht)
     print(graph)
-    print(viterbi(graph))
+    got = viterbi(graph)
+    print(' '.join([x.word for x in got if not x.is_eos()]))
 
 
 main()
