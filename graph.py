@@ -13,7 +13,8 @@ class Node:
         self.prev = None
 
     def __repr__(self):
-        return f"<Node: start_pos={self.start_pos}, word={self.word}, cost={self.cost}, prev={self.prev.word if self.prev else '-'}>"
+        return f"<Node: start_pos={self.start_pos}, word={self.word}," \
+               f" cost={self.cost}, prev={self.prev.word if self.prev else '-'}>"
 
     def get_cost(self):
         return - len(self.word)
@@ -25,11 +26,37 @@ class Node:
         return self.word == '</S>'
 
 
-def create_graph(size: int) -> Dict[int, List[Node]]:
-    return {
-        0: [Node(start_pos=-9999, word='<S>')],
-        size: [Node(start_pos=-2, word='</S>')],
-    }
+class Graph:
+    d: Dict[int, List[Node]]
+
+    def __init__(self, size: int):
+        self.d = {
+            0: [Node(start_pos=-9999, word='<S>')],
+            size + 1: [Node(start_pos=size, word='</S>')],
+        }
+
+    def __len__(self) -> int:
+        return len(self.d)
+
+    def __repr__(self) -> str:
+        s = ''
+        for i in sorted(self.d.keys()):
+            if i in self.d:
+                s += f"{i}:\n"
+                s += "\n".join(["\t" + str(x) for x in self.d[i]]) + "\n"
+        return s
+
+    def append(self, index, node):
+        if index not in self.d:
+            self.d[index] = []
+        # print(f"graph[{j}]={graph[j]} graph={graph}")
+        self.d[index].append(node)
+
+    def __getitem__(self, item):
+        ary = [None for _ in range(len(self.d))]
+        for k in sorted(self.d.keys()):
+            ary[k] = self.d[k]
+        return ary[item]
 
 
 def lookup(s, d: SystemDict):
@@ -43,8 +70,9 @@ def lookup(s, d: SystemDict):
 
 # n文字目でおわる単語リストを作成する
 def graph_construct(s, ht):
-    graph = create_graph(len(s))
+    graph = Graph(size=len(s))
     print(graph)
+    print(len(graph))
 
     for i in range(0, len(s)):
         for j in range(i + 1, min(len(s) + 1, 16)):
@@ -52,16 +80,9 @@ def graph_construct(s, ht):
             if substr in ht:
                 for word in ht[substr]:
                     node = Node(i, word)
-                    if j not in graph:
-                        graph[j] = []
-                    # print(f"graph[{j}]={graph[j]} graph={graph}")
-                    graph[j].append(node)
+                    graph.append(j, node)
 
     return graph
-
-
-def node_list(graph, i):
-    return graph[i]
 
 
 def get_prev_node(graph, node: Node) -> List[Node]:
@@ -71,12 +92,11 @@ def get_prev_node(graph, node: Node) -> List[Node]:
         return graph[node.start_pos]
 
 
-# TODO: エッジコスト的なももも考慮されたい。
+# TODO: エッジコスト的なモノも考慮されたい。
 
 def viterbi(graph):
     print("Viterbi phase 1")
-    for i in range(1, len(graph)):
-        nodes = node_list(graph, i)
+    for nodes in graph[1:]:
         for node in nodes:
             node_cost = node.get_cost()
             cost = sys.maxsize
