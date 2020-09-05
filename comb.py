@@ -3,6 +3,8 @@ import os
 import re
 import time
 import logging
+from gi.repository import GLib
+import pathlib
 
 import marisa_trie
 
