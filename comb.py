@@ -9,59 +9,7 @@ import pathlib
 import marisa_trie
 
 import combromkan
-
-
-def parse_skkdict(path: str, encoding: str = 'euc-jp'):
-    nasi = {}
-    ari = {}
-    target = ari
-
-    with open(path, 'r', encoding=encoding) as fp:
-        for line in fp:
-            if line == ";; okuri-ari entries.\n":
-                target = ari
-            if line == ";; okuri-nasi entries.\n":
-                target = nasi
-            if line.startswith(';;'):
-                continue
-
-            m = line.strip().split(' ', 1)
-            if len(m) == 2:
-                yomi, kanjis = m
-                kanjis = kanjis.lstrip('/').rstrip('/').split('/')
-                kanjis = [re.sub(';.*', '', k) for k in kanjis]
-
-                target[yomi] = kanjis
-
-    return ari, nasi
-
-
-def write_skkdict(outfname, dict_ari, dict_nasi, encoding='utf-8'):
-    with open(outfname, 'w', encoding=encoding) as ofh:
-        ofh.write(";; okuri-ari entries.\n")
-        for yomi in sorted(dict_ari.keys()):
-            kanjis = dict_ari[yomi]
-            if len(kanjis) != 0:
-                ofh.write("%s /%s/\n" % (yomi, '/'.join(kanjis)))
-
-        ofh.write(";; okuri-nasi entries.\n")
-        for yomi in sorted(dict_nasi.keys()):
-            kanjis = dict_nasi[yomi]
-            if len(kanjis) != 0:
-                ofh.write("%s /%s/\n" % (yomi, '/'.join(kanjis)))
-
-
-def merge_skkdict(dicts):
-    result = {}
-
-    for dic in dicts:
-        for k, v in dic.items():
-            if k not in result:
-                result[k] = []
-            result[k].extend(v)
-
-    return result
-
+from skkdict import parse_skkdict, write_skkdict, merge_skkdict
 
 BOIN = set(['a', 'i', 'u', 'e', 'o'])
 
