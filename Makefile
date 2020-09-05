@@ -14,6 +14,7 @@ check:
 	python -m py_compile ibus.py
 	python -m py_compile combromkan.py
 	python -m py_compile comb.py
+	python -m py_compile skkdict.py
 	pytest
 
 comb.xml: comb.xml.in
@@ -28,6 +29,7 @@ install: all check
 	install -m 0644 comb.svg $(DESTDIR)$(DATADIR)/ibus-comb
 	install -m 0644 ibus.py $(DESTDIR)$(DATADIR)/ibus-comb
 	install -m 0644 combromkan.py $(DESTDIR)$(DATADIR)/ibus-comb
+	install -m 0644 skkdict.py $(DESTDIR)$(DATADIR)/ibus-comb
 	install -m 0644 comb.py $(DESTDIR)$(DATADIR)/ibus-comb
 	install -m 0644 comb.xml $(DESTDIR)$(DATADIR)/ibus/component
 
@@ -36,6 +38,7 @@ uninstall:
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/config.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/ibus.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb.py
+	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/skkdict.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/combromkan.py
 	rmdir $(DESTDIR)$(DATADIR)/ibus-comb
 	rmdir $(DESTDIR)$(SYSCONFDIR)/xdg/comb
