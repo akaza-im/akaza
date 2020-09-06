@@ -1,27 +1,36 @@
 import sys
 from typing import Dict, List
+import marisa_trie
 
 from comb import SystemDict
 
 
 class Node:
-    def __init__(self, start_pos, word):
+    def __init__(self, start_pos, word, onegram_score):
         self.start_pos = start_pos
         self.word = word
-        self.cost = -len(word)
+        self.onegram_score = onegram_score
+        self.cost = onegram_score.get(word, -0.001)
         self.prev = None
 
     def __repr__(self):
         return f"<Node: start_pos={self.start_pos}, word={self.word}," \
                f" cost={self.cost}, prev={self.prev.word if self.prev else '-'}>"
 
-    def calc_node_cost(self):
+    def calc_node_cost(self) -> float:
         if self.is_bos():
             return 0
         elif self.is_eos():
             return 0
         else:
-            return len(self.word)
+            m = self.onegram_score.get(self.word, -0.001)
+            if type(m) == tuple:
+                m = m[0]
+            if type(m) == list:
+                m = m[0]
+            if type(m) == tuple:
+                m = m[0]
+            return m
 
     def is_bos(self):
         return self.word == '<S>'
@@ -33,10 +42,10 @@ class Node:
 class Graph:
     d: Dict[int, List[Node]]
 
-    def __init__(self, size: int):
+    def __init__(self, size: int, onegram_score):
         self.d = {
-            0: [Node(start_pos=-9999, word='<S>')],
-            size + 1: [Node(start_pos=size, word='</S>')],
+            0: [Node(start_pos=-9999, word='<S>', onegram_score=onegram_score)],
+            size + 1: [Node(start_pos=size, word='</S>', onegram_score=onegram_score)],
         }
 
     def __len__(self) -> int:
@@ -85,8 +94,8 @@ def lookup(s, d: SystemDict):
 
 
 # n文字目でおわる単語リストを作成する
-def graph_construct(s, ht):
-    graph = Graph(size=len(s))
+def graph_construct(s, ht, onegram_score):
+    graph = Graph(size=len(s), onegram_score=onegram_score)
     print(graph)
     print(len(graph))
 
@@ -95,7 +104,7 @@ def graph_construct(s, ht):
             substr = s[i:j]
             if substr in ht:
                 for word in ht[substr]:
-                    node = Node(i, word)
+                    node = Node(i, word, onegram_score=onegram_score)
                     graph.append(j, node)
 
     return graph
@@ -107,21 +116,24 @@ def get_prev_node(graph, node: Node) -> List[Node]:
 
 # TODO: エッジコスト的なモノも考慮されたい。
 
-def viterbi(graph: Graph):
+def viterbi(graph: Graph, onegram_trie):
     print("Viterbi phase 1")
     for nodes in graph[1:]:
         print(f"fFFFF {nodes}")
         for node in nodes:
             print(f"  PPPP {node}")
             node_cost = node.calc_node_cost()
+            print(f"  NC {node.word} {node_cost}")
             cost = sys.maxsize
             shortest_prev = None
             prev_nodes = get_prev_node(graph, node)
             if prev_nodes[0].is_bos():
                 node.prev = prev_nodes[0]
-                node.cost = 0
+                node.cost = node_cost
             else:
                 for prev_node in prev_nodes:
+                    # この単純に引くカタチはおかしいんじゃねえのか?
+                    # スコアがふっとぶわ。
                     tmp_cost = prev_node.cost + node_cost
                     if tmp_cost < cost:
                         cost = tmp_cost
@@ -147,10 +159,12 @@ def viterbi(graph: Graph):
 
 # TODO: generate diagram via graphviz...
 def main():
-    src = 'きょうはいいてんきですね'
-    # src = 'きょうは'
+    # src = 'きょうはいいてんきですね'
+    src = 'きょうは'
     # src = 'わたしのなまえはなかのです'
-    if True:
+    onegram_score = marisa_trie.RecordTrie('@f')
+    onegram_score.load('model/jawiki.1gram')
+    if False:
         system_dict = SystemDict()
         ht = dict(lookup(src, system_dict))
     else:
@@ -165,9 +179,9 @@ def main():
             'うは': ['右派', 'うは'],
         }
     print(ht)
-    graph = graph_construct(src, ht)
+    graph = graph_construct(src, ht, onegram_score)
     print(graph)
-    got = viterbi(graph)
+    got = viterbi(graph, onegram_score)
     print(' '.join([x.word for x in got if not x.is_eos()]))
 
 
