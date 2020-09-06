@@ -163,7 +163,7 @@ class Comb:
                 candidates.append(e)
 
         if [katakana, katakana] not in candidates:
-            candidates.insert(2, [katakana, katakana])
+            candidates.append([katakana, katakana])
 
         for e in [[x, x] for x in self.system_dict.get_candidates(src, hiragana)]:
             if e not in candidates:
