@@ -1,4 +1,4 @@
-all: jawiki.arpa
+all: jawiki.1gram
 
 jawiki-latest-pages-articles.xml.bz2:
 	wget --no-verbose --no-clobber -O jawiki-latest-pages-articles.xml.bz2 https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-pages-articles.xml.bz2
@@ -26,6 +26,9 @@ jawiki.id3gram: jawiki.vocab5k
 
 jawiki.arpa:
 	idngram2lm -idngram jawiki.id3gram -vocab jawiki.vocab5k -arpa jawiki.arpa
+
+jawiki.1gram: bin/naive.py
+	python bin/naive.py jawiki.arpa
 
 .PHONY: all
 
