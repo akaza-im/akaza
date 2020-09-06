@@ -13,7 +13,6 @@ from skkdict import parse_skkdict, write_skkdict, merge_skkdict
 
 BOIN = set(['a', 'i', 'u', 'e', 'o'])
 
-
 class SystemDict:
     def __init__(self, logger=logging.getLogger(__name__)):
         self.logger = logger

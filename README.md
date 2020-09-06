@@ -5,6 +5,8 @@ Yet another kana-kanji-converter on IBus, written in Python.
 ## Dependencies
 
  * python-marisa
+ * pip install wikiextractor
+
 
 ## THANKS TO
 

@@ -147,9 +147,10 @@ def viterbi(graph: Graph):
 
 # TODO: generate diagram via graphviz...
 def main():
-    src = 'きょうは'
+    src = 'きょうはいいてんきですね'
+    # src = 'きょうは'
     # src = 'わたしのなまえはなかのです'
-    if False:
+    if True:
         system_dict = SystemDict()
         ht = dict(lookup(src, system_dict))
     else:
