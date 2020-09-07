@@ -1,3 +1,5 @@
+from typing import List, Any
+
 import jaconv
 import os
 import re
@@ -146,6 +148,8 @@ class UserDict:
 
 
 class Comb:
+    dictionaries: List[Any]
+
     def __init__(self, logger, user_dict: UserDict, system_dict: SystemDict):
         self.logger = logger
         self.dictionaries = []
