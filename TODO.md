@@ -1,2 +1,4 @@
-- request it.
 - "きょう" の変換
+- 共起的なスコアをいれたい
+- support 3gram
+- make dictionary more bigger.

@@ -19,6 +19,8 @@ def write_1gram():
                 break
 
         for line in fp:
+            if line == "\\2-grams:\n":
+                break
             # process it
             line = line.lstrip()
             m = SPACES.split(line)
@@ -44,6 +46,8 @@ def write_2gram():
                 break
 
         for line in fp:
+            if line == "\\3-grams:\n":
+                break
             # process it
             line = line.lstrip()
             m = SPACES.split(line)
