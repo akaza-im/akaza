@@ -18,14 +18,15 @@ jawiki.text: dat/BE/wiki_13
 jawiki.wfreq: jawiki.text
 	text2wfreq jawiki.text jawiki.wfreq
 
-jawiki.vocab5k: jawiki.wfreq
-	wfreq2vocab -top 5000 jawiki.wfreq jawiki.vocab5k
+# 118,334=entry count of libkkc-data.
+jawiki.vocab: jawiki.wfreq
+	wfreq2vocab -top 30000 jawiki.wfreq jawiki.vocab
 
-jawiki.id3gram: jawiki.vocab5k
-	text2idngram -temp /tmp/ -vocab jawiki.vocab5k jawiki.text jawiki.id3gram
+jawiki.id3gram: jawiki.vocab
+	text2idngram -n 2 -temp /tmp/ -vocab jawiki.vocab jawiki.text jawiki.id3gram
 
-jawiki.arpa: jawiki.id3gram jawiki.vocab5k
-	idngram2lm -idngram jawiki.id3gram -vocab jawiki.vocab5k -arpa jawiki.arpa
+jawiki.arpa: jawiki.id3gram jawiki.vocab
+	idngram2lm -idngram jawiki.id3gram -vocab jawiki.vocab -arpa jawiki.arpa
 
 jawiki.1gram: bin/naive.py jawiki.arpa
 	python bin/naive.py jawiki.arpa

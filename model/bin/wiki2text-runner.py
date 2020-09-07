@@ -1,10 +1,11 @@
-import sys
 import glob
 import subprocess
+
 
 def split(a, n):
     k, m = divmod(len(a), n)
     return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
+
 
 files = glob.glob('text/*/wiki_*')
 chunks = split(files, 7)
@@ -17,4 +18,3 @@ for chunk in chunks:
 for proc in procs:
     ret = proc.wait()
     print(ret)
-
