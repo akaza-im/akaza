@@ -1,8 +1,11 @@
 import sys
 from typing import Dict, List
 import marisa_trie
+import math
 
 from comb import SystemDict
+
+DEFAULT_SCORE = math.log10(0.00000000001)
 
 
 class Node:
@@ -10,7 +13,7 @@ class Node:
         self.start_pos = start_pos
         self.word = word
         self.onegram_score = onegram_score
-        self.cost = onegram_score.get(word, -0.001)
+        self.cost = None
         self.prev = None
 
     def __repr__(self):
@@ -23,7 +26,7 @@ class Node:
         elif self.is_eos():
             return 0
         else:
-            m = self.onegram_score.get(self.word, -0.001)
+            m = self.onegram_score.get(self.word, DEFAULT_SCORE)
             if type(m) == tuple:
                 m = m[0]
             if type(m) == list:
@@ -80,7 +83,7 @@ class Graph:
             for i, nodes in self.d.items():
                 for node in nodes:
                     fp.write(f"  {node.start_pos} -> {i} [label=\"{node.word}:"
-                             f" {node.cost}: {node.calc_node_cost()}\"]\n")
+                             f" {node.cost}: node={node.calc_node_cost()} {node.prev.word if node.prev else '-'}\"]\n")
             fp.write("""}\n""")
 
 
@@ -124,7 +127,7 @@ def viterbi(graph: Graph, onegram_trie):
             print(f"  PPPP {node}")
             node_cost = node.calc_node_cost()
             print(f"  NC {node.word} {node_cost}")
-            cost = sys.maxsize
+            cost = -sys.maxsize
             shortest_prev = None
             prev_nodes = get_prev_node(graph, node)
             if prev_nodes[0].is_bos():
@@ -135,7 +138,7 @@ def viterbi(graph: Graph, onegram_trie):
                     # この単純に引くカタチはおかしいんじゃねえのか?
                     # スコアがふっとぶわ。
                     tmp_cost = prev_node.cost + node_cost
-                    if tmp_cost < cost:
+                    if -tmp_cost < -cost:
                         cost = tmp_cost
                         shortest_prev = prev_node
                 print(f"    SSSHORTEST: {shortest_prev} in {prev_nodes}")
@@ -164,7 +167,7 @@ def main():
     # src = 'わたしのなまえはなかのです'
     onegram_score = marisa_trie.RecordTrie('@f')
     onegram_score.load('model/jawiki.1gram')
-    if False:
+    if True:
         system_dict = SystemDict()
         ht = dict(lookup(src, system_dict))
     else:
