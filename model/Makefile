@@ -24,10 +24,10 @@ jawiki.vocab5k: jawiki.wfreq
 jawiki.id3gram: jawiki.vocab5k
 	text2idngram -temp /tmp/ -vocab jawiki.vocab5k jawiki.text jawiki.id3gram
 
-jawiki.arpa:
+jawiki.arpa: jawiki.id3gram jawiki.vocab5k
 	idngram2lm -idngram jawiki.id3gram -vocab jawiki.vocab5k -arpa jawiki.arpa
 
-jawiki.1gram: bin/naive.py
+jawiki.1gram: bin/naive.py jawiki.arpa
 	python bin/naive.py jawiki.arpa
 
 .PHONY: all

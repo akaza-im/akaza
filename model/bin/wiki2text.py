@@ -3,6 +3,7 @@ import sys
 import re
 import pathlib
 import os
+import MeCab
 
 from janome.tokenizer import Tokenizer
 
@@ -16,13 +17,27 @@ for ifilename in targets:
     pathlib.Path(ofilename).parent.mkdir(parents=True, exist_ok=True)
     print(f"[{os.getpid()}] {ifilename} -> {ofilename} ({completed}/{len(targets)})")
 
+    mecab = MeCab.Tagger('')
+    mecab.parse('')
+
     with open(ifilename, 'r') as rfp, \
-        open(ofilename, 'w') as wfp:
+            open(ofilename, 'w') as wfp:
         for line in rfp:
             if line.startswith('<') or len(line) == 0:
                 continue
 
-            wfp.write(' '.join([token.surface for token in t.tokenize(line)]))
+            tokens = []
+            n = mecab.parseToNode(line)
+            while n:
+                if n.stat == MeCab.MECAB_BOS_NODE:
+                    tokens.append("<S>")
+                elif n.stat == MeCab.MECAB_EOS_NODE:
+                    tokens.append("</S>")
+                else:
+                    tokens.append(n.surface)
+                n = n.next
+
+            if len(tokens) > 2:
+                wfp.write(' '.join(tokens) + "\n")
 
     completed += 1
-
