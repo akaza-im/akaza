@@ -9,10 +9,11 @@ DEFAULT_SCORE = math.log10(0.00000000001)
 
 
 class Node:
-    def __init__(self, start_pos, word, onegram_score):
+    def __init__(self, start_pos, word, unigram_score, bigram_score):
         self.start_pos = start_pos
         self.word = word
-        self.onegram_score = onegram_score
+        self.unigram_score = unigram_score
+        self.bigram_score = bigram_score
         self.cost = None
         self.prev = None
 
@@ -26,7 +27,7 @@ class Node:
         elif self.is_eos():
             return 0
         else:
-            m = self.onegram_score.get(self.word, DEFAULT_SCORE)
+            m = self.unigram_score.get(self.word, DEFAULT_SCORE)
             if type(m) == tuple:
                 m = m[0]
             if type(m) == list:
@@ -41,14 +42,27 @@ class Node:
     def is_eos(self):
         return self.word == '</S>'
 
+    def calc_bigram_cost(self, node):
+        # self → node で処理する。
+        n = self.bigram_score.get(f"{self.word}\t{node.word}", DEFAULT_SCORE)
+        if type(n) == tuple:
+            n = n[0]
+        if type(n) == list:
+            n = n[0]
+        if type(n) == tuple:
+            n = n[0]
+        # print(f"PPPPPPPPPPPPP {self.word} {node.word} -----> {n}")
+        return n
+
 
 class Graph:
     d: Dict[int, List[Node]]
 
-    def __init__(self, size: int, onegram_score):
+    def __init__(self, size: int, unigram_score, bigram_score):
         self.d = {
-            0: [Node(start_pos=-9999, word='<S>', onegram_score=onegram_score)],
-            size + 1: [Node(start_pos=size, word='</S>', onegram_score=onegram_score)],
+            0: [Node(start_pos=-9999, word='<S>', unigram_score=unigram_score, bigram_score=bigram_score)],
+            size + 1: [
+                Node(start_pos=size, word='</S>', unigram_score=unigram_score, bigram_score=bigram_score)],
         }
 
     def __len__(self) -> int:
@@ -97,8 +111,8 @@ def lookup(s, d: SystemDict):
 
 
 # n文字目でおわる単語リストを作成する
-def graph_construct(s, ht, onegram_score):
-    graph = Graph(size=len(s), onegram_score=onegram_score)
+def graph_construct(s, ht, unigram_score, bigram_score):
+    graph = Graph(size=len(s), unigram_score=unigram_score, bigram_score=bigram_score)
     print(graph)
     print(len(graph))
 
@@ -107,7 +121,7 @@ def graph_construct(s, ht, onegram_score):
             substr = s[i:j]
             if substr in ht:
                 for word in ht[substr]:
-                    node = Node(i, word, onegram_score=onegram_score)
+                    node = Node(i, word, unigram_score=unigram_score, bigram_score=bigram_score)
                     graph.append(j, node)
 
     return graph
@@ -137,7 +151,7 @@ def viterbi(graph: Graph, onegram_trie):
                 for prev_node in prev_nodes:
                     # この単純に引くカタチはおかしいんじゃねえのか?
                     # スコアがふっとぶわ。
-                    tmp_cost = prev_node.cost + node_cost
+                    tmp_cost = prev_node.cost + prev_node.calc_bigram_cost(node) + node_cost
                     if -tmp_cost < -cost:
                         cost = tmp_cost
                         shortest_prev = prev_node
@@ -163,10 +177,16 @@ def viterbi(graph: Graph, onegram_trie):
 # TODO: generate diagram via graphviz...
 def main():
     # src = 'きょうはいいてんきですね'
-    src = 'きょうは'
+    # src = 'きょうは'
+    src = 'きょうのてんきは'
     # src = 'わたしのなまえはなかのです'
-    onegram_score = marisa_trie.RecordTrie('@f')
-    onegram_score.load('model/jawiki.1gram')
+
+    unigram_score = marisa_trie.RecordTrie('@f')
+    unigram_score.load('model/jawiki.1gram')
+
+    bigram_score = marisa_trie.RecordTrie('@f')
+    bigram_score.load('model/jawiki.2gram')
+
     if True:
         system_dict = SystemDict()
         ht = dict(lookup(src, system_dict))
@@ -182,10 +202,16 @@ def main():
             'うは': ['右派', 'うは'],
         }
     print(ht)
-    graph = graph_construct(src, ht, onegram_score)
+    graph = graph_construct(src, ht, unigram_score, bigram_score)
     print(graph)
-    got = viterbi(graph, onegram_score)
+
+    got = viterbi(graph, unigram_score)
     print(' '.join([x.word for x in got if not x.is_eos()]))
+
+    for ww in ["今日", "頃", "きょう"]:
+        print(f"WWWWW {ww} {unigram_score.get(ww)}")
+    for ww in ["今日\tは", "頃\tは", "は\t今日", "は\t頃"]:
+        print(f"WWWWW {ww} {bigram_score.get(ww)}")
 
 
 main()
