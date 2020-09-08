@@ -9,7 +9,7 @@ from comb import combromkan
 
 from comb.system_dict import SystemDict
 from comb.user_dict import UserDict
-from comb.graph import graph_construct, viterbi, lookup
+from comb.graph import graph_construct, viterbi, lookup, Node
 from comb.config import MODEL_DIR
 import logging
 import marisa_trie
@@ -38,6 +38,19 @@ class Comb:
         self.bigram_score = marisa_trie.RecordTrie('@f')
         self.bigram_score.load(f"{MODEL_DIR}/jawiki.2gram")
 
+    # 連文節変換するバージョン。
+    def convert2(self, src: str) -> List[List[Node]]:
+        hiragana: str = combromkan.to_hiragana(src)
+        katakana: str = jaconv.hira2kata(hiragana)
+        self.logger.info(f"convert: src={src} hiragana={hiragana} katakana={katakana}")
+
+        ht = dict(lookup(hiragana, self.system_dict))
+        graph = graph_construct(hiragana, ht, self.unigram_score, self.bigram_score)
+        clauses = viterbi(graph)
+        return clauses
+
+    # 連文節しないバージョン(しばらくのあいだ、残しておく。)
+    # TODO: remove this.
     def convert(self, src):
         hiragana: str = combromkan.to_hiragana(src)
         katakana: str = jaconv.hira2kata(hiragana)
