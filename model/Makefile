@@ -22,14 +22,11 @@ jawiki.wfreq: jawiki.text
 jawiki.vocab: jawiki.wfreq
 	wfreq2vocab -top 30000 jawiki.wfreq jawiki.vocab
 
-jawiki.id3gram: jawiki.vocab
-	text2idngram -n 2 -temp /tmp/ -vocab jawiki.vocab jawiki.text jawiki.id3gram
+jawiki.1gram.json: jawiki.vocab
+	python bin/dumpngram.py jawiki.vocab
 
-jawiki.arpa: jawiki.id3gram jawiki.vocab
-	idngram2lm -idngram jawiki.id3gram -vocab jawiki.vocab -arpa jawiki.arpa
-
-jawiki.1gram: bin/naive.py jawiki.arpa
-	python bin/naive.py jawiki.arpa
+jawiki.1gram: jawiki.1gram.json jawiki.vocab
+	python bin/create-ngram-from-json.py
 
 .PHONY: all
 

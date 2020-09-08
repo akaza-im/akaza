@@ -2,3 +2,4 @@
 - 共起的なスコアをいれたい
 - support 3gram
 - make dictionary more bigger.
+- 絵文字辞書
