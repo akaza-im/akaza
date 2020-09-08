@@ -17,6 +17,11 @@ import marisa_trie
 from datetime import date
 
 
+class Candidate:
+    def __init__(self, word: str):
+        self.word = word
+
+
 class Comb:
     logger: Logger
     dictionaries: List[Any]
