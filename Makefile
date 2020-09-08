@@ -13,7 +13,7 @@ all: comb.xml comb
 check:
 	python -m py_compile ibus.py
 	python -m py_compile comb/combromkan.py
-	python -m py_compile comb/comb.py
+	python -m py_compile comb/engine.py
 	python -m py_compile comb/skkdict.py
 	pytest
 
@@ -32,16 +32,22 @@ install: all check comb/config.py
 	install -m 0644 comb/skkdict.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb/combromkan.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 ibus.py $(DESTDIR)$(DATADIR)/ibus-comb
-	install -m 0644 comb/comb.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
+	install -m 0644 comb/engine.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
+	install -m 0644 comb/ui.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
+	install -m 0644 comb/user_dict.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
+	install -m 0644 comb/system_dict.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb.xml $(DESTDIR)$(DATADIR)/ibus/component
 
 uninstall:
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb.svg
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/config.py
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/comb.py
+	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/engine.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/skkdict.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/combromkan.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/graph.py
+	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/ui.py
+	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/user_dict.py
+	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/system_dict.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/ibus.py
 	rmdir $(DESTDIR)$(DATADIR)/ibus-comb
 	rmdir $(DESTDIR)$(SYSCONFDIR)/xdg/comb

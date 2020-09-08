@@ -5,7 +5,7 @@ import math
 import logging
 import jaconv
 
-from comb.comb import SystemDict
+from comb.system_dict import SystemDict
 
 DEFAULT_SCORE = [(math.log10(0.00000000001),)]
 
