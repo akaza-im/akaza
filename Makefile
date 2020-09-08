@@ -22,13 +22,21 @@ comb.xml: comb.xml.in
 	    -e "s:@DATADIR@:$(DATADIR):g" $< > $@
 
 comb/config.py: comb/config.py.in
-	sed -e "s:@SYSCONFDIR@:$(SYSCONFDIR):g" $< > $@
+	sed -e "s:@SYSCONFDIR@:$(SYSCONFDIR):g" \
+	    -e "s:@MODELDIR@:$(DESTDIR)/$(DATADIR)/ibus-comb/model:g" \
+		$< > $@
 
-install: all check comb/config.py
-	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-comb/comb $(DESTDIR)$(SYSCONFDIR)/xdg/comb $(DESTDIR)$(DATADIR)/ibus/component
+model/jawiki.1gram:
+	make -C model jawiki.1gram
+
+install: all comb/config.py model/jawiki.1gram check
+	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-comb/comb $(DESTDIR)$(SYSCONFDIR)/xdg/comb $(DESTDIR)$(DATADIR)/ibus/component $(DESTDIR)$(DATADIR)/ibus-comb/model
+	install -m 0644 model/jawiki.1gram $(DESTDIR)$(DATADIR)/ibus-comb/model/
+	install -m 0644 model/jawiki.2gram $(DESTDIR)$(DATADIR)/ibus-comb/model/
 	install -m 0644 comb.svg $(DESTDIR)$(DATADIR)/ibus-comb
 	install -m 0644 comb/__init__.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb/graph.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
+	install -m 0644 comb/config.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb/skkdict.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb/combromkan.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 ibus.py $(DESTDIR)$(DATADIR)/ibus-comb
@@ -49,6 +57,8 @@ uninstall:
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/user_dict.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/system_dict.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/ibus.py
+	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/model/jawiki.1gram
+	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/model/jawiki.2gram
 	rmdir $(DESTDIR)$(DATADIR)/ibus-comb
 	rmdir $(DESTDIR)$(SYSCONFDIR)/xdg/comb
 	rm -f $(DESTDIR)$(DATADIR)/ibus/component/comb.xml

@@ -35,8 +35,14 @@ user_dict = UserDict(os.path.join(configdir, 'user-dict.txt'), logging.getLogger
 logging.info("Loaded user dictionary")
 
 system_dict = SystemDict()
+logging.info("Loaded system dictionary")
 
-comb = Comb(logging.getLogger('Comb'), user_dict, system_dict)
+try:
+    comb = Comb(logging.getLogger('Comb'), user_dict, system_dict)
+    logging.info("Finished Comb.")
+except:
+    logging.error("Cannot initialize.", exc_info=True)
+    sys.exit(1)
 
 
 # ----------------------------------------------------------------------

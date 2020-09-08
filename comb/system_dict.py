@@ -46,6 +46,7 @@ class SystemDict:
             trie = marisa_trie.BytesTrie()
             trie.load(cache_file)
             self.trie = trie
+            self.logger.info("loaded cache dictionary")
             return
 
         self.logger.info("loading dictionaries")

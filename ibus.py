@@ -131,4 +131,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except:
+        logging.error("Cannot initialize", exc_info=True)
+        sys.exit(1)
