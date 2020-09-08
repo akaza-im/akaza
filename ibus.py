@@ -32,15 +32,21 @@ import sys
 import getopt
 import locale
 import re
-
-from comb import Comb, UserDict, SystemDict
-
 import logging
+
+logging.basicConfig(level=logging.DEBUG, filename='/tmp/ibus-comb.log', filemode='w')
+logging.info("Loading ibus-comb")
+
+libpath = os.path.join(os.path.dirname(__file__), "comb")
+logging.info(f"library path: {libpath}")
+sys.path.append(libpath)
+
+from comb.comb import Comb, UserDict, SystemDict
+
 import pathlib
 
 __base_dir__ = os.path.dirname(__file__)
 
-logging.basicConfig(level=logging.DEBUG, filename='/tmp/ibus-comb.log', filemode='w')
 
 # gee thank you IBus :-)
 num_keys = []
@@ -58,6 +64,7 @@ del n
 configdir = os.path.join(GLib.get_user_config_dir(), 'ibus-comb')
 pathlib.Path(configdir).mkdir(parents=True, exist_ok=True)
 user_dict = UserDict(os.path.join(configdir, 'user-dict.txt'), logging.getLogger('UserDict'))
+logging.info("Loaded user dictionary")
 
 system_dict = SystemDict()
 
