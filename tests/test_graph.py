@@ -14,16 +14,16 @@ system_dict = SystemDict()
 
 
 @pytest.mark.parametrize('src, expected', [
+    # Wnn で有名なフレーズ。
     ('わたしのなまえはなかのです', '私の名前は中野です'),
-    # カタカナ語が SKK-JISYO にはいっておらず、結果として、カタカナ語に弱い状況となっている。
+    # カタカナ語の処理が出来ていること。
     ('わーど', 'ワード'),
 ])
 def test_wnn(src, expected):
     ht = dict(lookup(src, system_dict))
     graph = graph_construct(src, ht, unigram_score, bigram_score)
 
-    nodes = viterbi(graph)
-    # print(graph)
-    got = ''.join([x.word for x in nodes if not x.is_eos()])
+    clauses = viterbi(graph)
+    got = ''.join([clause[0].word for clause in clauses])
 
     assert got == expected

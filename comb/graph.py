@@ -173,17 +173,17 @@ def viterbi(graph: Graph):
     # print(node)
     result = []
     while not node.is_bos():
-        result.append(node)
         if node == node.prev:
             raise AssertionError(f"node==node.prev: {node}")
         if not node.is_eos():
             # 他の候補を追加する。
-            node.others = [n for n in graph[node.start_pos + len(node.yomi)] if node.yomi == n.yomi]
+            nodes = sorted([n for n in graph[node.start_pos + len(node.yomi)] if node.yomi == n.yomi],
+                           key=lambda x: x.cost, reverse=True)
+            result.append(nodes)
         node = node.prev
     return list(reversed(result))
 
 
-# TODO: generate diagram via graphviz...
 def main():
     logging.basicConfig(level=logging.DEBUG)
 

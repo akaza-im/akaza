@@ -1,3 +1,5 @@
+from typing import List, Any, Dict
+
 from gi.repository import IBus
 from gi.repository import GLib
 
@@ -8,6 +10,7 @@ import logging
 import pathlib
 
 from comb.engine import Comb
+from comb.graph import Node
 from comb.user_dict import UserDict
 from comb.system_dict import SystemDict
 
@@ -48,6 +51,10 @@ except:
 # ----------------------------------------------------------------------
 
 class CombIBusEngine(IBus.Engine):
+    current_clause: int
+    node_selected: Dict[int, int]
+    current_clause: int
+    clauses: List[List[Node]]
     prop_list: IBus.PropList
     comb: Comb
     mode: bool
@@ -59,8 +66,6 @@ class CombIBusEngine(IBus.Engine):
         self.is_invalidate = False
         # 未確定文字列。
         self.preedit_string = ''
-        # 変換候補
-        self.candidates = []
         # 候補文字列
         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
         self.prop_list = IBus.PropList()
@@ -68,6 +73,12 @@ class CombIBusEngine(IBus.Engine):
         self.user_dict = user_dict
         self.logger = logging.getLogger(__name__)
         self.mode = MODE_KANA
+        # 変換候補。文節ごとの配列。
+        self.clauses = []
+        # 現在選択されている、文節。
+        self.current_clause = 0
+        # key は、clause 番号。value は、node の index。
+        self.node_selected = {}
 
         # カーソル変更をしたばっかりかどうかを、みるフラグ。
         self.cursor_moved = False
@@ -149,10 +160,10 @@ class CombIBusEngine(IBus.Engine):
                     self.commit_candidate()
                     return True
                 return False
-            elif keyval in (IBus.Page_Up, IBus.KP_Page_Up, IBus.Left, IBus.KP_Left):
+            elif keyval in (IBus.Page_Up, IBus.KP_Page_Up):
                 self.page_up()
                 return True
-            elif keyval in (IBus.Page_Down, IBus.KP_Page_Down, IBus.Right, IBus.KP_Right):
+            elif keyval in (IBus.Page_Down, IBus.KP_Page_Down):
                 self.page_down()
                 return True
             elif keyval in (IBus.Up, IBus.KP_Up):
@@ -160,6 +171,12 @@ class CombIBusEngine(IBus.Engine):
                 return True
             elif keyval in (IBus.Down, IBus.KP_Down):
                 self.cursor_down()
+                return True
+            elif keyval in (IBus.Right, IBus.KP_Right):
+                self.cursor_right()
+                return True
+            elif keyval in (IBus.Left, IBus.KP_Left):
+                self.cursor_left()
                 return True
 
         if keyval == IBus.space:
@@ -197,67 +214,142 @@ class CombIBusEngine(IBus.Engine):
 
     def page_up(self):
         if self.lookup_table.page_up():
+            self.node_selected[self.current_clause] = self.lookup_table.get_cursor_pos()
             self.cursor_moved = True
-            self._update_lookup_table()
+            self.refresh()
             return True
         return False
 
     def page_down(self):
         if self.lookup_table.page_down():
+            self.node_selected[self.current_clause] = self.lookup_table.get_cursor_pos()
             self.cursor_moved = True
-            self._update_lookup_table()
+            self.refresh()
             return True
         return False
 
     def cursor_up(self):
         if self.lookup_table.cursor_up():
+            self.node_selected[self.current_clause] = self.lookup_table.get_cursor_pos()
             self.cursor_moved = True
-            self._update_lookup_table()
+            self.refresh()
             return True
         return False
 
     def cursor_down(self):
         if self.lookup_table.cursor_down():
+            self.node_selected[self.current_clause] = self.lookup_table.get_cursor_pos()
             self.cursor_moved = True
-            self._update_lookup_table()
+            self.refresh()
             return True
         return False
 
+    # 選択する分節を右にずらす。
+    def cursor_right(self):
+        self.logger.info(f"right cursor")
+        # いっこしか分節がない場合は、何もせぬ
+        if len(self.clauses) == 0:
+            self.logger.info(f"right cursor：no clauses")
+            return False
+
+        # 既に一番右だった場合、一番左にいく。
+        if self.current_clause == len(self.clauses) - 1:
+            self.current_clause = 0
+        else:
+            self.current_clause += 1
+        self.cursor_moved = True
+
+        # 選択肢テーブルをアップデートする。
+        self.lookup_table.clear()
+        for node in self.clauses[self.current_clause]:
+            candidate = IBus.Text.new_from_string(node.word)
+            self.lookup_table.append_candidate(candidate)
+        self.logger.info(f"right cursor：updated lookup table {self.current_clause}")
+
+        self.refresh()
+
+        return True
+
+    # 選択する分節を左にずらす。
+    def cursor_left(self):
+        self.logger.info(f"left cursor")
+        # いっこしか分節がない場合は、何もせぬ
+        if len(self.clauses) == 0:
+            self.logger.info(f"left cursor：no clauses")
+            return False
+
+        # 既に一番左だった場合、一番右にいく。
+        if self.current_clause == 0:
+            self.current_clause = len(self.clauses) - 1
+        else:
+            self.current_clause -= 1
+        self.cursor_moved = True
+
+        # 選択肢テーブルをアップデートする。
+        self.lookup_table.clear()
+        for node in self.clauses[self.current_clause]:
+            candidate = IBus.Text.new_from_string(node.word)
+            self.lookup_table.append_candidate(candidate)
+        self.logger.info(f"left cursor：updated lookup table {self.current_clause}")
+
+        self.refresh()
+
+        return True
+
     def commit_string(self, text):
         self.cursor_moved = False
+        ## TODO ここ変えないとダメ
         self.user_dict.add_entry(self.preedit_string, text)
         self.commit_text(IBus.Text.new_from_string(text))
         self.preedit_string = ''
+        self.current_clause = 0
+        self.node_selected = {}
         self.update_candidates()
 
+    def build_string(self):
+        result = ''
+        for clauseid, nodes in enumerate(self.clauses):
+            result += nodes[self.node_selected.get(clauseid, 0)].word
+        return result
+
     def commit_candidate(self):
-        cursor_pos = self.lookup_table.get_cursor_pos()
-        if cursor_pos < len(self.candidates):
-            self.commit_string(self.candidates[cursor_pos])
-        else:
-            # maybe, not happen, but happen.. why?
-            self.logger.error(
-                f"commit_candidate failure: cursor_pos={cursor_pos}, candidates={self.candidates}")
-            self.commit_string('')
+        s = self.build_string()
+        self.logger.info("Committing {s}")
+        self.commit_string(s)
+
+    # cursor_pos = self.lookup_table.get_cursor_pos()
+    # if cursor_pos < len(self.clauses[self.current_clause]):
+    #     self.commit_string(self.candidates[cursor_pos])
+    # else:
+    #     # maybe, not happen, but happen.. why?
+    #     self.logger.error(
+    #         f"commit_candidate failure: cursor_pos={cursor_pos}, candidates={self.clauses}")
+    #     self.commit_string('')
 
     def update_candidates(self):
-        preedit_len = len(self.preedit_string)
-        attrs = IBus.AttrList()
+        try:
+            self._update_candidates()
+        except:
+            self.logger.error(f"cannot get kanji candidates {sys.exc_info()[0]}", exc_info=True)
+
+    def _update_candidates(self):
         self.lookup_table.clear()
-        self.candidates = []
+        # self.candidates = []
 
-        if preedit_len > 0:
-            try:
-                comb_results = self.comb.convert(self.preedit_string)
-                self.logger.debug("HAHAHA %s, %s" % (str(self.preedit_string), str(comb_results)))
-                for char_sequence, display_str in comb_results:
-                    candidate = IBus.Text.new_from_string(display_str)
-                    self.candidates.append(char_sequence)
-                    self.lookup_table.append_candidate(candidate)
-            except:
-                self.logger.error("cannot get kanji candidates %s" % (sys.exc_info()[0]), exc_info=True)
+        if len(self.preedit_string) > 0:
+            self.clauses: List[List[Node]] = self.comb.convert2(self.preedit_string)
+            # self.logger.debug(f"HAHAHA {str(self.preedit_string)}, {str(self.clauses)}")
+            for node in self.clauses[0]:
+                candidate = IBus.Text.new_from_string(node.word)
+                # self.candidates.append(node.word)
+                self.lookup_table.append_candidate(candidate)
 
-        first_candidate = self.candidates[0] if len(self.candidates) > 0 else self.preedit_string
+        self.refresh()
+
+    def refresh(self):
+        attrs = IBus.AttrList()
+        preedit_len = len(self.preedit_string)
+        first_candidate = self.build_string() if len(self.clauses) > 0 else self.preedit_string
 
         # にほんご ですね.
         text = IBus.Text.new_from_string(first_candidate)
@@ -270,6 +362,8 @@ class CombIBusEngine(IBus.Engine):
         text.set_attributes(attrs)
 
         self.update_preedit_text(text, preedit_len, preedit_len > 0)
+
+        # 候補があれば、選択肢を表示させる。
         self._update_lookup_table()
         self.is_invalidate = False
 
