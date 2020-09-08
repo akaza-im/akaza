@@ -24,7 +24,7 @@ class Node:
 
     def __repr__(self):
         return f"<Node: start_pos={self.start_pos}, word={self.word}," \
-               f" cost={self.cost}, prev={self.prev.word if self.prev else '-'}>"
+               f" cost={self.cost}, prev={self.prev.word if self.prev else '-'} yomi={self.yomi}>"
 
     def calc_node_cost(self) -> float:
         if self.is_bos():
@@ -176,6 +176,9 @@ def viterbi(graph: Graph):
         result.append(node)
         if node == node.prev:
             raise AssertionError(f"node==node.prev: {node}")
+        if not node.is_eos():
+            # 他の候補を追加する。
+            node.others = [n for n in graph[node.start_pos + len(node.yomi)] if node.yomi == n.yomi]
         node = node.prev
     return list(reversed(result))
 
