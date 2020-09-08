@@ -8,7 +8,7 @@ DESTDIR ?=
 
 PYTHON ?= /usr/bin/python3
 
-all: comb.xml comb
+all: comb.xml comb/config.py comb
 
 check:
 	python -m py_compile ibus.py
@@ -24,15 +24,24 @@ comb.xml: comb.xml.in
 comb/config.py: comb/config.py.in
 	sed -e "s:@SYSCONFDIR@:$(SYSCONFDIR):g" \
 	    -e "s:@MODELDIR@:$(DESTDIR)/$(DATADIR)/ibus-comb/model:g" \
+	    -e "s:@DICTIONARYDIR@:$(DESTDIR)/$(DATADIR)/ibus-comb/dictionary:g" \
 		$< > $@
 
 model/jawiki.1gram:
 	make -C model jawiki.1gram
 
-install: all comb/config.py model/jawiki.1gram check
-	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-comb/comb $(DESTDIR)$(SYSCONFDIR)/xdg/comb $(DESTDIR)$(DATADIR)/ibus/component $(DESTDIR)$(DATADIR)/ibus-comb/model
+model/SKK-JISYO.katakana:
+	make -C model SKK-JISYO.katakana
+
+install-dict: model/SKK-JISYO.katakana
+	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-comb/dictionary
+	install -m 0644 model/SKK-JISYO.katakana $(DESTDIR)$(DATADIR)/ibus-comb/dictionary/
+
+install: all comb/config.py model/jawiki.1gram check install-dict
+	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-comb/comb $(DESTDIR)$(SYSCONFDIR)/xdg/comb $(DESTDIR)$(DATADIR)/ibus/component $(DESTDIR)$(DATADIR)/ibus-comb/model $(DESTDIR)$(DATADIR)/ibus-comb/dictionary
 	install -m 0644 model/jawiki.1gram $(DESTDIR)$(DATADIR)/ibus-comb/model/
 	install -m 0644 model/jawiki.2gram $(DESTDIR)$(DATADIR)/ibus-comb/model/
+
 	install -m 0644 comb.svg $(DESTDIR)$(DATADIR)/ibus-comb
 	install -m 0644 comb/__init__.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb/graph.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/

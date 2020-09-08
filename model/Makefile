@@ -28,5 +28,8 @@ jawiki.1gram.json: jawiki.vocab
 jawiki.1gram: jawiki.1gram.json jawiki.vocab
 	python bin/create-ngram-from-json.py
 
+SKK-JISYO.katakana: jawiki.vocab
+	python bin/make-katakana-dict.py
+
 .PHONY: all
 

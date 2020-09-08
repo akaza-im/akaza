@@ -14,6 +14,8 @@ from comb.config import MODEL_DIR
 import logging
 import marisa_trie
 
+from datetime import date
+
 
 class Comb:
     logger: Logger
@@ -42,6 +44,12 @@ class Comb:
         for e in self.user_dict.get_candidates(src, hiragana):
             if e not in candidates:
                 candidates.append(e)
+
+        if hiragana == 'きょう':
+            # こういう類の特別なワードは、そのまま記憶してはいけない。。。
+            today = date.today()
+            for dt in [today.strftime(fmt) for fmt in ['%Y-%m-%d', '%Y年%m月%d日']]:
+                candidates.append([dt, dt])
 
         try:
             ht = dict(lookup(hiragana, self.system_dict))
