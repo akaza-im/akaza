@@ -135,6 +135,8 @@ HEPBURNTAB_H = """ぁ      xa      あ      a      ぃ      xi      い      i  
 っちぇ      cche っちぇ      ttye
 じぇ      je じぇ      zye
 
+でゃ dhi でぃ dhi でゅ dhu でぇ dhe でょ dho
+
 てゃ	tha	てぃ	thi	てゅ	thu	てぇ	the	てょ	tho
 〜	z-	…	z.
 ←	zh	↓	zj	↑	zk	→	zl
