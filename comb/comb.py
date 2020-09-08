@@ -1,17 +1,18 @@
 from typing import List, Any
 
-import jaconv
+import comb
 import os
-import re
 import time
 import logging
-from gi.repository import GLib
-import pathlib
 
 import marisa_trie
+import jaconv
 
-import combromkan
-from skkdict import parse_skkdict, write_skkdict, merge_skkdict
+from gi.repository import GLib
+
+from comb import combromkan
+from comb.skkdict import parse_skkdict, write_skkdict, merge_skkdict
+import pathlib
 
 BOIN = set(['a', 'i', 'u', 'e', 'o'])
 

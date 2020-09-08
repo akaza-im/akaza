@@ -2,10 +2,10 @@ import sys
 from typing import Dict, List
 import marisa_trie
 import math
-import jaconv
 import logging
+import jaconv
 
-from comb import SystemDict
+from comb.comb import SystemDict
 
 DEFAULT_SCORE = [(math.log10(0.00000000001),)]
 
@@ -113,11 +113,8 @@ def lookup(s, system_dict: SystemDict):
         if len(words) > 0:
             # print(f"YOMI:::: {yomi} {words}")
             for word in words:
-                yield word, (
-                        system_dict.trie[word][0].decode('utf-8').split('/') + [
-                    word,
-                    jaconv.hira2kata(word)]
-                )
+                kanjis = system_dict.trie[word][0].decode('utf-8').split('/')
+                yield word, (kanjis + [word, jaconv.hira2kata(word)])
         else:
             # print(f"YOMI~~~~:::: {yomi}")
             yield yomi[0], [yomi[0], jaconv.hira2kata(yomi[0])]
@@ -174,9 +171,6 @@ def viterbi(graph: Graph, onegram_trie):
                 # print(f"    SSSHORTEST: {shortest_prev} in {prev_nodes}")
                 node.prev = shortest_prev
                 node.cost = cost
-
-    # print(graph)
-    graph.dump('hello.dot')
 
     print("Viterbi phase 2")
     node = graph[len(graph) - 1][0]
@@ -261,5 +255,5 @@ def main():
 #    for ww in ["きょう/橋\tは/は", "きょう/今日\tは/は", "きょう/頃\tは/は", "は/は\tきょう/今日", "は/は\tきょう/頃"]:
 #        print(f"WWWWW {ww} {bigram_score.get(ww, DEFAULT_SCORE)}")
 
-
-main()
+if __name__ == '__main__':
+    main()

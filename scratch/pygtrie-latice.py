@@ -1,4 +1,4 @@
-from comb import parse_skkdict
+from comb.comb import parse_skkdict
 import pygtrie
 
 dictionary = parse_skkdict('/usr/share/skk/SKK-JISYO.L', encoding='euc-jp')

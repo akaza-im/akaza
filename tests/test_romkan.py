@@ -1,4 +1,4 @@
-from combromkan import to_hiragana
+from comb.combromkan import to_hiragana
 
 
 def test_foo():
