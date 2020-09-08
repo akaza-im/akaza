@@ -23,4 +23,4 @@ def test_wnn():
     # print(graph)
     got = ''.join([x.word for x in nodes if not x.is_eos()])
 
-    assert (got == expected)
+    assert got == expected
