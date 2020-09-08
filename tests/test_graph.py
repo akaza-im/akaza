@@ -1,4 +1,5 @@
 from comb.combromkan import to_hiragana
+import pytest
 import marisa_trie
 from comb.system_dict import SystemDict
 from comb.graph import lookup, graph_construct, viterbi
@@ -12,10 +13,12 @@ bigram_score.load('model/jawiki.2gram')
 system_dict = SystemDict()
 
 
-def test_wnn():
-    src = 'わたしのなまえはなかのです'
-    expected = '私の名前は中野です'
-
+@pytest.mark.parametrize('src, expected', [
+    ('わたしのなまえはなかのです', '私の名前は中野です'),
+    # カタカナ語が SKK-JISYO にはいっておらず、結果として、カタカナ語に弱い状況となっている。
+    ('わーど', 'ワード'),
+])
+def test_wnn(src, expected):
     ht = dict(lookup(src, system_dict))
     graph = graph_construct(src, ht, unigram_score, bigram_score)
 

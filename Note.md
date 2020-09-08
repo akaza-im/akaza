@@ -1,0 +1,3 @@
+- anthy
+  - http://www.fenix.ne.jp/~G-HAL/soft/nosettle/anthy.html#patch13
+  - http://vagus.seesaa.net/article/62333234.html

@@ -88,11 +88,10 @@ def launch_engine(exec_by_ibus):
     IMApp(exec_by_ibus).run()
 
 
-def print_help(out, v=0):
+def print_help(out):
     print("-i, --ibus             executed by IBus.", file=out)
     print("-h, --help             show this message.", file=out)
     print("-d, --daemonize        daemonize ibus", file=out)
-    sys.exit(v)
 
 
 def main():
@@ -110,18 +109,21 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], shortopt, longopt)
     except getopt.GetoptError:
-        print_help(sys.stderr, 1)
+        print_help(sys.stderr)
+        sys.exit(1)
 
     for o, a in opts:
         if o in ("-h", "--help"):
             print_help(sys.stdout)
+            sys.exit(0)
         elif o in ("-d", "--daemonize"):
             daemonize = True
         elif o in ("-i", "--ibus"):
             exec_by_ibus = True
         else:
             print("Unknown argument: %s" % o, file=sys.stderr)
-            print_help(sys.stderr, 1)
+            print_help(sys.stderr)
+            sys.exit(1)
 
     if daemonize:
         if os.fork():
