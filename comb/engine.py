@@ -1,3 +1,4 @@
+from logging import Logger
 from typing import List, Any
 
 import os
@@ -8,26 +9,54 @@ from comb import combromkan
 
 from comb.system_dict import SystemDict
 from comb.user_dict import UserDict
+from comb.graph import graph_construct, viterbi, lookup
+from comb.config import MODEL_DIR
+import logging
+import marisa_trie
 
 
 class Comb:
+    logger: Logger
     dictionaries: List[Any]
 
-    def __init__(self, logger, user_dict: UserDict, system_dict: SystemDict):
+    def __init__(self, logger: Logger, user_dict: UserDict, system_dict: SystemDict):
         self.logger = logger
         self.dictionaries = []
         self.user_dict = user_dict
         self.system_dict = system_dict
 
+        self.unigram_score = marisa_trie.RecordTrie('@f')
+        self.unigram_score.load(f"{MODEL_DIR}/jawiki.1gram")
+
+        self.bigram_score = marisa_trie.RecordTrie('@f')
+        self.bigram_score.load(f"{MODEL_DIR}/jawiki.2gram")
+
     def convert(self, src):
         hiragana: str = combromkan.to_hiragana(src)
         katakana: str = jaconv.hira2kata(hiragana)
+
+        self.logger.info(f"convert: src={src} hiragana={hiragana} katakana={katakana}")
 
         candidates = [[hiragana, hiragana]]
 
         for e in self.user_dict.get_candidates(src, hiragana):
             if e not in candidates:
                 candidates.append(e)
+
+        try:
+            ht = dict(lookup(hiragana, self.system_dict))
+            graph = graph_construct(hiragana, ht, self.unigram_score, self.bigram_score)
+            got = viterbi(graph, self.unigram_score)
+
+            phrase = ''.join([x.word for x in got if not x.is_eos()])
+
+            self.logger.info(f"Got phrase: {phrase}")
+
+            if [phrase, phrase] not in candidates:
+                candidates.append([phrase, phrase])
+        except:
+            self.logger.error(f"Cannot convert: {hiragana} {katakana}",
+                              exc_info=True)
 
         if [katakana, katakana] not in candidates:
             candidates.append([katakana, katakana])

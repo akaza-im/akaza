@@ -56,7 +56,7 @@ class Node:
 class Graph:
     d: Dict[int, List[Node]]
 
-    def __init__(self, size: int, unigram_score, bigram_score):
+    def __init__(self, size: int, unigram_score, bigram_score, logger=logging.getLogger(__name__)):
         self.d = {
             0: [Node(start_pos=-9999, word='<S>', yomi='<S>', unigram_score=unigram_score,
                      bigram_score=bigram_score)],
@@ -84,12 +84,8 @@ class Graph:
 
     def __getitem__(self, item):
         ary = [None for _ in range(len(self.d))]
-        try:
-            for k in sorted(self.d.keys()):
-                ary[k] = self.d[k]
-        except IndexError:
-            logging.error(f"Cannot get entry {self.d[15]} {k}", exc_info=True)
-            sys.exit(1)
+        for k in sorted(self.d.keys()):
+            ary[k] = self.d[k]
         return ary[item]
 
     def dump(self, path: str):
@@ -202,6 +198,7 @@ def main():
 
     bigram_score = marisa_trie.RecordTrie('@f')
     bigram_score.load('model/jawiki.2gram')
+
     system_dict = SystemDict()
 
     # print(ht)
