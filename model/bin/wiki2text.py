@@ -2,12 +2,9 @@ import os
 import pathlib
 import re
 import sys
-import comb
+import jaconv
 
 import MeCab
-from janome.tokenizer import Tokenizer
-
-t = Tokenizer()
 
 targets = sys.argv[1:]
 completed = 0
@@ -22,7 +19,7 @@ def get_token(node):
         m = node.feature.split(',')
         if len(m) >= 8:
             yomi = node.feature.split(',')[7]
-            return comb.kata2hira(yomi) + "/" + node.surface
+            return jaconv.kata2hira(yomi) + "/" + node.surface
         else:
             return node.surface
 

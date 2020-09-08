@@ -48,6 +48,8 @@ except:
 # ----------------------------------------------------------------------
 
 class CombIBusEngine(IBus.Engine):
+    prop_list: IBus.PropList
+    comb: Comb
     mode: bool
 
     __gtype_name__ = 'CombIBusEngine'
@@ -55,14 +57,16 @@ class CombIBusEngine(IBus.Engine):
     def __init__(self):
         super(CombIBusEngine, self).__init__()
         self.is_invalidate = False
-        # 未変換文字列。
+        # 未確定文字列。
         self.preedit_string = ''
-        self.lookup_table = IBus.LookupTable.new(10, 0, True, True)
+        # 変換候補
+        self.candidates = []
+        # 候補文字列
+        self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
         self.prop_list = IBus.PropList()
         self.comb = comb
         self.user_dict = user_dict
         self.logger = logging.getLogger(__name__)
-        self.candidates = []
         self.mode = MODE_KANA
 
         # カーソル変更をしたばっかりかどうかを、みるフラグ。

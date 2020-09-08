@@ -20,7 +20,7 @@ jawiki.wfreq: jawiki.text
 
 # 118,334=entry count of libkkc-data.
 jawiki.vocab: jawiki.wfreq
-	wfreq2vocab -top 30000 jawiki.wfreq jawiki.vocab
+	wfreq2vocab -top 118000 jawiki.wfreq jawiki.vocab
 
 jawiki.1gram.json: jawiki.vocab
 	python bin/dumpngram.py jawiki.vocab
