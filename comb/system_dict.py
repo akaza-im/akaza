@@ -12,6 +12,13 @@ from comb.skkdict import parse_skkdict, merge_skkdict
 BOIN = set(['a', 'i', 'u', 'e', 'o'])
 
 
+def get_mtime(fname):
+    try:
+        return os.path.getmtime(fname)
+    except FileNotFoundError:
+        return -1
+
+
 class SystemDict:
     def __init__(self, logger=logging.getLogger(__name__)):
         self.logger = logger
@@ -33,12 +40,6 @@ class SystemDict:
             ('/usr/share/skk/SKK-JISYO.jinmei', 'euc-jp'),
             ('/home/tokuhirom/dotfiles/skk/SKK-JISYO.jawiki', 'utf-8'),
         ]
-
-        def get_mtime(fname):
-            try:
-                return os.path.getmtime(fname)
-            except FileNotFoundError:
-                return -1
 
         cache_file = self.cache_file()
         if get_mtime(cache_file) >= max([get_mtime(x[0]) for x in dicts]):
