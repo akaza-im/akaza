@@ -7,17 +7,19 @@ import logging
 
 from comb import SystemDict
 
-DEFAULT_SCORE = [(math.log10(0.00000000001), )]
+DEFAULT_SCORE = [(math.log10(0.00000000001),)]
 
 
 class Node:
+    cost: float
+
     def __init__(self, start_pos, word, yomi, unigram_score, bigram_score):
         self.start_pos = start_pos
         self.word = word
         self.yomi = yomi
         self.unigram_score = unigram_score
         self.bigram_score = bigram_score
-        self.cost = None
+        self.cost = self.calc_node_cost()
         self.prev = None
 
     def __repr__(self):
@@ -30,7 +32,7 @@ class Node:
         elif self.is_eos():
             return 0
         else:
-            return self.unigram_score.get(f"{self.yomi}/{self.word}", DEFAULT_SCORE)[0][0]
+            return self.unigram_score.get(self.get_key(), DEFAULT_SCORE)[0][0]
 
     def is_bos(self):
         return self.word == '<S>'
@@ -38,9 +40,17 @@ class Node:
     def is_eos(self):
         return self.word == '</S>'
 
-    def calc_bigram_cost(self, node):
+    def get_key(self) -> str:
+        if self.is_bos():
+            return '<S>'
+        elif self.is_eos():
+            return '</S>'
+        else:
+            return f"{self.yomi}/{self.word}"
+
+    def calc_bigram_cost(self, node) -> float:
         # self → node で処理する。
-        return self.bigram_score.get(f"{self.yomi}/{self.word}\t{node.yomi}/{node.word}", DEFAULT_SCORE)[0][0]
+        return self.bigram_score.get(f"{self.get_key()}\t{node.get_key()}", DEFAULT_SCORE)[0][0]
 
 
 class Graph:
@@ -66,7 +76,7 @@ class Graph:
                 s += "\n".join(["\t" + str(x) for x in self.d[i]]) + "\n"
         return s
 
-    def append(self, index, node):
+    def append(self, index: int, node: Node) -> None:
         if index not in self.d:
             self.d[index] = []
         # print(f"graph[{j}]={graph[j]} graph={graph}")
@@ -74,8 +84,12 @@ class Graph:
 
     def __getitem__(self, item):
         ary = [None for _ in range(len(self.d))]
-        for k in sorted(self.d.keys()):
-            ary[k] = self.d[k]
+        try:
+            for k in sorted(self.d.keys()):
+                ary[k] = self.d[k]
+        except IndexError:
+            logging.error(f"Cannot get entry {self.d[15]} {k}", exc_info=True)
+            sys.exit(1)
         return ary[item]
 
     def dump(self, path: str):
@@ -97,6 +111,7 @@ def lookup(s, system_dict: SystemDict):
         # print(f"YOMI:::: {yomi}")
         words = system_dict.trie.prefixes(yomi)
         if len(words) > 0:
+            # print(f"YOMI:::: {yomi} {words}")
             for word in words:
                 yield word, (
                         system_dict.trie[word][0].decode('utf-8').split('/') + [
@@ -113,17 +128,19 @@ def graph_construct(s, ht, unigram_score, bigram_score):
     graph = Graph(size=len(s), unigram_score=unigram_score, bigram_score=bigram_score)
 
     for i in range(0, len(s)):
-        for j in range(i + 1, min(len(s) + 1, 16)):
+        for j in range(i + 1, len(s) + 1):
             # substr は「読み」であろう。
             # word は「漢字」であろう。
             yomi = s[i:j]
             if yomi in ht:
+                # print(f"YOMI YOMI: {yomi} {ht[yomi]}")
                 for kanji in ht[yomi]:
                     node = Node(i, kanji, yomi, unigram_score=unigram_score, bigram_score=bigram_score)
-                    graph.append(j, node)
+                    graph.append(index=j, node=node)
             else:
                 # print(f"NO YOMI: {yomi}")
                 pass
+                # graph.append(j, Node(j, yomi, yomi, unigram_score=unigram_score, bigram_score=bigram_score))
 
     return graph
 
@@ -131,8 +148,6 @@ def graph_construct(s, ht, unigram_score, bigram_score):
 def get_prev_node(graph, node: Node) -> List[Node]:
     return graph[node.start_pos]
 
-
-# TODO: エッジコスト的なモノも考慮されたい。
 
 def viterbi(graph: Graph, onegram_trie):
     print("Viterbi phase 1")
@@ -150,6 +165,8 @@ def viterbi(graph: Graph, onegram_trie):
                 node.cost = node_cost
             else:
                 for prev_node in prev_nodes:
+                    if prev_node.cost is None:
+                        logging.error(f"Missing prev_node.cost: {prev_node}")
                     tmp_cost = prev_node.cost + prev_node.calc_bigram_cost(node) + node_cost
                     if cost < tmp_cost:
                         cost = tmp_cost
@@ -183,7 +200,7 @@ def main():
     # src = 'わたしのなまえはなかのです'
     # src = 'すももももももももものうち'
     # src = 'せいきゅう'
-    src = 'しはらいにちじ'
+    # src = 'しはらいにちじ'
     # src = 'せいきゅうしょのしはらいにちじ'
 
     unigram_score = marisa_trie.RecordTrie('@f')
@@ -191,36 +208,58 @@ def main():
 
     bigram_score = marisa_trie.RecordTrie('@f')
     bigram_score.load('model/jawiki.2gram')
+    system_dict = SystemDict()
 
-    if True:
-        system_dict = SystemDict()
-        ht = dict(lookup(src, system_dict))
-    else:
-        ht = {
-            'き': ['木', '気', 'き'],
-            'きょ': ['虚', 'きょ'],
-            'きょう': ['今日', 'きょう'],
-            'ょ': ['ょ'],
-            'ょう': ['ょう'],
-            'う': ['う'],
-            'は': ['葉', 'は'],
-            'うは': ['右派', 'うは'],
-            'せ': ['せ'],
-            'い': ['い'],
-            'き': ['き'],
-            'ゅ': ['ゅ'],
-        }
-    print(ht)
-    graph = graph_construct(src, ht, unigram_score, bigram_score)
-    # print(graph)
+    # print(ht)
+    def run(src):
+        if True:
+            ht = dict(lookup(src, system_dict))
+        else:
+            ht = {
+                'き': ['木', '気', 'き'],
+                'きょ': ['虚', 'きょ'],
+                'きょう': ['今日', 'きょう'],
+                'ょ': ['ょ'],
+                'ょう': ['ょう'],
+                'う': ['う'],
+                'は': ['葉', 'は'],
+                'うは': ['右派', 'うは'],
+                'せ': ['せ'],
+                'い': ['い'],
+                'き': ['き'],
+                'ゅ': ['ゅ'],
+            }
+        graph = graph_construct(src, ht, unigram_score, bigram_score)
 
-    got = viterbi(graph, unigram_score)
-    print(' '.join([f"<{x.yomi}/{x.word}>" for x in got if not x.is_eos()]))
+        got = viterbi(graph, unigram_score)
+        # print(graph)
+        print(' '.join([f"<{x.yomi}/{x.word}>" for x in got if not x.is_eos()]))
 
-    for ww in ["しはらい/支払い", "きょう/橋", "きょう/今日", "きょう/頃", "きょう/きょう"]:
-        print(f"WWWWW {ww} {unigram_score.get(ww, DEFAULT_SCORE)}")
-    for ww in ["きょう/橋\tは/は", "きょう/今日\tは/は", "きょう/頃\tは/は", "は/は\tきょう/今日", "は/は\tきょう/頃"]:
-        print(f"WWWWW {ww} {bigram_score.get(ww, DEFAULT_SCORE)}")
+    # http://cl.sd.tmu.ac.jp/~komachi/chaime/index.html
+    run('わたしのなまえはなかのです')
+    run('しはらいにちじ')
+    run('えんとりーすう')
+    run('せいきゅうしょのしはらいにちじ')
+    run('ちかくしじょうちょうさをおこなう')
+    dat = [
+        ('せいきゅうしょのしはらいにちじ', '請求書の支払い日時'),
+        ('ちかくしじょうちょうさをおこなう。', '近く市場調査を行う。'),
+        ('そのごさいとないで', 'その後サイト内で'),
+        ('きょねんにくらべたかいすいじゅんだ。', '去年に比べ高い水準だ。'),
+        ('ひるいちまでにしょるいつくっといて', '昼イチまでに書類作っといて。'),
+        ('そんなはなししんじっこないよね。', 'そんな話信じっこないよね。'),
+        ('はじめっからもってけばいいのに。', '初めっからもってけばいいのに。'),
+        ('あつあつのにくまんにぱくついた。', '熱々の肉まんにぱくついた。'),
+    ]
+    for kana, kanji in dat:
+        run(kana)
+        print(f"Expected: {kanji}")
+
+
+#    for ww in ["しはらい/支払い", "きょう/橋", "きょう/今日", "きょう/頃", "きょう/きょう"]:
+#        print(f"WWWWW {ww} {unigram_score.get(ww, DEFAULT_SCORE)}")
+#    for ww in ["きょう/橋\tは/は", "きょう/今日\tは/は", "きょう/頃\tは/は", "は/は\tきょう/今日", "は/は\tきょう/頃"]:
+#        print(f"WWWWW {ww} {bigram_score.get(ww, DEFAULT_SCORE)}")
 
 
 main()
