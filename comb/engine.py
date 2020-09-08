@@ -46,7 +46,7 @@ class Comb:
         try:
             ht = dict(lookup(hiragana, self.system_dict))
             graph = graph_construct(hiragana, ht, self.unigram_score, self.bigram_score)
-            got = viterbi(graph, self.unigram_score)
+            got = viterbi(graph)
 
             phrase = ''.join([x.word for x in got if not x.is_eos()])
 

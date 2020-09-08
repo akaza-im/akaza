@@ -142,7 +142,7 @@ def get_prev_node(graph, node: Node) -> List[Node]:
     return graph[node.start_pos]
 
 
-def viterbi(graph: Graph, onegram_trie):
+def viterbi(graph: Graph):
     print("Viterbi phase 1")
     for nodes in graph[1:]:
         # print(f"fFFFF {nodes}")
@@ -222,7 +222,7 @@ def main():
             }
         graph = graph_construct(src, ht, unigram_score, bigram_score)
 
-        got = viterbi(graph, unigram_score)
+        got = viterbi(graph)
         # print(graph)
         print(' '.join([f"<{x.yomi}/{x.word}>" for x in got if not x.is_eos()]))
 
