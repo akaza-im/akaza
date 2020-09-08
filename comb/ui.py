@@ -1,10 +1,8 @@
 from gi.repository import IBus
 from gi.repository import GLib
-from gi.repository import GObject
 
 import os
 import sys
-import locale
 import re
 import logging
 import pathlib
@@ -73,10 +71,10 @@ class CombIBusEngine(IBus.Engine):
         self.logger.debug("Create Comb engine OK")
 
     def set_lookup_table_cursor_pos_in_current_page(self, index):
-        '''Sets the cursor in the lookup table to index in the current page
+        """Sets the cursor in the lookup table to index in the current page
 
         Returns True if successful, False if not.
-        '''
+        """
         page_size = self.lookup_table.get_page_size()
         if index > page_size:
             return False
