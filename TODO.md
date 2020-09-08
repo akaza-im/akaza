@@ -1,5 +1,4 @@
-- "きょう" の変換
 - 共起的なスコアをいれたい
 - support 3gram
 - make dictionary more bigger.
-- 絵文字辞書
+- 絵文字辞書(`beer` で絵文字いれたい。)
