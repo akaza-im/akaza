@@ -12,12 +12,18 @@
 - support 3gram(必要?)
 - 青空文庫をコーパスとして使う?
 - 絵文字辞書(`ビール` か `beer` で絵文字いれたい。)
+- 平仮名語辞書もいるのかもしれない。
 
 - 変な変換
   - "げすとだけ" が "げストだけ" になる。
   - "bきゅう" が "B級" にならない
   - "ぜんぶでてるやつ" -> 全部で輝やつ"
   - "ERABERU" -> "鰓ベル"
+  - "NIHONN"
+  - "難し区内"
+  - "SOUMITAIDESUNE"
+  - "DOGGUFU-DHINGUSIDURAI"
+  - "PEPABO"
 
 ## Priority low
 
