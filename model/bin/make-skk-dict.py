@@ -15,32 +15,27 @@ HIRAGANA_BLOCK = r'\u3041-\u309F'
 HIRAGANA_PATTERN = re.compile(r'^[' + HIRAGANA_BLOCK + ']+$')
 
 
-def scan_kana():
+def scan_vocab():
     with open('jawiki.vocab', 'r') as rfp:
         for line in rfp:
             word = line.rstrip()
+            print(word)
             m = word.split('/')
             if len(m) != 2:
                 continue
-            # IGNORE 日本/にっぽん
+
             word, kana = m
-            if KATAKANA_PATTERN.match(word):
-                # ワード/わーど
-                yield word, kana
-            elif HIRAGANA_PATTERN.match(word):
-                # やよい/やよい
-                yield word, kana
+            if kana == 'UNK':
+                continue
+            yield word, kana
 
 
 okuri_nasi = {}
 
-for word, kana in scan_kana():
-    if kana == 'UNK':
-        continue
-
+for word, kana in scan_vocab():
     if kana not in okuri_nasi:
         okuri_nasi[kana] = []
     okuri_nasi[kana].append(word)
 
-write_skkdict('SKK-JISYO.kana', {}, okuri_nasi)
+write_skkdict('SKK-JISYO.jawiki', {}, okuri_nasi)
 
