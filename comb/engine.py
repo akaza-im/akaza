@@ -47,12 +47,15 @@ class Comb:
 
     # 連文節変換するバージョン。
     def convert2(self, src: str) -> List[List[Node]]:
-        # 末尾の子音を対象外とする。
-        m = TRAILING_CONSONANT_PATTERN.match(src)
-        if m:
-            src = m[1]
-
         hiragana: str = combromkan.to_hiragana(src)
+
+        # 末尾の子音を対象外とする。
+        m = TRAILING_CONSONANT_PATTERN.match(hiragana)
+        if m:
+            hiragana = m[1]
+            consonant = m[2]
+            print(f"{hiragana} {consonant}")
+
         katakana: str = jaconv.hira2kata(hiragana)
         self.logger.info(f"convert: src={src} hiragana={hiragana} katakana={katakana}")
 
@@ -68,8 +71,8 @@ class Comb:
         if m:
             clauses.append([Node(
                 start_pos=len(src),
-                word=m[2],
-                yomi=m[2],
+                word=consonant,
+                yomi=consonant,
                 unigram_score=self.unigram_score,
                 bigram_score=self.bigram_score
             )])
