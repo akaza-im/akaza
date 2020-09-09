@@ -37,7 +37,7 @@ install-dict: model/SKK-JISYO.katakana
 	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-comb/dictionary
 	install -m 0644 model/SKK-JISYO.katakana $(DESTDIR)$(DATADIR)/ibus-comb/dictionary/
 
-install: all comb/config.py model/jawiki.1gram check install-dict
+install: all comb/config.py model/jawiki.1gram install-dict
 	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-comb/comb $(DESTDIR)$(SYSCONFDIR)/xdg/comb $(DESTDIR)$(DATADIR)/ibus/component $(DESTDIR)$(DATADIR)/ibus-comb/model $(DESTDIR)$(DATADIR)/ibus-comb/dictionary
 	install -m 0644 model/jawiki.1gram $(DESTDIR)$(DATADIR)/ibus-comb/model/
 	install -m 0644 model/jawiki.2gram $(DESTDIR)$(DATADIR)/ibus-comb/model/

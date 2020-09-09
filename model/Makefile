@@ -9,7 +9,7 @@ jawiki-latest-pages-articles.xml: jawiki-latest-pages-articles.xml.bz2
 text/BE/wiki_13: jawiki-latest-pages-articles.xml
 	python -m wikiextractor.WikiExtractor jawiki-latest-pages-articles.xml
 
-dat/BE/wiki_13: text/BE/wiki_13 bin/wiki2text.py bin/wiki2text-runner.py
+dat/BE/wiki_13: text/BE/wiki_13 bin/wiki2text-runner.py
 	python bin/wiki2text-runner.py
 
 jawiki.text: dat/BE/wiki_13

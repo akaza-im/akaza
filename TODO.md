@@ -19,7 +19,6 @@
   - "bきゅう" が "B級" にならない
   - "ぜんぶでてるやつ" -> 全部で輝やつ"
   - "ERABERU" -> "鰓ベル"
-  - "NIHONN"
   - "難し区内"
   - "SOUMITAIDESUNE"
   - "DOGGUFU-DHINGUSIDURAI"
@@ -29,6 +28,7 @@
   - "KIZON"
   - "NIHON"
   - "NOZOMASII"
+  - "どんだけとちかんなくてもわかりそうなもんだよねw"
 
 ## Priority low
 
