@@ -22,8 +22,10 @@ comb = Comb(user_dict=user_dict, system_dict=system_dict)
     ('わーど', 'ワード'),
     ('にほん', '日本'),
     ('それなwww', 'それなwww'),
+    ('siinn', '子音'),
 ])
 def test_wnn(src, expected):
     clauses = comb.convert2(src)
     got = ''.join([clause[0].word for clause in clauses])
     assert got == expected
+

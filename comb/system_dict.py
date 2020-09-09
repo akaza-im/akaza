@@ -40,7 +40,7 @@ class SystemDict:
             ('/usr/share/skk/SKK-JISYO.L', 'euc-jp'),
             ('/usr/share/skk/SKK-JISYO.jinmei', 'euc-jp'),
             ('/home/tokuhirom/dotfiles/skk/SKK-JISYO.jawiki', 'utf-8'),
-            (DICTIONARY_DIR + '/SKK-JISYO.katakana', 'utf-8'),
+            (DICTIONARY_DIR + '/SKK-JISYO.kana', 'utf-8'),
         ]
 
         cache_file = self.cache_file()
