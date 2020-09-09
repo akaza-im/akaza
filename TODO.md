@@ -3,8 +3,8 @@
 ## Priority high
 
 - 単語 2 gram を学習データとして記録できるようにする
-- Function key とかのショートカットで、全部カタカナにすることができるように。
-  - ibus-comb がバグってた時に便利。
+- 末尾のアルファベット一文字は、変換しない。
+- [BUG] 
 
 ## Priority mid
 
@@ -24,6 +24,11 @@
   - "SOUMITAIDESUNE"
   - "DOGGUFU-DHINGUSIDURAI"
   - "PEPABO"
+  - "HAYAKUCHI"
+  - "KOUIU"
+  - "KIZON"
+  - "NIHON"
+  - "NOZOMASII"
 
 ## Priority low
 
@@ -36,3 +41,5 @@
 - 「きょう」を %Y-%m-%d 等に変換できるようにしたい。
 - カタカナ語辞書の作成
 - 連文節変換用の UI を実装する
+- Function key とかのショートカットで、全部カタカナにすることができるように。
+  - ibus-comb がバグってた時に便利。
