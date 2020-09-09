@@ -13,8 +13,13 @@ from comb.graph import graph_construct, viterbi, lookup, Node
 from comb.config import MODEL_DIR
 import logging
 import marisa_trie
+import time
 
 from datetime import date
+
+import re
+
+TRAILING_CONSONANT_PATTERN = re.compile(r'^(.*?)([qwrtypsdfghjklzxcvbnm]+)$')
 
 
 class Candidate:
@@ -26,7 +31,8 @@ class Comb:
     logger: Logger
     dictionaries: List[Any]
 
-    def __init__(self, logger: Logger, user_dict: UserDict, system_dict: SystemDict):
+    def __init__(self, user_dict: UserDict, system_dict: SystemDict,
+                 logger: Logger = logging.getLogger(__name__)):
         self.logger = logger
         self.dictionaries = []
         self.user_dict = user_dict
@@ -40,14 +46,36 @@ class Comb:
 
     # 連文節変換するバージョン。
     def convert2(self, src: str) -> List[List[Node]]:
+        # 末尾の子音を対象外とする。
+        m = TRAILING_CONSONANT_PATTERN.match(src)
+        if m:
+            src = m[1]
+
         hiragana: str = combromkan.to_hiragana(src)
         katakana: str = jaconv.hira2kata(hiragana)
         self.logger.info(f"convert: src={src} hiragana={hiragana} katakana={katakana}")
 
+        t0 = time.time()
         ht = dict(lookup(hiragana, self.system_dict))
         graph = graph_construct(hiragana, ht, self.unigram_score, self.bigram_score)
+        self.logger.info(
+            f"graph_constructed: src={src} hiragana={hiragana} katakana={katakana}: {time.time() - t0} seconds")
         clauses = viterbi(graph)
-        return clauses
+        self.logger.info(
+            f"converted: src={src} hiragana={hiragana} katakana={katakana}: {time.time() - t0} seconds")
+
+        if m:
+            clauses.append([Node(
+                start_pos=len(src),
+                word=m[2],
+                yomi=m[2],
+                unigram_score=self.unigram_score,
+                bigram_score=self.bigram_score
+            )])
+            print(clauses)
+            return clauses
+        else:
+            return clauses
 
     # 連文節しないバージョン(しばらくのあいだ、残しておく。)
     # TODO: remove this.
@@ -112,7 +140,7 @@ if __name__ == '__main__':
     pathlib.Path(configdir).mkdir(parents=True, exist_ok=True)
     d = SystemDict()
     u = UserDict(os.path.join(configdir, 'user-dict.txt'))
-    comb = Comb(logging.getLogger(__name__), u, d)
+    comb = Comb(u, d)
     # print(comb.convert('henkandekiru'))
     print(comb.convert('watasi'))
     # print(comb.convert('hituyoudayo'))

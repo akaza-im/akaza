@@ -42,7 +42,7 @@ system_dict = SystemDict()
 logging.info("Loaded system dictionary")
 
 try:
-    comb = Comb(logging.getLogger('Comb'), user_dict, system_dict)
+    comb = Comb(user_dict, system_dict)
     logging.info("Finished Comb.")
 except:
     logging.error("Cannot initialize.", exc_info=True)
@@ -56,7 +56,6 @@ except:
 class CombIBusEngine(IBus.Engine):
     current_clause: int
     node_selected: Dict[int, int]
-    current_clause: int
     clauses: List[List[Node]]
     prop_list: IBus.PropList
     comb: Comb
@@ -425,9 +424,10 @@ class CombIBusEngine(IBus.Engine):
         if len(self.preedit_string) > 0:
             self.clauses: List[List[Node]] = self.comb.convert2(self.preedit_string)
             # self.logger.debug(f"HAHAHA {str(self.preedit_string)}, {str(self.clauses)}")
+
+            # 先頭の分節を対象にルックアップテーブルを構築する。
             for node in self.clauses[0]:
                 candidate = IBus.Text.new_from_string(node.word)
-                # self.candidates.append(node.word)
                 self.lookup_table.append_candidate(candidate)
 
         self.refresh()
