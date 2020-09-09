@@ -46,9 +46,12 @@ def merge_skkdict(dicts):
     result = {}
 
     for dic in dicts:
-        for k, v in dic.items():
-            if k not in result:
-                result[k] = []
-            result[k].extend(v)
+        for kana, kanjis in dic.items():
+            if kana not in result:
+                result[kana] = []
+            for kanji in kanjis:
+                if kanji not in result[kana]:
+                    result[kana].append(kanji)
 
     return result
+

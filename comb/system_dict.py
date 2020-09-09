@@ -9,7 +9,6 @@ from gi.repository import GLib
 from comb import combromkan
 from comb.skkdict import parse_skkdict, merge_skkdict
 from comb.config import DICTIONARY_DIR
-
 BOIN = set(['a', 'i', 'u', 'e', 'o'])
 
 
@@ -45,8 +44,9 @@ class SystemDict:
 
         cache_file = self.cache_file()
         cache_file_mtime = get_mtime(cache_file)
-        dict_max_mtime = max([get_mtime(x[0]) for x in dicts])
-        self.logger.info(f"Cache file: {cache_file_mtime}, {dict_max_mtime}")
+        dict_mtimes = [(get_mtime(x[0]), x[0]) for x in dicts]
+        dict_max_mtime = max([x[0] for x in dict_mtimes])
+        self.logger.info(f"Cache file: cache={time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(cache_file_mtime))}, {time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(dict_max_mtime))}")
         if cache_file_mtime >= dict_max_mtime:
             self.logger.info("loading cache dictionary")
             trie = marisa_trie.BytesTrie()
@@ -55,7 +55,7 @@ class SystemDict:
             self.logger.info("loaded cache dictionary")
             return
 
-        self.logger.info("loading dictionaries")
+        self.logger.info(f"loading dictionaries(cache miss): {[(x[1], time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(x[0]))) for x in sorted(dict_mtimes, key=lambda x: x[1])]}")
         t0 = time.time()
         t = []
         # TODO cache trie.

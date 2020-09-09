@@ -73,7 +73,6 @@ class Comb:
                 unigram_score=self.unigram_score,
                 bigram_score=self.bigram_score
             )])
-            print(clauses)
             return clauses
         else:
             return clauses
