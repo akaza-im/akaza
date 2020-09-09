@@ -60,7 +60,7 @@ class CombIBusEngine(IBus.Engine):
     clauses: List[List[Node]]
     prop_list: IBus.PropList
     comb: Comb
-    mode: bool
+    mode: int
 
     __gtype_name__ = 'CombIBusEngine'
 
