@@ -169,6 +169,7 @@ def viterbi(graph: Graph) -> List[List[Node]]:
                 node.cost = cost
 
     print("Viterbi phase 2")
+    print(graph)
     node = graph[len(graph) - 1][0]
     # print(node)
     result = []
