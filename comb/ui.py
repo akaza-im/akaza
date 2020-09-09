@@ -182,16 +182,25 @@ class CombIBusEngine(IBus.Engine):
             elif keyval in (IBus.Left, IBus.KP_Left):
                 self.cursor_left()
                 return True
-            # F6 convert selected word/characters to full-width hiragana (standard hiragana): ホワイト → ほわいと
-            # F7 convert to full-width katakana (standard katakana): ほわいと → ホワイト
-            # TODO: F8 convert to half-width katakana (katakana for specific purpose): ホワイト → ﾎﾜｲﾄ
-            # TODO: F9 convert to full-width romaji, all-capitals, proper noun capitalization (latin script inside Japanese text): ホワイト → ｈｏｗａｉｔｏ → ＨＯＷＡＩＴＯ → Ｈｏｗａｉｔｏ
-            # TODO: F10 convert to half-width romaji, all-capitals, proper noun capitalization (latin script like standard English): ホワイト → howaito → HOWAITO → Howaito
             elif keyval == IBus.F6:
-                self.convert_to_hiragana()
+                # F6 convert selected word/characters to full-width hiragana (standard hiragana): ホワイト → ほわいと
+                self.convert_to_full_hiragana()
                 return True
             elif keyval == IBus.F7:
-                self.convert_to_katakana()
+                # F7 convert to full-width katakana (standard katakana): ほわいと → ホワイト
+                self.convert_to_full_katakana()
+                return True
+            elif keyval == IBus.F8:
+                # F8 convert to half-width katakana (katakana for specific purpose): ホワイト → ﾎﾜｲﾄ
+                self.convert_to_half_katakana()
+                return True
+            elif keyval == IBus.F9:
+                # F9 convert to full-width romaji, all-capitals, proper noun capitalization (latin script inside Japanese text): ホワイト → ｈｏｗａｉｔｏ → ＨＯＷＡＩＴＯ → Ｈｏｗａｉｔｏ
+                self.convert_to_full_romaji()
+                return True
+            elif keyval == IBus.F10:
+                # F10 convert to half-width romaji, all-capitals, proper noun capitalization (latin script like standard English): ホワイト → howaito → HOWAITO → Howaito
+                self.convert_to_half_romaji()
                 return True
 
         if keyval == IBus.space:
@@ -221,8 +230,8 @@ class CombIBusEngine(IBus.Engine):
 
         return False
 
-    def convert_to_katakana(self):
-        self.logger.info("Convert to katakana")
+    def convert_to_full_katakana(self):
+        self.logger.info("Convert to full katakana")
 
         # カタカナ候補のみを表示するようにする。
         hira = combromkan.to_hiragana(self.preedit_string)
@@ -230,12 +239,39 @@ class CombIBusEngine(IBus.Engine):
 
         self.convert_to_single(hira, kata)
 
-    def convert_to_hiragana(self):
-        self.logger.info("Convert to hiragana")
+    def convert_to_full_hiragana(self):
+        self.logger.info("Convert to full hiragana")
 
         # カタカナ候補のみを表示するようにする。
         hira = combromkan.to_hiragana(self.preedit_string)
         self.convert_to_single(hira, hira)
+
+    def convert_to_half_katakana(self):
+        self.logger.info("Convert to half katakana")
+
+        # 半角カタカナ候補のみを表示するようにする。
+        hira = combromkan.to_hiragana(self.preedit_string)
+        kata = jaconv.hira2kata(hira)
+        kata = jaconv.z2h(kata)
+
+        self.convert_to_single(hira, kata)
+
+    def convert_to_half_romaji(self):
+        self.logger.info("Convert to half romaji")
+
+        # 半角カタカナ候補のみを表示するようにする。
+        hira = combromkan.to_hiragana(self.preedit_string)
+        romaji = jaconv.z2h(self.preedit_string)
+
+        self.convert_to_single(hira, romaji)
+
+    def convert_to_full_romaji(self):
+        self.logger.info("Convert to full romaji")
+
+        hira = combromkan.to_hiragana(self.preedit_string)
+        romaji = jaconv.h2z(self.preedit_string, kana=True, digit=True, ascii=True)
+
+        self.convert_to_single(hira, romaji)
 
     def convert_to_single(self, yomi, word) -> None:
         """

@@ -18,6 +18,7 @@ system_dict = SystemDict()
     ('わたしのなまえはなかのです', '私の名前は中野です'),
     # カタカナ語の処理が出来ていること。
     ('わーど', 'ワード'),
+    ('にほん', '日本'),
 ])
 def test_wnn(src, expected):
     ht = dict(lookup(src, system_dict))
