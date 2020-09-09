@@ -19,7 +19,8 @@ from datetime import date
 
 import re
 
-TRAILING_CONSONANT_PATTERN = re.compile(r'^(.*?)([qwrtypsdfghjklzxcvbnm]+)$')
+# 子音だが、N は NN だと「ん」になるので処理しない。
+TRAILING_CONSONANT_PATTERN = re.compile(r'^(.*?)([qwrtypsdfghjklzxcvbm]+)$')
 
 
 class Candidate:

@@ -1,4 +1,4 @@
-all: jawiki.1gram
+all: jawiki.1gram SKK-JISYO.kana
 
 jawiki-latest-pages-articles.xml.bz2:
 	wget --no-verbose --no-clobber -O jawiki-latest-pages-articles.xml.bz2 https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-pages-articles.xml.bz2
@@ -28,8 +28,8 @@ jawiki.1gram.json: jawiki.vocab
 jawiki.1gram: jawiki.1gram.json jawiki.vocab
 	python bin/create-ngram-from-json.py
 
-SKK-JISYO.katakana: jawiki.vocab
-	python bin/make-katakana-dict.py
+SKK-JISYO.kana: jawiki.vocab
+	python bin/make-kana-dict.py
 
 .PHONY: all
 
