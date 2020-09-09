@@ -17,6 +17,7 @@ Yet another kana-kanji-converter on IBus, written in Python.
  * [日本語入力を支える技術](https://gihyo.jp/book/2012/978-4-7741-4993-6)
  * http://www.phontron.com/slides/nlp-programming-ja-bonus-01-kkc.pdf
  * http://www.ar.media.kyoto-u.ac.jp/member/gologo/lm.html
+ * [Japanese-Company-Lexicon](https://github.com/chakki-works/Japanese-Company-Lexicon)
 
 ## THANKS TO
 

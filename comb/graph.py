@@ -46,7 +46,7 @@ class Node:
         elif self.is_eos():
             return '</S>'
         else:
-            return f"{self.yomi}/{self.word}"
+            return f"{self.word}/{self.yomi}"
 
     def calc_bigram_cost(self, node) -> float:
         # self → node で処理する。
