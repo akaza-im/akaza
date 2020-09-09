@@ -142,7 +142,7 @@ def get_prev_node(graph, node: Node) -> List[Node]:
     return graph[node.start_pos]
 
 
-def viterbi(graph: Graph):
+def viterbi(graph: Graph) -> List[List[Node]]:
     print("Viterbi phase 1")
     for nodes in graph[1:]:
         # print(f"fFFFF {nodes}")
