@@ -9,6 +9,9 @@ import re
 import logging
 import pathlib
 
+from jaconv import jaconv
+
+from comb import combromkan
 from comb.engine import Comb
 from comb.graph import Node
 from comb.user_dict import UserDict
@@ -73,6 +76,7 @@ class CombIBusEngine(IBus.Engine):
         self.user_dict = user_dict
         self.logger = logging.getLogger(__name__)
         self.mode = MODE_KANA
+
         # 変換候補。文節ごとの配列。
         self.clauses = []
         # 現在選択されている、文節。
@@ -178,6 +182,17 @@ class CombIBusEngine(IBus.Engine):
             elif keyval in (IBus.Left, IBus.KP_Left):
                 self.cursor_left()
                 return True
+            # F6 convert selected word/characters to full-width hiragana (standard hiragana): ホワイト → ほわいと
+            # F7 convert to full-width katakana (standard katakana): ほわいと → ホワイト
+            # TODO: F8 convert to half-width katakana (katakana for specific purpose): ホワイト → ﾎﾜｲﾄ
+            # TODO: F9 convert to full-width romaji, all-capitals, proper noun capitalization (latin script inside Japanese text): ホワイト → ｈｏｗａｉｔｏ → ＨＯＷＡＩＴＯ → Ｈｏｗａｉｔｏ
+            # TODO: F10 convert to half-width romaji, all-capitals, proper noun capitalization (latin script like standard English): ホワイト → howaito → HOWAITO → Howaito
+            elif keyval == IBus.F6:
+                self.convert_to_hiragana()
+                return True
+            elif keyval == IBus.F7:
+                self.convert_to_katakana()
+                return True
 
         if keyval == IBus.space:
             if len(self.preedit_string) == 0:
@@ -205,6 +220,41 @@ class CombIBusEngine(IBus.Engine):
             return False
 
         return False
+
+    def convert_to_katakana(self):
+        self.logger.info("Convert to katakana")
+
+        # カタカナ候補のみを表示するようにする。
+        hira = combromkan.to_hiragana(self.preedit_string)
+        kata = jaconv.hira2kata(hira)
+
+        self.convert_to_single(hira, kata)
+
+    def convert_to_hiragana(self):
+        self.logger.info("Convert to hiragana")
+
+        # カタカナ候補のみを表示するようにする。
+        hira = combromkan.to_hiragana(self.preedit_string)
+        self.convert_to_single(hira, hira)
+
+    def convert_to_single(self, yomi, word) -> None:
+        """
+        特定の1文節の文章を候補として表示する。
+        F6 などを押した時用。
+        """
+        # 候補を設定
+        self.clauses = [[Node(start_pos=0, word=word, yomi=yomi, unigram_score=comb.unigram_score,
+                              bigram_score=comb.bigram_score)]]
+        self.current_clause = 0
+        self.node_selected = {}
+
+        # ルックアップテーブルに候補を設定
+        self.lookup_table.clear()
+        candidate = IBus.Text.new_from_string(word)
+        self.lookup_table.append_candidate(candidate)
+
+        # 表示を更新
+        self.refresh()
 
     def invalidate(self):
         if self.is_invalidate:

@@ -191,7 +191,7 @@ def normalize_double_n(s):
     return s
 
 
-def to_hiragana(s):
+def to_hiragana(s: str) -> str:
     """
     Convert a Romaji (ローマ字) to a Hiragana (平仮名).
     """
