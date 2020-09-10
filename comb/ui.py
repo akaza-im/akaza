@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Any
 
 from gi.repository import IBus
 from gi.repository import GLib
@@ -60,6 +60,7 @@ class CombIBusEngine(IBus.Engine):
     prop_list: IBus.PropList
     comb: Comb
     mode: int
+    force_selected_clause: Dict[int, int]
 
     __gtype_name__ = 'CombIBusEngine'
 
@@ -82,6 +83,9 @@ class CombIBusEngine(IBus.Engine):
         self.current_clause = 0
         # key は、clause 番号。value は、node の index。
         self.node_selected = {}
+
+        # 文節を選びなおしたもの。
+        self.force_selected_clause = {}
 
         # カーソル変更をしたばっかりかどうかを、みるフラグ。
         self.cursor_moved = False
@@ -176,10 +180,16 @@ class CombIBusEngine(IBus.Engine):
                 self.cursor_down()
                 return True
             elif keyval in (IBus.Right, IBus.KP_Right):
-                self.cursor_right()
+                if state & IBus.ModifierType.SHIFT_MASK == 0:
+                    self.cursor_right()
+                else:
+                    self.extend_clause_right()
                 return True
             elif keyval in (IBus.Left, IBus.KP_Left):
-                self.cursor_left()
+                if state & IBus.ModifierType.SHIFT_MASK == 0:
+                    self.cursor_left()
+                else:
+                    self.extend_clause_left()
                 return True
             elif keyval == IBus.F6:
                 # F6 convert selected word/characters to full-width hiragana (standard hiragana): ホワイト → ほわいと
@@ -285,6 +295,7 @@ class CombIBusEngine(IBus.Engine):
                               bigram_score=comb.bigram_score)]]
         self.current_clause = 0
         self.node_selected = {}
+        self.force_selected_clause = {}
 
         # ルックアップテーブルに候補を設定
         self.lookup_table.clear()
@@ -377,6 +388,31 @@ class CombIBusEngine(IBus.Engine):
 
         self.refresh()
 
+    def extend_clause_right(self):
+        """
+        文節の選択範囲を広げることを支持する
+        """
+        if len(self.clauses) == 0:
+            return False
+
+        node = self.clauses[self.current_clause][0]
+
+        # 既に設定されている場合、けす。
+        if node.start_pos in self.force_selected_clause:
+            del self.force_selected_clause[node.start_pos]
+
+        # 伸ばす
+        self.force_selected_clause[node.start_pos] = node.start_pos + len(node.yomi) + 1
+
+        self._update_candidates()
+
+    def extend_clause_left(self):
+        """
+        文節の選択範囲を広げることを支持する
+        """
+        # TODO: 左にのバス
+        pass
+
     def commit_string(self, text):
         self.cursor_moved = False
         ## TODO ここ変えないとダメ
@@ -387,6 +423,7 @@ class CombIBusEngine(IBus.Engine):
         self.clauses = []
         self.current_clause = 0
         self.node_selected = {}
+        self.force_selected_clause = {}
 
         self.update_candidates()
 
@@ -410,7 +447,7 @@ class CombIBusEngine(IBus.Engine):
     def _update_candidates(self):
         if len(self.preedit_string) > 0:
             # 変換をかける
-            self.clauses = self.comb.convert2(self.preedit_string)
+            self.clauses = self.comb.convert2(self.preedit_string, self.force_selected_clause)
         else:
             self.clauses = []
         self.create_lookup_table()

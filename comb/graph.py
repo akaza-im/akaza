@@ -82,11 +82,14 @@ class Graph:
         # print(f"graph[{j}]={graph[j]} graph={graph}")
         self.d[index].append(node)
 
-    def __getitem__(self, item):
-        ary = [None for _ in range(len(self.d))]
-        for k in sorted(self.d.keys()):
-            ary[k] = self.d[k]
-        return ary[item]
+    def get_items(self):
+        for i in sorted(self.d.keys()):
+            if i == 0:  # skip bos
+                continue
+            yield self.d[i]
+
+    def get_item(self, i: int) -> List[Node]:
+        return self.d[i]
 
     def dump(self, path: str):
         with open(path, 'w') as fp:
@@ -99,6 +102,9 @@ class Graph:
                     fp.write(f"  {node.start_pos} -> {i} [label=\"{node.word}:"
                              f" {node.cost}: node={node.calc_node_cost()} {node.prev.word if node.prev else '-'}\"]\n")
             fp.write("""}\n""")
+
+    def get_eos(self):
+        return self.d[max(self.d.keys())][0]
 
 
 def lookup(s, system_dict: SystemDict):
@@ -126,14 +132,20 @@ def lookup(s, system_dict: SystemDict):
 
 
 # n文字目でおわる単語リストを作成する
-def graph_construct(s, ht, unigram_score, bigram_score):
+def graph_construct(s, ht, unigram_score, bigram_score, force_selected_clause: Dict = {}) -> Graph:
     graph = Graph(size=len(s), unigram_score=unigram_score, bigram_score=bigram_score)
 
-    for i in range(0, len(s)):
-        for j in range(i + 1, len(s) + 1):
+    i = 0
+    while i < len(s):
+        print(f"LOOP {i}")
+        # for i in range(0, len(s)):
+        if i in force_selected_clause:
+            # 強制的に範囲を指定されている場合。
+            j = min(force_selected_clause[i], len(s))
             # substr は「読み」であろう。
             # word は「漢字」であろう。
             yomi = s[i:j]
+            logging.info(f"XXXX={s} {i} {j} {yomi}")
             if yomi in ht:
                 # print(f"YOMI YOMI: {yomi} {ht[yomi]}")
                 for kanji in ht[yomi]:
@@ -141,19 +153,31 @@ def graph_construct(s, ht, unigram_score, bigram_score):
                     graph.append(index=j, node=node)
             else:
                 # print(f"NO YOMI: {yomi}")
-                pass
-                # graph.append(j, Node(j, yomi, yomi, unigram_score=unigram_score, bigram_score=bigram_score))
+                node = Node(i, yomi, yomi, unigram_score=unigram_score, bigram_score=bigram_score)
+                graph.append(index=j, node=node)
+            i = j
+        else:
+            for j in range(i + 1, len(s) + 1):
+                # substr は「読み」であろう。
+                # word は「漢字」であろう。
+                yomi = s[i:j]
+                if yomi in ht:
+                    print(f"YOMI YOMI: {yomi} {ht[yomi]}")
+                    for kanji in ht[yomi]:
+                        node = Node(i, kanji, yomi, unigram_score=unigram_score, bigram_score=bigram_score)
+                        graph.append(index=j, node=node)
+                else:
+                    print(f"NO YOMI: {yomi}")
+                    pass
+                    # graph.append(j, Node(j, yomi, yomi, unigram_score=unigram_score, bigram_score=bigram_score))
+            i += 1
 
     return graph
 
 
-def get_prev_node(graph, node: Node) -> List[Node]:
-    return graph[node.start_pos]
-
-
 def viterbi(graph: Graph) -> List[List[Node]]:
     print("Viterbi phase 1")
-    for nodes in graph[1:]:
+    for nodes in graph.get_items():
         # print(f"fFFFF {nodes}")
         for node in nodes:
             # print(f"  PPPP {node}")
@@ -161,7 +185,7 @@ def viterbi(graph: Graph) -> List[List[Node]]:
             # print(f"  NC {node.word} {node_cost}")
             cost = -sys.maxsize
             shortest_prev = None
-            prev_nodes = get_prev_node(graph, node)
+            prev_nodes = graph.get_item(node.start_pos)
             if prev_nodes[0].is_bos():
                 node.prev = prev_nodes[0]
                 node.cost = node_cost
@@ -179,7 +203,11 @@ def viterbi(graph: Graph) -> List[List[Node]]:
 
     print("Viterbi phase 2")
     # print(graph)
-    node = graph[len(graph) - 1][0]
+
+    # find EOS.
+    node = graph.get_eos()
+    # node = graph.get_item(len(graph) - 1)[0]
+
     # print(node)
     result = []
     while not node.is_bos():
@@ -187,7 +215,7 @@ def viterbi(graph: Graph) -> List[List[Node]]:
             raise AssertionError(f"node==node.prev: {node}")
         if not node.is_eos():
             # 他の候補を追加する。
-            nodes = sorted([n for n in graph[node.start_pos + len(node.yomi)] if node.yomi == n.yomi],
+            nodes = sorted([n for n in graph.get_item(node.start_pos + len(node.yomi)) if node.yomi == n.yomi],
                            key=lambda x: x.cost, reverse=True)
             result.append(nodes)
         node = node.prev

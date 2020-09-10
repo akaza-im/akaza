@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import List, Any
+from typing import List, Any, Dict
 
 import os
 
@@ -46,7 +46,9 @@ class Comb:
         self.bigram_score.load(f"{MODEL_DIR}/jawiki.2gram")
 
     # 連文節変換するバージョン。
-    def convert2(self, src: str) -> List[List[Node]]:
+    def convert2(self, src: str, force_selected_clause: Dict[int, int] = {}) -> List[List[Node]]:
+        self.logger.info(f"convert2: {force_selected_clause}")
+
         hiragana: str = combromkan.to_hiragana(src)
 
         # 末尾の子音を対象外とする。
@@ -61,7 +63,7 @@ class Comb:
 
         t0 = time.time()
         ht = dict(lookup(hiragana, self.system_dict))
-        graph = graph_construct(hiragana, ht, self.unigram_score, self.bigram_score)
+        graph = graph_construct(hiragana, ht, self.unigram_score, self.bigram_score, force_selected_clause)
         self.logger.info(
             f"graph_constructed: src={src} hiragana={hiragana} katakana={katakana}: {time.time() - t0} seconds")
         clauses = viterbi(graph)

@@ -13,7 +13,6 @@ bigram_score.load('model/jawiki.2gram')
 
 system_dict = SystemDict()
 
-
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -39,3 +38,11 @@ def test_wnn(src, expected):
     got = ''.join([clause[0].word for clause in clauses])
 
     assert got == expected
+
+
+def test_graph_extend():
+    src = 'はなか'
+    ht = dict(lookup(src, system_dict))
+    # (0,2) の文節を強制指定する
+    graph = graph_construct(src, ht, unigram_score, bigram_score, {0: 2})
+    assert 1 not in graph.d
