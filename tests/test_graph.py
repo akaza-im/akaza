@@ -44,5 +44,8 @@ def test_graph_extend():
     src = 'はなか'
     ht = dict(lookup(src, system_dict))
     # (0,2) の文節を強制指定する
-    graph = graph_construct(src, ht, unigram_score, bigram_score, {0: 2})
+    graph = graph_construct(src, ht, unigram_score, bigram_score, [
+        slice(0, 2),
+        slice(2, 3)
+    ])
     assert 1 not in graph.d
