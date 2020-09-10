@@ -1,4 +1,4 @@
-from typing import List, Any, Dict
+from typing import List, Dict
 
 from gi.repository import IBus
 from gi.repository import GLib
@@ -194,11 +194,13 @@ class CombIBusEngine(IBus.Engine):
                 self.convert_to_half_katakana()
                 return True
             elif keyval == IBus.F9:
-                # F9 convert to full-width romaji, all-capitals, proper noun capitalization (latin script inside Japanese text): ホワイト → ｈｏｗａｉｔｏ → ＨＯＷＡＩＴＯ → Ｈｏｗａｉｔｏ
+                # F9 convert to full-width romaji, all-capitals, proper noun capitalization (latin script inside
+                # Japanese text): ホワイト → ｈｏｗａｉｔｏ → ＨＯＷＡＩＴＯ → Ｈｏｗａｉｔｏ
                 self.convert_to_full_romaji()
                 return True
             elif keyval == IBus.F10:
-                # F10 convert to half-width romaji, all-capitals, proper noun capitalization (latin script like standard English): ホワイト → howaito → HOWAITO → Howaito
+                # F10 convert to half-width romaji, all-capitals, proper noun capitalization (latin script like
+                # standard English): ホワイト → howaito → HOWAITO → Howaito
                 self.convert_to_half_romaji()
                 return True
 
@@ -346,14 +348,8 @@ class CombIBusEngine(IBus.Engine):
             self.current_clause = 0
         else:
             self.current_clause += 1
-        self.cursor_moved = True
 
-        # 選択肢テーブルをアップデートする。
-        self.lookup_table.clear()
-        for node in self.clauses[self.current_clause]:
-            candidate = IBus.Text.new_from_string(node.word)
-            self.lookup_table.append_candidate(candidate)
-        self.logger.info(f"right cursor：updated lookup table {self.current_clause}")
+        self.cursor_moved = True
 
         self.refresh()
 
@@ -370,14 +366,8 @@ class CombIBusEngine(IBus.Engine):
             self.current_clause = len(self.clauses) - 1
         else:
             self.current_clause -= 1
-        self.cursor_moved = True
 
-        # 選択肢テーブルをアップデートする。
-        self.lookup_table.clear()
-        for node in self.clauses[self.current_clause]:
-            candidate = IBus.Text.new_from_string(node.word)
-            self.lookup_table.append_candidate(candidate)
-        self.logger.info(f"left cursor：updated lookup table {self.current_clause}")
+        self.cursor_moved = True
 
         self.refresh()
 
@@ -402,15 +392,6 @@ class CombIBusEngine(IBus.Engine):
         self.logger.info("Committing {s}")
         self.commit_string(s)
 
-    # cursor_pos = self.lookup_table.get_cursor_pos()
-    # if cursor_pos < len(self.clauses[self.current_clause]):
-    #     self.commit_string(self.candidates[cursor_pos])
-    # else:
-    #     # maybe, not happen, but happen.. why?
-    #     self.logger.error(
-    #         f"commit_candidate failure: cursor_pos={cursor_pos}, candidates={self.clauses}")
-    #     self.commit_string('')
-
     def update_candidates(self):
         try:
             self._update_candidates()
@@ -418,17 +399,14 @@ class CombIBusEngine(IBus.Engine):
             self.logger.error(f"cannot get kanji candidates {sys.exc_info()[0]}", exc_info=True)
 
     def _update_candidates(self):
-        self.lookup_table.clear()
-        # self.candidates = []
-
         if len(self.preedit_string) > 0:
-            self.clauses: List[List[Node]] = self.comb.convert2(self.preedit_string)
-            # self.logger.debug(f"HAHAHA {str(self.preedit_string)}, {str(self.clauses)}")
+            # 変換をかける
+            self.clauses = self.comb.convert2(self.preedit_string)
+        else:
+            self.clauses = []
 
-            # 先頭の分節を対象にルックアップテーブルを構築する。
-            for node in self.clauses[0]:
-                candidate = IBus.Text.new_from_string(node.word)
-                self.lookup_table.append_candidate(candidate)
+        self.current_clause = 0
+        self.node_selected = {}
 
         self.refresh()
 
@@ -454,8 +432,21 @@ class CombIBusEngine(IBus.Engine):
         self.is_invalidate = False
 
     def _update_lookup_table(self):
-        visible = self.lookup_table.get_number_of_candidates() > 0
-        self.update_lookup_table(self.lookup_table, visible)
+        # 一旦、ルックアップテーブルをクリアする
+        self.lookup_table.clear()
+
+        # 現在の未変換情報を元に、候補を産出していく。
+        if len(self.clauses) > 0:
+            # lookup table に候補を詰め込んでいく。
+            for node in self.clauses[self.current_clause]:
+                candidate = IBus.Text.new_from_string(node.word)
+                self.lookup_table.append_candidate(candidate)
+
+            # 候補があるので、表示する。
+            self.update_lookup_table(self.lookup_table, True)
+        else:
+            # 候補がないので、非表示とする。
+            self.update_lookup_table(self.lookup_table, False)
 
     def do_focus_in(self):
         self.logger.debug("focus_in")
