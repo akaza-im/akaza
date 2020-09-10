@@ -50,7 +50,7 @@ class SystemDict:
         if cache_file_mtime >= dict_max_mtime:
             self.logger.info("loading cache dictionary")
             trie = marisa_trie.BytesTrie()
-            trie.load(cache_file)
+            trie.mmap(cache_file)
             self.trie = trie
             self.logger.info("loaded cache dictionary")
             return
