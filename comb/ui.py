@@ -331,7 +331,11 @@ class CombIBusEngine(IBus.Engine):
 
     # 選択する分節を右にずらす。
     def cursor_right(self):
+        """
+        選択する分節を右にずらす。
+        """
         self.logger.info(f"right cursor")
+
         # いっこしか分節がない場合は、何もせぬ
         if len(self.clauses) == 0:
             self.logger.info(f"right cursor：no clauses")
@@ -352,8 +356,6 @@ class CombIBusEngine(IBus.Engine):
         self.logger.info(f"right cursor：updated lookup table {self.current_clause}")
 
         self.refresh()
-
-        return True
 
     # 選択する分節を左にずらす。
     def cursor_left(self):
@@ -378,8 +380,6 @@ class CombIBusEngine(IBus.Engine):
         self.logger.info(f"left cursor：updated lookup table {self.current_clause}")
 
         self.refresh()
-
-        return True
 
     def commit_string(self, text):
         self.cursor_moved = False
