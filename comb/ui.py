@@ -434,7 +434,7 @@ class CombIBusEngine(IBus.Engine):
             if self.current_clause == i:
                 # 現在選択中の文節の場合、伸ばす。
                 self.force_selected_clause.append(
-                    slice(node.start_pos-1, node.start_pos + len(node.yomi)))
+                    slice(node.start_pos - 1, node.start_pos + len(node.yomi)))
             elif self.current_clause - 1 == i:
                 # 前の分節を一文字ヘラス
                 self.force_selected_clause.append(
@@ -491,21 +491,22 @@ class CombIBusEngine(IBus.Engine):
         self.refresh()
 
     def refresh(self):
-        attrs = IBus.AttrList()
         preedit_len = len(self.preedit_string)
-        first_candidate = self.build_string() if len(self.clauses) > 0 else self.preedit_string
 
-        # にほんご ですね.
-        text = IBus.Text.new_from_string(first_candidate)
-        text.set_attributes(attrs)
-        self.update_auxiliary_text(text, preedit_len > 0)
+        # -- auxiliary text
+        first_candidate = self.clauses[self.current_clause][0].yomi if len(
+            self.clauses) > 0 else self.preedit_string
+        auxiliary_text = IBus.Text.new_from_string(first_candidate)
+        auxiliary_text.set_attributes(IBus.AttrList())
+        self.update_auxiliary_text(auxiliary_text, preedit_len > 0)
 
-        attrs.append(IBus.Attribute.new(IBus.AttrType.UNDERLINE,
-                                        IBus.AttrUnderline.SINGLE, 0, preedit_len))
-        text = IBus.Text.new_from_string(first_candidate)
-        text.set_attributes(attrs)
-
-        self.update_preedit_text(text, preedit_len, preedit_len > 0)
+        # --- preedit text
+        preedit_attrs = IBus.AttrList()
+        preedit_attrs.append(IBus.Attribute.new(IBus.AttrType.UNDERLINE,
+                                                IBus.AttrUnderline.SINGLE, 0, preedit_len))
+        preedit_text = IBus.Text.new_from_string(self.build_string())
+        preedit_text.set_attributes(preedit_attrs)
+        self.update_preedit_text(preedit_text, preedit_len, preedit_len > 0)
 
         # 候補があれば、選択肢を表示させる。
         self._update_lookup_table()
