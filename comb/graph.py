@@ -110,10 +110,19 @@ def lookup(s, system_dict: SystemDict):
             # print(f"YOMI:::: {yomi} {words}")
             for word in words:
                 kanjis = system_dict.trie[word][0].decode('utf-8').split('/')
-                yield word, (kanjis + [word, jaconv.hira2kata(word)])
+                if word not in kanjis:
+                    kanjis.append(word)
+                hira = jaconv.hira2kata(word)
+                if hira not in kanjis:
+                    kanjis.append(hira)
+                yield word, kanjis
         else:
             # print(f"YOMI~~~~:::: {yomi}")
-            yield yomi[0], [yomi[0], jaconv.hira2kata(yomi[0])]
+            targets = [yomi[0]]
+            hira = jaconv.hira2kata(yomi[0])
+            if hira not in targets:
+                targets.append(hira)
+            yield yomi[0], targets
 
 
 # n文字目でおわる単語リストを作成する

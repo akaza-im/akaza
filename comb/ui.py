@@ -204,12 +204,13 @@ class CombIBusEngine(IBus.Engine):
                 self.convert_to_half_romaji()
                 return True
 
+        # スペース
         if keyval == IBus.space:
             if len(self.preedit_string) == 0:
                 # もし、まだなにもはいっていなければ、ただの空白をそのままいれる。
                 return False
             else:
-                self.logger.debug("cursor down")
+                self.logger.debug("Space.")
                 self.cursor_down()
                 return True
 
@@ -324,6 +325,9 @@ class CombIBusEngine(IBus.Engine):
         return False
 
     def cursor_down(self):
+        """
+        次の変換候補を選択する。
+        """
         if self.lookup_table.cursor_down():
             self.node_selected[self.current_clause] = self.lookup_table.get_cursor_pos()
             self.cursor_moved = True
@@ -350,6 +354,7 @@ class CombIBusEngine(IBus.Engine):
             self.current_clause += 1
 
         self.cursor_moved = True
+        self.create_lookup_table()
 
         self.refresh()
 
@@ -368,6 +373,7 @@ class CombIBusEngine(IBus.Engine):
             self.current_clause -= 1
 
         self.cursor_moved = True
+        self.create_lookup_table()
 
         self.refresh()
 
@@ -376,9 +382,12 @@ class CombIBusEngine(IBus.Engine):
         ## TODO ここ変えないとダメ
         self.user_dict.add_entry(self.preedit_string, text)
         self.commit_text(IBus.Text.new_from_string(text))
+
         self.preedit_string = ''
+        self.clauses = []
         self.current_clause = 0
         self.node_selected = {}
+
         self.update_candidates()
 
     def build_string(self):
@@ -389,7 +398,7 @@ class CombIBusEngine(IBus.Engine):
 
     def commit_candidate(self):
         s = self.build_string()
-        self.logger.info("Committing {s}")
+        self.logger.info(f"Committing {s}")
         self.commit_string(s)
 
     def update_candidates(self):
@@ -404,6 +413,7 @@ class CombIBusEngine(IBus.Engine):
             self.clauses = self.comb.convert2(self.preedit_string)
         else:
             self.clauses = []
+        self.create_lookup_table()
 
         self.current_clause = 0
         self.node_selected = {}
@@ -431,7 +441,10 @@ class CombIBusEngine(IBus.Engine):
         self._update_lookup_table()
         self.is_invalidate = False
 
-    def _update_lookup_table(self):
+    def create_lookup_table(self):
+        """
+        現在の候補選択状態から、 lookup table を構築する。
+        """
         # 一旦、ルックアップテーブルをクリアする
         self.lookup_table.clear()
 
@@ -442,11 +455,12 @@ class CombIBusEngine(IBus.Engine):
                 candidate = IBus.Text.new_from_string(node.word)
                 self.lookup_table.append_candidate(candidate)
 
-            # 候補があるので、表示する。
-            self.update_lookup_table(self.lookup_table, True)
-        else:
-            # 候補がないので、非表示とする。
-            self.update_lookup_table(self.lookup_table, False)
+    def _update_lookup_table(self):
+        """
+        候補があれば lookup table を表示。なければ非表示にする。
+        """
+        visible = self.lookup_table.get_number_of_candidates() > 0
+        self.update_lookup_table(self.lookup_table, visible)
 
     def do_focus_in(self):
         self.logger.debug("focus_in")
