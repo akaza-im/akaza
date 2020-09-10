@@ -1,4 +1,7 @@
 from typing import List, Dict, Any
+import gi
+
+gi.require_version('IBus', '1.0')
 
 from gi.repository import IBus
 from gi.repository import GLib
@@ -60,7 +63,7 @@ class CombIBusEngine(IBus.Engine):
     prop_list: IBus.PropList
     comb: Comb
     mode: int
-    force_selected_clause: Dict[int, int]
+    force_selected_clause: List[slice]
 
     __gtype_name__ = 'CombIBusEngine'
 
@@ -85,7 +88,7 @@ class CombIBusEngine(IBus.Engine):
         self.node_selected = {}
 
         # 文節を選びなおしたもの。
-        self.force_selected_clause = {}
+        self.force_selected_clause = []
 
         # カーソル変更をしたばっかりかどうかを、みるフラグ。
         self.cursor_moved = False
@@ -295,7 +298,7 @@ class CombIBusEngine(IBus.Engine):
                               bigram_score=comb.bigram_score)]]
         self.current_clause = 0
         self.node_selected = {}
-        self.force_selected_clause = {}
+        self.force_selected_clause = []
 
         # ルックアップテーブルに候補を設定
         self.lookup_table.clear()
@@ -395,14 +398,21 @@ class CombIBusEngine(IBus.Engine):
         if len(self.clauses) == 0:
             return False
 
-        node = self.clauses[self.current_clause][0]
-
-        # 既に設定されている場合、けす。
-        if node.start_pos in self.force_selected_clause:
-            del self.force_selected_clause[node.start_pos]
-
-        # 伸ばす
-        self.force_selected_clause[node.start_pos] = node.start_pos + len(node.yomi) + 1
+        self.force_selected_clause = []
+        for i, clause in enumerate(self.clauses):
+            node = clause[0]
+            if self.current_clause == i:
+                # 現在選択中の文節の場合、伸ばす。
+                self.force_selected_clause.append(
+                    slice(node.start_pos, node.start_pos + len(node.yomi) + 1))
+            elif self.current_clause + 1 == i:
+                # 次の分節を一文字ヘラス
+                self.force_selected_clause.append(
+                    slice(node.start_pos + 1, node.start_pos + len(node.yomi)))
+            else:
+                # それ以外は現在指定の分節のまま
+                self.force_selected_clause.append(
+                    slice(node.start_pos, node.start_pos + len(node.yomi)))
 
         self._update_candidates()
 
@@ -410,8 +420,31 @@ class CombIBusEngine(IBus.Engine):
         """
         文節の選択範囲を広げることを支持する
         """
-        # TODO: 左にのバス
-        pass
+        if len(self.clauses) == 0:
+            return False
+
+        node = self.clauses[self.current_clause][0]
+
+        if node.start_pos == 0:
+            return False
+
+        self.force_selected_clause = []
+        for i, clause in enumerate(self.clauses):
+            node = clause[0]
+            if self.current_clause == i:
+                # 現在選択中の文節の場合、伸ばす。
+                self.force_selected_clause.append(
+                    slice(node.start_pos-1, node.start_pos + len(node.yomi)))
+            elif self.current_clause - 1 == i:
+                # 前の分節を一文字ヘラス
+                self.force_selected_clause.append(
+                    slice(node.start_pos, node.start_pos + len(node.yomi) - 1))
+            else:
+                # それ以外は現在指定の分節のまま
+                self.force_selected_clause.append(
+                    slice(node.start_pos, node.start_pos + len(node.yomi)))
+
+        self._update_candidates()
 
     def commit_string(self, text):
         self.cursor_moved = False

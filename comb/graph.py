@@ -132,20 +132,18 @@ def lookup(s, system_dict: SystemDict):
 
 
 # n文字目でおわる単語リストを作成する
-def graph_construct(s, ht, unigram_score, bigram_score, force_selected_clause: Dict = {}) -> Graph:
+def graph_construct(s, ht, unigram_score, bigram_score, force_selected_clause:List[slice]=None) -> Graph:
     graph = Graph(size=len(s), unigram_score=unigram_score, bigram_score=bigram_score)
 
-    i = 0
-    while i < len(s):
-        print(f"LOOP {i}")
-        # for i in range(0, len(s)):
-        if i in force_selected_clause:
+    if force_selected_clause:
+        for force_slice in force_selected_clause:
             # 強制的に範囲を指定されている場合。
-            j = min(force_selected_clause[i], len(s))
             # substr は「読み」であろう。
             # word は「漢字」であろう。
-            yomi = s[i:j]
-            logging.info(f"XXXX={s} {i} {j} {yomi}")
+            yomi = s[force_slice]
+            i = force_slice.start
+            j = force_slice.stop
+            print(f"XXXX={s} {force_slice} {yomi}")
             if yomi in ht:
                 # print(f"YOMI YOMI: {yomi} {ht[yomi]}")
                 for kanji in ht[yomi]:
@@ -156,21 +154,23 @@ def graph_construct(s, ht, unigram_score, bigram_score, force_selected_clause: D
                 node = Node(i, yomi, yomi, unigram_score=unigram_score, bigram_score=bigram_score)
                 graph.append(index=j, node=node)
             i = j
-        else:
+    else:
+        for i in range(0, len(s)):
+            # print(f"LOOP {i}")
+            # for i in range(0, len(s)):
             for j in range(i + 1, len(s) + 1):
                 # substr は「読み」であろう。
                 # word は「漢字」であろう。
                 yomi = s[i:j]
                 if yomi in ht:
-                    print(f"YOMI YOMI: {yomi} {ht[yomi]}")
+                    # print(f"YOMI YOMI: {yomi} {ht[yomi]}")
                     for kanji in ht[yomi]:
                         node = Node(i, kanji, yomi, unigram_score=unigram_score, bigram_score=bigram_score)
                         graph.append(index=j, node=node)
                 else:
-                    print(f"NO YOMI: {yomi}")
+                    # print(f"NO YOMI: {yomi}")
                     pass
                     # graph.append(j, Node(j, yomi, yomi, unigram_score=unigram_score, bigram_score=bigram_score))
-            i += 1
 
     return graph
 
