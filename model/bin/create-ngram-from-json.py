@@ -10,6 +10,7 @@ import marisa_trie
 
 SPACES = re.compile(r'\s+')
 
+BIGRAM_CUTOFF = 1
 
 def write_1gram():
     # unigram かいていく
@@ -37,6 +38,8 @@ def write_2gram():
         for word1, word2data in data.items():
             total = sum(word2data.values())
             for word2, count in word2data.items():
+                if count <= BIGRAM_CUTOFF:
+                    continue
                 score = math.log10(count / total)
                 retval.append((f"{word1}\t{word2}", (float(score),),))
 

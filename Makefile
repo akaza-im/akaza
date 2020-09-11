@@ -8,7 +8,7 @@ DESTDIR ?=
 
 PYTHON ?= /usr/bin/python3
 
-all: comb.xml comb/config.py comb
+all: comb.xml comb/config.py comb model/jawiki.1gram
 
 check:
 	python -m py_compile ibus.py
@@ -27,7 +27,7 @@ comb/config.py: comb/config.py.in
 	    -e "s:@DICTIONARYDIR@:$(DESTDIR)/$(DATADIR)/ibus-comb/dictionary:g" \
 		$< > $@
 
-model/jawiki.1gram:
+model/jawiki.1gram: model/bin/create-ngram-from-json.py
 	make -C model jawiki.1gram
 
 model/SKK-JISYO.jawiki:
