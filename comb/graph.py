@@ -4,7 +4,7 @@ import marisa_trie
 import math
 import logging
 import jaconv
-
+import functools
 from comb.system_dict import SystemDict
 
 DEFAULT_SCORE = [(math.log10(0.00000000001),)]
@@ -48,6 +48,7 @@ class Node:
         else:
             return f"{self.word}/{self.yomi}"
 
+    @functools.lru_cache
     def calc_bigram_cost(self, node) -> float:
         # self → node で処理する。
         return self.bigram_score.get(f"{self.get_key()}\t{node.get_key()}", DEFAULT_SCORE)[0][0]
@@ -73,7 +74,7 @@ class Graph:
         for i in sorted(self.d.keys()):
             if i in self.d:
                 s += f"{i}:\n"
-                s += "\n".join(["\t" + str(x) for x in self.d[i]]) + "\n"
+                s += "\n".join(["\t" + str(x) for x in sorted(self.d[i], key=lambda x: x.cost)]) + "\n"
         return s
 
     def append(self, index: int, node: Node) -> None:
@@ -132,7 +133,7 @@ def lookup(s, system_dict: SystemDict):
 
 
 # n文字目でおわる単語リストを作成する
-def graph_construct(s, ht, unigram_score, bigram_score, force_selected_clause:List[slice]=None) -> Graph:
+def graph_construct(s, ht, unigram_score, bigram_score, force_selected_clause: List[slice] = None) -> Graph:
     graph = Graph(size=len(s), unigram_score=unigram_score, bigram_score=bigram_score)
 
     if force_selected_clause:
@@ -210,14 +211,19 @@ def viterbi(graph: Graph) -> List[List[Node]]:
 
     # print(node)
     result = []
+    last_node = None
     while not node.is_bos():
         if node == node.prev:
             raise AssertionError(f"node==node.prev: {node}")
+
         if not node.is_eos():
             # 他の候補を追加する。
+            # BUG: n-gram が考慮されていない！！
             nodes = sorted([n for n in graph.get_item(node.start_pos + len(node.yomi)) if node.yomi == n.yomi],
-                           key=lambda x: x.cost, reverse=True)
+                           key=lambda x: x.cost + x.calc_bigram_cost(last_node), reverse=True)
             result.append(nodes)
+
+        last_node = node
         node = node.prev
     return list(reversed(result))
 
