@@ -519,17 +519,33 @@ class CombIBusEngine(IBus.Engine):
     def refresh(self):
         preedit_len = len(self.preedit_string)
 
-        # -- auxiliary text
-        first_candidate = self.clauses[self.current_clause][0].yomi if len(
-            self.clauses) > 0 else self.preedit_string
+        if len(self.clauses) == 0:
+            self.hide_auxiliary_text()
+            self.hide_lookup_table()
+            self.hide_preedit_text()
+            return
+
+        current_clause = self.clauses[self.current_clause]
+        current_node = current_clause[0]
+
+        # -- auxiliary text(ポップアップしてるやつのほう)
+        first_candidate = current_node.yomi
         auxiliary_text = IBus.Text.new_from_string(first_candidate)
         auxiliary_text.set_attributes(IBus.AttrList())
         self.update_auxiliary_text(auxiliary_text, preedit_len > 0)
 
         text = self.build_string()
         preedit_attrs = IBus.AttrList()
+        # 全部に下線をひく。
         preedit_attrs.append(IBus.Attribute.new(IBus.AttrType.UNDERLINE,
                                                 IBus.AttrUnderline.SINGLE, 0, len(text)))
+        bgstart = sum([len(self.clauses[i][0].word) for i in range(0, self.current_clause)])
+        # 背景色を設定する。
+        preedit_attrs.append(IBus.Attribute.new(
+            IBus.AttrType.BACKGROUND,
+            0x00333333,
+            bgstart,
+            bgstart+len(current_node.word)))
         preedit_text = IBus.Text.new_from_string(text)
         preedit_text.set_attributes(preedit_attrs)
         self.update_preedit_text(preedit_text, len(text), len(text) > 0)
