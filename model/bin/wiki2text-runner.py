@@ -10,6 +10,7 @@ def split(a, n):
     k, m = divmod(len(a), n)
     return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
 
+
 logging.basicConfig(level=logging.DEBUG)
 
 numcpu = multiprocessing.cpu_count()
@@ -34,9 +35,10 @@ for file in files:
         for proc in procs:
             try:
                 logging.info(f"Waiting {proc}")
-                retcode = proc.wait(timeout = 1)
+                retcode = proc.wait(timeout=1)
                 finished += 1
-                logging.info(f"retcode={retcode} progress={finished}/{len(files)} (Elapsed: {time.time() - t0}, Expected: {(time.time()-t0) * len(files) / finished}, current procs={len(procs)})")
+                logging.info(
+                    f"retcode={retcode} progress={finished}/{len(files)} (Elapsed: {time.time() - t0}, Expected: {(time.time() - t0) * len(files) / finished}, current procs={len(procs)})")
                 procs.remove(proc)
                 break
             except TimeoutExpired:
@@ -45,4 +47,3 @@ for file in files:
 for proc in procs:
     retcode = proc.wait()
     logging.info(f"retcode={retcode}")
-
