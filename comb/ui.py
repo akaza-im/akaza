@@ -100,15 +100,19 @@ class CombIBusEngine(IBus.Engine):
 
         Returns True if successful, False if not.
         """
+        self.logger.info(f"set_lookup_table_cursor_pos_in_current_page: {index}")
         page_size = self.lookup_table.get_page_size()
         if index > page_size:
+            self.logger.info(f"index too big: {index} > {page_size}")
             return False
         page, pos_in_page = divmod(self.lookup_table.get_cursor_pos(),
                                    page_size)
         new_pos = page * page_size + index
         if new_pos > self.lookup_table.get_number_of_candidates():
+            self.logger.info(f"new_pos too big: {new_pos} > {self.lookup_table.get_number_of_candidates()}")
             return False
         self.lookup_table.set_cursor_pos(new_pos)
+        self.node_selected[self.current_clause] = self.lookup_table.get_cursor_pos()
         return True
 
     def do_candidate_clicked(self, index, dummy_button, dummy_state):
@@ -167,18 +171,18 @@ class CombIBusEngine(IBus.Engine):
                 # 変換していないときのレンダリングをする。
                 self.update_preedit_text_before_henkan()
                 return True
-            elif keyval in num_keys:
+            elif keyval in num_keys and self.in_henkan_mode():
                 # TODO: 変換候補が表示されている状態の時にのみハンドリングされるべき。
                 index = num_keys.index(keyval)
                 if self.set_lookup_table_cursor_pos_in_current_page(index):
-                    self.commit_candidate()
+                    self.refresh()
                     return True
                 return False
-            elif keyval in numpad_keys:
+            elif keyval in numpad_keys and self.in_henkan_mode():
                 # TODO: 変換候補が表示されている状態の時にのみハンドリングされるべき。
                 index = numpad_keys.index(keyval)
                 if self.set_lookup_table_cursor_pos_in_current_page(index):
-                    self.commit_candidate()
+                    self.refresh()
                     return True
                 return False
             elif keyval in (IBus.Page_Up, IBus.KP_Page_Up):
