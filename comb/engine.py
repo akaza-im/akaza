@@ -146,24 +146,3 @@ class Comb:
         return candidates
 
 
-if __name__ == '__main__':
-    from gi.repository import GLib
-    import pathlib
-    import logging
-
-    logging.basicConfig(level=logging.DEBUG)
-
-    configdir = os.path.join(GLib.get_user_config_dir(), 'ibus-comb')
-    pathlib.Path(configdir).mkdir(parents=True, exist_ok=True)
-    d = SystemDict()
-    u = UserDict(os.path.join(configdir, 'user-dict.txt'))
-    comb = Comb(u, d)
-    # print(comb.convert('henkandekiru'))
-    print(comb.convert('watasi'))
-    # print(comb.convert('hituyoudayo'))
-    # print(list(d.get_candidates('henkandekiru', 'へんかんできる')))
-    # print(list(d.get_candidates('warudakumi', 'わるだくみ')))
-    # print(list(d.get_candidates('subarasii', 'すばらしい')))
-    # print(list(d.get_candidates('watasi', 'わたし')))
-    # print(list(d.get_candidates('hiragana', 'ひらがな')))
-    # print(list(d.get_candidates('buffer', 'ぶっふぇr')))
