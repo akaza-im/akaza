@@ -30,6 +30,10 @@ logging.basicConfig(level=logging.DEBUG)
     ('はやくち', '早口'),
     ('どっぐふーでぃんぐしづらい', 'ドッグフーディング仕辛い'),
     ('しょうがっこう', '小学校'),
+    ('げすとだけ', 'ゲストだけ'),
+    ('ぜんぶでてるやつ', '全部でてる奴'),
+    ('えらべる', '選べる'),
+    ('そうみたいですね', 'そうみたいですね'),
 ])
 def test_wnn(src, expected):
     ht = dict(lookup(src, system_dict))

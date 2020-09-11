@@ -22,10 +22,10 @@ jawiki.wfreq: jawiki.text
 jawiki.vocab: jawiki.wfreq
 	wfreq2vocab -top 118000 jawiki.wfreq jawiki.vocab
 
-jawiki.1gram.json: jawiki.vocab
+jawiki.1gram.json: jawiki.vocab  bin/dumpngram.py
 	python bin/dumpngram.py jawiki.vocab
 
-jawiki.1gram: jawiki.1gram.json jawiki.vocab
+jawiki.1gram: jawiki.1gram.json jawiki.vocab bin/create-ngram-from-json.py
 	python bin/create-ngram-from-json.py
 
 SKK-JISYO.jawiki: jawiki.vocab
