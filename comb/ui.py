@@ -159,6 +159,7 @@ class CombIBusEngine(IBus.Engine):
                 self.invalidate()
                 return True
             elif keyval in num_keys:
+                # TODO: 変換候補が表示されている状態の時にのみハンドリングされるべき。
                 index = num_keys.index(keyval)
                 if self.set_lookup_table_cursor_pos_in_current_page(index):
                     self.commit_candidate()
@@ -229,8 +230,7 @@ class CombIBusEngine(IBus.Engine):
 
         if self.mode == MODE_KANA:
             # Allow typing all ASCII letters and punctuation, except digits
-            if ord('!') <= keyval < ord('0') or \
-                    ord('9') < keyval <= ord('~'):
+            if ord('!') <= keyval <= ord('~'):
                 if state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.MOD1_MASK) == 0:
                     if self.cursor_moved:
                         self.commit_candidate()
