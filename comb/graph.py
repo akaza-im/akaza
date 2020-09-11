@@ -203,7 +203,7 @@ def viterbi(graph: Graph) -> List[List[Node]]:
                 node.cost = cost
 
     print("Viterbi phase 2")
-    print(graph)
+    # print(graph)
 
     # find EOS.
     node = graph.get_eos()
