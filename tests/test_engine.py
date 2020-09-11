@@ -24,6 +24,7 @@ comb = Comb(user_dict=user_dict, system_dict=system_dict)
     ('それなwww', 'それなwww'),
     ('siinn', '子音'),
     ('zh', '←'),
+    ('IME', 'IME'),
 ])
 def test_wnn(src, expected):
     clauses = comb.convert2(src)
