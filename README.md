@@ -2,6 +2,8 @@
 
 Yet another kana-kanji-converter on IBus, written in Python.
 
+統計的かな漢字変換です。
+
 ## Dependencies
 
  * python-marisa
@@ -10,7 +12,7 @@ Yet another kana-kanji-converter on IBus, written in Python.
 ## 設計方針
 
  * モデル
-  * モデルは 日本語 wikipedia 等から自動生成されて、再現性があることが望ましい。
+  * モデルは 日本語 wikipedia 等から自動生成されて、誰でもチューニング可能なようにしたい。
 
 ## See also
 

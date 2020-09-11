@@ -1,49 +1,58 @@
 import logging
 import os
+from typing import List, Dict
 
-from comb import combromkan
-from comb.skkdict import parse_skkdict, write_skkdict
+from atomicwrites import atomic_write
+
+from comb.graph import Node
 
 
+# ユーザー辞書。
+#
+# カタカナなどの単語の追加辞書。
+# unigram score
+# bigram score
 class UserDict:
+    unigram: Dict[str, int]
+
     def __init__(self, path, logger=logging.getLogger(__name__)):
         self.path = path
         self.logger = logger
-        if os.path.isfile(path):
-            self.dict_ari, self.dict_nasi = parse_skkdict(path, encoding='utf-8')
+
+        self.unigram = {}
+        if os.path.exists(self.unigram_path()):
+            self.read()
         else:
-            self.dict_ari, self.dict_nasi = {}, {}
+            self.total = 0
 
-    def get_candidates(self, src, hiragana):
-        candidates = []
+    def unigram_path(self):
+        return os.path.join(self.path, 'unigram.txt')
 
-        for keyword in [src, hiragana]:
-            if keyword in self.dict_nasi:
-                got = self.dict_nasi[keyword]
-                self.logger.debug("GOT: %s" % str(got))
-                for e in got:
-                    candidates.append([e, e])
+    def read(self):
+        total = 0
+        with open(self.unigram_path()) as fp:
+            for line in fp:
+                m = line.rstrip().split(" ")
+                if len(m) == 2:
+                    kanji_kana, count = m
+                    self.unigram[kanji_kana] = count
+                    total += count
+            self.total = total
 
-        return candidates
+    def add_entry(self, nodes: List[Node]):
+        for node in nodes:
+            kanji = node.word
+            kana = node.yomi
 
-    def add_entry(self, roma, kanji):
-        self.logger.info(f"add user_dict entry: roma='{roma}' kanji='{kanji}'")
-        kana = combromkan.to_hiragana(roma)
+            self.logger.info(f"add user_dict entry: kana='{kana}' kanji='{kanji}'")
 
-        if kana in self.dict_nasi:
-            e = self.dict_nasi[kana]
-            if kanji in e:
-                # イチバンマエにもっていく。
-                e.remove(kanji)
-                e.insert(0, kanji)
-            else:
-                self.dict_nasi[kana].insert(0, kanji)
-        else:
-            self.dict_nasi[kana] = [kanji]
-
-        # 非同期でかくようにしたほうが better.
-        self.save()
-        self.logger.info("SAVED!")
+            key = f"{kanji}/{kana}"
+            self.unigram[key] = self.unigram.get(key, 0) + 1
+            self.total += 1
 
     def save(self):
-        write_skkdict(self.path, self.dict_ari, self.dict_nasi)
+        with atomic_write(self.unigram_path(), overwrite=True) as f:
+            for kanji_kana in sorted(self.unigram.keys()):
+                count = self.unigram[kanji_kana]
+                f.write(f"{kanji_kana} {count}")
+        self.logger.info(f"SAVED {self.path}")

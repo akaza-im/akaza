@@ -36,9 +36,9 @@ numpad_keys.append(getattr(IBus, 'KP_0'))
 del n
 
 configdir = os.path.join(GLib.get_user_config_dir(), 'ibus-comb')
-pathlib.Path(configdir).mkdir(parents=True, exist_ok=True)
+pathlib.Path(os.path.join(configdir, 'user-dict')).mkdir(parents=True, exist_ok=True)
 logging.info(f"Loading user dictionary: {configdir}")
-user_dict = UserDict(os.path.join(configdir, 'user-dict.txt'), logging.getLogger('UserDict'))
+user_dict = UserDict(os.path.join(configdir, 'user-dict'))
 logging.info("Loaded user dictionary")
 
 system_dict = SystemDict()
@@ -473,15 +473,22 @@ class CombIBusEngine(IBus.Engine):
     def commit_string(self, text):
         self.cursor_moved = False
 
-        ## TODO ここ変えないとダメ
-        self.user_dict.add_entry(self.preedit_string, text)
+        if self.in_henkan_mode():
+            # 変換モードのときのみ学習を実施する。
+            candidate_nodes = []
+            for clauseid, nodes in enumerate(self.clauses):
+                candidate_nodes.append(nodes[self.node_selected.get(clauseid, 0)])
+            self.user_dict.add_entry(candidate_nodes)
+            # 学習データの書き出しは、バックグラウンドスレッドでやりたい。
+            self.user_dict.save()
+
         self.commit_text(IBus.Text.new_from_string(text))
 
         self.preedit_string = ''
         self.clauses = []
         self.current_clause = 0
         self.node_selected = {}
-        self.force_selected_clause = {}
+        self.force_selected_clause = []
 
         self.update_candidates()
 
