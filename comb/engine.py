@@ -46,7 +46,7 @@ class Comb:
         self.bigram_score.load(f"{MODEL_DIR}/jawiki.2gram")
 
     # 連文節変換するバージョン。
-    def convert2(self, src: str, force_selected_clause: Dict[int, int] = None) -> List[List[Node]]:
+    def convert2(self, src: str, force_selected_clause: List[slice] = None) -> List[List[Node]]:
         self.logger.info(f"convert2: {force_selected_clause}")
 
         if len(src) > 0 and src[0].isupper() and not force_selected_clause:
