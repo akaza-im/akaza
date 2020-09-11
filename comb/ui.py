@@ -143,20 +143,29 @@ class CombIBusEngine(IBus.Engine):
 
         if self.preedit_string:
             if keyval in (IBus.Return, IBus.KP_Enter):
-                if self.lookup_table.get_number_of_candidates() > 0:
+                if self.in_henkan_mode():
                     self.commit_candidate()
                 else:
-                    self.commit_string(self.preedit_string)
+                    # 無変換状態では、ひらがなに変換してコミットします。
+                    self.commit_string(combromkan.to_hiragana(self.preedit_string))
                 return True
             elif keyval == IBus.Escape:
                 self.preedit_string = ''
                 self.update_candidates()
                 return True
             elif keyval == IBus.BackSpace:
-                # サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
-                self.preedit_string = re.sub('(?:z[hjkl.-]|[kstnhmyrwgzjdbp]?[aiueo]|.)$', '',
-                                             self.preedit_string)
-                self.invalidate()
+                if self.in_henkan_mode():
+                    # 変換中の場合、無変換モードにもどす。
+                    self.lookup_table.clear()
+                    self.hide_auxiliary_text()
+                    self.hide_lookup_table()
+                else:
+                    # サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
+                    self.preedit_string = re.sub('(?:z[hjkl.-]|n+|[kstnhmyrwgzjdbp]?[aiueo]|.)$', '',
+                                                 self.preedit_string)
+
+                # 変換していないときのレンダリングをする。
+                self.update_preedit_text_before_henkan()
                 return True
             elif keyval in num_keys:
                 # TODO: 変換候補が表示されている状態の時にのみハンドリングされるべき。
@@ -166,6 +175,7 @@ class CombIBusEngine(IBus.Engine):
                     return True
                 return False
             elif keyval in numpad_keys:
+                # TODO: 変換候補が表示されている状態の時にのみハンドリングされるべき。
                 index = numpad_keys.index(keyval)
                 if self.set_lookup_table_cursor_pos_in_current_page(index):
                     self.commit_candidate()
@@ -224,18 +234,25 @@ class CombIBusEngine(IBus.Engine):
                 # もし、まだなにもはいっていなければ、ただの空白をそのままいれる。
                 return False
             else:
-                self.logger.debug("Space.")
-                self.cursor_down()
+                if self.in_henkan_mode():
+                    self.logger.debug("cursor down.")
+                    self.cursor_down()
+                else:
+                    # 実際に変換していく。
+                    self.logger.debug("update_candidates.")
+                    self.update_candidates()
                 return True
 
         if self.mode == MODE_KANA:
-            # Allow typing all ASCII letters and punctuation, except digits
+            # Allow typing all ASCII letters and punctuation
             if ord('!') <= keyval <= ord('~'):
                 if state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.MOD1_MASK) == 0:
-                    if self.cursor_moved:
+                    if self.in_henkan_mode():
                         self.commit_candidate()
+
                     self.preedit_string += chr(keyval)
-                    self.invalidate()
+                    # この時点では、preedit string にだけ、追加して表示するひつようがあります。
+                    self.update_preedit_text_before_henkan()
                     return True
             else:
                 if keyval < 128 and self.preedit_string:
@@ -244,6 +261,9 @@ class CombIBusEngine(IBus.Engine):
             return False
 
         return False
+
+    def in_henkan_mode(self):
+        return self.lookup_table.get_number_of_candidates() > 0
 
     def convert_to_full_katakana(self):
         self.logger.info("Convert to full katakana")
@@ -448,6 +468,7 @@ class CombIBusEngine(IBus.Engine):
 
     def commit_string(self, text):
         self.cursor_moved = False
+
         ## TODO ここ変えないとダメ
         self.user_dict.add_entry(self.preedit_string, text)
         self.commit_text(IBus.Text.new_from_string(text))
@@ -472,6 +493,7 @@ class CombIBusEngine(IBus.Engine):
         self.commit_string(s)
 
     def update_candidates(self):
+        self.logger.info("update_candidates")
         try:
             self._update_candidates()
         except:
@@ -500,17 +522,37 @@ class CombIBusEngine(IBus.Engine):
         auxiliary_text.set_attributes(IBus.AttrList())
         self.update_auxiliary_text(auxiliary_text, preedit_len > 0)
 
-        # --- preedit text
+        text = self.build_string()
         preedit_attrs = IBus.AttrList()
         preedit_attrs.append(IBus.Attribute.new(IBus.AttrType.UNDERLINE,
-                                                IBus.AttrUnderline.SINGLE, 0, preedit_len))
-        preedit_text = IBus.Text.new_from_string(self.build_string())
+                                                IBus.AttrUnderline.SINGLE, 0, len(text)))
+        preedit_text = IBus.Text.new_from_string(text)
         preedit_text.set_attributes(preedit_attrs)
-        self.update_preedit_text(preedit_text, preedit_len, preedit_len > 0)
+        self.update_preedit_text(preedit_text, len(text), len(text) > 0)
 
         # 候補があれば、選択肢を表示させる。
         self._update_lookup_table()
         self.is_invalidate = False
+
+    def update_preedit_text_before_henkan(self):
+        """
+        無変換状態で、どんどん入力していくフェーズ。
+        """
+
+        # 平仮名にする。
+        text = combromkan.to_hiragana(self.preedit_string)
+        self.clauses = [
+            [Node(word=text, yomi=text, start_pos=3, unigram_score=self.comb.unigram_score,
+                  bigram_score=self.comb.bigram_score)]
+        ]
+        self.current_clause = 0
+
+        preedit_attrs = IBus.AttrList()
+        preedit_attrs.append(IBus.Attribute.new(IBus.AttrType.UNDERLINE,
+                                                IBus.AttrUnderline.SINGLE, 0, len(text)))
+        preedit_text = IBus.Text.new_from_string(text)
+        preedit_text.set_attributes(preedit_attrs)
+        self.update_preedit_text(preedit_text, len(text), len(text) > 0)
 
     def create_lookup_table(self):
         """
