@@ -46,12 +46,24 @@ class Comb:
         self.bigram_score.load(f"{MODEL_DIR}/jawiki.2gram")
 
     # 連文節変換するバージョン。
-    def convert2(self, src: str, force_selected_clause: Dict[int, int] = {}) -> List[List[Node]]:
+    def convert2(self, src: str, force_selected_clause: Dict[int, int] = None) -> List[List[Node]]:
         self.logger.info(f"convert2: {force_selected_clause}")
+
+        if len(src) > 0 and src[0].isupper() and not force_selected_clause:
+            # 最初の文字が大文字で、文節の強制指定がない場合、アルファベット強制入力とする。
+            return [[
+                Node(
+                    start_pos=0,
+                    word=src,
+                    yomi=src,
+                    unigram_score=self.unigram_score,
+                    bigram_score=self.bigram_score
+                )
+            ]]
 
         hiragana: str = combromkan.to_hiragana(src)
 
-        # 末尾の子音を対象外とする。
+        # 末尾の子音を変換対象外とする。
         m = TRAILING_CONSONANT_PATTERN.match(hiragana)
         if m:
             hiragana = m[1]
