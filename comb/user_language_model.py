@@ -78,6 +78,8 @@ class UserLanguageModel:
             self.bigram[key] = self.bigram.get(key, 0) + 1
             self.bigram_total[node1.get_key()] = self.bigram_total.get(node1.get_key(), 0) + 1
 
+    # TODO save in background thread...
+    # TODO: bulk save in every 1 minute.
     def save(self):
         with atomic_write(self.unigram_path(), overwrite=True) as f:
             for kanji_kana in sorted(self.unigram.keys()):

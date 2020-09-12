@@ -16,10 +16,10 @@ class SystemLanguageModel:
     @staticmethod
     def create():
         unigram_score = marisa_trie.RecordTrie('@f')
-        unigram_score.load(f"{MODEL_DIR}/jawiki.1gram")
+        unigram_score.mmap(f"{MODEL_DIR}/jawiki.1gram")
 
         bigram_score = marisa_trie.RecordTrie('@f')
-        bigram_score.load(f"{MODEL_DIR}/jawiki.2gram")
+        bigram_score.mmap(f"{MODEL_DIR}/jawiki.2gram")
 
         return SystemLanguageModel(unigram_score, bigram_score)
 
