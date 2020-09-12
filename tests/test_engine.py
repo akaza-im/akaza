@@ -8,7 +8,7 @@ from comb.user_language_model import UserLanguageModel
 
 tmpfile = NamedTemporaryFile(delete=False)
 user_language_model = UserLanguageModel(tmpfile.name)
-system_dict = SystemDict()
+system_dict = SystemDict.create()
 
 comb = Comb(user_language_model=user_language_model, system_dict=system_dict)
 

@@ -1,11 +1,12 @@
 from comb.system_dict import SystemDict
 
-system_dict = SystemDict()
+system_dict = SystemDict('model/system_dict.trie')
 
 
 def test_system_dict():
-    d = list(system_dict.get_candidates('better', 'べってr'))
-    assert d[0] == 'ベター'
+    s = system_dict['れいわ']
+    assert '令和' in s
 
-    d = list(system_dict.get_candidates('reiwa', 'れいわ'))
-    assert '令和' in d
+    # 絵文字辞書
+    s = system_dict['びーる']
+    assert '🍺' in s

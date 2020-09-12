@@ -4,7 +4,6 @@ from logging import Logger
 from typing import Dict, List
 
 import jaconv
-import marisa_trie
 
 from comb.language_model import LanguageModel
 from comb.node import Node
@@ -72,16 +71,18 @@ def lookup(s, system_dict: SystemDict):
     for i in range(0, len(s)):
         yomi = s[i:]
         # print(f"YOMI:::: {yomi}")
-        words = system_dict.trie.prefixes(yomi)
+        words = system_dict.prefixes(yomi)
         if len(words) > 0:
             # print(f"YOMI:::: {yomi} {words}")
             for word in words:
-                kanjis = system_dict.trie[word][0].decode('utf-8').split('/')
+                kanjis = system_dict[word]
                 if word not in kanjis:
                     kanjis.append(word)
+
                 hira = jaconv.hira2kata(word)
                 if hira not in kanjis:
                     kanjis.append(hira)
+
                 yield word, kanjis
         else:
             # print(f"YOMI~~~~:::: {yomi}")
@@ -192,77 +193,3 @@ def viterbi(graph: Graph, language_model: LanguageModel) -> List[List[Node]]:
         node = node.prev
     return list(reversed(result))
 
-
-def main():
-    logging.basicConfig(level=logging.DEBUG)
-
-    # src = 'きょうはいいてんきですね'
-    # src = 'きょうは'
-    # src = 'きょうのてんきは'
-    # src = 'わたしのなまえはなかのです'
-    # src = 'すももももももももものうち'
-    # src = 'せいきゅう'
-    # src = 'しはらいにちじ'
-    # src = 'せいきゅうしょのしはらいにちじ'
-
-    unigram_score = marisa_trie.RecordTrie('@f')
-    unigram_score.load('model/jawiki.1gram')
-
-    bigram_score = marisa_trie.RecordTrie('@f')
-    bigram_score.load('model/jawiki.2gram')
-
-    system_dict = SystemDict()
-
-    # print(ht)
-    def run(src):
-        if True:
-            ht = dict(lookup(src, system_dict))
-        else:
-            ht = {
-                'き': ['木', '気', 'き'],
-                'きょ': ['虚', 'きょ'],
-                'きょう': ['今日', 'きょう'],
-                'ょ': ['ょ'],
-                'ょう': ['ょう'],
-                'う': ['う'],
-                'は': ['葉', 'は'],
-                'うは': ['右派', 'うは'],
-                'せ': ['せ'],
-                'い': ['い'],
-                'き': ['き'],
-                'ゅ': ['ゅ'],
-            }
-        graph = graph_construct(src, ht)
-
-        got = viterbi(graph)
-        # print(graph)
-        print(' '.join([f"<{x.yomi}/{x.word}>" for x in got if not x.is_eos()]))
-
-    # http://cl.sd.tmu.ac.jp/~komachi/chaime/index.html
-    run('わたしのなまえはなかのです')
-    run('しはらいにちじ')
-    run('えんとりーすう')
-    run('せいきゅうしょのしはらいにちじ')
-    run('ちかくしじょうちょうさをおこなう')
-    dat = [
-        ('せいきゅうしょのしはらいにちじ', '請求書の支払い日時'),
-        ('ちかくしじょうちょうさをおこなう。', '近く市場調査を行う。'),
-        ('そのごさいとないで', 'その後サイト内で'),
-        ('きょねんにくらべたかいすいじゅんだ。', '去年に比べ高い水準だ。'),
-        ('ひるいちまでにしょるいつくっといて', '昼イチまでに書類作っといて。'),
-        ('そんなはなししんじっこないよね。', 'そんな話信じっこないよね。'),
-        ('はじめっからもってけばいいのに。', '初めっからもってけばいいのに。'),
-        ('あつあつのにくまんにぱくついた。', '熱々の肉まんにぱくついた。'),
-    ]
-    for kana, kanji in dat:
-        run(kana)
-        print(f"Expected: {kanji}")
-
-
-#    for ww in ["しはらい/支払い", "きょう/橋", "きょう/今日", "きょう/頃", "きょう/きょう"]:
-#        print(f"WWWWW {ww} {unigram_score.get(ww, DEFAULT_SCORE)}")
-#    for ww in ["きょう/橋\tは/は", "きょう/今日\tは/は", "きょう/頃\tは/は", "は/は\tきょう/今日", "は/は\tきょう/頃"]:
-#        print(f"WWWWW {ww} {bigram_score.get(ww, DEFAULT_SCORE)}")
-
-if __name__ == '__main__':
-    main()

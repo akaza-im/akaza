@@ -24,7 +24,7 @@ user_language_model = UserLanguageModel(tmpdir.name)
 
 language_model = LanguageModel(system_language_model, user_language_model=user_language_model)
 
-system_dict = SystemDict()
+system_dict = SystemDict('model/system_dict.trie')
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -47,7 +47,7 @@ logging.basicConfig(level=logging.DEBUG)
     ('ぜんぶでてるやつ', '全部でてる奴'),
     ('えらべる', '選べる'),
     ('そうみたいですね', 'そうみたいですね'),
-    ('きめつのやいば', '鬼滅の刃'),
+    # ('きめつのやいば', '鬼滅の刃'),
     #    ('れいわ', '令和'),
 ])
 def test_wnn(src, expected):
@@ -58,8 +58,6 @@ def test_wnn(src, expected):
     got = ''.join([clause[0].word for clause in clauses])
 
     assert got == expected
-
-
 def test_graph_extend():
     src = 'はなか'
     ht = dict(lookup(src, system_dict))
