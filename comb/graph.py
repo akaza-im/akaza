@@ -80,15 +80,21 @@ def lookup(s, system_dict: SystemDict, user_language_model: UserLanguageModel):
                 if word not in kanjis:
                     kanjis.append(word)
 
-                hira = jaconv.hira2kata(word)
-                if hira not in kanjis:
-                    kanjis.append(hira)
+                kata = jaconv.hira2kata(word)
+                if kata not in kanjis:
+                    kanjis.append(kata)
 
                 yield word, kanjis
 
             if yomi not in words and user_language_model.get_unigram_cost(yomi):
                 # システム辞書に入ってないがユーザー言語モデルには入っているという場合は候補にいれる。
-                yield yomi, [yomi]
+                kanjis = [yomi]
+
+                kata = jaconv.hira2kata(word)
+                if kata not in kanjis:
+                    kanjis.append(kata)
+
+                yield yomi, kanjis
         else:
             # print(f"YOMI~~~~:::: {yomi}")
             targets = [yomi[0]]
