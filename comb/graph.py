@@ -1,4 +1,5 @@
 import sys
+from logging import Logger
 from typing import Dict, List
 import marisa_trie
 import math
@@ -13,26 +14,15 @@ DEFAULT_SCORE = [(math.log10(0.00000000001),)]
 class Node:
     cost: float
 
-    def __init__(self, start_pos, word, yomi, unigram_score, bigram_score):
+    def __init__(self, start_pos, word, yomi):
         self.start_pos = start_pos
         self.word = word
         self.yomi = yomi
-        self.unigram_score = unigram_score
-        self.bigram_score = bigram_score
-        self.cost = self.calc_node_cost()
         self.prev = None
 
     def __repr__(self):
         return f"<Node: start_pos={self.start_pos}, word={self.word}," \
                f" cost={self.cost}, prev={self.prev.word if self.prev else '-'} yomi={self.yomi}>"
-
-    def calc_node_cost(self) -> float:
-        if self.is_bos():
-            return 0
-        elif self.is_eos():
-            return 0
-        else:
-            return self.unigram_score.get(self.get_key(), DEFAULT_SCORE)[0][0]
 
     def is_bos(self):
         return self.word == '<S>'
@@ -48,23 +38,18 @@ class Node:
         else:
             return f"{self.word}/{self.yomi}"
 
-    @functools.lru_cache
-    def calc_bigram_cost(self, node) -> float:
-        # self → node で処理する。
-        return self.bigram_score.get(f"{self.get_key()}\t{node.get_key()}", DEFAULT_SCORE)[0][0]
-
 
 class Graph:
+    logger: Logger
     d: Dict[int, List[Node]]
 
     def __init__(self, size: int, unigram_score, bigram_score, logger=logging.getLogger(__name__)):
         self.d = {
-            0: [Node(start_pos=-9999, word='<S>', yomi='<S>', unigram_score=unigram_score,
-                     bigram_score=bigram_score)],
+            0: [Node(start_pos=-9999, word='<S>', yomi='<S>')],
             size + 1: [
-                Node(start_pos=size, word='</S>', yomi='</S>', unigram_score=unigram_score,
-                     bigram_score=bigram_score)],
+                Node(start_pos=size, word='</S>', yomi='</S>')],
         }
+        self.logger = logger
 
     def __len__(self) -> int:
         return len(self.d)
@@ -107,6 +92,9 @@ class Graph:
     def get_eos(self):
         return self.d[max(self.d.keys())][0]
 
+    def get_bos(self):
+        return self.d[0][0]
+
 
 def lookup(s, system_dict: SystemDict):
     for i in range(0, len(s)):
@@ -148,11 +136,11 @@ def graph_construct(s, ht, unigram_score, bigram_score, force_selected_clause: L
             if yomi in ht:
                 # print(f"YOMI YOMI: {yomi} {ht[yomi]}")
                 for kanji in ht[yomi]:
-                    node = Node(i, kanji, yomi, unigram_score=unigram_score, bigram_score=bigram_score)
+                    node = Node(i, kanji, yomi)
                     graph.append(index=j, node=node)
             else:
                 # print(f"NO YOMI: {yomi}")
-                node = Node(i, yomi, yomi, unigram_score=unigram_score, bigram_score=bigram_score)
+                node = Node(i, yomi, yomi)
                 graph.append(index=j, node=node)
             i = j
     else:
@@ -166,7 +154,7 @@ def graph_construct(s, ht, unigram_score, bigram_score, force_selected_clause: L
                 if yomi in ht:
                     # print(f"YOMI YOMI: {yomi} {ht[yomi]}")
                     for kanji in ht[yomi]:
-                        node = Node(i, kanji, yomi, unigram_score=unigram_score, bigram_score=bigram_score)
+                        node = Node(i, kanji, yomi)
                         graph.append(index=j, node=node)
                 else:
                     # print(f"NO YOMI: {yomi}")
@@ -176,13 +164,29 @@ def graph_construct(s, ht, unigram_score, bigram_score, force_selected_clause: L
     return graph
 
 
-def viterbi(graph: Graph) -> List[List[Node]]:
-    print("Viterbi phase 1")
+def calc_bigram_cost(prev_node, next_node, bigram_score: marisa_trie.RecordTrie) -> float:
+    # self → node で処理する。
+    return bigram_score.get(f"{prev_node.get_key()}\t{next_node.get_key()}", DEFAULT_SCORE)[0][0]
+
+
+def calc_node_cost(node: Node, system_unigram_score) -> float:
+    if node.is_bos():
+        return 0
+    elif node.is_eos():
+        return 0
+    else:
+        return system_unigram_score.get(node.get_key(), DEFAULT_SCORE)[0][0]
+
+
+def viterbi(graph: Graph, unigram_score, bigram_score: marisa_trie.RecordTrie) -> List[List[Node]]:
+    # BOS にスコアを設定。
+    graph.get_bos().cost = 0
+
     for nodes in graph.get_items():
         # print(f"fFFFF {nodes}")
         for node in nodes:
             # print(f"  PPPP {node}")
-            node_cost = node.calc_node_cost()
+            node_cost = calc_node_cost(node, unigram_score)
             # print(f"  NC {node.word} {node_cost}")
             cost = -sys.maxsize
             shortest_prev = None
@@ -194,7 +198,7 @@ def viterbi(graph: Graph) -> List[List[Node]]:
                 for prev_node in prev_nodes:
                     if prev_node.cost is None:
                         logging.error(f"Missing prev_node.cost: {prev_node}")
-                    tmp_cost = prev_node.cost + prev_node.calc_bigram_cost(node) + node_cost
+                    tmp_cost = prev_node.cost + calc_bigram_cost(prev_node, node, bigram_score) + node_cost
                     if cost < tmp_cost:
                         cost = tmp_cost
                         shortest_prev = prev_node
@@ -202,7 +206,6 @@ def viterbi(graph: Graph) -> List[List[Node]]:
                 node.prev = shortest_prev
                 node.cost = cost
 
-    print("Viterbi phase 2")
     # print(graph)
 
     # find EOS.
@@ -218,9 +221,8 @@ def viterbi(graph: Graph) -> List[List[Node]]:
 
         if not node.is_eos():
             # 他の候補を追加する。
-            # BUG: n-gram が考慮されていない！！
             nodes = sorted([n for n in graph.get_item(node.start_pos + len(node.yomi)) if node.yomi == n.yomi],
-                           key=lambda x: x.cost + x.calc_bigram_cost(last_node), reverse=True)
+                           key=lambda x: x.cost + calc_bigram_cost(x, last_node, bigram_score), reverse=True)
             result.append(nodes)
 
         last_node = node

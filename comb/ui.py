@@ -318,8 +318,7 @@ class CombIBusEngine(IBus.Engine):
         F6 などを押した時用。
         """
         # 候補を設定
-        self.clauses = [[Node(start_pos=0, word=word, yomi=yomi, unigram_score=comb.unigram_score,
-                              bigram_score=comb.bigram_score)]]
+        self.clauses = [[Node(start_pos=0, word=word, yomi=yomi)]]
         self.current_clause = 0
         self.node_selected = {}
         self.force_selected_clause = []
@@ -569,8 +568,7 @@ class CombIBusEngine(IBus.Engine):
         # 平仮名にする。
         text = combromkan.to_hiragana(self.preedit_string)
         self.clauses = [
-            [Node(word=text, yomi=text, start_pos=3, unigram_score=self.comb.unigram_score,
-                  bigram_score=self.comb.bigram_score)]
+            [Node(word=text, yomi=text, start_pos=3)]
         ]
         self.current_clause = 0
 

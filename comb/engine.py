@@ -23,11 +23,6 @@ import re
 TRAILING_CONSONANT_PATTERN = re.compile(r'^(.*?)([qwrtypsdfghjklzxcvbm]+)$')
 
 
-class Candidate:
-    def __init__(self, word: str):
-        self.word = word
-
-
 class Comb:
     logger: Logger
     dictionaries: List[Any]
@@ -56,8 +51,6 @@ class Comb:
                     start_pos=0,
                     word=src,
                     yomi=src,
-                    unigram_score=self.unigram_score,
-                    bigram_score=self.bigram_score
                 )
             ]]
 
@@ -78,7 +71,7 @@ class Comb:
         graph = graph_construct(hiragana, ht, self.unigram_score, self.bigram_score, force_selected_clause)
         self.logger.info(
             f"graph_constructed: src={src} hiragana={hiragana} katakana={katakana}: {time.time() - t0} seconds")
-        clauses = viterbi(graph)
+        clauses = viterbi(graph, self.unigram_score, self.bigram_score)
         self.logger.info(
             f"converted: src={src} hiragana={hiragana} katakana={katakana}: {time.time() - t0} seconds")
 
@@ -87,8 +80,6 @@ class Comb:
                 start_pos=len(src),
                 word=consonant,
                 yomi=consonant,
-                unigram_score=self.unigram_score,
-                bigram_score=self.bigram_score
             )])
             return clauses
         else:
@@ -144,5 +135,3 @@ class Comb:
             candidates.append([src, src])
 
         return candidates
-
-
