@@ -167,7 +167,7 @@ class CombIBusEngine(IBus.Engine):
                     # サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
                     self.preedit_string = re.sub('(?:z[hjkl.-]|n+|[kstnhmyrwgzjdbp]?[aiueo]|.)$', '',
                                                  self.preedit_string)
-               # 変換していないときのレンダリングをする。
+                # 変換していないときのレンダリングをする。
                 self.update_preedit_text_before_henkan()
                 return True
             elif keyval in num_keys and self.in_henkan_mode():
@@ -264,6 +264,7 @@ class CombIBusEngine(IBus.Engine):
             return False
 
         return False
+
     def in_henkan_mode(self):
         return self.lookup_table.get_number_of_candidates() > 0
 
@@ -419,13 +420,15 @@ class CombIBusEngine(IBus.Engine):
         if len(self.clauses) == 0:
             return False
 
+        max_len = max([clause[0].start_pos + len(clause[0].yomi) for clause in self.clauses])
+
         self.force_selected_clause = []
         for i, clause in enumerate(self.clauses):
             node = clause[0]
             if self.current_clause == i:
                 # 現在選択中の文節の場合、伸ばす。
                 self.force_selected_clause.append(
-                    slice(node.start_pos, node.start_pos + len(node.yomi) + 1))
+                    slice(node.start_pos, min(node.start_pos + len(node.yomi) + 1, max_len)))
             elif self.current_clause + 1 == i:
                 # 次の分節を一文字ヘラス
                 self.force_selected_clause.append(
@@ -445,20 +448,17 @@ class CombIBusEngine(IBus.Engine):
         if len(self.clauses) == 0:
             return False
 
-        node = self.clauses[self.current_clause][0]
+        # 一番左の文節にフォーカスがある場合、一番左の文節が短くなるべき。
+        target_clause = 1 if self.current_clause == 0 and len(self.clauses) > 1 else self.current_clause
 
-        if node.start_pos == 0:
-            return False
-
-        # TODO: 一番左の文節にフォーカスがある場合、一番左の文節が短くなるべき。
         self.force_selected_clause = []
         for i, clause in enumerate(self.clauses):
             node = clause[0]
-            if self.current_clause == i:
+            if target_clause == i:
                 # 現在選択中の文節の場合、伸ばす。
                 self.force_selected_clause.append(
                     slice(node.start_pos - 1, node.start_pos + len(node.yomi)))
-            elif self.current_clause - 1 == i:
+            elif target_clause - 1 == i:
                 # 前の分節を一文字ヘラス
                 self.force_selected_clause.append(
                     slice(node.start_pos, node.start_pos + len(node.yomi) - 1))
@@ -565,7 +565,7 @@ class CombIBusEngine(IBus.Engine):
         """
         無変換状態で、どんどん入力していくフェーズ。
         """
-        
+
         if len(self.preedit_string) == 0:
             self.hide_preedit_text()
             return
