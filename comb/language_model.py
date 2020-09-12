@@ -36,6 +36,10 @@ class LanguageModel:
     @functools.lru_cache
     def calc_bigram_cost(self, prev_node, next_node) -> float:
         # self → node で処理する。
+        u = self.user_dict.get_bigram_cost(prev_node, next_node)
+        if u:
+            self.logger.info(f"Use user's bigram score: {prev_node.get_key()},{next_node.get_key()} -> {u}")
+            return u
         return self.system_bigram_score.get(
             f"{prev_node.get_key()}\t{next_node.get_key()}", DEFAULT_SCORE
         )[0][0]
