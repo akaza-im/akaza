@@ -1,11 +1,18 @@
+from typing import Optional
+
+
 class Node:
-    cost: float
+    cost: Optional[float]
 
     def __init__(self, start_pos, word, yomi):
+        if len(word) == 0:
+            raise AssertionError(f"len(word) should not be 0")
+
         self.start_pos = start_pos
         self.word = word
         self.yomi = yomi
         self.prev = None
+        self.cost = 0
 
     def __repr__(self):
         return f"<Node: start_pos={self.start_pos}, word={self.word}," \
