@@ -9,10 +9,9 @@
 - 2gram のデータがデカすぎる。libkkc と同等の圧縮をすべき
 - User dictionary learner from text file or web.
   - クローラーをかく？
-- ベースのシステム辞書は、marisa-trie 形式でビルドしたものをロードするようにした法が良いのではないか?
-  - user can add their own skk style dictionary.
-  - by configuration file
+- ユーザー辞書機能を実装する
 - 文節として、一文字の平仮名のみになったものに関しては、連結してしまった方が良いのではないだろうか？
+- packaging to arch linux.
 
 - 変な変換
   - ドンだけと"bきゅう" が "B級" にならない
@@ -24,6 +23,11 @@
 - fcitx 対応(python 以外で書き直さないと難しそう)
 - 設定画面の実装
 - 単語登録機能
+- かな入力サポート
+
+## priority very low
+
+- NICOLA support?
 - 共起的なスコアをいれたい?
 - 青空文庫をコーパスとして使う?
   - 古くさすぎるかも
@@ -41,3 +45,4 @@
 - 分節の区切り箇所を自分で指定できるようにしたい。
 - 単語 2 gram を学習データとして記録できるようにする
 - 絵文字辞書(`ビール` か `beer` で絵文字いれたい。)
+- ベースのシステム辞書は、marisa-trie 形式でビルドしたものをロードするようにした法が良いのではないか?
