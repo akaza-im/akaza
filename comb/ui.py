@@ -41,7 +41,7 @@ logging.info(f"Loading user dictionary: {configdir}")
 user_dict = UserLanguageModel(os.path.join(configdir, 'user-dict'))
 logging.info("Loaded user dictionary")
 
-system_dict = SystemDict()
+system_dict = SystemDict.create()
 logging.info("Loaded system dictionary")
 
 try:
