@@ -1,6 +1,11 @@
 import re
 from typing import Dict, List
 
+from comb import combromkan
+
+BOIN = ['a', 'i', 'u', 'e', 'o']
+
+LOWER_PATTERN = re.compile('[a-z]')
 
 def parse_skkdict(path: str, encoding: str = 'euc-jp'):
     nasi: Dict[str, List[str]] = {}
@@ -42,7 +47,7 @@ def write_skkdict(outfname: str, dict_ari, dict_nasi, encoding: str = 'utf-8'):
                 ofh.write("%s /%s/\n" % (yomi, '/'.join(kanjis)))
 
 
-def merge_skkdict(dicts):
+def merge_skkdict(dicts: List[Dict[str, List[str]]]) -> Dict[str, List[str]]:
     result = {}
 
     for dic in dicts:
@@ -55,3 +60,26 @@ def merge_skkdict(dicts):
 
     return result
 
+
+def expand_okuri(kana: str, kanjis: List[str]):
+    if kana[-1].isalpha():
+        if kana[-1] in BOIN:
+            okuri = combromkan.to_hiragana(kana[-1])
+            yield kana[:-1] + okuri, [kanji + okuri for kanji in kanjis]
+        else:
+            for b in BOIN:
+                okuri = combromkan.to_hiragana(kana[-1] + b)
+                if LOWER_PATTERN.match(okuri):
+                    # wu のように、変換できないものは無視する。
+                    continue
+                yield kana[:-1] + okuri, [kanji + okuri for kanji in kanjis]
+    else:
+        yield kana, kanjis
+
+
+def ari2nasi(src):
+    retval = {}
+    for kana, kanjis in src.items():
+        for kkk, vvv in expand_okuri(kana, kanjis):
+            retval[kkk] = vvv
+    return retval

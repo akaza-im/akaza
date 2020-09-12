@@ -1,0 +1,3 @@
+[submodule "model/skk-dev-dict"]
+	path = model/skk-dev-dict
+	url = https://github.com/skk-dev/dict.git

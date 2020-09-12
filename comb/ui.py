@@ -606,11 +606,11 @@ class CombIBusEngine(IBus.Engine):
         self.update_lookup_table(self.lookup_table, visible)
 
     def do_focus_in(self):
-        self.logger.debug("focus_in")
+        # self.logger.debug("focus_in")
         self.register_properties(self.prop_list)
 
     def do_focus_out(self):
-        self.logger.debug("focus_out")
+        # self.logger.debug("focus_out")
         self.do_reset()
 
     def do_reset(self):

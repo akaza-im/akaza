@@ -30,12 +30,12 @@ comb/config.py: comb/config.py.in
 model/jawiki.1gram: model/bin/create-ngram-from-json.py
 	make -C model jawiki.1gram
 
-model/SKK-JISYO.jawiki:
-	make -C model SKK-JISYO.jawiki
+model/system_dict.trie:
+	make -C model system_dict.trie
 
-install-dict: model/SKK-JISYO.jawiki
+install-dict: model/system_dict.trie
 	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-comb/dictionary
-	install -p -m 0644 model/SKK-JISYO.jawiki $(DESTDIR)$(DATADIR)/ibus-comb/dictionary/
+	install -p -m 0644 model/system_dict.trie $(DESTDIR)$(DATADIR)/ibus-comb/dictionary/
 
 install: all comb/config.py model/jawiki.1gram install-dict
 	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-comb/comb $(DESTDIR)$(SYSCONFDIR)/xdg/comb $(DESTDIR)$(DATADIR)/ibus/component $(DESTDIR)$(DATADIR)/ibus-comb/model $(DESTDIR)$(DATADIR)/ibus-comb/dictionary
@@ -54,7 +54,7 @@ install: all comb/config.py model/jawiki.1gram install-dict
 	install -m 0644 comb/engine.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb/ui.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb/user_language_model.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
-	install -m 0644 comb/sytem_language_model.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
+	install -m 0644 comb/system_language_model.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb/system_dict.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb.xml $(DESTDIR)$(DATADIR)/ibus/component
 
