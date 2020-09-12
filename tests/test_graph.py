@@ -47,6 +47,8 @@ logging.basicConfig(level=logging.DEBUG)
     ('ぜんぶでてるやつ', '全部でてる奴'),
     ('えらべる', '選べる'),
     ('そうみたいですね', 'そうみたいですね'),
+    ('きめつのやいば', '鬼滅の刃'),
+    ('れいわ', '令和'),
 ])
 def test_wnn(src, expected):
     ht = dict(lookup(src, system_dict))

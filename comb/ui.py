@@ -128,7 +128,7 @@ class CombIBusEngine(IBus.Engine):
             return False
 
     def _do_process_key_event(self, keyval, keycode, state):
-        self.logger.debug("process_key_event(%04x, %04x, %04x)" % (keyval, keycode, state))
+        # self.logger.debug("process_key_event(%04x, %04x, %04x)" % (keyval, keycode, state))
 
         # ignore key release events
         is_press = ((state & IBus.ModifierType.RELEASE_MASK) == 0)
@@ -614,8 +614,14 @@ class CombIBusEngine(IBus.Engine):
         self.do_reset()
 
     def do_reset(self):
-        self.logger.debug("reset")
+        # self.logger.debug("reset")
         self.preedit_string = ''
+        self.force_selected_clause = []
+        self.clauses = []
+        self.current_clause = 0
+        self.lookup_table.clear()
+        self.hide_auxiliary_text()
+        self.hide_lookup_table()
 
     def do_property_activate(self, prop_name):
         self.logger.debug("PropertyActivate(%s)" % prop_name)

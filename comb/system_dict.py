@@ -78,7 +78,7 @@ class SystemDict:
             for kana, kanjis in src.items():
                 for kkk, vvv in expand_okuri(kana, kanjis):
                     retval[kkk] = vvv
-            return retval
+            return retval攪
 
         ari_dictionary = merge_skkdict([d[0] for d in dictionaries])
         nasi_dictionary = merge_skkdict(
