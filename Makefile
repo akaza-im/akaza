@@ -45,6 +45,8 @@ install: all comb/config.py model/jawiki.1gram install-dict
 	install -m 0644 comb.svg $(DESTDIR)$(DATADIR)/ibus-comb
 	install -m 0644 comb/__init__.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb/graph.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
+	install -m 0644 comb/language_model.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
+	install -m 0644 comb/node.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb/config.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb/skkdict.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb/combromkan.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
@@ -62,6 +64,8 @@ uninstall:
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/skkdict.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/combromkan.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/graph.py
+	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/language_model.py
+	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/node.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/ui.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/user_dict.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/system_dict.py

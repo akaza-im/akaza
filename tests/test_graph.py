@@ -1,9 +1,14 @@
+from tempfile import TemporaryDirectory
+
 from comb.combromkan import to_hiragana
 import pytest
 import marisa_trie
 from comb.system_dict import SystemDict
-from comb.graph import lookup, graph_construct, viterbi, LanguageModel
+from comb.graph import lookup, graph_construct, viterbi
+from comb.language_model import LanguageModel
 import logging
+
+from comb.user_dict import UserDict
 
 unigram_score = marisa_trie.RecordTrie('@f')
 unigram_score.load('model/jawiki.1gram')
@@ -11,7 +16,10 @@ unigram_score.load('model/jawiki.1gram')
 bigram_score = marisa_trie.RecordTrie('@f')
 bigram_score.load('model/jawiki.2gram')
 
-language_model = LanguageModel(unigram_score, bigram_score)
+tmpdir = TemporaryDirectory()
+user_dict = UserDict(tmpdir.name)
+
+language_model = LanguageModel(unigram_score, bigram_score, user_dict)
 
 system_dict = SystemDict()
 
