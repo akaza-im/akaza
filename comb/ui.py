@@ -16,7 +16,7 @@ from jaconv import jaconv
 
 from comb import combromkan
 from comb.engine import Comb
-from comb.graph import Node
+from comb.node import Node
 from comb.user_dict import UserDict
 from comb.system_dict import SystemDict
 

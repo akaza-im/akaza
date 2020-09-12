@@ -1,6 +1,6 @@
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
-from comb.graph import Node
+from comb.node import Node
 from comb.user_dict import UserDict
 import marisa_trie
 

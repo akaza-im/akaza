@@ -1,42 +1,14 @@
+import logging
 import sys
 from logging import Logger
 from typing import Dict, List
-import marisa_trie
-import math
-import logging
+
 import jaconv
-import functools
+import marisa_trie
+
+from comb.language_model import LanguageModel
+from comb.node import Node
 from comb.system_dict import SystemDict
-
-DEFAULT_SCORE = [(math.log10(0.00000000001),)]
-
-
-class Node:
-    cost: float
-
-    def __init__(self, start_pos, word, yomi):
-        self.start_pos = start_pos
-        self.word = word
-        self.yomi = yomi
-        self.prev = None
-
-    def __repr__(self):
-        return f"<Node: start_pos={self.start_pos}, word={self.word}," \
-               f" cost={self.cost}, prev={self.prev.word if self.prev else '-'} yomi={self.yomi}>"
-
-    def is_bos(self):
-        return self.word == '<S>'
-
-    def is_eos(self):
-        return self.word == '</S>'
-
-    def get_key(self) -> str:
-        if self.is_bos():
-            return '<S>'
-        elif self.is_eos():
-            return '</S>'
-        else:
-            return f"{self.word}/{self.yomi}"
 
 
 class Graph:
@@ -162,27 +134,6 @@ def graph_construct(s, ht, force_selected_clause: List[slice] = None) -> Graph:
                     # graph.append(j, Node(j, yomi, yomi, unigram_score=unigram_score, bigram_score=bigram_score))
 
     return graph
-
-
-class LanguageModel:
-    def __init__(self,
-                 system_unigram_score: marisa_trie.RecordTrie,
-                 system_bigram_score: marisa_trie.RecordTrie):
-        self.system_bigram_score = system_bigram_score
-        self.system_unigram_score = system_unigram_score
-
-    def calc_node_cost(self, node: Node) -> float:
-        if node.is_bos():
-            return 0
-        elif node.is_eos():
-            return 0
-        else:
-            return self.system_unigram_score.get(node.get_key(), DEFAULT_SCORE)[0][0]
-
-    @functools.lru_cache
-    def calc_bigram_cost(self, prev_node, next_node) -> float:
-        # self → node で処理する。
-        return self.system_bigram_score.get(f"{prev_node.get_key()}\t{next_node.get_key()}", DEFAULT_SCORE)[0][0]
 
 
 def viterbi(graph: Graph, language_model: LanguageModel) -> List[List[Node]]:

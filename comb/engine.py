@@ -9,7 +9,9 @@ from comb import combromkan
 
 from comb.system_dict import SystemDict
 from comb.user_dict import UserDict
-from comb.graph import graph_construct, viterbi, lookup, Node, LanguageModel
+from comb.graph import graph_construct, viterbi, lookup
+from comb.node import Node
+from comb.language_model import LanguageModel
 from comb.config import MODEL_DIR
 import logging
 import marisa_trie
@@ -40,7 +42,7 @@ class Comb:
         bigram_score = marisa_trie.RecordTrie('@f')
         bigram_score.load(f"{MODEL_DIR}/jawiki.2gram")
 
-        self.language_model = LanguageModel(unigram_score, bigram_score)
+        self.language_model = LanguageModel(unigram_score, bigram_score, user_dict)
 
     # 連文節変換するバージョン。
     def convert2(self, src: str, force_selected_clause: List[slice] = None) -> List[List[Node]]:

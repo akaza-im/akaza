@@ -1,10 +1,11 @@
 import logging
+import math
 import os
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from atomicwrites import atomic_write
 
-from comb.graph import Node
+from comb.node import Node
 
 
 # ユーザー辞書。
@@ -56,3 +57,9 @@ class UserDict:
                 count = self.unigram[kanji_kana]
                 f.write(f"{kanji_kana} {count}")
         self.logger.info(f"SAVED {self.path}")
+
+    def get_unigram_cost(self, key: str) -> Optional[float]:
+        if key in self.unigram:
+            count = self.unigram[key]
+            return math.log10(count / self.total)
+        return None
