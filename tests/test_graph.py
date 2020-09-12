@@ -8,6 +8,7 @@ from comb.graph import lookup, graph_construct, viterbi
 from comb.language_model import LanguageModel
 import logging
 
+from comb.system_language_model import SystemLanguageModel
 from comb.user_language_model import UserLanguageModel
 
 unigram_score = marisa_trie.RecordTrie('@f')
@@ -16,10 +17,12 @@ unigram_score.load('model/jawiki.1gram')
 bigram_score = marisa_trie.RecordTrie('@f')
 bigram_score.load('model/jawiki.2gram')
 
-tmpdir = TemporaryDirectory()
-user_dict = UserLanguageModel(tmpdir.name)
+system_language_model = SystemLanguageModel(unigram_score, bigram_score)
 
-language_model = LanguageModel(unigram_score, bigram_score, user_dict)
+tmpdir = TemporaryDirectory()
+user_language_model = UserLanguageModel(tmpdir.name)
+
+language_model = LanguageModel(system_language_model, user_language_model=user_language_model)
 
 system_dict = SystemDict()
 

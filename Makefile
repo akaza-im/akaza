@@ -54,6 +54,7 @@ install: all comb/config.py model/jawiki.1gram install-dict
 	install -m 0644 comb/engine.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb/ui.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb/user_language_model.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
+	install -m 0644 comb/sytem_language_model.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb/system_dict.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
 	install -m 0644 comb.xml $(DESTDIR)$(DATADIR)/ibus/component
 
@@ -68,6 +69,7 @@ uninstall:
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/node.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/ui.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/user_language_model.py
+	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/system_language_model.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/system_dict.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/ibus.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/model/jawiki.1gram
