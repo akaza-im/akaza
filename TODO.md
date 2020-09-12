@@ -7,11 +7,12 @@
 
 - support 3gram(必要?)
 - 2gram のデータがデカすぎる。libkkc と同等の圧縮をすべき
-- User dictionary learner from text file or web.
+- ユーザー言語モデル学習機 from text file or web.
   - クローラーをかく？
 - ユーザー辞書機能を実装する
 - 文節として、一文字の平仮名のみになったものに関しては、連結してしまった方が良いのではないだろうか？
 - packaging to arch linux.
+- きーばいんでぃんぐを設定可能に。
 
 - 変な変換
   - ドンだけと"bきゅう" が "B級" にならない
