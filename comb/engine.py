@@ -9,7 +9,7 @@ from comb import combromkan
 
 from comb.system_dict import SystemDict
 from comb.user_dict import UserDict
-from comb.graph import graph_construct, viterbi, lookup, Node
+from comb.graph import graph_construct, viterbi, lookup, Node, LanguageModel
 from comb.config import MODEL_DIR
 import logging
 import marisa_trie
@@ -39,6 +39,7 @@ class Comb:
 
         self.bigram_score = marisa_trie.RecordTrie('@f')
         self.bigram_score.load(f"{MODEL_DIR}/jawiki.2gram")
+        self.language_model = LanguageModel(self.unigram_score, self.bigram_score)
 
     # 連文節変換するバージョン。
     def convert2(self, src: str, force_selected_clause: List[slice] = None) -> List[List[Node]]:
@@ -68,10 +69,10 @@ class Comb:
 
         t0 = time.time()
         ht = dict(lookup(hiragana, self.system_dict))
-        graph = graph_construct(hiragana, ht, self.unigram_score, self.bigram_score, force_selected_clause)
+        graph = graph_construct(hiragana, ht, force_selected_clause)
         self.logger.info(
             f"graph_constructed: src={src} hiragana={hiragana} katakana={katakana}: {time.time() - t0} seconds")
-        clauses = viterbi(graph, self.unigram_score, self.bigram_score)
+        clauses = viterbi(graph, self.language_model)
         self.logger.info(
             f"converted: src={src} hiragana={hiragana} katakana={katakana}: {time.time() - t0} seconds")
 
@@ -107,7 +108,7 @@ class Comb:
 
         try:
             ht = dict(lookup(hiragana, self.system_dict))
-            graph = graph_construct(hiragana, ht, self.unigram_score, self.bigram_score)
+            graph = graph_construct(hiragana, ht)
             got = viterbi(graph)
 
             phrase = ''.join([x.word for x in got if not x.is_eos()])
