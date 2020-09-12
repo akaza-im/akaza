@@ -2,7 +2,13 @@
 
 Yet another kana-kanji-converter on IBus, written in Python.
 
-統計的かな漢字変換です。
+統計的かな漢字変換です。ibus の変換システムは Python でかけるので、かいてみました。
+
+## 特徴
+
+ * Python で書いてあるので、拡張が容易です。
+ * 統計的かな漢字変換モデルを採用しています
+ * 言語モデルの生成元は日本語 Wikipedia のみを,
 
 ## Dependencies
 
