@@ -104,7 +104,7 @@ def graph_construct(s, ht, force_selected_clause: List[slice] = None) -> Graph:
             yomi = s[force_slice]
             i = force_slice.start
             j = force_slice.stop
-            print(f"XXXX={s} {force_slice} {yomi}")
+            # print(f"XXXX={s} {force_slice} {yomi}")
             if yomi in ht:
                 # print(f"YOMI YOMI: {yomi} {ht[yomi]}")
                 for kanji in ht[yomi]:
@@ -112,9 +112,10 @@ def graph_construct(s, ht, force_selected_clause: List[slice] = None) -> Graph:
                     graph.append(index=j, node=node)
             else:
                 # print(f"NO YOMI: {yomi}")
+                if len(yomi) == 0:
+                    raise AssertionError(f"len(yomi) should not be 0. {s}, {force_slice}")
                 node = Node(i, yomi, yomi)
                 graph.append(index=j, node=node)
-            i = j
     else:
         for i in range(0, len(s)):
             # print(f"LOOP {i}")
@@ -158,7 +159,7 @@ def viterbi(graph: Graph, language_model: LanguageModel) -> List[List[Node]]:
             else:
                 for prev_node in prev_nodes:
                     if prev_node.cost is None:
-                        logging.error(f"Missing prev_node.cost: {prev_node}")
+                        logging.error(f"Missing prev_node.cost--- {prev_node}")
                     tmp_cost = prev_node.cost + language_model.calc_bigram_cost(prev_node, node) + node_cost
                     if cost < tmp_cost:
                         cost = tmp_cost
@@ -178,6 +179,7 @@ def viterbi(graph: Graph, language_model: LanguageModel) -> List[List[Node]]:
     last_node = None
     while not node.is_bos():
         if node == node.prev:
+            print(graph)
             raise AssertionError(f"node==node.prev: {node}")
 
         if not node.is_eos():

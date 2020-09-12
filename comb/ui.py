@@ -437,6 +437,7 @@ class CombIBusEngine(IBus.Engine):
                 self.force_selected_clause.append(
                     slice(node.start_pos, node.start_pos + len(node.yomi)))
 
+        self.force_selected_clause = [x for x in self.force_selected_clause if x.start != x.stop]
         self._update_candidates()
 
     def extend_clause_left(self):
@@ -451,6 +452,7 @@ class CombIBusEngine(IBus.Engine):
         if node.start_pos == 0:
             return False
 
+        # TODO: 一番左の文節にフォーカスがある場合、一番左の文節が短くなるべき。
         self.force_selected_clause = []
         for i, clause in enumerate(self.clauses):
             node = clause[0]
@@ -467,6 +469,7 @@ class CombIBusEngine(IBus.Engine):
                 self.force_selected_clause.append(
                     slice(node.start_pos, node.start_pos + len(node.yomi)))
 
+        self.force_selected_clause = [x for x in self.force_selected_clause if x.start != x.stop]
         self._update_candidates()
 
     def commit_string(self, text):
@@ -551,7 +554,7 @@ class CombIBusEngine(IBus.Engine):
             IBus.AttrType.BACKGROUND,
             0x00333333,
             bgstart,
-            bgstart+len(current_node.word)))
+            bgstart + len(current_node.word)))
         preedit_text = IBus.Text.new_from_string(text)
         preedit_text.set_attributes(preedit_attrs)
         self.update_preedit_text(preedit_text, len(text), len(text) > 0)
