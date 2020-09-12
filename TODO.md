@@ -8,11 +8,12 @@
 
 - support 3gram(必要?)
 - 2gram のデータがデカすぎる。libkkc と同等の圧縮をすべき
-- 青空文庫をコーパスとして使う?
-  - 古くさすぎるかも
-- クローラーをかく？
+- User dictionary learner from text file or web.
+  - クローラーをかく？
 - 絵文字辞書(`ビール` か `beer` で絵文字いれたい。)
 - ベースのシステム辞書は、marisa-trie 形式でビルドしたものをロードするようにした法が良いのではないか?
+  - user can add their own skk style dictionary.
+  - by configuration file
 - 文節として、一文字の平仮名のみになったものに関しては、連結してしまった方が良いのではないだろうか？
 
 - 変な変換
@@ -22,10 +23,13 @@
 
 ## Priority low
 
+- when user edit user dictionary, reload it
 - fcitx 対応
 - 設定画面の実装
 - 単語登録機能
 - 共起的なスコアをいれたい?
+- 青空文庫をコーパスとして使う?
+  - 古くさすぎるかも
 
 # DONE
 
