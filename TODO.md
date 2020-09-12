@@ -9,7 +9,6 @@
 - 2gram のデータがデカすぎる。libkkc と同等の圧縮をすべき
 - User dictionary learner from text file or web.
   - クローラーをかく？
-- 絵文字辞書(`ビール` か `beer` で絵文字いれたい。)
 - ベースのシステム辞書は、marisa-trie 形式でビルドしたものをロードするようにした法が良いのではないか?
   - user can add their own skk style dictionary.
   - by configuration file
@@ -22,7 +21,7 @@
 ## Priority low
 
 - when user edit user dictionary, reload it
-- fcitx 対応
+- fcitx 対応(python 以外で書き直さないと難しそう)
 - 設定画面の実装
 - 単語登録機能
 - 共起的なスコアをいれたい?
@@ -41,3 +40,4 @@
 - 平仮名語辞書もいるのかもしれない。
 - 分節の区切り箇所を自分で指定できるようにしたい。
 - 単語 2 gram を学習データとして記録できるようにする
+- 絵文字辞書(`ビール` か `beer` で絵文字いれたい。)

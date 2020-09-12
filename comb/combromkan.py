@@ -138,7 +138,7 @@ HEPBURNTAB_H = """ぁ      xa      あ      a      ぃ      xi      い      i  
 でゃ dhi でぃ dhi でゅ dhu でぇ dhe でょ dho
 
 てゃ	tha	てぃ	thi	てゅ	thu	てぇ	the	てょ	tho
-〜	z-	…	z.
+〜	z-	…	z.  ‥   z,
 ←	zh	↓	zj	↑	zk	→	zl
 
 。	.	、	,
@@ -151,8 +151,6 @@ def pairs(arr, size=2):
     for i in range(0, len(arr) - 1, size):
         yield arr[i:i + size]
 
-
-# Use Hiragana
 
 ROMKAN_H = {}
 
