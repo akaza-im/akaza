@@ -8,6 +8,7 @@ import jaconv
 from comb.language_model import LanguageModel
 from comb.node import Node
 from comb.system_dict import SystemDict
+from comb.user_language_model import UserLanguageModel
 
 
 class Graph:
@@ -67,7 +68,7 @@ class Graph:
         return self.d[0][0]
 
 
-def lookup(s, system_dict: SystemDict):
+def lookup(s, system_dict: SystemDict, user_language_model: UserLanguageModel):
     for i in range(0, len(s)):
         yomi = s[i:]
         # print(f"YOMI:::: {yomi}")
@@ -84,6 +85,10 @@ def lookup(s, system_dict: SystemDict):
                     kanjis.append(hira)
 
                 yield word, kanjis
+
+            if yomi not in words and user_language_model.get_unigram_cost(yomi):
+                # システム辞書に入ってないがユーザー言語モデルには入っているという場合は候補にいれる。
+                yield yomi, [yomi]
         else:
             # print(f"YOMI~~~~:::: {yomi}")
             targets = [yomi[0]]
