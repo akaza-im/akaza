@@ -34,12 +34,13 @@ class Comb:
         self.user_dict = user_dict
         self.system_dict = system_dict
 
-        self.unigram_score = marisa_trie.RecordTrie('@f')
-        self.unigram_score.load(f"{MODEL_DIR}/jawiki.1gram")
+        unigram_score = marisa_trie.RecordTrie('@f')
+        unigram_score.load(f"{MODEL_DIR}/jawiki.1gram")
 
-        self.bigram_score = marisa_trie.RecordTrie('@f')
-        self.bigram_score.load(f"{MODEL_DIR}/jawiki.2gram")
-        self.language_model = LanguageModel(self.unigram_score, self.bigram_score)
+        bigram_score = marisa_trie.RecordTrie('@f')
+        bigram_score.load(f"{MODEL_DIR}/jawiki.2gram")
+
+        self.language_model = LanguageModel(unigram_score, bigram_score)
 
     # 連文節変換するバージョン。
     def convert2(self, src: str, force_selected_clause: List[slice] = None) -> List[List[Node]]:
