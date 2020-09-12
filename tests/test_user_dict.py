@@ -1,7 +1,7 @@
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 from comb.node import Node
-from comb.user_dict import UserDict
+from comb.user_language_model import UserLanguageModel
 import marisa_trie
 
 unigram_score = marisa_trie.RecordTrie('@f')
@@ -13,7 +13,7 @@ bigram_score.load('model/jawiki.2gram')
 
 def test_read():
     tmpdir = TemporaryDirectory()
-    d = UserDict(tmpdir.name + "/foobar.dict")
+    d = UserLanguageModel(tmpdir.name + "/foobar.dict")
     d.add_entry([Node(start_pos=0, word='単語', yomi='たんご')])
     d.add_entry([Node(start_pos=0, word='単語', yomi='たんご')])
     d.add_entry([Node(start_pos=0, word='熟語', yomi='じゅくご')])
@@ -23,7 +23,7 @@ def test_read():
 
 def test_read2():
     tmpdir = TemporaryDirectory()
-    d = UserDict(tmpdir.name + "/foobar.dict")
+    d = UserLanguageModel(tmpdir.name + "/foobar.dict")
     d.add_entry([
         Node(start_pos=0, word='私', yomi='わたし'),
         Node(start_pos=1, word='だよ', yomi='だよ'),

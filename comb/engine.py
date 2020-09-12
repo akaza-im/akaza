@@ -8,7 +8,7 @@ import jaconv
 from comb import combromkan
 
 from comb.system_dict import SystemDict
-from comb.user_dict import UserDict
+from comb.user_language_model import UserLanguageModel
 from comb.graph import graph_construct, viterbi, lookup
 from comb.node import Node
 from comb.language_model import LanguageModel
@@ -29,7 +29,7 @@ class Comb:
     logger: Logger
     dictionaries: List[Any]
 
-    def __init__(self, user_dict: UserDict, system_dict: SystemDict,
+    def __init__(self, user_dict: UserLanguageModel, system_dict: SystemDict,
                  logger: Logger = logging.getLogger(__name__)):
         self.logger = logger
         self.dictionaries = []

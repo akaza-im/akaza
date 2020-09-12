@@ -17,7 +17,7 @@ from jaconv import jaconv
 from comb import combromkan
 from comb.engine import Comb
 from comb.node import Node
-from comb.user_dict import UserDict
+from comb.user_language_model import UserLanguageModel
 from comb.system_dict import SystemDict
 
 MODE_KANA = 1
@@ -38,7 +38,7 @@ del n
 configdir = os.path.join(GLib.get_user_config_dir(), 'ibus-comb')
 pathlib.Path(os.path.join(configdir, 'user-dict')).mkdir(parents=True, exist_ok=True)
 logging.info(f"Loading user dictionary: {configdir}")
-user_dict = UserDict(os.path.join(configdir, 'user-dict'))
+user_dict = UserLanguageModel(os.path.join(configdir, 'user-dict'))
 logging.info("Loaded user dictionary")
 
 system_dict = SystemDict()

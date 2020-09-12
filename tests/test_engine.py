@@ -6,10 +6,10 @@ import marisa_trie
 from comb.system_dict import SystemDict
 from comb.graph import lookup, graph_construct, viterbi
 from comb.engine import Comb
-from comb.user_dict import UserDict
+from comb.user_language_model import UserLanguageModel
 
 tmpfile = NamedTemporaryFile(delete=False)
-user_dict = UserDict(tmpfile.name)
+user_dict = UserLanguageModel(tmpfile.name)
 system_dict = SystemDict()
 
 comb = Comb(user_dict=user_dict, system_dict=system_dict)
