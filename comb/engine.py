@@ -60,7 +60,7 @@ class Comb:
         self.logger.info(f"convert: src={src} hiragana={hiragana} katakana={katakana}")
 
         t0 = time.time()
-        ht = dict(lookup(hiragana, self.system_dict))
+        ht = dict(lookup(hiragana, self.system_dict, self.user_language_model))
         graph = graph_construct(hiragana, ht, force_selected_clause)
         self.logger.info(
             f"graph_constructed: src={src} hiragana={hiragana} katakana={katakana}: {time.time() - t0} seconds")

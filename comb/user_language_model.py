@@ -97,6 +97,9 @@ class UserLanguageModel:
             return math.log10(count / self.total)
         return None
 
+    def has_unigram_cost(self, key: str) -> bool:
+        return key in self.unigram
+
     def get_bigram_cost(self, node1: Node, node2: Node) -> Optional[float]:
         key1 = node1.get_key()
         key2 = node2.get_key()
