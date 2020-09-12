@@ -39,7 +39,7 @@ def test_wnn(src, expected):
     ht = dict(lookup(src, system_dict))
     graph = graph_construct(src, ht, unigram_score, bigram_score)
 
-    clauses = viterbi(graph)
+    clauses = viterbi(graph, unigram_score, bigram_score)
     got = ''.join([clause[0].word for clause in clauses])
 
     assert got == expected
