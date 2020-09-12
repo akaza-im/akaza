@@ -1,26 +1,18 @@
+import logging
+import re
+import time
 from logging import Logger
-from typing import List, Any, Dict
-
-import os
+from typing import List, Any
 
 import jaconv
 
 from comb import combromkan
-
+from comb.graph import graph_construct, viterbi, lookup
+from comb.language_model import LanguageModel
+from comb.node import Node
 from comb.system_dict import SystemDict
 from comb.system_language_model import SystemLanguageModel
 from comb.user_language_model import UserLanguageModel
-from comb.graph import graph_construct, viterbi, lookup
-from comb.node import Node
-from comb.language_model import LanguageModel
-from comb.config import MODEL_DIR
-import logging
-import marisa_trie
-import time
-
-from datetime import date
-
-import re
 
 # 子音だが、N は NN だと「ん」になるので処理しない。
 TRAILING_CONSONANT_PATTERN = re.compile(r'^(.*?)([qwrtypsdfghjklzxcvbm]+)$')
