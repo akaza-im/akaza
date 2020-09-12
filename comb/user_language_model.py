@@ -8,12 +8,11 @@ from atomicwrites import atomic_write
 from comb.node import Node
 
 
-# ユーザー辞書。
+# ユーザーの言語モデル。
 #
-# カタカナなどの単語の追加辞書。
 # unigram score
 # bigram score
-class UserDict:
+class UserLanguageModel:
     unigram: Dict[str, int]
 
     def __init__(self, path, logger=logging.getLogger(__name__)):
