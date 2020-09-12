@@ -17,19 +17,19 @@ numcpu = multiprocessing.cpu_count()
 logging.info(f"numcpu={numcpu}")
 
 files = glob.glob('text/*/wiki_*')
+chunks = split(files, numcpu)
 
 t0 = time.time()
 
 finished = 0
 
 procs = []
-for file in files:
-    dst = file.replace('text/', 'dat/')
-    cmd = ['/bin/sh', '-c', f'''cat {file} | sed -e 's/<doc.*>//; s/<\/doc>//' | kytea -notag 1 > {dst}''']
+for chunk in chunks:
+    cmd = ['python', 'bin/wiki2text.py'] + chunk
     proc = subprocess.Popen(cmd)
     procs.append(proc)
 
-    logging.info(f"Run {cmd}")
+    # logging.info(f"Run {cmd}")
 
     while numcpu <= len(procs):
         for proc in procs:
