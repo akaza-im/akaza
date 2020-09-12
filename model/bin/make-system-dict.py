@@ -55,7 +55,7 @@ def main():
 
     for path, encoding in dictionary_sources:
         ari, nasi = parse_skkdict(path, encoding)
-        dicts.append(ari)
+        dicts.append(nasi)
         dicts.append(ari2nasi(ari))
 
     dicts.append(make_vocab_dict())
