@@ -1,18 +1,16 @@
 from tempfile import NamedTemporaryFile
 
-from comb.combromkan import to_hiragana
 import pytest
-import marisa_trie
-from comb.system_dict import SystemDict
-from comb.graph import lookup, graph_construct, viterbi
+
 from comb.engine import Comb
+from comb.system_dict import SystemDict
 from comb.user_language_model import UserLanguageModel
 
 tmpfile = NamedTemporaryFile(delete=False)
-user_dict = UserLanguageModel(tmpfile.name)
+user_language_model = UserLanguageModel(tmpfile.name)
 system_dict = SystemDict()
 
-comb = Comb(user_dict=user_dict, system_dict=system_dict)
+comb = Comb(user_language_model=user_language_model, system_dict=system_dict)
 
 
 @pytest.mark.parametrize('src, expected', [
