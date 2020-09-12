@@ -2,7 +2,7 @@ from comb.combromkan import to_hiragana
 import pytest
 import marisa_trie
 from comb.system_dict import SystemDict
-from comb.graph import lookup, graph_construct, viterbi
+from comb.graph import lookup, graph_construct, viterbi, LanguageModel
 import logging
 
 unigram_score = marisa_trie.RecordTrie('@f')
@@ -10,6 +10,8 @@ unigram_score.load('model/jawiki.1gram')
 
 bigram_score = marisa_trie.RecordTrie('@f')
 bigram_score.load('model/jawiki.2gram')
+
+language_model = LanguageModel(unigram_score, bigram_score)
 
 system_dict = SystemDict()
 
@@ -37,9 +39,9 @@ logging.basicConfig(level=logging.DEBUG)
 ])
 def test_wnn(src, expected):
     ht = dict(lookup(src, system_dict))
-    graph = graph_construct(src, ht, unigram_score, bigram_score)
+    graph = graph_construct(src, ht)
 
-    clauses = viterbi(graph, unigram_score, bigram_score)
+    clauses = viterbi(graph, language_model)
     got = ''.join([clause[0].word for clause in clauses])
 
     assert got == expected
@@ -49,7 +51,7 @@ def test_graph_extend():
     src = 'はなか'
     ht = dict(lookup(src, system_dict))
     # (0,2) の文節を強制指定する
-    graph = graph_construct(src, ht, unigram_score, bigram_score, [
+    graph = graph_construct(src, ht, [
         slice(0, 2),
         slice(2, 3)
     ])

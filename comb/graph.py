@@ -43,7 +43,7 @@ class Graph:
     logger: Logger
     d: Dict[int, List[Node]]
 
-    def __init__(self, size: int, unigram_score, bigram_score, logger=logging.getLogger(__name__)):
+    def __init__(self, size: int, logger=logging.getLogger(__name__)):
         self.d = {
             0: [Node(start_pos=-9999, word='<S>', yomi='<S>')],
             size + 1: [
@@ -121,8 +121,8 @@ def lookup(s, system_dict: SystemDict):
 
 
 # n文字目でおわる単語リストを作成する
-def graph_construct(s, ht, unigram_score, bigram_score, force_selected_clause: List[slice] = None) -> Graph:
-    graph = Graph(size=len(s), unigram_score=unigram_score, bigram_score=bigram_score)
+def graph_construct(s, ht, force_selected_clause: List[slice] = None) -> Graph:
+    graph = Graph(size=len(s))
 
     if force_selected_clause:
         for force_slice in force_selected_clause:
@@ -164,21 +164,31 @@ def graph_construct(s, ht, unigram_score, bigram_score, force_selected_clause: L
     return graph
 
 
-def calc_bigram_cost(prev_node, next_node, bigram_score: marisa_trie.RecordTrie) -> float:
-    # self → node で処理する。
-    return bigram_score.get(f"{prev_node.get_key()}\t{next_node.get_key()}", DEFAULT_SCORE)[0][0]
+class LanguageModel:
+    def __init__(self,
+                 system_unigram_score: marisa_trie.RecordTrie,
+                 system_bigram_score: marisa_trie.RecordTrie):
+        self.system_bigram_score = system_bigram_score
+        self.system_unigram_score = system_unigram_score
+
+    def calc_node_cost(self, node: Node) -> float:
+        if node.is_bos():
+            return 0
+        elif node.is_eos():
+            return 0
+        else:
+            return self.system_unigram_score.get(node.get_key(), DEFAULT_SCORE)[0][0]
+
+    @functools.lru_cache
+    def calc_bigram_cost(self, prev_node, next_node) -> float:
+        # self → node で処理する。
+        return self.system_bigram_score.get(f"{prev_node.get_key()}\t{next_node.get_key()}", DEFAULT_SCORE)[0][0]
 
 
-def calc_node_cost(node: Node, system_unigram_score) -> float:
-    if node.is_bos():
-        return 0
-    elif node.is_eos():
-        return 0
-    else:
-        return system_unigram_score.get(node.get_key(), DEFAULT_SCORE)[0][0]
-
-
-def viterbi(graph: Graph, unigram_score, bigram_score: marisa_trie.RecordTrie) -> List[List[Node]]:
+def viterbi(graph: Graph, language_model: LanguageModel) -> List[List[Node]]:
+    """
+    ビタビアルゴリズムにもとづき、最短の経路を求めて、N-Best 解を求める。
+    """
     # BOS にスコアを設定。
     graph.get_bos().cost = 0
 
@@ -186,7 +196,7 @@ def viterbi(graph: Graph, unigram_score, bigram_score: marisa_trie.RecordTrie) -
         # print(f"fFFFF {nodes}")
         for node in nodes:
             # print(f"  PPPP {node}")
-            node_cost = calc_node_cost(node, unigram_score)
+            node_cost = language_model.calc_node_cost(node)
             # print(f"  NC {node.word} {node_cost}")
             cost = -sys.maxsize
             shortest_prev = None
@@ -198,7 +208,7 @@ def viterbi(graph: Graph, unigram_score, bigram_score: marisa_trie.RecordTrie) -
                 for prev_node in prev_nodes:
                     if prev_node.cost is None:
                         logging.error(f"Missing prev_node.cost: {prev_node}")
-                    tmp_cost = prev_node.cost + calc_bigram_cost(prev_node, node, bigram_score) + node_cost
+                    tmp_cost = prev_node.cost + language_model.calc_bigram_cost(prev_node, node) + node_cost
                     if cost < tmp_cost:
                         cost = tmp_cost
                         shortest_prev = prev_node
@@ -222,7 +232,7 @@ def viterbi(graph: Graph, unigram_score, bigram_score: marisa_trie.RecordTrie) -
         if not node.is_eos():
             # 他の候補を追加する。
             nodes = sorted([n for n in graph.get_item(node.start_pos + len(node.yomi)) if node.yomi == n.yomi],
-                           key=lambda x: x.cost + calc_bigram_cost(x, last_node, bigram_score), reverse=True)
+                           key=lambda x: x.cost + language_model.calc_bigram_cost(x, last_node), reverse=True)
             result.append(nodes)
 
         last_node = node
@@ -269,7 +279,7 @@ def main():
                 'き': ['き'],
                 'ゅ': ['ゅ'],
             }
-        graph = graph_construct(src, ht, unigram_score, bigram_score)
+        graph = graph_construct(src, ht)
 
         got = viterbi(graph)
         # print(graph)
