@@ -167,8 +167,7 @@ class CombIBusEngine(IBus.Engine):
                     # サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
                     self.preedit_string = re.sub('(?:z[hjkl.-]|n+|[kstnhmyrwgzjdbp]?[aiueo]|.)$', '',
                                                  self.preedit_string)
-
-                # 変換していないときのレンダリングをする。
+               # 変換していないときのレンダリングをする。
                 self.update_preedit_text_before_henkan()
                 return True
             elif keyval in num_keys and self.in_henkan_mode():
@@ -265,7 +264,6 @@ class CombIBusEngine(IBus.Engine):
             return False
 
         return False
-
     def in_henkan_mode(self):
         return self.lookup_table.get_number_of_candidates() > 0
 
@@ -567,6 +565,10 @@ class CombIBusEngine(IBus.Engine):
         """
         無変換状態で、どんどん入力していくフェーズ。
         """
+        
+        if len(self.preedit_string) == 0:
+            self.hide_preedit_text()
+            return
 
         # 平仮名にする。
         text = combromkan.to_hiragana(self.preedit_string)
