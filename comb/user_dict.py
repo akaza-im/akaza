@@ -55,7 +55,7 @@ class UserDict:
         with atomic_write(self.unigram_path(), overwrite=True) as f:
             for kanji_kana in sorted(self.unigram.keys()):
                 count = self.unigram[kanji_kana]
-                f.write(f"{kanji_kana} {count}")
+                f.write(f"{kanji_kana}\t{count}\n")
         self.logger.info(f"SAVED {self.path}")
 
     def get_unigram_cost(self, key: str) -> Optional[float]:
