@@ -42,8 +42,8 @@ class Comb:
         self.language_model = LanguageModel(system_language_model, user_language_model)
 
     # 連文節変換するバージョン。
-    def convert2(self, src: str, force_selected_clause: List[slice] = None) -> List[List[Node]]:
-        self.logger.info(f"convert2: {force_selected_clause}")
+    def convert(self, src: str, force_selected_clause: List[slice] = None) -> List[List[Node]]:
+        self.logger.info(f"convert: {force_selected_clause}")
 
         if len(src) > 0 and src[0].isupper() and not force_selected_clause:
             # 最初の文字が大文字で、文節の強制指定がない場合、アルファベット強制入力とする。
@@ -85,54 +85,3 @@ class Comb:
             return clauses
         else:
             return clauses
-
-    # 連文節しないバージョン(しばらくのあいだ、残しておく。)
-    # TODO: remove this.
-    def convert(self, src):
-        hiragana: str = combromkan.to_hiragana(src)
-        katakana: str = jaconv.hira2kata(hiragana)
-
-        self.logger.info(f"convert: src={src} hiragana={hiragana} katakana={katakana}")
-
-        candidates = [[hiragana, hiragana]]
-
-#        for e in self.user_dict.get_candidates(src, hiragana):
-#            if e not in candidates:
-#                candidates.append(e)
-
-        if hiragana == 'きょう':
-            # こういう類の特別なワードは、そのまま記憶してはいけない。。。
-            today = date.today()
-            for dt in [today.strftime(fmt) for fmt in ['%Y-%m-%d', '%Y年%m月%d日']]:
-                candidates.append([dt, dt])
-
-        try:
-            ht = dict(lookup(hiragana, self.system_dict))
-            graph = graph_construct(hiragana, ht)
-            got = viterbi(graph)
-
-            phrase = ''.join([x.word for x in got if not x.is_eos()])
-
-            self.logger.info(f"Got phrase: {phrase}")
-
-            if [phrase, phrase] not in candidates:
-                candidates.append([phrase, phrase])
-        except:
-            self.logger.error(f"Cannot convert: {hiragana} {katakana}",
-                              exc_info=True)
-
-        if [katakana, katakana] not in candidates:
-            candidates.append([katakana, katakana])
-
-        for e in [[x, x] for x in self.system_dict.get_candidates(src, hiragana)]:
-            if e not in candidates:
-                candidates.append(e)
-
-        if src[0].isupper():
-            # 先頭が大文字の場合、それを先頭にもってくる。
-            candidates.insert(0, [src, src])
-        else:
-            # そうじゃなければ、末尾にいれる。
-            candidates.append([src, src])
-
-        return candidates

@@ -25,13 +25,13 @@ comb = Comb(user_language_model=user_language_model, system_dict=system_dict)
     ('IME', 'IME'),
 ])
 def test_wnn(src, expected):
-    clauses = comb.convert2(src)
+    clauses = comb.convert(src)
     got = ''.join([clause[0].word for clause in clauses])
     assert got == expected
 
 
 def test_wnn2():
-    clauses = comb.convert2("わたし")
+    clauses = comb.convert("わたし")
     hiragana_len = len([True for node in clauses[0] if node.word == 'わたし'])
     for node in clauses[0]:
         print(node)

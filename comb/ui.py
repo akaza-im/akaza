@@ -513,7 +513,7 @@ class CombIBusEngine(IBus.Engine):
     def _update_candidates(self):
         if len(self.preedit_string) > 0:
             # 変換をかける
-            self.clauses = self.comb.convert2(self.preedit_string, self.force_selected_clause)
+            self.clauses = self.comb.convert(self.preedit_string, self.force_selected_clause)
         else:
             self.clauses = []
         self.create_lookup_table()
