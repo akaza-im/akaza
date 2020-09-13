@@ -8,7 +8,8 @@ Yet another kana-kanji-converter on IBus, written in Python.
 
  * Python で書いてあるので、拡張が容易です。
  * 統計的かな漢字変換モデルを採用しています
- * 言語モデルの生成元は日本語 Wikipedia のみを,
+ * 言語モデルの生成元は日本語 Wikipedia のみをベースとしています。
+  * kytea で分析した結果をベースに 2gram 言語モデルを構築しています。
 
 ## Dependencies
 
@@ -34,7 +35,9 @@ wikipedia の全データをダウンロードして言語モデルと辞書の�
  * ある程度 CPU/Memory が潤沢なシステムを想定しています。
    * メモリ8GB, CPU Intel core i5 程度を想定しています。
    * 現状は開発速度を優先しているために、メモリ容量を多めに消費するようになっています。
-
+ * なにか面白い改善方法が思いついたら、fork して実装できるように。
+   * 改造しやすい IME をめざす。
+ * 品詞を扱わなくてもよいようにした
 
 ## See also
 

@@ -10,7 +10,6 @@
 - ユーザー言語モデル学習機 from text file or web.
   - クローラーをかく？
 - ユーザー辞書機能を実装する
-- 文節として、一文字の平仮名のみになったものに関しては、連結してしまった方が良いのではないだろうか？
 - packaging to arch linux.
 - キーバインディングを設定可能に。
 - 設定候補の最後にアルファベットなどを入れる。
@@ -19,16 +18,21 @@
   - ドンだけと"bきゅう" が "B級" にならない
   - "どんだけとちかんなくてもわかりそうなもんだよねw"
 
+- release the package to github.
+
 ## Priority low
 
+- 文節として、一文字の平仮名のみになったものに関しては、連結してしまった方が良いのではないだろうか？
 - when user edit user dictionary, reload it
-- fcitx 対応(python 以外で書き直さないと難しそう)
 - 設定画面の実装
 - 単語登録機能
 - かな入力サポート
 
 ## priority very low
 
+- fcitx 対応(python 以外で書き直さないと難しそう)
+- When user language model is too big, purge data automatically.
+  - if the data is bigger than 1GB?
 - NICOLA support?
 - 共起的なスコアをいれたい?
 - 青空文庫をコーパスとして使う?
