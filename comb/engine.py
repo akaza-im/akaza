@@ -2,7 +2,7 @@ import logging
 import re
 import time
 from logging import Logger
-from typing import List, Any
+from typing import List, Any, Optional
 
 import jaconv
 
@@ -12,6 +12,7 @@ from comb.language_model import LanguageModel
 from comb.node import Node
 from comb.system_dict import SystemDict
 from comb.system_language_model import SystemLanguageModel
+from comb.user_dict import UserDict
 from comb.user_language_model import UserLanguageModel
 
 # 子音だが、N は NN だと「ん」になるので処理しない。
@@ -19,15 +20,19 @@ TRAILING_CONSONANT_PATTERN = re.compile(r'^(.*?)([qwrtypsdfghjklzxcvbm]+)$')
 
 
 class Comb:
+    user_dict: Optional[UserDict]
     logger: Logger
     dictionaries: List[Any]
 
     def __init__(self, user_language_model: UserLanguageModel, system_dict: SystemDict,
+                 user_dict: Optional[UserDict],
                  logger: Logger = logging.getLogger(__name__)):
+        assert user_language_model
         self.logger = logger
         self.dictionaries = []
         self.user_language_model = user_language_model
         self.system_dict = system_dict
+        self.user_dict = user_dict
 
         system_language_model = SystemLanguageModel.create()
 
@@ -60,7 +65,7 @@ class Comb:
         self.logger.info(f"convert: src={src} hiragana={hiragana} katakana={katakana}")
 
         t0 = time.time()
-        ht = dict(lookup(hiragana, self.system_dict, self.user_language_model))
+        ht = dict(lookup(hiragana, self.system_dict, self.user_language_model, self.user_dict))
         graph = graph_construct(hiragana, ht, force_selected_clause)
         self.logger.info(
             f"graph_constructed: src={src} hiragana={hiragana} katakana={katakana}: {time.time() - t0} seconds")

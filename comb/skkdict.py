@@ -7,6 +7,7 @@ BOIN = ['a', 'i', 'u', 'e', 'o']
 
 LOWER_PATTERN = re.compile('[a-z]')
 
+
 def parse_skkdict(path: str, encoding: str = 'euc-jp'):
     nasi: Dict[str, List[str]] = {}
     ari: Dict[str, List[str]] = {}

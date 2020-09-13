@@ -1,4 +1,5 @@
-from typing import List, Dict, Any
+from typing import List, Dict
+
 import gi
 
 gi.require_version('IBus', '1.0')
@@ -19,6 +20,7 @@ from comb.engine import Comb
 from comb.node import Node
 from comb.user_language_model import UserLanguageModel
 from comb.system_dict import SystemDict
+from comb.user_dict import load_user_dict_from_json_config
 
 MODE_KANA = 1
 MODE_ALPHA = 2
@@ -38,14 +40,27 @@ del n
 configdir = os.path.join(GLib.get_user_config_dir(), 'ibus-comb')
 pathlib.Path(os.path.join(configdir, 'user-dict')).mkdir(parents=True, exist_ok=True)
 logging.info(f"Loading user dictionary: {configdir}")
-user_dict = UserLanguageModel(os.path.join(configdir, 'user-dict'))
+user_language_model = UserLanguageModel(os.path.join(configdir, 'user-dict'))
 logging.info("Loaded user dictionary")
 
 system_dict = SystemDict.create()
 logging.info("Loaded system dictionary")
 
 try:
-    comb = Comb(user_dict, system_dict)
+    user_dict_conf_path = os.path.join(configdir, 'user-dict.json')
+    logging.info(f"user_dict_conf_path={user_dict_conf_path}")
+
+    user_dict = None
+    if os.path.exists(user_dict_conf_path):
+        logging.info(f"Loading '{user_dict_conf_path}'")
+        try:
+            user_dict = load_user_dict_from_json_config(user_dict_conf_path)
+        except:
+            logging.error("Cannot load user dictionary", exc_info=True)
+    else:
+        logging.info(f"'{user_dict_conf_path}' does not exist.")
+
+    comb = Comb(user_language_model, system_dict, user_dict)
     logging.info("Finished Comb.")
 except:
     logging.error("Cannot initialize.", exc_info=True)
@@ -57,6 +72,7 @@ except:
 # ----------------------------------------------------------------------
 
 class CombIBusEngine(IBus.Engine):
+    user_language_model: UserLanguageModel
     current_clause: int
     node_selected: Dict[int, int]
     clauses: List[List[Node]]
@@ -76,6 +92,7 @@ class CombIBusEngine(IBus.Engine):
         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
         self.prop_list = IBus.PropList()
         self.comb = comb
+        self.user_language_model = user_language_model
         self.user_dict = user_dict
         self.logger = logging.getLogger(__name__)
         self.mode = MODE_KANA
@@ -478,9 +495,9 @@ class CombIBusEngine(IBus.Engine):
             candidate_nodes = []
             for clauseid, nodes in enumerate(self.clauses):
                 candidate_nodes.append(nodes[self.node_selected.get(clauseid, 0)])
-            self.user_dict.add_entry(candidate_nodes)
-            # 学習データの書き出しは、バックグラウンドスレッドでやりたい。
-            self.user_dict.save()
+            self.user_language_model.add_entry(candidate_nodes)
+            # user language model の書き出しは、バックグラウンドスレッドでやりたい。
+            self.user_language_model.save()
 
         self.commit_text(IBus.Text.new_from_string(text))
 
