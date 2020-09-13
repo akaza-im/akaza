@@ -7,7 +7,7 @@ sys.path.append('../')
 
 from comb.skkdict import parse_skkdict, merge_skkdict, ari2nasi
 
-# jawiki.vocab から辞書を作成する。
+# jawiki.vocab から system_dict.trie を作成する。
 
 
 # https://www.ncbi.nlm.nih.gov/staff/beck/charents/unicode/30A0-30FF.html

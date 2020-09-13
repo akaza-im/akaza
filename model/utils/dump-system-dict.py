@@ -1,4 +1,3 @@
-import sys
 import marisa_trie
 
 trie = marisa_trie.BytesTrie()
