@@ -2,6 +2,7 @@
 
 ## Priority high
 
+- CI を実施する
 
 ## Priority mid
 
