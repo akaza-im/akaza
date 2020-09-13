@@ -1,4 +1,3 @@
-# cmd = ['/bin/sh', '-c', f'''cat {file} | sed -e 's/<doc.*>//; s/<\/doc>//' | kytea -notag 1 > {dst}''']
 import logging
 import os
 import sys

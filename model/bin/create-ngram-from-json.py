@@ -1,7 +1,6 @@
-import sys
-import re
 import json
 import math
+import re
 import time
 
 import marisa_trie
@@ -11,6 +10,7 @@ import marisa_trie
 SPACES = re.compile(r'\s+')
 
 BIGRAM_CUTOFF = 1
+
 
 def write_1gram():
     # unigram かいていく
@@ -53,7 +53,8 @@ def main():
     t0 = time.time()
     write_1gram()
     write_2gram()
-    print(f"Elapsed: {time.time()-t0} seconds")
+    print(f"Elapsed: {time.time() - t0} seconds")
+
 
 if __name__ == '__main__':
     main()

@@ -6,6 +6,8 @@ import psutil
 import json
 import time
 
+# jawiki.vocab と dat/*/* を元に、jawiki.1gram.json と jawiki.2gram.json を構築する。
+
 # Usage: $0 wfreq
 from typing import Set
 
