@@ -10,7 +10,7 @@ tmpfile = NamedTemporaryFile(delete=False)
 user_language_model = UserLanguageModel(tmpfile.name)
 system_dict = SystemDict.create()
 
-comb = Comb(user_language_model=user_language_model, system_dict=system_dict)
+comb = Comb(user_language_model=user_language_model, system_dict=system_dict, user_dict=None)
 
 
 @pytest.mark.parametrize('src, expected', [

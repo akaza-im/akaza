@@ -1,13 +1,14 @@
 import logging
 import sys
 from logging import Logger
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import jaconv
 
 from comb.language_model import LanguageModel
 from comb.node import Node
 from comb.system_dict import SystemDict
+from comb.user_dict import UserDict
 from comb.user_language_model import UserLanguageModel
 
 
@@ -68,15 +69,27 @@ class Graph:
         return self.d[0][0]
 
 
-def lookup(s, system_dict: SystemDict, user_language_model: UserLanguageModel):
+def lookup(s, system_dict: SystemDict, user_language_model: UserLanguageModel, user_dict: Optional[UserDict]):
+    assert user_language_model
+
     for i in range(0, len(s)):
         yomi = s[i:]
         # print(f"YOMI:::: {yomi}")
         words = system_dict.prefixes(yomi)
+        if user_dict:
+            user_words = user_dict.prefixes(yomi)
+            for user_word in user_words:
+                if user_word not in words:
+                    words.append(user_word)
         if len(words) > 0:
             # print(f"YOMI:::: {yomi} {words}")
             for word in words:
                 kanjis = system_dict[word]
+                if user_dict and user_dict.has_item(word):
+                    user_kanjis = user_dict[word]
+                    if user_kanjis:
+                        for user_kanji in user_kanjis:
+                            kanjis.insert(0, user_kanji)
                 if word not in kanjis:
                     kanjis.append(word)
 

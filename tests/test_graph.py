@@ -51,16 +51,18 @@ logging.basicConfig(level=logging.DEBUG)
     #    ('れいわ', '令和'),
 ])
 def test_wnn(src, expected):
-    ht = dict(lookup(src, system_dict, user_language_model))
+    ht = dict(lookup(src, system_dict, user_language_model, user_dict=None))
     graph = graph_construct(src, ht)
 
     clauses = viterbi(graph, language_model)
     got = ''.join([clause[0].word for clause in clauses])
 
     assert got == expected
+
+
 def test_graph_extend():
     src = 'はなか'
-    ht = dict(lookup(src, system_dict, user_language_model))
+    ht = dict(lookup(src, system_dict, user_language_model, user_dict=None))
     # (0,2) の文節を強制指定する
     graph = graph_construct(src, ht, [
         slice(0, 2),
