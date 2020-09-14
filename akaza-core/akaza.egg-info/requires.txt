@@ -1,0 +1,6 @@
+marisa-trie==0.7.5
+jaconv==0.2.4
+
+[develop]
+dev-packageA
+dev-packageB

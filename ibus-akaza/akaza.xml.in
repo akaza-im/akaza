@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- filename: akaza.xml -->
+<component>
+    <name>org.freedesktop.IBus.Akaza</name>
+    <description>Akaza - kana kanji converter</description>
+    <version>0.0.1</version>
+    <license>GPL</license>
+    <author>Tokuhiro Matsuno &lt;tokuhirom@gmail.com&gt;</author>
+    <homepage>https://github.com/tokuhirom/ibus-akaza</homepage>
+    <exec>@PYTHON@ @DATADIR@/ibus-akaza/ibus.py --ibus</exec>
+    <textdomain>akaza</textdomain>
+    <engines>
+        <engine>
+            <name>akaza</name>
+            <longname>akaza</longname>
+            <description>Akaza - Kana Kanji Converter</description>
+            <language>ja</language>
+            <license>GPL</license>
+            <author>Tokuhiro Matsuno &lt;tokuhirom@gmail.com&gt;</author>
+            <icon>@DATADIR@/ibus-akaza/akaza.svg</icon>
+            <layout>us</layout>
+            <layout_variant></layout_variant>
+            <layout_option></layout_option>
+            <hotkeys></hotkeys>
+            <symbol>昆</symbol>
+            <setup></setup>
+            <version></version>
+            <textdomain></textdomain>
+            <rank>0</rank>
+        </engine>
+    </engines>
+</component>
