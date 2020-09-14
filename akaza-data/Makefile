@@ -1,4 +1,4 @@
-all: system_dict.trie system_language_model.trie
+all: akaza_data/data/system_dict.trie akaza_data/data/system_language_model.trie
 
 jawiki-latest-pages-articles.xml.bz2:
 	wget --no-verbose --no-clobber -O jawiki-latest-pages-articles.xml.bz2 https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-pages-articles.xml.bz2
@@ -25,10 +25,10 @@ jawiki.vocab: jawiki.wfreq
 jawiki.1gram.json: jawiki.vocab  bin/dumpngram.py
 	python bin/dumpngram.py jawiki.vocab
 
-system_language_model.trie: jawiki.1gram.json jawiki.2gram.json jawiki.vocab bin/create-system_language_model-from-json.py
+akaza_data/data/system_language_model.trie: jawiki.1gram.json jawiki.2gram.json jawiki.vocab bin/create-system_language_model-from-json.py
 	python bin/create-system_language_model-from-json.py
 
-system_dict.trie: jawiki.vocab
+akaza_data/data/system_dict.trie: jawiki.vocab
 	python bin/make-system-dict.py
 
 .PHONY: all

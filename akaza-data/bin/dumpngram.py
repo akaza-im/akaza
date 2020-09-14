@@ -14,6 +14,7 @@ from typing import Set
 vocabfname = sys.argv[1]
 
 SPACES = re.compile(r'\s+')
+BIGRAM_CUTOFF = 3
 
 
 def read_vocab():
@@ -64,6 +65,13 @@ class BiGram:
 
     def dump(self, fname):
         with open(fname, 'w') as fp:
+            removelist = []
+            for word1 in self.d:
+                for word2 in self.d[word1]:
+                    if self.d[word1][word2] <= BIGRAM_CUTOFF:
+                        removelist.append((word1, word2))
+            for word1, word2 in removelist:
+                del self.d[word1][word2]
             json.dump(self.d, fp, ensure_ascii=False)
 
 

@@ -1,3 +1,12 @@
+# 2020-09-15(Tue)
+
+Compare DAWG and marisa-trie.
+
+    -rw-r--r-- 1 tokuhirom tokuhirom  37M Sep 15 00:46 system_dict.dawg
+    -rw-r--r-- 1 tokuhirom tokuhirom 5.5M Sep 14 18:57 system_dict.trie
+    -rw-r--r-- 1 tokuhirom tokuhirom 261M Sep 15 00:52 system_language_model.dawg
+    -rw-r--r-- 1 tokuhirom tokuhirom  51M Sep 15 00:52 system_language_model.trie
+
 # 2020-09-14(Mon)
 
 * comb を akaza に改名した。

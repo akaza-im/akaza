@@ -9,7 +9,7 @@ import marisa_trie
 
 SPACES = re.compile(r'\s+')
 
-BIGRAM_CUTOFF = 3
+BIGRAM_CUTOFF = 20
 
 
 def write_model():
@@ -28,8 +28,11 @@ def write_model():
 
             retval.append((word, (float(score),),))
 
+    print(f"1gram. size={len(retval)}")
+    unigram_size = len(retval)
+
     print('# 2gram')
-    with open('jawiki.2gram.json', 'r') as fp:
+    with open('jawiki.2gram.json.orig', 'r') as fp:
         data = json.load(fp)
 
         for word1, word2data in data.items():
@@ -41,6 +44,9 @@ def write_model():
 
                 score = math.log10(count / total)
                 retval.append((f"{word1}\t{word2}", (float(score),),))
+
+    print(f"2gram. size={len(retval)-unigram_size}")
+
 
     trie = marisa_trie.RecordTrie('<f', retval)
     fname = 'system_language_model.trie'
