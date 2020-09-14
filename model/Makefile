@@ -25,8 +25,8 @@ jawiki.vocab: jawiki.wfreq
 jawiki.1gram.json: jawiki.vocab  bin/dumpngram.py
 	python bin/dumpngram.py jawiki.vocab
 
-jawiki.1gram: jawiki.1gram.json jawiki.vocab bin/create-ngram-from-json.py
-	python bin/create-ngram-from-json.py
+system_language_model.trie: jawiki.1gram.json jawiki.2gram.json jawiki.vocab bin/create-system_language_model-from-json.py
+	python bin/create-system_language_model-from-json.py
 
 system_dict.trie: jawiki.vocab
 	python bin/make-system-dict.py
