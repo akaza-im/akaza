@@ -1,4 +1,4 @@
-import logging
+import pathlib
 
 import marisa_trie
 from marisa_trie import BytesTrie
@@ -7,13 +7,15 @@ from marisa_trie import BytesTrie
 class SystemDict:
     _trie: BytesTrie
 
-    def __init__(self, path, logger=logging.getLogger(__name__)):
-        self.logger = logger
+    def __init__(self, trie: marisa_trie.BytesTrie):
+        self._trie = trie
 
-        self.logger.info(f"loading cache dictionary: {path}")
+    @staticmethod
+    def load(path: str = str(pathlib.Path(__file__).parent.absolute().joinpath('data/system_dict.trie'))):
+        print(path)
         trie = marisa_trie.BytesTrie()
         trie.mmap(path)
-        self._trie = trie
+        return SystemDict(trie)
 
     def prefixes(self, key):
         return self._trie.prefixes(key)
