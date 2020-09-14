@@ -27,8 +27,8 @@ comb/config.py: comb/config.py.in
 	    -e "s:@DICTIONARYDIR@:$(DESTDIR)/$(DATADIR)/ibus-comb/dictionary:g" \
 		$< > $@
 
-model/jawiki.1gram: model/bin/create-ngram-from-json.py
-	make -C model jawiki.1gram
+model/system_language_model.trie: model/bin/create-system_language_model-from-json.py
+	make -C model system_language_model.trie
 
 model/system_dict.trie:
 	make -C model system_dict.trie
@@ -39,8 +39,7 @@ install-dict: model/system_dict.trie
 
 install: all comb/config.py model/jawiki.1gram install-dict
 	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-comb/comb $(DESTDIR)$(SYSCONFDIR)/xdg/comb $(DESTDIR)$(DATADIR)/ibus/component $(DESTDIR)$(DATADIR)/ibus-comb/model $(DESTDIR)$(DATADIR)/ibus-comb/dictionary
-	install -m 0644 model/jawiki.1gram $(DESTDIR)$(DATADIR)/ibus-comb/model/
-	install -m 0644 model/jawiki.2gram $(DESTDIR)$(DATADIR)/ibus-comb/model/
+	install -m 0644 model/system_language_model.trie $(DESTDIR)$(DATADIR)/ibus-comb/model/
 
 	install -m 0644 comb.svg $(DESTDIR)$(DATADIR)/ibus-comb
 	install -m 0644 comb/__init__.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
@@ -74,8 +73,7 @@ uninstall:
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/user_dict.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/system_dict.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/ibus.py
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/model/jawiki.1gram
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/model/jawiki.2gram
+	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/model/system_language_model.trie
 	rmdir $(DESTDIR)$(DATADIR)/ibus-comb
 	rmdir $(DESTDIR)$(SYSCONFDIR)/xdg/comb
 	rm -f $(DESTDIR)$(DATADIR)/ibus/component/comb.xml

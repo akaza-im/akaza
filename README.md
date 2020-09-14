@@ -39,6 +39,16 @@ wikipedia の全データをダウンロードして言語モデルと辞書の�
    * 改造しやすい IME をめざす。
  * 品詞を扱わなくてもよいようにした
 
+## ファイル形式
+
+ * system_dict.trie
+   * `(u'読み', u'漢字1/漢字2/漢字3'.encode('utf-8'))` で入れている。
+   * common prefix search している。
+ * system_language_model.trie
+   * `("漢字/かな", score)`
+   * `("漢字/かな\t漢字/かな", score)`
+   * key でそのままひく
+
 ## See also
 
  * http://www.phontron.com/slides/nlp-programming-ja-bonus-01-kkc.pdf
