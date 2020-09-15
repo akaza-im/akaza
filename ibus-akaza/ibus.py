@@ -37,7 +37,7 @@ import logging
 # messages when import modules are failed. E.g. Gtk.
 GLib.set_prgname('ibus-engine-akaza')
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, filename='/tmp/ibus-akaza.log', filemode='w')
 logging.info("Loading ibus-akaza")
 
 __base_dir__ = os.path.dirname(__file__)

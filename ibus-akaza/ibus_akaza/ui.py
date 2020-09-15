@@ -39,8 +39,8 @@ del n
 
 def build_akaza():
     configdir = pathlib.Path(GLib.get_user_config_dir(), 'ibus-akaza')
-    configdir.joinpath('user-dict') \
-        .mkdir(parents=True, exist_ok=True)
+    user_dict_path = configdir.joinpath('user-dict')
+    user_dict_path.mkdir(parents=True, exist_ok=True)
 
     user_dict_conf_path = configdir.joinpath('user-dict.json')
     logging.info(f"user_dict_conf_path={user_dict_conf_path}")
@@ -51,7 +51,7 @@ def build_akaza():
         logging.info(f"Missing user dict: {user_dict_conf_path}")
         user_dict = None
 
-    user_language_model = UserLanguageModel(str(configdir.joinpath('user-dict')))
+    user_language_model = UserLanguageModel(str(user_dict_path))
     system_dict = SystemDict.load()
     system_language_model = SystemLanguageModel.load()
 
@@ -61,6 +61,7 @@ def build_akaza():
         user_dict=user_dict,
         system_language_model=system_language_model
     )
+
 
 try:
     akaza = build_akaza()
@@ -112,7 +113,7 @@ class AkazaIBusEngine(IBus.Engine):
         # カーソル変更をしたばっかりかどうかを、みるフラグ。
         self.cursor_moved = False
 
-        self.logger.debug("Create Akaza engine OK")
+        self.logger.debug("Create Akaza engine OK: 20200916")
 
     def set_lookup_table_cursor_pos_in_current_page(self, index):
         """Sets the cursor in the lookup table to index in the current page
@@ -490,6 +491,7 @@ class AkazaIBusEngine(IBus.Engine):
         self._update_candidates()
 
     def commit_string(self, text):
+        self.logger.info("commit_string.")
         self.cursor_moved = False
 
         if self.in_henkan_mode():
@@ -499,6 +501,7 @@ class AkazaIBusEngine(IBus.Engine):
                 candidate_nodes.append(nodes[self.node_selected.get(clauseid, 0)])
             self.user_language_model.add_entry(candidate_nodes)
             # user language model の書き出しは、バックグラウンドスレッドでやりたい。
+            self.logger.info("Save user language model.")
             self.user_language_model.save()
 
         self.commit_text(IBus.Text.new_from_string(text))
@@ -518,6 +521,7 @@ class AkazaIBusEngine(IBus.Engine):
         return result
 
     def commit_candidate(self):
+        self.logger.info("commit_candidate")
         s = self.build_string()
         self.logger.info(f"Committing {s}")
         self.commit_string(s)

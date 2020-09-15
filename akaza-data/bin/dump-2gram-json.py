@@ -1,7 +1,5 @@
 import json
 
-BIGRAM_CUTOFF = 10
-
 with open('jawiki.2gram.json.orig', 'r') as fp:
     data = json.load(fp)
 
@@ -12,8 +10,6 @@ with open('jawiki.2gram.json.orig', 'r') as fp:
         wc = 0
 
         for word2, count in word2data.items():
-            if count <= BIGRAM_CUTOFF:
-                continue
             c2 += count
             wc += 1
 
