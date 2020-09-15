@@ -1,3 +1,33 @@
+# 2020-09-16(Wed)
+
+ * 「わたし」の変換結果に「私」が二個含まれてしまう。。なぜだ。
+   * なおした。
+
+* 言語モデルファイルのサイズをもう少し小さくしたい。50MB をきるようにしたい。現状↓
+
+-rw-r--r-- 1 tokuhirom tokuhirom 5.5M Sep 14 18:57 system_dict.trie
+-rw-r--r-- 1 tokuhirom tokuhirom  51M Sep 16 00:38 system_language_model.trie
+
+ * `<nowiki>` 記法をちゃんと消すようにしたい。
+
+# 2020-09-15(Tue)
+
+Compare DAWG and marisa-trie.
+
+    -rw-r--r-- 1 tokuhirom tokuhirom  37M Sep 15 00:46 system_dict.dawg
+    -rw-r--r-- 1 tokuhirom tokuhirom 5.5M Sep 14 18:57 system_dict.trie
+    -rw-r--r-- 1 tokuhirom tokuhirom 261M Sep 15 00:52 system_language_model.dawg
+    -rw-r--r-- 1 tokuhirom tokuhirom  51M Sep 15 00:52 system_language_model.trie
+
+# 2020-09-14(Mon)
+
+* comb を akaza に改名した。
+* ibus 関連部分とそれ以外を分離する。以下のようなモジュール構成を目指す。
+ * ibus-akaza: ibus 連動部分。
+ * akaza-core: 変換コアエンジン。ibus 関連部分と独立させることにより、fcitx との連動を可能にすることを目指す
+ * skkdictutils: SKK 辞書関連ユーティリティライブラリ。単独利用可能なようにパッケージングし、単独レポジトリに独立させる予定。
+ * akaza-data : システム辞書/システム言語モデル
+
 # 2020-09-13(Sun)
 
 * Rust で書き直そうかなぁ。。
@@ -14,7 +44,7 @@
  * kytea から得られた結果をもとに、平仮名を連結して ngram を作成したが、この結果は惨憺たるものであった。
 * DONE: 文節を伸ばす機能が死んでいる。
 * ユーザー辞書を設定できるようにしたい。
-  * ~/.config/ibus-comb/user-dict.json のなかに設定をいれる。
+  * ~/.config/ibus-akaza/user-dict.json のなかに設定をいれる。
   * `path/to/dict.txt;format=skk;charset=euc-jp` みたいなフォーマットでいいかなぁ。。JSONでもいいかな。。
   * 思ったより、簡単に実装できそう。
 

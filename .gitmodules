@@ -1,3 +1,6 @@
 [submodule "model/skk-dev-dict"]
 	path = model/skk-dev-dict
 	url = https://github.com/skk-dev/dict.git
+[submodule "akaza-data/skk-dev-dict"]
+	path = akaza-data/skk-dev-dict
+	url = https://github.com/skk-dev/dict.git

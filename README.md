@@ -1,4 +1,4 @@
-# ibus-comb
+# ibus-akaza
 
 Yet another kana-kanji-converter on IBus, written in Python.
 
