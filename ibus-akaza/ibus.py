@@ -33,12 +33,12 @@ import getopt
 import locale
 import logging
 
+# set_prgname before importing factory to show the name in warning
+# messages when import modules are failed. E.g. Gtk.
+GLib.set_prgname('ibus-engine-akaza')
+
 logging.basicConfig(level=logging.DEBUG)
 logging.info("Loading ibus-akaza")
-
-libpath = os.path.join(os.path.dirname(__file__), "akaza")
-logging.info(f"library path: {libpath}")
-sys.path.append(libpath)
 
 __base_dir__ = os.path.dirname(__file__)
 
