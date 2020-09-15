@@ -26,9 +26,10 @@ akaza.xml: akaza.xml.in
 	sed -e "s:@PYTHON@:$(PYTHON):g;" \
 	    -e "s:@DATADIR@:$(DATADIR):g" $< > $@
 
-check:
+test:
 	python -m py_compile ibus.py
 	python -m py_compile ibus_akaza/ui.py
+	pytest
 
 uninstall:
 	rm -f $(DESTDIR)$(DATADIR)/ibus-akaza/akaza.svg
@@ -41,5 +42,5 @@ uninstall:
 clean:
 	rm -f akaza.xml
 
-.PHONY: all check install uninstall clean
+.PHONY: all test install uninstall clean
 

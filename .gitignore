@@ -4,3 +4,5 @@ __pycache__
 /hello.*
 /test_graph2.py
 /akaza.xml
+*.egg-info/
+dist/

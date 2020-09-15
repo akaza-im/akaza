@@ -15,11 +15,11 @@ import pathlib
 
 from jaconv import jaconv
 
-from akaza import akazaromkan
+from akaza import romkan
 from akaza.engine import Comb
 from akaza.node import Node
 from akaza.user_language_model import UserLanguageModel
-from akaza.system_dict import SystemDict
+from akaza_data.system_dict import SystemDict
 from akaza.user_dict import load_user_dict_from_json_config
 from akaza.config import MODEL_DIR
 
@@ -63,7 +63,7 @@ try:
         logging.info(f"'{user_dict_conf_path}' does not exist.")
 
     system_language_model_path = f"{MODEL_DIR}/system_language_model.trie"
-    system_language_model = SystemLanguageModel.create(system_language_model_path)
+    system_language_model = SystemLanguageModel.load()
 
     akaza = Comb(user_language_model, system_dict, user_dict, system_language_model)
     logging.info("Finished Comb.")
@@ -173,7 +173,7 @@ class AkazaIBusEngine(IBus.Engine):
                     self.commit_candidate()
                 else:
                     # 無変換状態では、ひらがなに変換してコミットします。
-                    self.commit_string(akazaromkan.to_hiragana(self.preedit_string))
+                    self.commit_string(romkan.to_hiragana(self.preedit_string))
                 return True
             elif keyval == IBus.Escape:
                 self.preedit_string = ''
@@ -294,7 +294,7 @@ class AkazaIBusEngine(IBus.Engine):
         self.logger.info("Convert to full katakana")
 
         # カタカナ候補のみを表示するようにする。
-        hira = akazaromkan.to_hiragana(self.preedit_string)
+        hira = romkan.to_hiragana(self.preedit_string)
         kata = jaconv.hira2kata(hira)
 
         self.convert_to_single(hira, kata)
@@ -303,14 +303,14 @@ class AkazaIBusEngine(IBus.Engine):
         self.logger.info("Convert to full hiragana")
 
         # カタカナ候補のみを表示するようにする。
-        hira = akazaromkan.to_hiragana(self.preedit_string)
+        hira = romkan.to_hiragana(self.preedit_string)
         self.convert_to_single(hira, hira)
 
     def convert_to_half_katakana(self):
         self.logger.info("Convert to half katakana")
 
         # 半角カタカナ候補のみを表示するようにする。
-        hira = akazaromkan.to_hiragana(self.preedit_string)
+        hira = romkan.to_hiragana(self.preedit_string)
         kata = jaconv.hira2kata(hira)
         kata = jaconv.z2h(kata)
 
@@ -320,7 +320,7 @@ class AkazaIBusEngine(IBus.Engine):
         self.logger.info("Convert to half romaji")
 
         # 半角カタカナ候補のみを表示するようにする。
-        hira = akazaromkan.to_hiragana(self.preedit_string)
+        hira = romkan.to_hiragana(self.preedit_string)
         romaji = jaconv.z2h(self.preedit_string)
 
         self.convert_to_single(hira, romaji)
@@ -328,7 +328,7 @@ class AkazaIBusEngine(IBus.Engine):
     def convert_to_full_romaji(self):
         self.logger.info("Convert to full romaji")
 
-        hira = akazaromkan.to_hiragana(self.preedit_string)
+        hira = romkan.to_hiragana(self.preedit_string)
         romaji = jaconv.h2z(self.preedit_string, kana=True, digit=True, ascii=True)
 
         self.convert_to_single(hira, romaji)
@@ -593,7 +593,7 @@ class AkazaIBusEngine(IBus.Engine):
             return
 
         # 平仮名にする。
-        text = akazaromkan.to_hiragana(self.preedit_string)
+        text = romkan.to_hiragana(self.preedit_string)
         self.clauses = [
             [Node(word=text, yomi=text, start_pos=3)]
         ]
