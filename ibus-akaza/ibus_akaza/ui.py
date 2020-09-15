@@ -460,6 +460,7 @@ class AkazaIBusEngine(IBus.Engine):
 
         self.force_selected_clause = [x for x in self.force_selected_clause if x.start != x.stop]
         self._update_candidates()
+        # TODO: もし、分節の長さをいじったら、self.node_selected も変更するべき。
 
     def extend_clause_left(self):
         """
@@ -489,6 +490,7 @@ class AkazaIBusEngine(IBus.Engine):
 
         self.force_selected_clause = [x for x in self.force_selected_clause if x.start != x.stop]
         self._update_candidates()
+        # TODO: もし、分節の長さをいじったら、self.node_selected も変更するべき。
 
     def commit_string(self, text):
         self.logger.info("commit_string.")
@@ -530,6 +532,8 @@ class AkazaIBusEngine(IBus.Engine):
         self.logger.info("update_candidates")
         try:
             self._update_candidates()
+            self.current_clause = 0
+            self.node_selected = {}
         except:
             self.logger.error(f"cannot get kanji candidates {sys.exc_info()[0]}", exc_info=True)
 
@@ -540,9 +544,6 @@ class AkazaIBusEngine(IBus.Engine):
         else:
             self.clauses = []
         self.create_lookup_table()
-
-        self.current_clause = 0
-        self.node_selected = {}
 
         self.refresh()
 
