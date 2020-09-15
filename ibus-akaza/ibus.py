@@ -57,7 +57,7 @@ class IMApp:
 
         logging.info("Loading IMApp")
 
-        from akaza.ui import AkazaIBusEngine
+        from ibus_akaza.ui import AkazaIBusEngine
 
         self.mainloop = GLib.MainLoop()
         self.bus = IBus.Bus()

@@ -23,29 +23,32 @@ install-data: model/system_dict.trie
 	install -p -m 0644 model/system_dict.trie $(DESTDIR)$(DATADIR)/ibus-akaza/dictionary/
 	install -m 0644 model/system_language_model.trie $(DESTDIR)$(DATADIR)/ibus-akaza/model/
 
-install: all akaza/config.py model/system_dict.trie install-data
-	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-akaza/akaza $(DESTDIR)$(SYSCONFDIR)/xdg/akaza $(DESTDIR)$(DATADIR)/ibus/component $(DESTDIR)$(DATADIR)/ibus-akaza/model $(DESTDIR)$(DATADIR)/ibus-akaza/dictionary
+install:
+	cd akaza-data && $(PYTHON) setup.py install
+	cd akaza-core && $(PYTHON) setup.py install
 
-	install -m 0644 akaza.svg $(DESTDIR)$(DATADIR)/ibus-akaza
-	install -m 0644 ibus.py $(DESTDIR)$(DATADIR)/ibus-akaza
-	install -m 0644 akaza.xml $(DESTDIR)$(DATADIR)/ibus/component
-
-	install -m 0644 akaza/__init__.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
-	install -m 0644 akaza/graph.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
-	install -m 0644 akaza/language_model.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
-	install -m 0644 akaza/node.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
-	install -m 0644 akaza/config.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
-	install -m 0644 akaza/skkdict.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
-	install -m 0644 akaza/akazaromkan.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
-	install -m 0644 akaza/engine.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
-	install -m 0644 akaza/ui.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
-	install -m 0644 akaza/user_language_model.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
-	install -m 0644 akaza/system_language_model.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
-	install -m 0644 akaza/system_dict.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
-	install -m 0644 akaza/user_dict.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
+#install: all akaza/config.py model/system_dict.trie install-data
+#	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-akaza/akaza $(DESTDIR)$(SYSCONFDIR)/xdg/akaza $(DESTDIR)$(DATADIR)/ibus/component $(DESTDIR)$(DATADIR)/ibus-akaza/model $(DESTDIR)$(DATADIR)/ibus-akaza/dictionary
+#
+#	install -m 0644 akaza.svg $(DESTDIR)$(DATADIR)/ibus-akaza
+#	install -m 0644 ibus.py $(DESTDIR)$(DATADIR)/ibus-akaza
+#	install -m 0644 akaza.xml $(DESTDIR)$(DATADIR)/ibus/component
+#
+#	install -m 0644 akaza/__init__.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
+#	install -m 0644 akaza/graph.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
+#	install -m 0644 akaza/language_model.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
+#	install -m 0644 akaza/node.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
+#	install -m 0644 akaza/config.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
+#	install -m 0644 akaza/skkdict.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
+#	install -m 0644 akaza/romkan.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
+#	install -m 0644 akaza/engine.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
+#	install -m 0644 akaza/ui.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
+#	install -m 0644 akaza/user_language_model.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
+#	install -m 0644 akaza/system_language_model.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
+#	install -m 0644 akaza/system_dict.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
+#	install -m 0644 akaza/user_dict.py $(DESTDIR)$(DATADIR)/ibus-akaza/akaza/
 
 uninstall:
-
 	rm -f $(DESTDIR)$(DATADIR)/ibus-akaza
 	rm -f $(DESTDIR)$(DATADIR)/ibus/component/akaza.xml
 

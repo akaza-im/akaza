@@ -3,7 +3,7 @@ import os
 os.environ['AKAZA_DICTIONARY_DIR'] = 'model/'
 os.environ['AKAZA_MODEL_DIR'] = 'model/'
 
-from akaza.ui import AkazaIBusEngine
+from ibus_akaza.ui import AkazaIBusEngine
 
 
 def test_extend_clause_right():

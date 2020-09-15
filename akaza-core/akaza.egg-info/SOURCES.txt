@@ -1,6 +1,0 @@
-setup.py
-akaza.egg-info/PKG-INFO
-akaza.egg-info/SOURCES.txt
-akaza.egg-info/dependency_links.txt
-akaza.egg-info/requires.txt
-akaza.egg-info/top_level.txt
