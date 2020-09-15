@@ -66,7 +66,7 @@ def main():
         entries.append((yomi, '/'.join(kanjis).encode('utf-8')))
 
     trie = marisa_trie.BytesTrie(entries)
-    trie.save('system_dict.trie')
+    trie.save('akaza_data/data/system_dict.trie')
 
 
 if __name__ == '__main__':
