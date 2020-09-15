@@ -9,7 +9,7 @@ import marisa_trie
 
 SPACES = re.compile(r'\s+')
 
-BIGRAM_CUTOFF = 20
+BIGRAM_CUTOFF = 2
 
 
 def write_model():
@@ -49,7 +49,7 @@ def write_model():
 
 
     trie = marisa_trie.RecordTrie('<f', retval)
-    fname = 'system_language_model.trie'
+    fname = 'akaza_data/data/system_language_model.trie'
     print(f"writing {fname}. size={len(retval)}")
     trie.save(fname)
 
