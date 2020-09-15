@@ -12,15 +12,12 @@ text/BE/wiki_13: jawiki-latest-pages-articles.xml
 dat/BE/wiki_13: text/BE/wiki_13 bin/wiki2text-runner.py bin/wiki2text.py
 	python bin/wiki2text-runner.py
 
-jawiki.text: dat/BE/wiki_13
-	cat dat/*/wiki_* > jawiki.text
-
-jawiki.wfreq: jawiki.text
-	text2wfreq jawiki.text jawiki.wfreq
+jawiki.wfreq: dat/BE/wiki_13
+	python bin/text2wfreq.py
 
 # 118,334=entry count of libkkc-data.
 jawiki.vocab: jawiki.wfreq
-	wfreq2vocab -gt 15 jawiki.wfreq jawiki.vocab
+	python bin/wfreq2vocab.py
 
 jawiki.1gram.json: jawiki.vocab  bin/dumpngram.py
 	python bin/dumpngram.py jawiki.vocab
