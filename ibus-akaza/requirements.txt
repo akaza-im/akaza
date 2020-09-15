@@ -1,0 +1,2 @@
+skkdictutils>=0.0.2
+jaconv>=0.2.4
