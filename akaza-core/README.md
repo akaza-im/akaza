@@ -8,13 +8,13 @@ Yet another kana-kanji conversion system written in Python 3.
 
 ### Use as a library
 
-    system_language_model = SystemLanguageModel.create('path/to/system_language_model.trie')
-    system_dict = SystemDictionary.create('path/to/system_language_model.trie')
+    system_language_model = SystemLanguageModel.load()
+    system_dict = SystemDictionary.load()
     akaza = Akaza(
         system_language_model = system_language_model,
         system_dict: system_dict,
         user_language_model: user_language_model,
-        user_dict: user_dict,
+        user_dict: None,
     )
     print(akaza.convert('watasinonamaehanakanodesu.'))
     # → 私の名前は中野です。
