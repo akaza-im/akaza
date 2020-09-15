@@ -11,17 +11,7 @@ PYTHON ?= /usr/bin/python3
 test:
 	cd akaza-data && pytest
 	cd akaza-core && pytest
-
-akaza-data/system_language_model.trie: akaza-data/bin/create-system_language_model-from-json.py
-	make -C model system_language_model.trie
-
-akaza-data/system_dict.trie:
-	make -C model system_dict.trie
-
-install-data: model/system_dict.trie
-	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-akaza/dictionary
-	install -p -m 0644 model/system_dict.trie $(DESTDIR)$(DATADIR)/ibus-akaza/dictionary/
-	install -m 0644 model/system_language_model.trie $(DESTDIR)$(DATADIR)/ibus-akaza/model/
+	cd ibus-akaza && pytest
 
 install:
 	cd akaza-data && $(PYTHON) setup.py install

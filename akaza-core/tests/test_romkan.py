@@ -3,7 +3,7 @@ import sys
 
 sys.path.append('../akaza-data/')
 
-from akaza.akazaromkan import to_hiragana
+from akaza.romkan import to_hiragana
 
 
 def test_foo():

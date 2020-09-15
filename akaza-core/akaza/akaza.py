@@ -6,7 +6,7 @@ from typing import List, Any, Optional
 
 import jaconv
 
-from akaza import akazaromkan
+from akaza import romkan
 from akaza.graph import graph_construct, viterbi, lookup
 from akaza.language_model import LanguageModel
 from akaza.node import Node
@@ -53,7 +53,7 @@ class Akaza:
                 )
             ]]
 
-        hiragana: str = akazaromkan.to_hiragana(src)
+        hiragana: str = romkan.to_hiragana(src)
 
         # 末尾の子音を変換対象外とする。
         m = TRAILING_CONSONANT_PATTERN.match(hiragana)

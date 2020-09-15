@@ -1,8 +1,9 @@
 import logging
 from tempfile import TemporaryDirectory
 import sys
+import pathlib
 
-sys.path.append('../akaza-data/')
+sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
 import pytest
 from akaza.graph import lookup, graph_construct, viterbi
