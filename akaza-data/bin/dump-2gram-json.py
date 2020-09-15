@@ -1,6 +1,6 @@
 import json
 
-with open('jawiki.2gram.json.orig', 'r') as fp:
+with open('jawiki.2gram.json', 'r') as fp:
     data = json.load(fp)
 
     for word1, word2data in data.items():
@@ -15,5 +15,5 @@ with open('jawiki.2gram.json.orig', 'r') as fp:
 
             # score = math.log10(count / total)
 
-        print(f"{word1}\t{wc}\t{c2}")
+        print(f"{wc}\t{word1}")
 

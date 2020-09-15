@@ -76,11 +76,17 @@ def main():
         with open(ifile, 'r') as rfp, \
                 open(ofile, 'w') as wfp:
             for line in rfp:
+                # タグ始まりの行をスキップする
                 if line.startswith('<'):
                     continue
+
                 line = line.rstrip()
+                # strip <nowiki> tag.
+                line = re.sub('<nowiki>(.*?)</nowiki>', r'\1',  line)
+
                 if len(line) == 0:
                     continue
+
                 wfp.write(' '.join([x[0] + '/' + x[1] for x in parse_line_simple(line)]) + "\n")
         count += 1
 

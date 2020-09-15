@@ -45,8 +45,7 @@ def write_model():
                 score = math.log10(count / total)
                 retval.append((f"{word1}\t{word2}", (float(score),),))
 
-    print(f"2gram. size={len(retval)-unigram_size}")
-
+    print(f"2gram. size={len(retval) - unigram_size}")
 
     trie = marisa_trie.RecordTrie('<f', retval)
     fname = 'akaza_data/data/system_language_model.trie'

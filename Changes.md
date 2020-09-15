@@ -1,6 +1,14 @@
 # 2020-09-16(Wed)
 
  * 「わたし」の変換結果に「私」が二個含まれてしまう。。なぜだ。
+   * なおした。
+
+* 言語モデルファイルのサイズをもう少し小さくしたい。50MB をきるようにしたい。現状↓
+
+-rw-r--r-- 1 tokuhirom tokuhirom 5.5M Sep 14 18:57 system_dict.trie
+-rw-r--r-- 1 tokuhirom tokuhirom  51M Sep 16 00:38 system_language_model.trie
+
+ * `<nowiki>` 記法をちゃんと消すようにしたい。
 
 # 2020-09-15(Tue)
 
