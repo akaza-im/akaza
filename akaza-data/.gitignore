@@ -12,3 +12,4 @@
 /jawiki.vocab
 /jawiki.1gram.json
 /jawiki.2gram.json
+*.orig
