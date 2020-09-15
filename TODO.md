@@ -6,7 +6,6 @@
 
 ## Priority mid
 
-- support 3gram(必要?)
 - ユーザー言語モデル学習機 from text file or web.
   - クローラーをかく？
 - ユーザー辞書機能を実装する
@@ -31,6 +30,7 @@
 ## priority very low
 
 - fcitx 対応(python 以外で書き直さないと難しそう)
+  - IPC にすればできそう。
 - When user language model is too big, purge data automatically.
   - if the data is bigger than 1GB?
 - NICOLA support?
@@ -38,6 +38,7 @@
 - 青空文庫をコーパスとして使う?
   - 古くさすぎるかも
 - 言語モデルを小さくできないか?
+- support 3gram(必要?)
 
 # DONE
 

@@ -112,7 +112,7 @@ class AkazaIBusEngine(IBus.Engine):
         # カーソル変更をしたばっかりかどうかを、みるフラグ。
         self.cursor_moved = False
 
-        self.logger.debug("Create Comb engine OK")
+        self.logger.debug("Create Akaza engine OK")
 
     def set_lookup_table_cursor_pos_in_current_page(self, index):
         """Sets the cursor in the lookup table to index in the current page
