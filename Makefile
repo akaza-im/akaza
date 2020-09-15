@@ -16,6 +16,7 @@ test:
 install:
 	cd akaza-data && $(PYTHON) setup.py install
 	cd akaza-core && $(PYTHON) setup.py install
+	cd ibus-akaza && make install
 
 #install: all akaza/config.py model/system_dict.trie install-data
 #	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-akaza/akaza $(DESTDIR)$(SYSCONFDIR)/xdg/akaza $(DESTDIR)$(DATADIR)/ibus/component $(DESTDIR)$(DATADIR)/ibus-akaza/model $(DESTDIR)$(DATADIR)/ibus-akaza/dictionary

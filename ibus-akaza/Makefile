@@ -14,6 +14,7 @@ install: ibus_akaza/config.py akaza.xml
 	install -m 0644 ibus.py $(DESTDIR)$(DATADIR)/ibus-akaza
 	install -m 0644 ibus_akaza/ui.py $(DESTDIR)$(DATADIR)/ibus-akaza/ibus_akaza/
 	install -m 0644 ibus_akaza/config.py $(DESTDIR)$(DATADIR)/ibus-akaza/ibus_akaza/
+	install -m 0644 ibus_akaza/__init__.py $(DESTDIR)$(DATADIR)/ibus-akaza/ibus_akaza/
 	install -m 0644 akaza.xml $(DESTDIR)$(DATADIR)/ibus/component
 
 ibus_akaza/config.py: ibus_akaza/config.py.in
