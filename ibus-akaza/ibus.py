@@ -33,8 +33,7 @@ import getopt
 import locale
 import logging
 
-# TODO: remove log file generation
-logging.basicConfig(level=logging.DEBUG, filename='/tmp/ibus-akaza.log', filemode='w')
+logging.basicConfig(level=logging.DEBUG)
 logging.info("Loading ibus-akaza")
 
 libpath = os.path.join(os.path.dirname(__file__), "akaza")
@@ -66,7 +65,7 @@ class IMApp:
         self.factory.add_engine("akaza", GObject.type_from_name("AkazaIBusEngine"))
 
         if exec_by_ibus:
-            self.bus.request_name("org.freedesktop.IBus.Comb", 0)
+            self.bus.request_name("org.freedesktop.IBus.Akaza", 0)
         else:
             xml_path = os.path.join(__base_dir__, 'AkazaIBusEngine.xml')
             if os.path.exists(xml_path):

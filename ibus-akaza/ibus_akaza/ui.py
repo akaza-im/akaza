@@ -7,7 +7,6 @@ gi.require_version('IBus', '1.0')
 from gi.repository import IBus
 from gi.repository import GLib
 
-import os
 import sys
 import re
 import logging
@@ -15,13 +14,12 @@ import pathlib
 
 from jaconv import jaconv
 
-from akaza import romkan
-from akaza.engine import Comb
+from akaza import romkan, Akaza
 from akaza.node import Node
 from akaza.user_language_model import UserLanguageModel
 from akaza_data.system_dict import SystemDict
+from akaza_data.system_language_model import SystemLanguageModel
 from akaza.user_dict import load_user_dict_from_json_config
-from akaza.config import MODEL_DIR
 
 MODE_KANA = 1
 MODE_ALPHA = 2
@@ -38,37 +36,36 @@ for n in range(1, 10):
 numpad_keys.append(getattr(IBus, 'KP_0'))
 del n
 
-configdir = os.path.join(GLib.get_user_config_dir(), 'ibus-akaza')
-pathlib.Path(os.path.join(configdir, 'user-dict')).mkdir(parents=True, exist_ok=True)
-logging.info(f"Loading user dictionary: {configdir}")
-user_language_model = UserLanguageModel(os.path.join(configdir, 'user-dict'))
-logging.info("Loaded user dictionary")
 
-system_dict_path = os.path.join(DICTIONARY_DIR, 'system_dict.trie')
-system_dict = SystemDict(system_dict_path)
-logging.info("Loaded system dictionary")
+def build_akaza():
+    configdir = pathlib.Path(GLib.get_user_config_dir(), 'ibus-akaza')
+    configdir.joinpath('user-dict') \
+        .mkdir(parents=True, exist_ok=True)
 
-try:
-    user_dict_conf_path = os.path.join(configdir, 'user-dict.json')
+    user_dict_conf_path = configdir.joinpath('user-dict.json')
     logging.info(f"user_dict_conf_path={user_dict_conf_path}")
-
-    user_dict = None
-    if os.path.exists(user_dict_conf_path):
-        logging.info(f"Loading '{user_dict_conf_path}'")
-        try:
-            user_dict = load_user_dict_from_json_config(user_dict_conf_path)
-        except:
-            logging.error("Cannot load user dictionary", exc_info=True)
+    if user_dict_conf_path.exists():
+        logging.info(f"Loading user dict: {user_dict_conf_path}")
+        user_dict = load_user_dict_from_json_config(str(user_dict_conf_path))
     else:
-        logging.info(f"'{user_dict_conf_path}' does not exist.")
+        logging.info(f"Missing user dict: {user_dict_conf_path}")
+        user_dict = None
 
-    system_language_model_path = f"{MODEL_DIR}/system_language_model.trie"
+    user_language_model = UserLanguageModel(str(configdir.joinpath('user-dict')))
+    system_dict = SystemDict.load()
     system_language_model = SystemLanguageModel.load()
 
-    akaza = Comb(user_language_model, system_dict, user_dict, system_language_model)
-    logging.info("Finished Comb.")
+    return Akaza(
+        user_language_model=user_language_model,
+        system_dict=system_dict,
+        user_dict=user_dict,
+        system_language_model=system_language_model
+    )
+
+try:
+    akaza = build_akaza()
 except:
-    logging.error("Cannot initialize.", exc_info=True)
+    logging.error("Cannot initialize Akaza.", exc_info=True)
     sys.exit(1)
 
 
@@ -82,7 +79,7 @@ class AkazaIBusEngine(IBus.Engine):
     node_selected: Dict[int, int]
     clauses: List[List[Node]]
     prop_list: IBus.PropList
-    akaza: Comb
+    akaza: Akaza
     mode: int
     force_selected_clause: List[slice]
 
@@ -97,8 +94,8 @@ class AkazaIBusEngine(IBus.Engine):
         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
         self.prop_list = IBus.PropList()
         self.akaza = akaza
-        self.user_language_model = user_language_model
-        self.user_dict = user_dict
+        self.user_language_model = akaza.user_language_model
+        self.user_dict = akaza.user_dict
         self.logger = logging.getLogger(__name__)
         self.mode = MODE_KANA
 
