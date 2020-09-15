@@ -10,11 +10,13 @@ Yet another kana-kanji-converter on IBus, written in Python.
  * 統計的かな漢字変換モデルを採用しています
  * 言語モデルの生成元は日本語 Wikipedia のみをベースとしています。
   * kytea で分析した結果をベースに 2gram 言語モデルを構築しています。
+ * 変換結果を学習します(unigram, bigramのスコアを学習します)
 
 ## Dependencies
 
- * python-marisa
- * pip install wikiextractor
+ * ibus
+ * python3
+ * marisa-trie
 
 ## Install 方法
 
@@ -37,7 +39,7 @@ wikipedia の全データをダウンロードして言語モデルと辞書の�
    * 現状は開発速度を優先しているために、メモリ容量を多めに消費するようになっています。
  * なにか面白い改善方法が思いついたら、fork して実装できるように。
    * 改造しやすい IME をめざす。
- * 品詞を扱わなくてもよいようにした
+ * 辞書のメンテや実装において、品詞を扱わなくてもよいようにした
 
 ## ファイル形式
 
