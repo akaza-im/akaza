@@ -32,7 +32,7 @@ def write_model():
     unigram_size = len(retval)
 
     print('# 2gram')
-    with open('jawiki.2gram.json.orig', 'r') as fp:
+    with open('jawiki.2gram.json', 'r') as fp:
         data = json.load(fp)
 
         for word1, word2data in data.items():

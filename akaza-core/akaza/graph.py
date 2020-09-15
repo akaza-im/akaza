@@ -7,7 +7,7 @@ import jaconv
 
 from akaza.language_model import LanguageModel
 from akaza.node import Node
-from akaza.system_dict import SystemDict
+from akaza_data.system_dict import SystemDict
 from akaza.user_dict import UserDict
 from akaza.user_language_model import UserLanguageModel
 

@@ -8,14 +8,9 @@ DESTDIR ?=
 
 PYTHON ?= /usr/bin/python3
 
-all: akaza.xml akaza/config.py akaza akaza-data/system_language_model.trie akaza-data/system_dict.trie
-
-check:
-	python -m py_compile ibus.py
-	python -m py_compile akaza/akazaromkan.py
-	python -m py_compile akaza/engine.py
-	python -m py_compile akaza/skkdict.py
-	pytest
+test:
+	cd akaza-data && pytest
+	cd akaza-core && pytest
 
 akaza-data/system_language_model.trie: akaza-data/bin/create-system_language_model-from-json.py
 	make -C model system_language_model.trie
@@ -72,4 +67,4 @@ clean:
 	rm -f akaza.xml
 	rm -f akaza/config.py
 
-.PHONY: all check install uninstall
+.PHONY: all install uninstall test
