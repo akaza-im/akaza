@@ -9,7 +9,7 @@ Yet another kana-kanji-converter on IBus, written in Python.
  * Python で書いてあるので、拡張が容易です。
  * 統計的かな漢字変換モデルを採用しています
  * 言語モデルの生成元は日本語 Wikipedia のみをベースとしています。
-  * kytea で分析した結果をベースに 2gram 言語モデルを構築しています。
+   * kytea で分析した結果をベースに 2gram 言語モデルを構築しています。
  * 変換結果を学習します(unigram, bigramのスコアを学習します)
 
 ## Dependencies
