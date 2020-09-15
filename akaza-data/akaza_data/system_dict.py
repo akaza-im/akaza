@@ -8,6 +8,7 @@ class SystemDict:
     _trie: BytesTrie
 
     def __init__(self, trie: marisa_trie.BytesTrie):
+        assert trie is not str
         self._trie = trie
 
     @staticmethod

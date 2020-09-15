@@ -1,19 +1,19 @@
 from tempfile import NamedTemporaryFile
+import sys
 
-import os
+sys.path.append('../akaza-data/')
 
 import pytest
-
 from akaza import Akaza
-from akaza.system_dict import SystemDict
 from akaza.user_language_model import UserLanguageModel
-from akaza.system_language_model import SystemLanguageModel
+from akaza_data.system_dict import SystemDict
+from akaza_data.system_language_model import SystemLanguageModel
 
 tmpfile = NamedTemporaryFile(delete=False)
 user_language_model = UserLanguageModel(tmpfile.name)
-system_dict = SystemDict('../akaza-data/system_dict.trie')
+system_dict = SystemDict.load()
 
-system_language_model = SystemLanguageModel.create('../akaza-data/system_language_model.trie')
+system_language_model = SystemLanguageModel.load()
 
 akaza = Akaza(
     user_language_model=user_language_model,

@@ -102,9 +102,7 @@ class UserLanguageModel:
     def has_unigram_cost(self, key: str) -> bool:
         return key in self.unigram
 
-    def get_bigram_cost(self, node1: Node, node2: Node) -> Optional[float]:
-        key1 = node1.get_key()
-        key2 = node2.get_key()
+    def get_bigram_cost(self, key1: str, key2: str) -> Optional[float]:
         key = key1 + "\t" + key2
         if key in self.bigram:
             count = self.bigram[key]

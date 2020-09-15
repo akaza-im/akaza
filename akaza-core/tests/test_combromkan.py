@@ -1,4 +1,7 @@
 import pytest
+import sys
+
+sys.path.append('../akaza-data/')
 
 from akaza.akazaromkan import to_hiragana
 

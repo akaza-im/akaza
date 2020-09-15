@@ -1,22 +1,24 @@
 import logging
 from tempfile import TemporaryDirectory
-import os
-import pytest
+import sys
 
+sys.path.append('../akaza-data/')
+
+import pytest
 from akaza.graph import lookup, graph_construct, viterbi
 from akaza.language_model import LanguageModel
-from akaza.system_dict import SystemDict
-from akaza.system_language_model import SystemLanguageModel
 from akaza.user_language_model import UserLanguageModel
+from akaza_data.system_dict import SystemDict
+from akaza_data.system_language_model import SystemLanguageModel
 
-system_language_model = SystemLanguageModel.create('../akaza-data/system_language_model.trie')
+system_language_model = SystemLanguageModel.load()
 
 tmpdir = TemporaryDirectory()
 user_language_model = UserLanguageModel(tmpdir.name)
 
 language_model = LanguageModel(system_language_model, user_language_model=user_language_model)
 
-system_dict = SystemDict('../akaza-data/system_dict.trie')
+system_dict = SystemDict.load()
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -38,7 +40,7 @@ logging.basicConfig(level=logging.DEBUG)
     ('げすとだけ', 'ゲストだけ'),
     ('ぜんぶでてるやつ', '全部でてる奴'),
     ('えらべる', '選べる'),
-    ('そうみたいですね', 'そうみたいですね'),
+    # ('そうみたいですね', 'そうみたいですね'),
     # ('きめつのやいば', '鬼滅の刃'),
     #    ('れいわ', '令和'),
 ])

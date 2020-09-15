@@ -1,13 +1,9 @@
 import functools
 import logging
-import math
-
-import marisa_trie
 
 from akaza.node import Node
-from akaza.system_language_model import SystemLanguageModel
 from akaza.user_language_model import UserLanguageModel
-
+from akaza_data.system_language_model import SystemLanguageModel
 
 
 class LanguageModel:
@@ -34,8 +30,8 @@ class LanguageModel:
     @functools.lru_cache
     def calc_bigram_cost(self, prev_node, next_node) -> float:
         # self → node で処理する。
-        u = self.user_language_model.get_bigram_cost(prev_node, next_node)
+        u = self.user_language_model.get_bigram_cost(prev_node.get_key(), next_node.get_key())
         if u:
             self.logger.info(f"Use user's bigram score: {prev_node.get_key()},{next_node.get_key()} -> {u}")
             return u
-        return self.system_language_model.get_bigram_cost(prev_node, next_node)
+        return self.system_language_model.get_bigram_cost(prev_node.get_key(), next_node.get_key())
