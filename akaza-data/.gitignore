@@ -1,0 +1,15 @@
+/build/
+/jawiki-latest-pages-articles.xml
+/jawiki-latest-pages-articles.xml.bz2
+/text/
+/dat/
+/jawiki.wfreq
+/jawiki.text
+/jawiki.id3gram
+/jawiki.arpa
+/jawiki.1gram
+/jawiki.2gram
+/jawiki.vocab
+/jawiki.1gram.json
+/jawiki.2gram.json
+*.orig

@@ -6,11 +6,8 @@
 
 ## Priority mid
 
-- support 3gram(必要?)
-- 2gram のデータがデカすぎる。libkkc と同等の圧縮をすべき
 - ユーザー言語モデル学習機 from text file or web.
   - クローラーをかく？
-- ユーザー辞書機能を実装する
 - packaging to arch linux.
 - キーバインディングを設定可能に。
 - 設定候補の最後にアルファベットなどを入れる。
@@ -32,12 +29,15 @@
 ## priority very low
 
 - fcitx 対応(python 以外で書き直さないと難しそう)
+  - IPC にすればできそう。
 - When user language model is too big, purge data automatically.
   - if the data is bigger than 1GB?
 - NICOLA support?
 - 共起的なスコアをいれたい?
 - 青空文庫をコーパスとして使う?
   - 古くさすぎるかも
+- 言語モデルを小さくできないか?
+- support 3gram(必要?)
 
 # DONE
 
@@ -45,7 +45,7 @@
 - カタカナ語辞書の作成
 - 連文節変換用の UI を実装する
 - Function key とかのショートカットで、全部カタカナにすることができるように。
-  - ibus-comb がバグってた時に便利。
+  - ibus-akaza がバグってた時に便利。
 - 末尾のアルファベット一文字は、変換しない。
 - 前向きDP後ろ向きA* で候補を得る
 - 平仮名語辞書もいるのかもしれない。
@@ -53,3 +53,4 @@
 - 単語 2 gram を学習データとして記録できるようにする
 - 絵文字辞書(`ビール` か `beer` で絵文字いれたい。)
 - ベースのシステム辞書は、marisa-trie 形式でビルドしたものをロードするようにした法が良いのではないか?
+- ユーザー辞書機能を実装する
