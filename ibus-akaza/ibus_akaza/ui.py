@@ -83,7 +83,7 @@ class AkazaIBusEngine(IBus.Engine):
     mode: int
     force_selected_clause: List[slice]
 
-    __gtype_name__ = 'kaza'
+    __gtype_name__ = 'AkazaIBusEngine'
 
     def __init__(self):
         super(AkazaIBusEngine, self).__init__()
