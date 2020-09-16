@@ -7,7 +7,7 @@ from typing import List, Any, Optional
 import jaconv
 
 from akaza import romkan
-from akaza.graph import graph_construct, viterbi, lookup
+from akaza.graph import GraphResolver
 from akaza.language_model import LanguageModel
 from akaza.node import Node
 from akaza_data.system_dict import SystemDict
@@ -20,24 +20,14 @@ TRAILING_CONSONANT_PATTERN = re.compile(r'^(.*?)([qwrtypsdfghjklzxcvbm]+)$')
 
 
 class Akaza:
-    user_dict: Optional[UserDict]
+    resolver: GraphResolver
     logger: Logger
-    dictionaries: List[Any]
 
     def __init__(self,
-                 system_language_model: SystemLanguageModel,
-                 system_dict: SystemDict,
-                 user_language_model: UserLanguageModel,
-                 user_dict: Optional[UserDict] = None,
+                 resolver: GraphResolver,
                  logger: Logger = logging.getLogger(__name__)):
-        assert user_language_model
         self.logger = logger
-        self.dictionaries = []
-        self.user_language_model = user_language_model
-        self.system_dict = system_dict
-        self.user_dict = user_dict
-
-        self.language_model = LanguageModel(system_language_model, user_language_model)
+        self.resolver = resolver
 
     # 連文節変換するバージョン。
     def convert(self, src: str, force_selected_clause: List[slice] = None) -> List[List[Node]]:
@@ -66,11 +56,11 @@ class Akaza:
         self.logger.info(f"convert: src={src} hiragana={hiragana} katakana={katakana}")
 
         t0 = time.time()
-        ht = dict(lookup(hiragana, self.system_dict, self.user_language_model, self.user_dict))
-        graph = graph_construct(hiragana, ht, force_selected_clause)
+        ht = dict(self.resolver.lookup(hiragana))
+        graph = self.resolver.graph_construct(hiragana, ht, force_selected_clause)
         self.logger.info(
             f"graph_constructed: src={src} hiragana={hiragana} katakana={katakana}: {time.time() - t0} seconds")
-        clauses = viterbi(graph, self.language_model)
+        clauses = self.resolver.viterbi(graph)
         self.logger.info(
             f"converted: src={src} hiragana={hiragana} katakana={katakana}: {time.time() - t0} seconds")
 
