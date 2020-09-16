@@ -47,6 +47,14 @@ class Graph:
                 continue
             yield self.d[i]
 
+    def all_nodes(self):
+        for i in sorted(self.d.keys()):
+            nodes = self.d[i]
+            for node in nodes:
+                if node.is_eos() or node.is_bos():
+                    continue
+                yield node
+
     def get_item(self, i: int) -> List[Node]:
         return self.d[i]
 
@@ -157,9 +165,10 @@ def graph_construct(s, ht, force_selected_clause: List[slice] = None) -> Graph:
                         node = Node(i, kanji, yomi)
                         graph.append(index=j, node=node)
                 else:
-                    # print(f"NO YOMI: {yomi}")
-                    pass
-                    # graph.append(j, Node(j, yomi, yomi, unigram_score=unigram_score, bigram_score=bigram_score))
+                    for word in [yomi, jaconv.hira2kata(yomi), jaconv.kana2alphabet(yomi),
+                                 jaconv.h2z(jaconv.kana2alphabet(yomi), ascii=True)]:
+                        node = Node(start_pos=i, word=word, yomi=yomi)
+                        graph.append(index=j, node=node)
 
     return graph
 
