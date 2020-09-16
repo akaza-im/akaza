@@ -64,3 +64,21 @@ def test_graph_extend():
         slice(2, 3)
     ])
     assert 1 not in graph.d
+
+
+# 「ひょいー」のような辞書に登録されていない単語に対して、カタカナ候補を提供すべき。
+def test_katakana_candidates():
+    src = 'ひょいー'
+    ht = dict(lookup(src, system_dict, user_language_model, user_dict=None))
+    for k, v in ht.items():
+        print(f"{k}:{v}")
+    graph = graph_construct(src, ht, [
+        slice(0, 4)
+    ])
+    print(graph)
+
+    clauses = viterbi(graph, language_model)
+    print(clauses)
+    got = '/'.join([node.word for node in clauses[0]])
+
+    assert got == 'ひょいー/ヒョイー/hyoiー/ｈｙｏｉー'

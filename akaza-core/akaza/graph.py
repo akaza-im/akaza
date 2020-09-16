@@ -139,8 +139,10 @@ def graph_construct(s, ht, force_selected_clause: List[slice] = None) -> Graph:
                 # print(f"NO YOMI: {yomi}")
                 if len(yomi) == 0:
                     raise AssertionError(f"len(yomi) should not be 0. {s}, {force_slice}")
-                node = Node(i, yomi, yomi)
-                graph.append(index=j, node=node)
+                for word in [yomi, jaconv.hira2kata(yomi), jaconv.kana2alphabet(yomi),
+                             jaconv.h2z(jaconv.kana2alphabet(yomi), ascii=True)]:
+                    node = Node(start_pos=i, word=word, yomi=yomi)
+                    graph.append(index=j, node=node)
     else:
         for i in range(0, len(s)):
             # print(f"LOOP {i}")
@@ -216,4 +218,3 @@ def viterbi(graph: Graph, language_model: LanguageModel) -> List[List[Node]]:
         last_node = node
         node = node.prev
     return list(reversed(result))
-
