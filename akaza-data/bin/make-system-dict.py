@@ -49,6 +49,7 @@ def main():
         # 先の方が優先される
         ('skk-dev-dict/SKK-JISYO.L', 'euc-jp'),
         ('skk-dev-dict/SKK-JISYO.jinmei', 'euc-jp'),
+        ('skk-dev-dict/SKK-JISYO.station', 'euc-jp'),
         ('skk-dev-dict/SKK-JISYO.emoji', 'utf-8'),
     ]
     dicts = []
@@ -64,6 +65,8 @@ def main():
     entries = []
     for yomi, kanjis in merged_dict.items():
         entries.append((yomi, '/'.join(kanjis).encode('utf-8')))
+
+    print(f"# of entries: {len(entries)}")
 
     trie = marisa_trie.BytesTrie(entries)
     trie.save('akaza_data/data/system_dict.trie')
