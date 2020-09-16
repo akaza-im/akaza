@@ -51,7 +51,10 @@ def build_akaza():
         logging.info(f"Missing user dict: {user_dict_conf_path}")
         user_dict = None
 
-    user_language_model = UserLanguageModel(str(user_dict_path))
+    user_language_model_path = configdir.joinpath('user_language_model')
+    user_language_model_path.mkdir(parents=True, exist_ok=True)
+    user_language_model = UserLanguageModel(str(user_language_model_path))
+
     system_dict = SystemDict.load()
     system_language_model = SystemLanguageModel.load()
 
