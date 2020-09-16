@@ -1,8 +1,9 @@
 import os
 import sys
+import pathlib
 
-sys.path.append('../akaza-data/')
-sys.path.append('../akaza-core/')
+sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
+sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-core/').absolute().resolve()))
 
 os.environ['AKAZA_DICTIONARY_DIR'] = 'model/'
 os.environ['AKAZA_MODEL_DIR'] = 'model/'

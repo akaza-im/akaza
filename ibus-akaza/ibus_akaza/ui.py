@@ -20,6 +20,8 @@ from akaza.user_language_model import UserLanguageModel
 from akaza_data.system_dict import SystemDict
 from akaza_data.system_language_model import SystemLanguageModel
 from akaza.user_dict import load_user_dict_from_json_config
+from akaza.graph import GraphResolver
+from akaza.language_model import LanguageModel
 
 MODE_KANA = 1
 MODE_ALPHA = 2
@@ -58,16 +60,22 @@ def build_akaza():
     system_dict = SystemDict.load()
     system_language_model = SystemLanguageModel.load()
 
-    return Akaza(
+    language_model = LanguageModel(
+        system_language_model=system_language_model,
         user_language_model=user_language_model,
+    )
+
+    resolver = GraphResolver(
         system_dict=system_dict,
         user_dict=user_dict,
-        system_language_model=system_language_model
+        language_model=language_model,
     )
+
+    return user_language_model, Akaza(resolver=resolver)
 
 
 try:
-    akaza = build_akaza()
+    user_language_model, akaza = build_akaza()
 except:
     logging.error("Cannot initialize Akaza.", exc_info=True)
     sys.exit(1)
@@ -98,8 +106,7 @@ class AkazaIBusEngine(IBus.Engine):
         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
         self.prop_list = IBus.PropList()
         self.akaza = akaza
-        self.user_language_model = akaza.user_language_model
-        self.user_dict = akaza.user_dict
+        self.user_language_model = user_language_model
         self.logger = logging.getLogger(__name__)
         self.mode = MODE_KANA
 

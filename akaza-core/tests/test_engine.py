@@ -10,6 +10,8 @@ from akaza import Akaza
 from akaza.user_language_model import UserLanguageModel
 from akaza_data.system_dict import SystemDict
 from akaza_data.system_language_model import SystemLanguageModel
+from akaza.language_model import LanguageModel
+from akaza.graph import GraphResolver
 
 tmpfile = NamedTemporaryFile(delete=False)
 user_language_model = UserLanguageModel(tmpfile.name)
@@ -17,12 +19,18 @@ system_dict = SystemDict.load()
 
 system_language_model = SystemLanguageModel.load()
 
-akaza = Akaza(
+language_model = LanguageModel(
+    system_language_model=system_language_model,
     user_language_model=user_language_model,
+)
+
+resolver = GraphResolver(
+    language_model=language_model,
     system_dict=system_dict,
     user_dict=None,
-    system_language_model=system_language_model
 )
+
+akaza = Akaza(resolver=resolver)
 
 
 @pytest.mark.parametrize('src, expected', [
