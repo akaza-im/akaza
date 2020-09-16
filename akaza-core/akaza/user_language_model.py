@@ -15,7 +15,7 @@ from akaza.node import Node
 class UserLanguageModel:
     unigram: Dict[str, int]
 
-    def __init__(self, path, logger=logging.getLogger(__name__)):
+    def __init__(self, path: str, logger=logging.getLogger(__name__)):
         self.path = path
         self.logger = logger
 
@@ -64,7 +64,7 @@ class UserLanguageModel:
             kanji = node.word
             kana = node.yomi
 
-            self.logger.info(f"add user_dict entry: kana='{kana}' kanji='{kanji}'")
+            self.logger.info(f"add user_language_model entry: kana='{kana}' kanji='{kanji}'")
 
             key = node.get_key()
             self.unigram[key] = self.unigram.get(key, 0) + 1
