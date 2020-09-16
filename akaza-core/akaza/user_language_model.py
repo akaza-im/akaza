@@ -64,9 +64,11 @@ class UserLanguageModel:
             kanji = node.word
             kana = node.yomi
 
-            self.logger.info(f"add user_language_model entry: kana='{kana}' kanji='{kanji}'")
-
             key = node.get_key()
+
+            self.logger.info(f"add user_language_model entry: kana='{kana}' kanji='{kanji}' key={key}")
+            print(f"add user_language_model entry: key={key}")
+
             self.unigram[key] = self.unigram.get(key, 0) + 1
             self.total += 1
 

@@ -3,6 +3,8 @@ from tempfile import TemporaryDirectory
 import sys
 import pathlib
 
+from akaza.node import Node
+
 sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
 import pytest
@@ -82,3 +84,36 @@ def test_katakana_candidates():
     got = '/'.join([node.word for node in clauses[0]])
 
     assert got == 'ひょいー/ヒョイー/hyoiー/ｈｙｏｉー'
+
+
+# 「ひょいー」のような辞書に登録されていない単語に対して、カタカナ候補を提供すべき。
+def test_katakana_candidates_for_unknown_word():
+    # ユーザー言語モデルで「ヒョイー」のコストを高めておく。
+    my_tmpdir = TemporaryDirectory()
+    my_user_language_model = UserLanguageModel(my_tmpdir.name)
+    my_user_language_model.add_entry(
+        [Node(start_pos=0, word='ヒョイー', yomi='ひょいー')]
+    )
+    my_user_language_model.add_entry(
+        [Node(start_pos=0, word='ヒョイー', yomi='ひょいー')]
+    )
+    my_user_language_model.add_entry(
+        [Node(start_pos=0, word='ヒョイー', yomi='ひょいー')]
+    )
+    my_user_language_model.add_entry(
+        [Node(start_pos=0, word='ヒョイー', yomi='ひょいー')]
+    )
+
+    src = 'ひょいー'
+    ht = dict(lookup(src, system_dict, my_user_language_model, user_dict=None))
+    graph = graph_construct(src, ht)
+    assert 'ひょいー' in set([node.yomi for node in graph.all_nodes()])
+    my_language_model = LanguageModel(system_language_model, user_language_model=my_user_language_model)
+    # print(graph)
+
+    clauses = viterbi(graph, my_language_model)
+    print(graph.d[4])
+    got = '/'.join([node.word for node in clauses[0]])
+
+    # ユーザー言語もでるにもといづいて、ヒョイーのスコアがあがって上位にでるようになっている。
+    assert got == 'ヒョイー/ひょいー/hyoiー/ｈｙｏｉー'

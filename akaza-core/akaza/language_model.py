@@ -21,11 +21,13 @@ class LanguageModel:
         elif node.is_eos():
             return 0
         else:
-            u = self.user_language_model.get_unigram_cost(node.get_key())
-            if u:
+            key = node.get_key()
+            u = self.user_language_model.get_unigram_cost(key)
+            if u is not None:
                 # self.logger.info(f"Use user score: {node.get_key()} -> {u}")
                 return u
-            return self.system_language_model.get_unigram_cost(node.get_key())
+            # print(f"SYSTEM LANGUAGE MODEL UNIGRAM: {key}")
+            return self.system_language_model.get_unigram_cost(key)
 
     @functools.lru_cache
     def calc_bigram_cost(self, prev_node, next_node) -> float:
