@@ -50,6 +50,7 @@ def main():
         ('skk-dev-dict/SKK-JISYO.L', 'euc-jp'),
         ('skk-dev-dict/SKK-JISYO.jinmei', 'euc-jp'),
         ('skk-dev-dict/SKK-JISYO.station', 'euc-jp'),
+        ('skk-dev-dict/zipcode/SKK-JISYO.zipcode', 'euc-jp'),
         ('skk-dev-dict/SKK-JISYO.emoji', 'utf-8'),
     ]
     dicts = []
