@@ -1,4 +1,4 @@
-from datetime import time
+import time
 from typing import List, Dict
 
 import gi
@@ -78,7 +78,7 @@ def build_akaza():
 try:
     t0 = time.time()
     user_language_model, akaza = build_akaza()
-    logging.info(f"Loaded Akaza in {t0-time.time()} seconds")
+    logging.info(f"Loaded Akaza in {time.time()-t0} seconds")
 except:
     logging.error("Cannot initialize Akaza.", exc_info=True)
     sys.exit(1)
