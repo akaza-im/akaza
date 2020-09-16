@@ -1,6 +1,4 @@
-import os
-import time
-import glob
+import logging
 
 with open('jawiki.wfreq', 'r') as rfp, \
         open('jawiki.vocab', 'w') as wfp:
@@ -10,12 +8,13 @@ with open('jawiki.wfreq', 'r') as rfp, \
         if len(m) == 2:
             word, cnt = m
             if word.endswith('/UNK'):
-                print(f"Skip: {word}")
-                continue
-            if int(cnt) > 15:
+                logging.info(f"Skip: {word}(unknown word)")
+            elif '/' not in word:
+                logging.info(f"Skip: {word}(no slash)")
+            elif int(cnt) > 15 and len(word) > 0:
                 vocab.append(word)
             else:
-                print(f"Skip: {word}: {cnt}")
+                logging.info(f"Skip: {word}: {cnt}(few count)")
 
     for word in sorted(vocab):
         wfp.write(word + "\n")
