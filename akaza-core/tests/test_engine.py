@@ -47,6 +47,7 @@ akaza = Akaza(resolver=resolver)
 def test_wnn(src, expected):
     clauses = akaza.convert(src)
     got = ''.join([clause[0].word for clause in clauses])
+    print(user_language_model.get_unigram_cost('子音/しいん'))
     assert got == expected
 
 

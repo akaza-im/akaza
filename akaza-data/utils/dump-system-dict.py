@@ -1,7 +1,7 @@
 import marisa_trie
 
 trie = marisa_trie.BytesTrie()
-trie.load('system_dict.trie')
+trie.load('akaza_data/data/system_dict.trie')
 
 for yomi, kanji_bytes in trie.items():
     kanjis = kanji_bytes.decode('utf-8')

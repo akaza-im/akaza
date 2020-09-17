@@ -1,7 +1,7 @@
 import logging
 import math
 import os
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Set, Any
 
 from atomicwrites import atomic_write
 
@@ -13,6 +13,7 @@ from akaza.node import Node
 # unigram score
 # bigram score
 class UserLanguageModel:
+    unigram_kanas: Set[str]
     unigram: Dict[str, int]
 
     def __init__(self, path: str, logger=logging.getLogger(__name__)):
@@ -20,6 +21,7 @@ class UserLanguageModel:
         self.logger = logger
 
         self.unigram = {}
+        self.unigram_kanas = set()
         if os.path.exists(self.unigram_path()):
             self.read_unigram()
         else:
@@ -43,6 +45,8 @@ class UserLanguageModel:
                 m = line.rstrip().split("\t")
                 if len(m) == 2:
                     kanji_kana, count = m
+                    kanji, kana = kanji_kana.split('/')
+                    self.unigram_kanas.add(kana)
                     count = int(count)
                     self.unigram[kanji_kana] = count
                     total += count
@@ -68,6 +72,8 @@ class UserLanguageModel:
 
             self.logger.info(f"add user_language_model entry: kana='{kana}' kanji='{kanji}' key={key}")
             print(f"add user_language_model entry: key={key}")
+
+            self.unigram_kanas.add(kana)
 
             self.unigram[key] = self.unigram.get(key, 0) + 1
             self.total += 1
@@ -101,8 +107,8 @@ class UserLanguageModel:
             return math.log10(count / self.total)
         return None
 
-    def has_unigram_cost(self, key: str) -> bool:
-        return key in self.unigram
+    def has_unigram_cost_by_yomi(self, yomi: str) -> bool:
+        return yomi in self.unigram_kanas
 
     def get_bigram_cost(self, key1: str, key2: str) -> Optional[float]:
         key = key1 + "\t" + key2

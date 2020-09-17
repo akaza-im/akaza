@@ -12,6 +12,15 @@ SPACES = re.compile(r'\s+')
 BIGRAM_CUTOFF = 2
 
 
+# 漢字/よみ → よみ/漢字 に変更する。
+def reverse_word(word):
+    m = word.split('/')
+    if len(m) != 2:
+        raise RuntimeError(f"---{word}---")
+    kanji, yomi = m
+    return f"{yomi}/{kanji}"
+
+
 def write_model():
     # bigram かいていく
     retval = []
