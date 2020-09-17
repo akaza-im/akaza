@@ -1,2 +1,3 @@
 skkdictutils>=0.0.2
 jaconv>=0.2.4
+PyGObject>=3.38.0
