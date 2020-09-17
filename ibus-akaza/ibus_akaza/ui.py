@@ -209,12 +209,12 @@ g
 
         # 入力モードの切り替え機能。
         if keyval == IBus.Henkan or (
-                (state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.SHIFT_MASK)) > 0
+                (state & IBus.ModifierType.CONTROL_MASK) > 0
                 and keyval == ord('J')):
             self._set_input_mode(INPUT_MODE_HIRAGANA)
             return True
         elif keyval == IBus.Muhenkan or (
-                (state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.SHIFT_MASK)) > 0
+                (state & IBus.ModifierType.CONTROL_MASK) > 0
                 and keyval == ord(':')):
             self._set_input_mode(INPUT_MODE_LATIN)
             return True
