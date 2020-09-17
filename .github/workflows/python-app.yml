@@ -35,13 +35,16 @@ jobs:
         cd akaza-data
         pip install -r requirements.txt
         pytest
+        sudo python setup.py install
     - name: Test akaza-core
       run: |
         cd akaza-core
         pip install -r requirements.txt
         pytest
+        sudo python setup.py install
     - name: Test ibus-akaza
       run: |
         cd ibus-akaza
         pip install -r requirements.txt
         pytest
+        sudo python setup.py install
