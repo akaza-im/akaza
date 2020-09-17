@@ -13,6 +13,7 @@ install: ibus_akaza/config.py akaza.xml
 	install -m 0644 akaza.svg $(DESTDIR)$(DATADIR)/ibus-akaza
 	install -m 0644 ibus.py $(DESTDIR)$(DATADIR)/ibus-akaza
 	install -m 0644 ibus_akaza/ui.py $(DESTDIR)$(DATADIR)/ibus-akaza/ibus_akaza/
+	install -m 0644 ibus_akaza/input_mode.py $(DESTDIR)$(DATADIR)/ibus-akaza/ibus_akaza/
 	install -m 0644 ibus_akaza/config.py $(DESTDIR)$(DATADIR)/ibus-akaza/ibus_akaza/
 	install -m 0644 ibus_akaza/__init__.py $(DESTDIR)$(DATADIR)/ibus-akaza/ibus_akaza/
 	install -m 0644 akaza.xml $(DESTDIR)$(DATADIR)/ibus/component
@@ -34,6 +35,7 @@ test:
 
 uninstall:
 	rm -f $(DESTDIR)$(DATADIR)/ibus-akaza/akaza.svg
+	rm -f $(DESTDIR)$(DATADIR)/ibus-akaza/ibus_akaza/input_mode.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-akaza/ibus_akaza/ui.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-akaza/ibus_akaza/config.py
 	rm -f $(DESTDIR)$(DATADIR)/ibus-akaza/ibus.py
