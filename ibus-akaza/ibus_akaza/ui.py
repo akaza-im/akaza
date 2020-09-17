@@ -24,7 +24,8 @@ from akaza.user_dict import load_user_dict_from_json_config
 from akaza.graph import GraphResolver
 from akaza.language_model import LanguageModel
 
-from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_LATIN, INPUT_MODE_HIRAGANA
+from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_LATIN, INPUT_MODE_HIRAGANA, \
+    get_all_input_modes
 
 num_keys = []
 for n in range(1, 10):
@@ -146,24 +147,16 @@ class AkazaIBusEngine(IBus.Engine):
         prop_list.append(self.input_mode_prop)
 
         props = IBus.PropList()
-        props.append(IBus.Property(key='InputMode.Hiragana',
-                                   prop_type=IBus.PropType.RADIO,
-                                   label=IBus.Text.new_from_string("ひらがな"),
-                                   icon=None,
-                                   tooltip=None,
-                                   sensitive=True,
-                                   visible=True,
-                                   state=IBus.PropState.UNCHECKED,
-                                   sub_props=None))
-        props.append(IBus.Property(key='InputMode.Latin',
-                                   prop_type=IBus.PropType.RADIO,
-                                   label=IBus.Text.new_from_string("Latin"),
-                                   icon=None,
-                                   tooltip=None,
-                                   sensitive=True,
-                                   visible=True,
-                                   state=IBus.PropState.UNCHECKED,
-                                   sub_props=None))
+        for input_mode in get_all_input_modes():
+            props.append(IBus.Property(key=input_mode.prop_name,
+                                       prop_type=IBus.PropType.RADIO,
+                                       label=IBus.Text.new_from_string(input_mode.label),
+                                       icon=None,
+                                       tooltip=None,
+                                       sensitive=True,
+                                       visible=True,
+                                       state=IBus.PropState.UNCHECKED,
+                                       sub_props=None))
         i = 0
         while props.get(i) is not None:
             prop = props.get(i)
