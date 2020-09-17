@@ -1,4 +1,4 @@
 marisa-trie>=0.7.5
 jaconv>=0.2.4
-skkdictutils>=0.0.2
+skkdictutils>=0.1.0
 akaza-data>=0.0.1
