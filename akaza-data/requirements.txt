@@ -1,1 +1,2 @@
 skkdictutils>=0.0.2
+marisa-trie>=0.7.5
