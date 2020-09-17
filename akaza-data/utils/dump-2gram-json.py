@@ -16,4 +16,3 @@ with open('jawiki.2gram.json', 'r') as fp:
             # score = math.log10(count / total)
 
         print(f"{wc}\t{word1}")
-
