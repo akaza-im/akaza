@@ -200,7 +200,7 @@ g
             return False
 
     def _do_process_key_event(self, keyval, keycode, state):
-        # self.logger.debug("process_key_event(%04x, %04x, %04x)" % (keyval, keycode, state))
+        self.logger.debug("process_key_event(%04x, %04x, %04x)" % (keyval, keycode, state))
 
         # ignore key release events
         is_press = ((state & IBus.ModifierType.RELEASE_MASK) == 0)
@@ -208,10 +208,14 @@ g
             return False
 
         # 入力モードの切り替え機能。
-        if keyval == IBus.Henkan:
+        if keyval == IBus.Henkan or (
+                (state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.SHIFT_MASK)) > 0
+                and keyval == ord('J')):
             self._set_input_mode(INPUT_MODE_HIRAGANA)
             return True
-        elif keyval == IBus.Muhenkan:
+        elif keyval == IBus.Muhenkan or (
+                (state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.SHIFT_MASK)) > 0
+                and keyval == ord(':')):
             self._set_input_mode(INPUT_MODE_LATIN)
             return True
 

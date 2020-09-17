@@ -19,9 +19,12 @@ class InputMode:
     def __eq__(self, other):
         return self.mode_code == other.mode_code
 
+    def __str__(self):
+        return f"<InputMode {self.prop_name}>"
 
-INPUT_MODE_HIRAGANA = InputMode('InputMode.Hiragana', 0, 'あ', 'ひらがな')
-INPUT_MODE_LATIN = InputMode('InputMode.Latin', 1, '_A', 'Latin')
+
+INPUT_MODE_HIRAGANA = InputMode('InputMode.Hiragana', 0, 'あ', 'ひらがな (C-S-j)')
+INPUT_MODE_LATIN = InputMode('InputMode.Latin', 1, '_A', 'Latin (C-S-;)')
 
 _ALL_INPUT_MODE = [INPUT_MODE_HIRAGANA, INPUT_MODE_LATIN]
 
