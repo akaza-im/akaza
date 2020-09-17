@@ -119,11 +119,11 @@ class GraphResolver:
 
                     yield word, kanjis
 
-                if yomi not in words and self.language_model.has_unigram_cost(yomi):
+                if yomi not in words and self.language_model.has_unigram_cost_by_yomi(yomi):
                     # システム辞書に入ってないがユーザー言語モデルには入っているという場合は候補にいれる。
                     kanjis = [yomi]
 
-                    kata = jaconv.hira2kata(word)
+                    kata = jaconv.hira2kata(yomi)
                     if kata not in kanjis:
                         kanjis.append(kata)
 
@@ -176,7 +176,7 @@ class GraphResolver:
                             node = Node(i, kanji, yomi)
                             graph.append(index=j, node=node)
                     else:
-                        if self.language_model.has_unigram_cost(yomi):
+                        if self.language_model.has_unigram_cost_by_yomi(yomi):
                             for word in [yomi, jaconv.hira2kata(yomi), jaconv.kana2alphabet(yomi),
                                          jaconv.h2z(jaconv.kana2alphabet(yomi), ascii=True)]:
                                 node = Node(start_pos=i, word=word, yomi=yomi)

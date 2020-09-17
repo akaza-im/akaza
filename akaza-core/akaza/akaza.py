@@ -2,18 +2,13 @@ import logging
 import re
 import time
 from logging import Logger
-from typing import List, Any, Optional
+from typing import List
 
 import jaconv
+from akaza.graph import GraphResolver
+from akaza.node import Node
 
 from akaza import romkan
-from akaza.graph import GraphResolver
-from akaza.language_model import LanguageModel
-from akaza.node import Node
-from akaza_data.system_dict import SystemDict
-from akaza_data.system_language_model import SystemLanguageModel
-from akaza.user_dict import UserDict
-from akaza.user_language_model import UserLanguageModel
 
 # 子音だが、N は NN だと「ん」になるので処理しない。
 TRAILING_CONSONANT_PATTERN = re.compile(r'^(.*?)([qwrtypsdfghjklzxcvbm]+)$')
@@ -61,6 +56,7 @@ class Akaza:
         self.logger.info(
             f"graph_constructed: src={src} hiragana={hiragana} katakana={katakana}: {time.time() - t0} seconds")
         clauses = self.resolver.viterbi(graph)
+        print(graph)
         self.logger.info(
             f"converted: src={src} hiragana={hiragana} katakana={katakana}: {time.time() - t0} seconds")
 

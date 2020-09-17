@@ -29,8 +29,8 @@ class LanguageModel:
             # print(f"SYSTEM LANGUAGE MODEL UNIGRAM: {key}")
             return self.system_language_model.get_unigram_cost(key)
 
-    def has_unigram_cost(self, yomi: str):
-        return self.user_language_model.has_unigram_cost(yomi)
+    def has_unigram_cost_by_yomi(self, yomi: str):
+        return self.user_language_model.has_unigram_cost_by_yomi(yomi)
 
     @functools.lru_cache
     def calc_bigram_cost(self, prev_node, next_node) -> float:
