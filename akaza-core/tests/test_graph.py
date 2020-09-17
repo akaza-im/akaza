@@ -107,7 +107,6 @@ def test_katakana_candidates():
 
 
 # 「ひょいー」のような辞書に登録されていない単語に対して、カタカナ候補を提供すべき。
-@pytest.mark.skip(reason="今は動かない。")
 def test_katakana_candidates_for_unknown_word():
     # ユーザー言語モデルで「ヒョイー」のコストを高めておく。
     my_tmpdir = TemporaryDirectory()
@@ -131,8 +130,8 @@ def test_katakana_candidates_for_unknown_word():
         system_language_model=system_language_model,
         user_language_model=my_user_language_model
     )
-    print(my_user_language_model.has_unigram_cost('ひょいー'))
-    print(my_language_model.has_unigram_cost('ひょいー'))
+    print(my_user_language_model.has_unigram_cost_by_yomi('ひょいー'))
+    print(my_language_model.has_unigram_cost_by_yomi('ひょいー'))
 
     resolver = GraphResolver(language_model=my_language_model, system_dict=system_dict)
     ht = dict(resolver.lookup(src))
@@ -145,4 +144,4 @@ def test_katakana_candidates_for_unknown_word():
     got = '/'.join([node.word for node in clauses[0]])
 
     # ユーザー言語もでるにもといづいて、ヒョイーのスコアがあがって上位にでるようになっている。
-    assert got == 'ヒョイー/ひょいー/hyoiー/ｈｙｏｉー'
+    assert got == 'ヒョイー/ひょいー'

@@ -3,7 +3,7 @@ import pathlib
 
 import marisa_trie
 
-DEFAULT_COST = [(math.log10(0.00000000001),)]
+DEFAULT_COST = [(math.log10(1e-20),)]
 
 
 class SystemLanguageModel:
