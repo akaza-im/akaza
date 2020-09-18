@@ -15,7 +15,8 @@ import pathlib
 
 from jaconv import jaconv
 
-from akaza import romkan, Akaza
+from akaza import Akaza
+from akaza.romkan import RomkanConverter
 from akaza.node import Node
 from akaza.user_language_model import UserLanguageModel
 from akaza_data.system_dict import SystemDict
@@ -72,12 +73,14 @@ def build_akaza():
         language_model=language_model,
     )
 
-    return user_language_model, Akaza(resolver=resolver)
+    romkan = RomkanConverter()
+
+    return user_language_model, Akaza(resolver=resolver, romkan=romkan), romkan
 
 
 try:
     t0 = time.time()
-    user_language_model, akaza = build_akaza()
+    user_language_model, akaza, romkan = build_akaza()
     logging.info(f"Loaded Akaza in {time.time() - t0} seconds")
 except:
     logging.error("Cannot initialize Akaza.", exc_info=True)
@@ -125,6 +128,8 @@ class AkazaIBusEngine(IBus.Engine):
 
         # カーソル変更をしたばっかりかどうかを、みるフラグ。
         self.cursor_moved = False
+
+        self.romkan = romkan
 
         try:
             self.__prop_dict = {}
@@ -248,7 +253,7 @@ g
                     self.hide_lookup_table()
                 else:
                     # サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
-                    self.preedit_string = re.sub('(?:z[hjkl.-]|n+|[kstnhmyrwgzjdbp]?[aiueo]|.)$', '',
+                    self.preedit_string = re.sub(r'(?:z[hjkl.-\[\]]|n+|[kstnhmyrwgzjdbp]?[aiueo]|.)$', '',
                                                  self.preedit_string)
                 # 変換していないときのレンダリングをする。
                 self.update_preedit_text_before_henkan()
@@ -400,7 +405,7 @@ g
         self.logger.info("Convert to full katakana")
 
         # カタカナ候補のみを表示するようにする。
-        hira = romkan.to_hiragana(self.preedit_string)
+        hira = self.romkan.to_hiragana(self.preedit_string)
         kata = jaconv.hira2kata(hira)
 
         self.convert_to_single(hira, kata)
@@ -409,14 +414,14 @@ g
         self.logger.info("Convert to full hiragana")
 
         # カタカナ候補のみを表示するようにする。
-        hira = romkan.to_hiragana(self.preedit_string)
+        hira = self.romkan.to_hiragana(self.preedit_string)
         self.convert_to_single(hira, hira)
 
     def convert_to_half_katakana(self):
         self.logger.info("Convert to half katakana")
 
         # 半角カタカナ候補のみを表示するようにする。
-        hira = romkan.to_hiragana(self.preedit_string)
+        hira = self.romkan.to_hiragana(self.preedit_string)
         kata = jaconv.hira2kata(hira)
         kata = jaconv.z2h(kata)
 
@@ -426,7 +431,7 @@ g
         self.logger.info("Convert to half romaji")
 
         # 半角カタカナ候補のみを表示するようにする。
-        hira = romkan.to_hiragana(self.preedit_string)
+        hira = self.romkan.to_hiragana(self.preedit_string)
         romaji = jaconv.z2h(self.preedit_string)
 
         self.convert_to_single(hira, romaji)
@@ -434,7 +439,7 @@ g
     def convert_to_full_romaji(self):
         self.logger.info("Convert to full romaji")
 
-        hira = romkan.to_hiragana(self.preedit_string)
+        hira = self.romkan.to_hiragana(self.preedit_string)
         romaji = jaconv.h2z(self.preedit_string, kana=True, digit=True, ascii=True)
 
         self.convert_to_single(hira, romaji)
@@ -699,7 +704,7 @@ g
         """
         preedict string をよい感じに見せる。
         """
-        yomi = romkan.to_hiragana(self.preedit_string)
+        yomi = self.romkan.to_hiragana(self.preedit_string)
         if self.input_mode == INPUT_MODE_KATAKANA:
             return yomi, jaconv.hira2kata(yomi)
         elif self.input_mode == INPUT_MODE_HALFWIDTH_KATAKANA:
