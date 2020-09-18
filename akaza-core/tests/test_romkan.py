@@ -30,6 +30,9 @@ def test_foo():
     ('wo', 'を'),
     ('z,', '‥'),
     ('z.', '…'),
+    ('z/', '・'),
+    ('z[', '『'),
+    ('z]', '』'),
 ])
 def test_bar(src, expected):
     assert to_hiragana(src) == expected
