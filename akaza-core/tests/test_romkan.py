@@ -33,7 +33,15 @@ def test_foo():
     ('z/', '・'),
     ('z[', '『'),
     ('z]', '』'),
+    ('du', 'づ'),
+    ("di", "ぢ"),
+    ("fu", "ふ"),
+    ("ti", "ち"),
+    ("wi", "うぃ"),
+    ("we", "うぇ"),
+    ("wo", "を"),
 ])
 def test_bar(src, expected):
     assert to_hiragana(src) == expected
 
+# ROMKAN_H.update({})
