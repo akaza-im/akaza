@@ -16,6 +16,7 @@
   - ドンだけと"bきゅう" が "B級" にならない
   - "どんだけとちかんなくてもわかりそうなもんだよねw"
 
+- 変換モードをタスクトレイに表示するように(ibus-anthy をみてもよくわからなかった)
 - release the package to github.
 
 ## Priority low
