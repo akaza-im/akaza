@@ -2,9 +2,6 @@ import os
 import sys
 import pathlib
 import pytest
-from akaza.node import Node
-
-from ibus_akaza.input_mode import INPUT_MODE_KATAKANA, INPUT_MODE_HIRAGANA
 
 sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-core/').absolute().resolve()))
@@ -13,6 +10,8 @@ os.environ['AKAZA_DICTIONARY_DIR'] = 'model/'
 os.environ['AKAZA_MODEL_DIR'] = 'model/'
 
 from ibus_akaza.ui import AkazaIBusEngine
+from ibus_akaza.input_mode import INPUT_MODE_KATAKANA, INPUT_MODE_HIRAGANA
+from akaza.node import Node
 
 
 def test_extend_clause_right():
