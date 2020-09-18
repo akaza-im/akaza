@@ -24,8 +24,8 @@ from akaza.user_dict import load_user_dict_from_json_config
 from akaza.graph import GraphResolver
 from akaza.language_model import LanguageModel
 
-from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_LATIN, INPUT_MODE_HIRAGANA, \
-    get_all_input_modes
+from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_ALNUM, INPUT_MODE_HIRAGANA, \
+    get_all_input_modes, INPUT_MODE_FULLWIDTH_ALNUM
 
 num_keys = []
 for n in range(1, 10):
@@ -216,7 +216,11 @@ g
         elif keyval == IBus.Muhenkan or (
                 (state & IBus.ModifierType.CONTROL_MASK) > 0
                 and keyval == ord(':')):
-            self._set_input_mode(INPUT_MODE_LATIN)
+            self._set_input_mode(INPUT_MODE_ALNUM)
+            return True
+        elif ((state & IBus.ModifierType.CONTROL_MASK) > 0
+              and keyval == ord('L')):
+            self._set_input_mode(INPUT_MODE_FULLWIDTH_ALNUM)
             return True
 
         if self.preedit_string:
@@ -334,6 +338,12 @@ g
             else:
                 if keyval < 128 and self.preedit_string:
                     self.commit_string(self.preedit_string)
+        elif self.input_mode == INPUT_MODE_FULLWIDTH_ALNUM:
+            self.logger.info("In full-width alnum mode.")
+            if ord('!') <= keyval <= ord('~'):
+                if state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.MOD1_MASK) == 0:
+                    self.commit_text(IBus.Text.new_from_string(jaconv.h2z(chr(keyval), ascii=True, digit=True)))
+                    return True
         else:
             return False
 
