@@ -144,6 +144,7 @@ HEPBURNTAB_H = """ぁ      xa      あ      a      ぃ      xi      い      i  
 。	.	、	,
 「	[	」	]
 『	z[	』	z]
+・  z/
 """
 
 
