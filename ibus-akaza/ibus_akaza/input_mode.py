@@ -24,9 +24,10 @@ class InputMode:
 
 
 INPUT_MODE_HIRAGANA = InputMode('InputMode.Hiragana', 0, 'あ', 'ひらがな (C-S-j)')
-INPUT_MODE_LATIN = InputMode('InputMode.Latin', 1, '_A', 'Latin (C-S-;)')
+INPUT_MODE_ALNUM = InputMode('InputMode.Latin', 1, '_A', 'Alnum (C-S-;)')
+INPUT_MODE_FULLWIDTH_ALNUM = InputMode('InputMode.FullWidthAlnum', 2, 'Ａ', 'Fullwidth Alnum (C-S-l)')
 
-_ALL_INPUT_MODE = [INPUT_MODE_HIRAGANA, INPUT_MODE_LATIN]
+_ALL_INPUT_MODE = [INPUT_MODE_HIRAGANA, INPUT_MODE_ALNUM, INPUT_MODE_FULLWIDTH_ALNUM]
 
 _INPUT_MODE_PROP_NAME2MODE = dict([(mode.prop_name, mode) for mode in _ALL_INPUT_MODE])
 
