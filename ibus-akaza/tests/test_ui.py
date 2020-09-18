@@ -2,6 +2,9 @@ import os
 import sys
 import pathlib
 import pytest
+from akaza.node import Node
+
+from ibus_akaza.input_mode import INPUT_MODE_KATAKANA, INPUT_MODE_HIRAGANA
 
 sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-core/').absolute().resolve()))
@@ -150,3 +153,29 @@ def test_extend_clause_left_most_left_and_more():
     assert ui.current_clause == 2
     ui.extend_clause_right()  # とちか→とちかん
     assert '/'.join([clause[0].yomi for clause in ui.clauses]) == 'どん/だけ/とちかん'
+
+
+def test_update_preedit_text_before_henkan1():
+    ui = AkazaIBusEngine()
+    ui._set_input_mode(INPUT_MODE_HIRAGANA)
+    ui.preedit_string = "hyoi"
+    ui.update_preedit_text_before_henkan()
+    print(ui.clauses)
+    assert [
+               [Node(word='ひょい', yomi='ひょい', start_pos=0)]
+           ] == [
+               [Node(word='ひょい', yomi='ひょい', start_pos=0)]
+           ]
+    assert ui.clauses == [
+        [Node(word='ひょい', yomi='ひょい', start_pos=0)]
+    ]
+
+
+def test_update_preedit_text_before_henkan2():
+    ui = AkazaIBusEngine()
+    ui._set_input_mode(INPUT_MODE_KATAKANA)
+    ui.preedit_string = "hyoi-"
+    ui.update_preedit_text_before_henkan()
+    assert ui.clauses == [
+        [Node(word='ヒョイー', yomi='ひょいー', start_pos=0)]
+    ]

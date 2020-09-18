@@ -25,7 +25,7 @@ from akaza.graph import GraphResolver
 from akaza.language_model import LanguageModel
 
 from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_ALNUM, INPUT_MODE_HIRAGANA, \
-    get_all_input_modes, INPUT_MODE_FULLWIDTH_ALNUM
+    get_all_input_modes, INPUT_MODE_FULLWIDTH_ALNUM, INPUT_MODE_KATAKANA, INPUT_MODE_HALFWIDTH_KATAKANA
 
 num_keys = []
 for n in range(1, 10):
@@ -222,6 +222,10 @@ g
               and keyval == ord('L')):
             self._set_input_mode(INPUT_MODE_FULLWIDTH_ALNUM)
             return True
+        elif ((state & IBus.ModifierType.CONTROL_MASK) > 0
+              and keyval == ord('K')):
+            self._set_input_mode(INPUT_MODE_KATAKANA)
+            return True
 
         if self.preedit_string:
             if keyval in (IBus.Return, IBus.KP_Enter):
@@ -229,7 +233,8 @@ g
                     self.commit_candidate()
                 else:
                     # 無変換状態では、ひらがなに変換してコミットします。
-                    self.commit_string(romkan.to_hiragana(self.preedit_string))
+                    yomi, word = self._make_preedit_word()
+                    self.commit_string(word)
                 return True
             elif keyval == IBus.Escape:
                 self.preedit_string = ''
@@ -324,7 +329,7 @@ g
                     self.update_candidates()
                 return True
 
-        if self.input_mode == INPUT_MODE_HIRAGANA:
+        if self.input_mode in (INPUT_MODE_HIRAGANA, INPUT_MODE_KATAKANA, INPUT_MODE_HALFWIDTH_KATAKANA):
             # Allow typing all ASCII letters and punctuation
             if ord('!') <= keyval <= ord('~'):
                 if state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.MOD1_MASK) == 0:
@@ -351,6 +356,9 @@ g
 
     def _set_input_mode(self, mode: InputMode):
         self.logger.info(f"input mode activate: {mode}")
+
+        # 変換候補をいったんコミットする。
+        self.commit_candidate()
 
         label = f"Input mode: ({mode.symbol})"
         prop = self.input_mode_prop
@@ -687,6 +695,18 @@ g
         self._update_lookup_table()
         self.is_invalidate = False
 
+    def _make_preedit_word(self):
+        """
+        preedict string をよい感じに見せる。
+        """
+        yomi = romkan.to_hiragana(self.preedit_string)
+        if self.input_mode == INPUT_MODE_KATAKANA:
+            return yomi, jaconv.hira2kata(yomi)
+        elif self.input_mode == INPUT_MODE_HALFWIDTH_KATAKANA:
+            return yomi, jaconv.z2h(jaconv.hira2kata(yomi))
+        else:
+            return yomi, yomi
+
     def update_preedit_text_before_henkan(self):
         """
         無変換状態で、どんどん入力していくフェーズ。
@@ -697,18 +717,18 @@ g
             return
 
         # 平仮名にする。
-        text = romkan.to_hiragana(self.preedit_string)
+        yomi, word = self._make_preedit_word()
         self.clauses = [
-            [Node(word=text, yomi=text, start_pos=3)]
+            [Node(word=word, yomi=yomi, start_pos=0)]
         ]
         self.current_clause = 0
 
         preedit_attrs = IBus.AttrList()
         preedit_attrs.append(IBus.Attribute.new(IBus.AttrType.UNDERLINE,
-                                                IBus.AttrUnderline.SINGLE, 0, len(text)))
-        preedit_text = IBus.Text.new_from_string(text)
+                                                IBus.AttrUnderline.SINGLE, 0, len(word)))
+        preedit_text = IBus.Text.new_from_string(word)
         preedit_text.set_attributes(preedit_attrs)
-        self.update_preedit_text(preedit_text, len(text), len(text) > 0)
+        self.update_preedit_text(preedit_text, len(word), len(word) > 0)
 
     def create_lookup_table(self):
         """

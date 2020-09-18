@@ -31,3 +31,10 @@ class Node:
             return '</S>'
         else:
             return f"{self.word}/{self.yomi}"
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __hash__(self):
+        # necessary for instances to behave sanely in dicts and sets.
+        return hash((self.start_pos, self.word, self.yomi, self.prev, self.cost))
