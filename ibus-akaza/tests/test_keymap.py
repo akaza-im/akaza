@@ -9,7 +9,7 @@ from ibus_akaza.keymap import Keymap, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVER
 
 def test_foobar():
     keymap = Keymap()
-    keymap.register(KEY_STATE_PRECOMPOSITION, 'C-j', 'foobar')
+    keymap.register([KEY_STATE_PRECOMPOSITION], ['C-j'], 'foobar')
 
     # chr(106) => j
     # chr(74) => J
@@ -19,7 +19,7 @@ def test_foobar():
 
 def test_left():
     keymap = Keymap()
-    keymap.register(KEY_STATE_CONVERSION, 'S-Left', 'foobar')
+    keymap.register([KEY_STATE_CONVERSION], ['S-Left'], 'foobar')
 
     # chr(106) => j
     # chr(74) => J
