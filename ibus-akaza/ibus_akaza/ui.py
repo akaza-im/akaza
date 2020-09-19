@@ -102,6 +102,9 @@ try:
         keymap.register(state, 'F9', 'convert_to_full_romaji')
         keymap.register(state, 'F10', 'convert_to_half_romaji')
 
+    keymap.register_multi(KEY_STATE_CONVERSION, ['Up', 'KP_Up'], 'cursor_up')
+    keymap.register_multi(KEY_STATE_CONVERSION, ['Down', 'KP_Down'], 'cursor_down')
+
     keymap.register_multi(KEY_STATE_CONVERSION, ['Right', 'KP_Right'], 'cursor_right')
     keymap.register_multi(KEY_STATE_CONVERSION, ['S-Right', 'S-KP_Right'], 'extend_clause_right')
 
@@ -302,12 +305,6 @@ g
                 return True
             elif keyval in (IBus.Page_Down, IBus.KP_Page_Down):
                 self.page_down()
-                return True
-            elif keyval in (IBus.Up, IBus.KP_Up):
-                self.cursor_up()
-                return True
-            elif keyval in (IBus.Down, IBus.KP_Down):
-                self.cursor_down()
                 return True
 
         # スペース
