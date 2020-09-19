@@ -102,6 +102,12 @@ try:
         keymap.register(state, 'F9', 'convert_to_full_romaji')
         keymap.register(state, 'F10', 'convert_to_half_romaji')
 
+    keymap.register_multi(KEY_STATE_CONVERSION, ['Right', 'KP_Right'], 'cursor_right')
+    keymap.register_multi(KEY_STATE_CONVERSION, ['S-Right', 'S-KP_Right'], 'extend_clause_right')
+
+    keymap.register_multi(KEY_STATE_CONVERSION, ['Left', 'KP_Left'], 'cursor_left')
+    keymap.register_multi(KEY_STATE_CONVERSION, ['S-Left', 'S-KP_Left'], 'extend_clause_left')
+
     logging.info(f"Loaded Akaza in {time.time() - t0} seconds")
 except:
     logging.error("Cannot initialize Akaza.", exc_info=True)
@@ -227,11 +233,14 @@ g
 
     def _get_key_state(self):
         if len(self.preedit_string) == 0:
+            self.logger.debug("key_state: KEY_STATE_PRECOMPOSITION")
             return KEY_STATE_PRECOMPOSITION
         else:
             if self.in_henkan_mode():
+                self.logger.debug("key_state: KEY_STATE_CONVERSION")
                 return KEY_STATE_CONVERSION
             else:
+                self.logger.debug("key_state: KEY_STATE_COMPOSITION")
                 return KEY_STATE_COMPOSITION
 
     def _do_process_key_event(self, keyval, keycode, state):
@@ -299,18 +308,6 @@ g
                 return True
             elif keyval in (IBus.Down, IBus.KP_Down):
                 self.cursor_down()
-                return True
-            elif keyval in (IBus.Right, IBus.KP_Right):
-                if state & IBus.ModifierType.SHIFT_MASK == 0:
-                    self.cursor_right()
-                else:
-                    self.extend_clause_right()
-                return True
-            elif keyval in (IBus.Left, IBus.KP_Left):
-                if state & IBus.ModifierType.SHIFT_MASK == 0:
-                    self.cursor_left()
-                else:
-                    self.extend_clause_left()
                 return True
 
         # スペース

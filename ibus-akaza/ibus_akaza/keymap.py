@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 import gi
 
@@ -23,7 +23,9 @@ class Keymap:
         }
 
     def register_ibus(self, key_state: int, keyval: int, mask: int, method: str):
-        self.keys[key_state][keyval] = (method, mask)
+        if keyval not in self.keys[key_state]:
+            self.keys[key_state][keyval] = {}
+        self.keys[key_state][keyval][mask] = method
         # IBus.ModifierType.CONTROL_MASK
 
     def register(self, state, key: str, method: str):
@@ -41,11 +43,14 @@ class Keymap:
         keyval = ord(key) if len(key) == 1 else getattr(IBus, key)
         self.register_ibus(state, keyval, mask, method)
 
+    def register_multi(self, state, keys: List[str], method: str):
+        for key in keys:
+            self.register(state, key, method)
+
     def get(self, key_state: int, keyval: int, state: int) -> Optional[str]:
         if keyval in self.keys[key_state]:
-            got = self.keys[key_state][keyval]
-            (got_method, got_mask) = got
-            # logging.info(f"!!!!!! KJKJKJKJKJK keyval={keyval}(j:{ord('j')}, J:{ord('J')}) {state} ^ {got_mask} (CTRL: {int(IBus.ModifierType.CONTROL_MASK)})")
-            if state ^ got_mask == 0:
-                return got_method
+            got_method = self.keys[key_state][keyval][state]
+            import logging
+            logging.info(f"!!!!!! KJKJKJKJKJK keyval={keyval}(j:{ord('j')}, J:{ord('J')}) {state} (CTRL: {int(IBus.ModifierType.CONTROL_MASK)}) -> {got_method}")
+            return got_method
         return None
