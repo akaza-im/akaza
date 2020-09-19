@@ -2,11 +2,10 @@ import pathlib
 import sys
 from tempfile import NamedTemporaryFile
 
-from akaza.dictionary import Dictionary
-
 sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
 import pytest
+from akaza.dictionary import Dictionary
 from akaza import Akaza
 from akaza.user_language_model import UserLanguageModel
 from akaza_data.system_dict import SystemDict

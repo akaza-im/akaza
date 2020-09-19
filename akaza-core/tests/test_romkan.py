@@ -1,7 +1,8 @@
 import pytest
+import pathlib
 import sys
 
-sys.path.append('../akaza-data/')
+sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
 from akaza.romkan import RomkanConverter
 
