@@ -2,6 +2,8 @@ import pathlib
 import sys
 from tempfile import NamedTemporaryFile
 
+from akaza.dictionary import Dictionary
+
 sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
 import pytest
@@ -24,10 +26,14 @@ language_model = LanguageModel(
     user_language_model=user_language_model,
 )
 
+dictionary = Dictionary(
+    system_dict=system_dict,
+    user_dicts=[],
+)
+
 resolver = GraphResolver(
     language_model=language_model,
-    system_dict=system_dict,
-    user_dict=None,
+    dictionary=dictionary,
 )
 
 romkan = RomkanConverter()

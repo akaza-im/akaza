@@ -51,14 +51,22 @@ wikipedia の全データをダウンロードして言語モデルと辞書の�
 
 ## 設定方法
 
+### config.yml
+
 XDG の設定ファイルディレクトリ以下、通常であれば `$HOME/.config/ibus-akaza/config.yml` に設定ファイルを書くことができます。
 
-ローマ字変換テーブルを書くことができます。この設定は通常の設定を上書きすることができます。
+設定可能な項目は以下のもの。
 
-    # ローマ字変換テーブル
-    romaji:
+ * ローマ字変換テーブルの上書き
+ * ユーザー辞書の設定
+
+サンプルの設定は以下のような感じになります。
+
+    romaji:        # ローマ字変換テーブル
       la: ら
-
+    user_dicts:    # ユーザー辞書の設定
+      - path: /home/tokuhirom/dotfiles/skk/SKK-JISYO.tokuhirom
+        encoding: utf-8
 
 ## See also
 

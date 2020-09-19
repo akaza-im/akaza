@@ -3,6 +3,8 @@ from typing import List, Dict
 
 import gi
 
+from akaza.dictionary import Dictionary
+
 gi.require_version('IBus', '1.0')
 
 from gi.repository import IBus
@@ -21,7 +23,6 @@ from akaza.node import Node
 from akaza.user_language_model import UserLanguageModel
 from akaza_data.system_dict import SystemDict
 from akaza_data.system_language_model import SystemLanguageModel
-from akaza.user_dict import load_user_dict_from_json_config
 from akaza.graph import GraphResolver
 from akaza.language_model import LanguageModel
 from ibus_akaza import config_loader
@@ -33,17 +34,9 @@ from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_ALN
 
 def build_akaza():
     configdir = pathlib.Path(GLib.get_user_config_dir(), 'ibus-akaza')
-    user_dict_path = configdir.joinpath('user-dict')
-    user_dict_path.mkdir(parents=True, exist_ok=True)
 
-    user_dict_conf_path = configdir.joinpath('user-dict.json')
-    logging.info(f"user_dict_conf_path={user_dict_conf_path}")
-    if user_dict_conf_path.exists():
-        logging.info(f"Loading user dict: {user_dict_conf_path}")
-        user_dict = load_user_dict_from_json_config(str(user_dict_conf_path))
-    else:
-        logging.info(f"Missing user dict: {user_dict_conf_path}")
-        user_dict = None
+    config = config_loader.ConfigLoader()
+    user_dicts = list(config.load_user_dict())
 
     user_language_model_path = configdir.joinpath('user_language_model')
     user_language_model_path.mkdir(parents=True, exist_ok=True)
@@ -57,13 +50,15 @@ def build_akaza():
         user_language_model=user_language_model,
     )
 
-    resolver = GraphResolver(
+    dictionary = Dictionary(
         system_dict=system_dict,
-        user_dict=user_dict,
-        language_model=language_model,
+        user_dicts=user_dicts,
     )
 
-    config = config_loader.load_config()
+    resolver = GraphResolver(
+        dictionary=dictionary,
+        language_model=language_model,
+    )
 
     romkan = RomkanConverter(additional=config.get('romaji'))
 
