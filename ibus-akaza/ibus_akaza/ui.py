@@ -67,46 +67,64 @@ def build_akaza():
     return user_language_model, Akaza(resolver=resolver, romkan=romkan), romkan
 
 
-try:
-    t0 = time.time()
-    user_language_model, akaza, romkan = build_akaza()
-
+def build_keymap() -> Keymap:
     keymap = Keymap()
 
-    for state in [KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION]:
-        # 入力モードの切り替え
-        keymap.register(state, 'Henkan', 'set_input_mode_hiragana')
-        keymap.register(state, 'C-S-J', 'set_input_mode_hiragana')
-        keymap.register(state, 'Muhenkan', 'set_input_mode_alnum')
-        keymap.register(state, 'C-S-:', 'set_input_mode_alnum')
-        keymap.register(state, 'C-S-L', 'set_input_mode_fullwidth_alnum')
-        keymap.register(state, 'C-S-K', 'set_input_mode_katakana')
+    # 入力モードの切り替え
+    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION], ['Henkan'],
+                    'set_input_mode_hiragana')
+    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION], ['C-S-J'],
+                    'set_input_mode_hiragana')
+    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION], ['Muhenkan'],
+                    'set_input_mode_alnum')
+    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION], ['C-S-:'],
+                    'set_input_mode_alnum')
+    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION], ['C-S-L'],
+                    'set_input_mode_fullwidth_alnum')
+    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION], ['C-S-K'],
+                    'set_input_mode_katakana')
 
     # 後から文字タイプを指定する
-    for state in [KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION]:
-        keymap.register(state, 'F6', 'convert_to_full_hiragana')
-        keymap.register(state, 'F7', 'convert_to_full_katakana')
-        keymap.register(state, 'F8', 'convert_to_half_katakana')
-        keymap.register(state, 'F9', 'convert_to_full_romaji')
-        keymap.register(state, 'F10', 'convert_to_half_romaji')
+    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F6'], 'convert_to_full_hiragana')
+    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F7'], 'convert_to_full_katakana')
+    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F8'], 'convert_to_half_katakana')
+    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F9'], 'convert_to_full_romaji')
+    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F10'], 'convert_to_half_romaji')
 
-    """
-"""
+    keymap.register([KEY_STATE_CONVERSION], ['space'], 'cursor_down')
+    keymap.register([KEY_STATE_COMPOSITION], ['space'], 'update_candidates')
+
+    keymap.register([KEY_STATE_CONVERSION], ['Return', 'KP_Enter'], 'commit_candidate')
+    keymap.register([KEY_STATE_COMPOSITION], ['Return', 'KP_Enter'], 'commit_preedit')
+
+    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['Escape'], 'escape')
+
+    keymap.register([KEY_STATE_CONVERSION], ['BackSpace'], 'erase_character_before_cursor')
+    keymap.register([KEY_STATE_COMPOSITION], ['BackSpace'], 'erase_character_before_cursor')
 
     for n in range(0, 10):
-        keymap.register_multi(KEY_STATE_CONVERSION, [str(n), f"KP_{n}"], f"press_number_{n}")
+        keymap.register([KEY_STATE_CONVERSION], [str(n), f"KP_{n}"], f"press_number_{n}")
 
-    keymap.register_multi(KEY_STATE_CONVERSION, ['Page_Up', 'KP_Page_Up'], 'page_up')
-    keymap.register_multi(KEY_STATE_CONVERSION, ['Page_Down', 'KP_Page_Down'], 'page_down')
+    keymap.register([KEY_STATE_CONVERSION], ['Page_Up', 'KP_Page_Up'], 'page_up')
+    keymap.register([KEY_STATE_CONVERSION], ['Page_Down', 'KP_Page_Down'], 'page_down')
 
-    keymap.register_multi(KEY_STATE_CONVERSION, ['Up', 'KP_Up'], 'cursor_up')
-    keymap.register_multi(KEY_STATE_CONVERSION, ['Down', 'KP_Down'], 'cursor_down')
+    keymap.register([KEY_STATE_CONVERSION], ['Up', 'KP_Up'], 'cursor_up')
+    keymap.register([KEY_STATE_CONVERSION], ['Down', 'KP_Down'], 'cursor_down')
 
-    keymap.register_multi(KEY_STATE_CONVERSION, ['Right', 'KP_Right'], 'cursor_right')
-    keymap.register_multi(KEY_STATE_CONVERSION, ['S-Right', 'S-KP_Right'], 'extend_clause_right')
+    keymap.register([KEY_STATE_CONVERSION], ['Right', 'KP_Right'], 'cursor_right')
+    keymap.register([KEY_STATE_CONVERSION], ['S-Right', 'S-KP_Right'], 'extend_clause_right')
 
-    keymap.register_multi(KEY_STATE_CONVERSION, ['Left', 'KP_Left'], 'cursor_left')
-    keymap.register_multi(KEY_STATE_CONVERSION, ['S-Left', 'S-KP_Left'], 'extend_clause_left')
+    keymap.register([KEY_STATE_CONVERSION], ['Left', 'KP_Left'], 'cursor_left')
+    keymap.register([KEY_STATE_CONVERSION], ['S-Left', 'S-KP_Left'], 'extend_clause_left')
+
+    return keymap
+
+
+try:
+    t0 = time.time()
+
+    user_language_model, akaza, romkan = build_akaza()
+    keymap = build_keymap()
 
     logging.info(f"Loaded Akaza in {time.time() - t0} seconds")
 except:
@@ -253,51 +271,9 @@ g
 
         got_method = keymap.get(self._get_key_state(), keyval, state)
         if got_method is not None:
-            self.logger.info(f"Calling method: {got_method}")
+            self.logger.debug(f"Calling method: {got_method}")
             getattr(self, got_method)()
             return True
-
-        if self.preedit_string:
-            if keyval in (IBus.Return, IBus.KP_Enter):
-                if self.in_henkan_mode():
-                    self.commit_candidate()
-                else:
-                    # 無変換状態では、ひらがなに変換してコミットします。
-                    yomi, word = self._make_preedit_word()
-                    self.commit_string(word)
-                return True
-            elif keyval == IBus.Escape:
-                self.preedit_string = ''
-                self.update_candidates()
-                return True
-            elif keyval == IBus.BackSpace:
-                if self.in_henkan_mode():
-                    # 変換中の場合、無変換モードにもどす。
-                    self.lookup_table.clear()
-                    self.hide_auxiliary_text()
-                    self.hide_lookup_table()
-                else:
-                    # サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
-                    self.preedit_string = re.sub(r'(?:z[hjkl.-\[\]]|n+|[kstnhmyrwgzjdbp]?[aiueo]|.)$', '',
-                                                 self.preedit_string)
-                # 変換していないときのレンダリングをする。
-                self.update_preedit_text_before_henkan()
-                return True
-
-        # スペース
-        if keyval == IBus.space:
-            if len(self.preedit_string) == 0:
-                # もし、まだなにもはいっていなければ、ただの空白をそのままいれる。
-                return False
-            else:
-                if self.in_henkan_mode():
-                    self.logger.debug("cursor down.")
-                    self.cursor_down()
-                else:
-                    # 実際に変換していく。
-                    self.logger.debug("update_candidates.")
-                    self.update_candidates()
-                return True
 
         if self.input_mode in (INPUT_MODE_HIRAGANA, INPUT_MODE_KATAKANA, INPUT_MODE_HALFWIDTH_KATAKANA):
             # Allow typing all ASCII letters and punctuation
@@ -601,6 +577,11 @@ g
         self._update_candidates()
         # TODO: もし、分節の長さをいじったら、self.node_selected も変更するべき。
 
+    def commit_preedit(self):
+        # 無変換状態では、ひらがなに変換してコミットします。
+        yomi, word = self._make_preedit_word()
+        self.commit_string(word)
+
     def commit_string(self, text):
         self.logger.info("commit_string.")
         self.cursor_moved = False
@@ -779,6 +760,23 @@ g
 
     def do_cursor_down(self):
         return self.cursor_down()
+
+    def erase_character_before_cursor(self):
+        if self.in_henkan_mode():
+            # 変換中の場合、無変換モードにもどす。
+            self.lookup_table.clear()
+            self.hide_auxiliary_text()
+            self.hide_lookup_table()
+        else:
+            # サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
+            self.preedit_string = re.sub(r'(?:z[hjkl.-\[\]]|n+|[kstnhmyrwgzjdbp]?[aiueo]|.)$', '',
+                                         self.preedit_string)
+        # 変換していないときのレンダリングをする。
+        self.update_preedit_text_before_henkan()
+
+    def escape(self):
+        self.preedit_string = ''
+        self.update_candidates()
 
 
 for n in range(0, 10):

@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, List
 
 import gi
@@ -15,12 +16,13 @@ KEY_STATE_CONVERSION = 4
 
 
 class Keymap:
-    def __init__(self):
+    def __init__(self, logger=logging.getLogger(__name__)):
         self.keys = {
             KEY_STATE_PRECOMPOSITION: {},
             KEY_STATE_COMPOSITION: {},
             KEY_STATE_CONVERSION: {},
         }
+        self.logger = logger
 
     def register_ibus(self, key_state: int, keyval: int, mask: int, method: str):
         if keyval not in self.keys[key_state]:
@@ -28,7 +30,7 @@ class Keymap:
         self.keys[key_state][keyval][mask] = method
         # IBus.ModifierType.CONTROL_MASK
 
-    def register(self, state, key: str, method: str):
+    def do_register(self, state, key: str, method: str):
         mask = 0
         while '-' in key:
             if key.startswith('C-'):
@@ -43,14 +45,14 @@ class Keymap:
         keyval = ord(key) if len(key) == 1 else getattr(IBus, key)
         self.register_ibus(state, keyval, mask, method)
 
-    def register_multi(self, state, keys: List[str], method: str):
+    def register(self, states: List[int], keys: List[str], method: str):
         for key in keys:
-            self.register(state, key, method)
+            for state in states:
+                self.do_register(state, key, method)
 
     def get(self, key_state: int, keyval: int, state: int) -> Optional[str]:
         if keyval in self.keys[key_state]:
             got_method = self.keys[key_state][keyval][state]
-            import logging
-            logging.info(f"!!!!!! KJKJKJKJKJK keyval={keyval}(j:{ord('j')}, J:{ord('J')}) {state} (CTRL: {int(IBus.ModifierType.CONTROL_MASK)}) -> {got_method}")
+            self.logger.debug(f"keyval={keyval}(j:{ord('j')}, J:{ord('J')}) {state} -> {got_method}")
             return got_method
         return None
