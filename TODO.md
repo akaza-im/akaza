@@ -3,6 +3,8 @@
 ## Priority high
 
 - 「なんの」の入力に違和感。
+- Twitterの web form で挙動不審
+- 「きょう」の変換。
 
 ## Priority mid
 
@@ -22,8 +24,6 @@
 
 - 文節として、一文字の平仮名のみになったものに関しては、連結してしまった方が良いのではないだろうか？
 - when user edit user dictionary, reload it
-- *GUI* 設定画面の実装
-- *GUI* 単語登録機能
 - かな入力サポート
 - ユーザー言語モデル学習機 from text file or web.
   - クローラーをかく？
@@ -41,6 +41,8 @@
   - 古くさすぎるかも
 - 言語モデルを小さくできないか?
 - support 3gram(必要?)
+- *GUI* 設定画面の実装
+- *GUI* 単語登録機能
 
 # DONE
 
