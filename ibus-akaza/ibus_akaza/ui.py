@@ -25,6 +25,7 @@ from akaza.user_dict import load_user_dict_from_json_config
 from akaza.graph import GraphResolver
 from akaza.language_model import LanguageModel
 
+from .keymap import Keymap, KEY_STATE_PRECOMPOSITION, KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION
 from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_ALNUM, INPUT_MODE_HIRAGANA, \
     get_all_input_modes, INPUT_MODE_FULLWIDTH_ALNUM, INPUT_MODE_KATAKANA, INPUT_MODE_HALFWIDTH_KATAKANA
 
@@ -81,6 +82,12 @@ def build_akaza():
 try:
     t0 = time.time()
     user_language_model, akaza, romkan = build_akaza()
+
+    keymap = Keymap()
+    keymap.register(KEY_STATE_COMPOSITION, 'Henkan', 'set_input_mode_hiragana')
+    keymap.register(KEY_STATE_PRECOMPOSITION, 'Henkan', 'set_input_mode_hiragana')
+    keymap.register(KEY_STATE_CONVERSION, 'Henkan', 'set_input_mode_hiragana')
+
     logging.info(f"Loaded Akaza in {time.time() - t0} seconds")
 except:
     logging.error("Cannot initialize Akaza.", exc_info=True)
@@ -204,6 +211,15 @@ g
                               exc_info=True)
             return False
 
+    def _get_key_state(self):
+        if len(self.preedit_string) == 0:
+            return KEY_STATE_PRECOMPOSITION
+        else:
+            if self.in_henkan_mode():
+                return KEY_STATE_CONVERSION
+            else:
+                return KEY_STATE_COMPOSITION
+
     def _do_process_key_event(self, keyval, keycode, state):
         self.logger.debug("process_key_event(%04x, %04x, %04x)" % (keyval, keycode, state))
 
@@ -212,9 +228,14 @@ g
         if not is_press:
             return False
 
+        got_method = keymap.get(self._get_key_state(), keyval, state)
+        if got_method is not None:
+            self.logger.info(f"Calling method: {got_method}")
+            getattr(self, got_method)()
+            return True
+
         # 入力モードの切り替え機能。
-        if keyval == IBus.Henkan or (
-                (state & IBus.ModifierType.CONTROL_MASK) > 0
+        if ((state & IBus.ModifierType.CONTROL_MASK) > 0
                 and keyval == ord('J')):
             self._set_input_mode(INPUT_MODE_HIRAGANA)
             return True
@@ -375,6 +396,9 @@ g
         self.update_property(self.__prop_dict[mode.prop_name])
 
         self.input_mode = mode
+
+    def set_input_mode_hiragana(self):
+        self._set_input_mode(INPUT_MODE_HIRAGANA)
 
     def do_property_activate(self, prop_name, state):
         """
