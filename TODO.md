@@ -6,8 +6,6 @@
 
 ## Priority mid
 
-- ユーザー言語モデル学習機 from text file or web.
-  - クローラーをかく？
 - packaging to arch linux.
 - キーバインディングを設定可能に。
 - 設定候補の最後にアルファベットなどを入れる。
@@ -24,9 +22,11 @@
 
 - 文節として、一文字の平仮名のみになったものに関しては、連結してしまった方が良いのではないだろうか？
 - when user edit user dictionary, reload it
-- 設定画面の実装
-- 単語登録機能
+- *GUI* 設定画面の実装
+- *GUI* 単語登録機能
 - かな入力サポート
+- ユーザー言語モデル学習機 from text file or web.
+  - クローラーをかく？
 
 ## priority very low
 
