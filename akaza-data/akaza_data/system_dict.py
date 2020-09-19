@@ -18,8 +18,11 @@ class SystemDict:
         trie.mmap(path)
         return SystemDict(trie)
 
-    def prefixes(self, key):
-        return self._trie.prefixes(key)
+    def prefixes(self, yomi):
+        return self._trie.prefixes(yomi)
 
-    def __getitem__(self, item):
-        return self._trie[item][0].decode('utf-8').split('/')
+    def __getitem__(self, yomi):
+        return self._trie[yomi][0].decode('utf-8').split('/')
+
+    def has_item(self, yomi):
+        return yomi in self._trie
