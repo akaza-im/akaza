@@ -96,6 +96,7 @@ class UserLanguageModel:
             self.logger.debug("Skip saving user_language_mdel.")
             return
 
+        self.need_save = False
         self.logger.info("Writing user_language_model")
         with atomic_write(self.unigram_path(), overwrite=True) as f:
             for kanji_kana in sorted(self.unigram.keys()):
