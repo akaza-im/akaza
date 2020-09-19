@@ -24,6 +24,7 @@ from akaza_data.system_language_model import SystemLanguageModel
 from akaza.user_dict import load_user_dict_from_json_config
 from akaza.graph import GraphResolver
 from akaza.language_model import LanguageModel
+from ibus_akaza import config_loader
 
 from .keymap import build_default_keymap, KEY_STATE_PRECOMPOSITION, KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION
 from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_ALNUM, INPUT_MODE_HIRAGANA, \
@@ -62,7 +63,9 @@ def build_akaza():
         language_model=language_model,
     )
 
-    romkan = RomkanConverter()
+    config = config_loader.load_config()
+
+    romkan = RomkanConverter(additional=config.get('romaji'))
 
     return user_language_model, Akaza(resolver=resolver, romkan=romkan), romkan
 
