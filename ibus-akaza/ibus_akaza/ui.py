@@ -627,6 +627,12 @@ g
         """
         preedict string をよい感じに見せる。
         """
+        self.logger.debug(f"_make_preedit_word: {self.preedit_string}")
+
+        if len(self.preedit_string) > 0 and self.preedit_string[0].isupper() \
+                and len(self.force_selected_clause) == 0:
+            return self.preedit_string, self.preedit_string
+
         yomi = self.romkan.to_hiragana(self.preedit_string)
         if self.input_mode == INPUT_MODE_KATAKANA:
             return yomi, jaconv.hira2kata(yomi)
@@ -639,6 +645,7 @@ g
         """
         無変換状態で、どんどん入力していくフェーズ。
         """
+        self.logger.debug(f"update_preedit_text_before_henkan")
 
         if len(self.preedit_string) == 0:
             self.hide_preedit_text()
