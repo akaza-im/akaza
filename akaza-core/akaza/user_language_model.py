@@ -1,6 +1,7 @@
 import logging
 import math
 import os
+import time
 from typing import List, Dict, Optional, Set, Any
 
 from atomicwrites import atomic_write
@@ -19,6 +20,8 @@ class UserLanguageModel:
     def __init__(self, path: str, logger=logging.getLogger(__name__)):
         self.path = path
         self.logger = logger
+
+        self.need_save = False
 
         self.unigram = {}
         self.unigram_kanas = set()
@@ -86,9 +89,14 @@ class UserLanguageModel:
             self.bigram[key] = self.bigram.get(key, 0) + 1
             self.bigram_total[node1.get_key()] = self.bigram_total.get(node1.get_key(), 0) + 1
 
-    # TODO save in background thread...
-    # TODO: bulk save in every 1 minute.
+        self.need_save = True
+
     def save(self):
+        if not self.need_save:
+            self.logger.debug("Skip saving user_language_mdel.")
+            return
+
+        self.logger.info("Writing user_language_model")
         with atomic_write(self.unigram_path(), overwrite=True) as f:
             for kanji_kana in sorted(self.unigram.keys()):
                 count = self.unigram[kanji_kana]
@@ -116,3 +124,8 @@ class UserLanguageModel:
             count = self.bigram[key]
             return math.log10(count / self.bigram_total[key1])
         return None
+
+    def save_periodically(self):
+        while True:
+            self.save()
+            time.sleep(60)

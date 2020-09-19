@@ -14,6 +14,7 @@ import sys
 import re
 import logging
 import pathlib
+import threading
 
 from jaconv import jaconv
 
@@ -69,6 +70,14 @@ try:
     t0 = time.time()
 
     user_language_model, akaza, romkan = build_akaza()
+
+    user_language_model_save_thread = threading.Thread(
+        name='user_language_model_save_thread',
+        target=lambda: user_language_model.save_periodically(),
+        daemon=True,
+    )
+    user_language_model_save_thread.start()
+
     keymap = build_default_keymap()
 
     logging.info(f"Loaded Akaza in {time.time() - t0} seconds")
@@ -535,9 +544,6 @@ g
             for clauseid, nodes in enumerate(self.clauses):
                 candidate_nodes.append(nodes[self.node_selected.get(clauseid, 0)])
             self.user_language_model.add_entry(candidate_nodes)
-            # user language model の書き出しは、バックグラウンドスレッドでやりたい。
-            self.logger.info("Save user language model.")
-            self.user_language_model.save()
 
         self.commit_text(IBus.Text.new_from_string(text))
 
