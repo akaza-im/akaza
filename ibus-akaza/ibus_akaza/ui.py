@@ -73,7 +73,8 @@ try:
 
     user_language_model_save_thread = threading.Thread(
         name='user_language_model_save_thread',
-        target=lambda: user_language_model.save_periodically()
+        target=lambda: user_language_model.save_periodically(),
+        daemon=True,
     )
     user_language_model_save_thread.start()
 
