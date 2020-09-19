@@ -3,18 +3,19 @@ import sys
 
 sys.path.append('../akaza-data/')
 
-from akaza.romkan import to_hiragana
+from akaza.romkan import RomkanConverter
 
 
 def test_foo():
-    assert to_hiragana('a') == 'あ'
-    assert to_hiragana('ba') == 'ば'
-    assert to_hiragana('hi') == 'ひ'
-    assert to_hiragana('wahaha') == 'わはは'
-    assert to_hiragana('thi') == 'てぃ'
-    assert to_hiragana('better') == 'べってr'
-    assert to_hiragana('[') == '「'
-    assert to_hiragana(']') == '」'
+    romkan = RomkanConverter()
+    assert romkan.to_hiragana('a') == 'あ'
+    assert romkan.to_hiragana('ba') == 'ば'
+    assert romkan.to_hiragana('hi') == 'ひ'
+    assert romkan.to_hiragana('wahaha') == 'わはは'
+    assert romkan.to_hiragana('thi') == 'てぃ'
+    assert romkan.to_hiragana('better') == 'べってr'
+    assert romkan.to_hiragana('[') == '「'
+    assert romkan.to_hiragana(']') == '」'
 
 
 @pytest.mark.parametrize('src, expected', [
@@ -30,7 +31,19 @@ def test_foo():
     ('wo', 'を'),
     ('z,', '‥'),
     ('z.', '…'),
+    ('z/', '・'),
+    ('z[', '『'),
+    ('z]', '』'),
+    ('du', 'づ'),
+    ("di", "ぢ"),
+    ("fu", "ふ"),
+    ("ti", "ち"),
+    ("wi", "うぃ"),
+    ("we", "うぇ"),
+    ("wo", "を"),
 ])
 def test_bar(src, expected):
-    assert to_hiragana(src) == expected
+    romkan = RomkanConverter()
+    assert romkan.to_hiragana(src) == expected
 
+# ROMKAN_H.update({})
