@@ -29,18 +29,6 @@ from .keymap import Keymap, KEY_STATE_PRECOMPOSITION, KEY_STATE_COMPOSITION, KEY
 from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_ALNUM, INPUT_MODE_HIRAGANA, \
     get_all_input_modes, INPUT_MODE_FULLWIDTH_ALNUM, INPUT_MODE_KATAKANA, INPUT_MODE_HALFWIDTH_KATAKANA
 
-num_keys = []
-for n in range(1, 10):
-    num_keys.append(getattr(IBus, str(n)))
-num_keys.append(getattr(IBus, '0'))
-del n
-
-numpad_keys = []
-for n in range(1, 10):
-    numpad_keys.append(getattr(IBus, 'KP_' + str(n)))
-numpad_keys.append(getattr(IBus, 'KP_0'))
-del n
-
 
 def build_akaza():
     configdir = pathlib.Path(GLib.get_user_config_dir(), 'ibus-akaza')
@@ -101,6 +89,15 @@ try:
         keymap.register(state, 'F8', 'convert_to_half_katakana')
         keymap.register(state, 'F9', 'convert_to_full_romaji')
         keymap.register(state, 'F10', 'convert_to_half_romaji')
+
+    """
+"""
+
+    for n in range(0, 10):
+        keymap.register_multi(KEY_STATE_CONVERSION, [str(n), f"KP_{n}"], f"press_number_{n}")
+
+    keymap.register_multi(KEY_STATE_CONVERSION, ['Page_Up', 'KP_Page_Up'], 'page_up')
+    keymap.register_multi(KEY_STATE_CONVERSION, ['Page_Down', 'KP_Page_Down'], 'page_down')
 
     keymap.register_multi(KEY_STATE_CONVERSION, ['Up', 'KP_Up'], 'cursor_up')
     keymap.register_multi(KEY_STATE_CONVERSION, ['Down', 'KP_Down'], 'cursor_down')
@@ -285,26 +282,6 @@ g
                                                  self.preedit_string)
                 # 変換していないときのレンダリングをする。
                 self.update_preedit_text_before_henkan()
-                return True
-            elif keyval in num_keys and self.in_henkan_mode():
-                # TODO: 変換候補が表示されている状態の時にのみハンドリングされるべき。
-                index = num_keys.index(keyval)
-                if self.set_lookup_table_cursor_pos_in_current_page(index):
-                    self.refresh()
-                    return True
-                return False
-            elif keyval in numpad_keys and self.in_henkan_mode():
-                # TODO: 変換候補が表示されている状態の時にのみハンドリングされるべき。
-                index = numpad_keys.index(keyval)
-                if self.set_lookup_table_cursor_pos_in_current_page(index):
-                    self.refresh()
-                    return True
-                return False
-            elif keyval in (IBus.Page_Up, IBus.KP_Page_Up):
-                self.page_up()
-                return True
-            elif keyval in (IBus.Page_Down, IBus.KP_Page_Down):
-                self.page_down()
                 return True
 
         # スペース
@@ -802,3 +779,17 @@ g
 
     def do_cursor_down(self):
         return self.cursor_down()
+
+
+for n in range(0, 10):
+    def create_cb(nn):
+        idx = 9 if nn == 0 else nn - 1
+
+        def cb(self):
+            if self.set_lookup_table_cursor_pos_in_current_page(idx):
+                self.refresh()
+
+        return cb
+
+
+    setattr(AkazaIBusEngine, f"press_number_{n}", create_cb(n))
