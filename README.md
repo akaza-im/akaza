@@ -49,6 +49,17 @@ wikipedia の全データをダウンロードして言語モデルと辞書の�
    * `("漢字/かな\t漢字/かな", score)`
    * key でそのままひく
 
+## 設定方法
+
+XDG の設定ファイルディレクトリ以下、通常であれば `$HOME/.config/ibus-akaza/config.yml` に設定ファイルを書くことができます。
+
+ローマ字変換テーブルを書くことができます。この設定は通常の設定を上書きすることができます。
+
+    # ローマ字変換テーブル
+    romaji:
+      la: ら
+
+
 ## See also
 
  * http://www.phontron.com/slides/nlp-programming-ja-bonus-01-kkc.pdf
