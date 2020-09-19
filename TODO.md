@@ -27,6 +27,7 @@
 - かな入力サポート
 - ユーザー言語モデル学習機 from text file or web.
   - クローラーをかく？
+- skkserv support
 
 ## priority very low
 
