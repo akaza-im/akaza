@@ -46,134 +46,121 @@ import re
 
 # This table is imported from KAKASI <http://kakasi.namazu.org/> and modified.
 
-HEPBURNTAB_H = """ぁ      xa      あ      a      ぃ      xi      い      i      ぅ      xu
-う      u      う゛      vu      う゛ぁ      va      う゛ぃ      vi      う゛ぇ      ve
-う゛ぉ      vo      ぇ      xe      え      e      ぉ      xo      お      o
+ROMKAN_H = {
+    "xa": "ぁ", "a": "あ", "xi": "ぃ", "i": "い", "xu": "ぅ", "u": "う", "vu": "う゛",
+    "va": "う゛ぁ", "vi": "う゛ぃ", "ve": "う゛ぇ", "vo": "う゛ぉ",
+    "xe": "ぇ", "e": "え",
+    "xo": "ぉ", "o": "お",
 
+    "ka": "か",
+    "ga": "が",
+    "ki": "き",
+    "kya": "きゃ", "kyu": "きゅ", "kyo": "きょ",
+    "gi": "ぎ", "gya": "ぎゃ", "gyu": "ぎゅ", "gyo": "ぎょ",
+    "ku": "く", "gu": "ぐ", "ke": "け", "ge": "げ", "ko": "こ", "go": "ご",
+    "sa": "さ", "za": "ざ",
+    "shi": "し", "sha": "しゃ", "shu": "しゅ", "si": "し", "sya": "しゃ", "syu": "しゅ", "sho": "しょ",
+    "ji": "じ", "ja": "じゃ", "ju": "じゅ", "jo": "じょ", "syo": "しょ", "zi": "じ", "zya": "じゃ", "zyu": "じゅ",
+    "zyo": "じょ",
+    "su": "す", "zu": "ず",
+    "se": "せ", "ze": "ぜ",
+    "so": "そ", "zo": "ぞ",
+    "ta": "た", "da": "だ",
+    "chi": "ち", "cha": "ちゃ", "chu": "ちゅ", "ti": "ち", "tya": "ちゃ", "tyu": "ちゅ", "cho": "ちょ",
+    "di": "ぢ", "dya": "ぢゃ", "dyu": "ぢゅ", "dyo": "ぢょ", "tyo": "ちょ",
+    "xtsu": "っ", "xtu": "っ",
+    "vvu": "っう゛", "vva": "っう゛ぁ", "vvi": "っう゛ぃ", "vve": "っう゛ぇ", "vvo": "っう゛ぉ",
+    "kka": "っか", "gga": "っが",
+    "kki": "っき", "kkya": "っきゃ", "kkyu": "っきゅ", "kkyo": "っきょ",
+    "ggi": "っぎ", "ggya": "っぎゃ", "ggyu": "っぎゅ", "ggyo": "っぎょ",
+    "kku": "っく", "ggu": "っぐ",
+    "kke": "っけ", "gge": "っげ",
+    "kko": "っこ", "ggo": "っご",
+    "ssa": "っさ", "zza": "っざ",
+    "sshi": "っし", "ssha": "っしゃ",
+    "ssi": "っし", "ssya": "っしゃ", "sshu": "っしゅ", "ssho": "っしょ", "ssyu": "っしゅ", "ssyo": "っしょ",
+    "jji": "っじ", "jja": "っじゃ", "jju": "っじゅ", "jjo": "っじょ",
+    "zzi": "っじ", "zzya": "っじゃ", "zzyu": "っじゅ", "zzyo": "っじょ",
+    "ssu": "っす", "zzu": "っず",
+    "sse": "っせ", "zze": "っぜ",
+    "sso": "っそ", "zzo": "っぞ",
+    "tta": "った", "dda": "っだ",
+    "cchi": "っち", "tti": "っち",
+    "ccha": "っちゃ", "cchu": "っちゅ", "ccho": "っちょ",
+    "ddi": "っぢ", "ttya": "っちゃ", "ttyu": "っちゅ", "ttyo": "っちょ",
+    "ddya": "っぢゃ", "ddyu": "っぢゅ", "ddyo": "っぢょ",
+    "ttsu": "っつ", "ttu": "っつ", "ddu": "っづ",
+    "tte": "って", "dde": "っで",
+    "tto": "っと",
+    "ddo": "っど",
+    "hha": "っは", "bba": "っば", "ppa": "っぱ",
+    "hhi": "っひ", "hhya": "っひゃ", "hhyu": "っひゅ", "hhyo": "っひょ",
+    "bbi": "っび", "bbya": "っびゃ", "bbyu": "っびゅ", "bbyo": "っびょ",
+    "ppi": "っぴ", "ppya": "っぴゃ", "ppyu": "っぴゅ", "ppyo": "っぴょ",
+    "ffu": "っふ", "hhu": "っふ", "ffa": "っふぁ", "ffi": "っふぃ", "ffe": "っふぇ", "ffo": "っふぉ",
+    "bbu": "っぶ", "ppu": "っぷ",
+    "hhe": "っへ", "bbe": "っべ", "ppe": "っぺ",
+    "hho": "っほ", "bbo": "っぼ", "ppo": "っぽ",
+    "yya": "っや", "yyu": "っゆ", "yyo": "っよ",
+    "rra": "っら",
+    "rri": "っり", "rrya": "っりゃ", "rryu": "っりゅ", "rryo": "っりょ",
+    "rru": "っる",
+    "rre": "っれ",
+    "rro": "っろ",
+    "tu": "つ", "tsu": "つ", "du": "づ",
+    "te": "て", "de": "で",
+    "to": "と",
+    "do": "ど",
+    "na": "な",
+    "ni": "に", "nya": "にゃ", "nyu": "にゅ", "nyo": "にょ",
+    "nu": "ぬ",
+    "ne": "ね",
+    "no": "の",
+    "ha": "は", "ba": "ば", "pa": "ぱ",
+    "hi": "ひ", "hya": "ひゃ", "hyu": "ひゅ", "hyo": "ひょ",
+    "bi": "び", "bya": "びゃ", "byu": "びゅ", "byo": "びょ",
+    "pi": "ぴ", "pya": "ぴゃ", "pyu": "ぴゅ", "pyo": "ぴょ",
+    "fu": "ふ", "fa": "ふぁ", "fi": "ふぃ", "fe": "ふぇ", "fo": "ふぉ",
+    "hu": "ふ", "bu": "ぶ", "pu": "ぷ",
+    "he": "へ", "be": "べ", "pe": "ぺ",
+    "ho": "ほ", "bo": "ぼ", "po": "ぽ",
+    "ma": "ま",
+    "mi": "み", "mya": "みゃ", "myu": "みゅ", "myo": "みょ",
+    "mu": "む",
+    "me": "め",
+    "mo": "も",
+    "xya": "ゃ", "ya": "や",
+    "xyu": "ゅ", "yu": "ゆ",
+    "xyo": "ょ", "yo": "よ",
+    "ra": "ら",
+    "ri": "り", "rya": "りゃ", "ryu": "りゅ", "ryo": "りょ",
+    "ru": "る",
+    "re": "れ",
+    "ro": "ろ",
+    "xwa": "ゎ", "wa": "わ",
+    "wo": "を",
+    "n": "ん", "n'": "ん",
+    "dyi": "でぃ",
+    "-": "ー",
+    "che": "ちぇ", "tye": "ちぇ",
+    "cche": "っちぇ", "ttye": "っちぇ",
+    "je": "じぇ", "zye": "じぇ",
+    "dha": "でゃ", "dhi": "でぃ", "dhu": "でゅ", "dhe": "でぇ", "dho": "でょ",
+    "tha": "てゃ", "thi": "てぃ", "thu": "てゅ", "the": "てぇ", "tho": "てょ",
 
-か      ka      が      ga      き      ki      きゃ      kya      きゅ      kyu
-きょ      kyo      ぎ      gi      ぎゃ      gya      ぎゅ      gyu      ぎょ      gyo
-く      ku      ぐ      gu      け      ke      げ      ge      こ      ko
-ご      go      
+    ".": "。", ",": "、", "[": "「", "]": "」", "z[": "『",
 
-さ      sa      ざ      za      し      shi      しゃ      sha      しゅ      shu
-し      si      しゃ      sya      しゅ      syu 
-しょ      sho      じ      ji      じゃ      ja      じゅ      ju      じょ      jo
-しょ      syo      じ      zi      じゃ      zya      じゅ      zyu      じょ      zyo 
-す      su      ず      zu      せ      se      ぜ      ze      そ      so
-ぞ      zo
+    "z-": "〜", "z.": "…", "z,": "‥", "zh": "←", "zj": "↓", "zk": "↑", "zl": "→",
+    "z]": "』", "z/": "・",
 
-た      ta      だ      da      ち      chi      ちゃ      cha      ちゅ      chu
-ち      ti      ちゃ      tya      ちゅ      tyu 
-ちょ      cho      ぢ      di      ぢゃ      dya      ぢゅ      dyu      ぢょ      dyo
-ちょ      tyo
-
-っ      xtsu      っ      xtu 
-っう゛      vvu      っう゛ぁ      vva      っう゛ぃ      vvi      
-っう゛ぇ      vve      っう゛ぉ      vvo      
-っか      kka      っが      gga      っき      kki      っきゃ      kkya      
-っきゅ      kkyu      っきょ      kkyo      っぎ      ggi      っぎゃ      ggya      
-っぎゅ      ggyu      っぎょ      ggyo      っく      kku      っぐ      ggu      
-っけ      kke      っげ      gge      っこ      kko      っご      ggo      っさ      ssa
-っざ      zza      っし      sshi      っしゃ      ssha      
-っし      ssi      っしゃ      ssya 
-っしゅ      sshu      っしょ      ssho      
-っしゅ      ssyu      っしょ      ssyo 
-っじ      jji      っじゃ      jja      っじゅ      jju      っじょ      jjo      
-っじ      zzi      っじゃ      zzya      っじゅ      zzyu      っじょ      zzyo 
-っす      ssu      っず      zzu      っせ      sse      っぜ      zze      っそ      sso
-っぞ      zzo      った      tta      っだ      dda      っち      cchi      
-っち      tti 
-っちゃ      ccha      っちゅ      cchu      っちょ      ccho      っぢ      ddi      
-っちゃ      ttya      っちゅ      ttyu      っちょ      ttyo
-っぢゃ      ddya      っぢゅ      ddyu      っぢょ      ddyo      っつ      ttsu      
-っつ      ttu 
-っづ      ddu      って      tte      っで      dde      っと      tto      っど      ddo
-っは      hha      っば      bba      っぱ      ppa      っひ      hhi      
-っひゃ      hhya      っひゅ      hhyu      っひょ      hhyo      っび      bbi      
-っびゃ      bbya      っびゅ      bbyu      っびょ      bbyo      っぴ      ppi      
-っぴゃ      ppya      っぴゅ      ppyu      っぴょ      ppyo      っふ      ffu      
-っふ      hhu 
-っふぁ      ffa      っふぃ      ffi      っふぇ      ffe      っふぉ      ffo      
-っぶ      bbu      っぷ      ppu      っへ      hhe      っべ      bbe      っぺ      ppe
-っほ      hho      っぼ      bbo      っぽ      ppo      っや      yya      っゆ      yyu
-っよ      yyo      っら      rra      っり      rri      っりゃ      rrya      
-っりゅ      rryu      っりょ      rryo      っる      rru      っれ      rre      
-っろ      rro      
-
-つ      tsu      づ      du      て      te      で      de      と      to
-つ      tu
-ど      do
-
-な      na      に      ni      にゃ      nya      にゅ      nyu      にょ      nyo
-ぬ      nu      ね      ne      の      no      
-
-は      ha      ば      ba      ぱ      pa      ひ      hi      ひゃ      hya
-ひゅ      hyu      ひょ      hyo      び      bi      びゃ      bya      びゅ      byu
-びょ      byo      ぴ      pi      ぴゃ      pya      ぴゅ      pyu      ぴょ      pyo
-ふ      fu      ふぁ      fa      ふぃ      fi      ふぇ      fe      ふぉ      fo
-ふ      hu
-ぶ      bu      ぷ      pu      へ      he      べ      be      ぺ      pe
-ほ      ho      ぼ      bo      ぽ      po      
-
-ま      ma      み      mi      みゃ      mya      みゅ      myu      みょ      myo
-む      mu      め      me      も      mo
-
-ゃ      xya      や      ya      ゅ      xyu      ゆ      yu      ょ      xyo
-よ      yo      
-
-ら      ra      り      ri      りゃ      rya      りゅ      ryu      りょ      ryo
-る      ru      れ      re      ろ      ro      
-
-ゎ      xwa      わ      wa      ゐ      wi      ゑ      we
-を      wo      ん      n      
-
-ん     n'
-でぃ   dyi
-ー     -
-ちぇ    che ちぇ    tye
-っちぇ      cche っちぇ      ttye
-じぇ      je じぇ      zye
-
-でゃ dhi でぃ dhi でゅ dhu でぇ dhe でょ dho
-
-てゃ	tha	てぃ	thi	てゅ	thu	てぇ	the	てょ	tho
-〜	z-	…	z.  ‥   z,
-←	zh	↓	zj	↑	zk	→	zl
-
-。	.	、	,
-「	[	」	]
-「	z[	」	z]
-"""
-
-
-def pairs(arr, size=2):
-    for i in range(0, len(arr) - 1, size):
-        yield arr[i:i + size]
-
-
-ROMKAN_H = {}
-
-for kana, roma in pairs(re.split(r"\s+", HEPBURNTAB_H)):
-    ROMKAN_H[roma] = kana
-
-# special modification
-# wo -> ヲ, but ヲ/ウォ -> wo
-# du -> ヅ, but ヅ/ドゥ -> du
-# we -> ウェ, ウェ -> we
-ROMKAN_H.update({"du": "づ", "di": "ぢ", "fu": "ふ", "ti": "ち",
-                 "wi": "うぃ", "we": "うぇ", "wo": "を"})
+    "wi": "うぃ", "we": "うぇ",
+}
 
 
 # Sort in long order so that a longer Romaji sequence precedes.
 
 def _len_cmp(x):
     return -len(x)
-
-
-ROMPAT_H = re.compile(
-    '(' + "|".join(sorted([re.escape(x) for x in ROMKAN_H.keys()], key=_len_cmp)) + ')'
-)
 
 
 def normalize_double_n(s):
@@ -189,14 +176,27 @@ def normalize_double_n(s):
     return s
 
 
+class RomkanConverter:
+    def __init__(self):
+        self.pattern = re.compile(
+            '(' + "|".join(sorted([re.escape(x) for x in ROMKAN_H.keys()], key=_len_cmp)) + ')'
+        )
+
+    def to_hiragana(self, s: str) -> str:
+        """
+        Convert a Romaji (ローマ字) to a Hiragana (平仮名).
+        """
+
+        s = s.lower()
+        s = normalize_double_n(s)
+
+        tmp = self.pattern.sub(lambda x: ROMKAN_H[x.group(1)], s)
+        return tmp
+
+
 def to_hiragana(s: str) -> str:
     """
     Convert a Romaji (ローマ字) to a Hiragana (平仮名).
     """
 
-    s = s.lower()
-    s = normalize_double_n(s)
-
-    # print(ROMKAN_H)
-    tmp = ROMPAT_H.sub(lambda x: ROMKAN_H[x.group(1)], s)
-    return tmp
+    return RomkanConverter().to_hiragana(s)

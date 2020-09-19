@@ -8,7 +8,7 @@ import jaconv
 from akaza.graph import GraphResolver
 from akaza.node import Node
 
-from akaza import romkan
+from akaza.romkan import RomkanConverter
 
 # 子音だが、N は NN だと「ん」になるので処理しない。
 TRAILING_CONSONANT_PATTERN = re.compile(r'^(.*?)([qwrtypsdfghjklzxcvbm]+)$')
@@ -20,9 +20,11 @@ class Akaza:
 
     def __init__(self,
                  resolver: GraphResolver,
+                 romkan: RomkanConverter,
                  logger: Logger = logging.getLogger(__name__)):
         self.logger = logger
         self.resolver = resolver
+        self.romkan = romkan
 
     # 連文節変換するバージョン。
     def convert(self, src: str, force_selected_clause: List[slice] = None) -> List[List[Node]]:
@@ -38,7 +40,7 @@ class Akaza:
                 )
             ]]
 
-        hiragana: str = romkan.to_hiragana(src)
+        hiragana: str = self.romkan.to_hiragana(src)
 
         # 末尾の子音を変換対象外とする。
         m = TRAILING_CONSONANT_PATTERN.match(hiragana)

@@ -15,7 +15,8 @@ import pathlib
 
 from jaconv import jaconv
 
-from akaza import romkan, Akaza
+from akaza import Akaza
+from akaza.romkan import RomkanConverter
 from akaza.node import Node
 from akaza.user_language_model import UserLanguageModel
 from akaza_data.system_dict import SystemDict
@@ -24,20 +25,9 @@ from akaza.user_dict import load_user_dict_from_json_config
 from akaza.graph import GraphResolver
 from akaza.language_model import LanguageModel
 
+from .keymap import build_default_keymap, KEY_STATE_PRECOMPOSITION, KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION
 from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_ALNUM, INPUT_MODE_HIRAGANA, \
     get_all_input_modes, INPUT_MODE_FULLWIDTH_ALNUM, INPUT_MODE_KATAKANA, INPUT_MODE_HALFWIDTH_KATAKANA
-
-num_keys = []
-for n in range(1, 10):
-    num_keys.append(getattr(IBus, str(n)))
-num_keys.append(getattr(IBus, '0'))
-del n
-
-numpad_keys = []
-for n in range(1, 10):
-    numpad_keys.append(getattr(IBus, 'KP_' + str(n)))
-numpad_keys.append(getattr(IBus, 'KP_0'))
-del n
 
 
 def build_akaza():
@@ -72,12 +62,17 @@ def build_akaza():
         language_model=language_model,
     )
 
-    return user_language_model, Akaza(resolver=resolver)
+    romkan = RomkanConverter()
+
+    return user_language_model, Akaza(resolver=resolver, romkan=romkan), romkan
 
 
 try:
     t0 = time.time()
-    user_language_model, akaza = build_akaza()
+
+    user_language_model, akaza, romkan = build_akaza()
+    keymap = build_default_keymap()
+
     logging.info(f"Loaded Akaza in {time.time() - t0} seconds")
 except:
     logging.error("Cannot initialize Akaza.", exc_info=True)
@@ -125,6 +120,8 @@ class AkazaIBusEngine(IBus.Engine):
 
         # カーソル変更をしたばっかりかどうかを、みるフラグ。
         self.cursor_moved = False
+
+        self.romkan = romkan
 
         try:
             self.__prop_dict = {}
@@ -199,6 +196,18 @@ g
                               exc_info=True)
             return False
 
+    def _get_key_state(self):
+        if len(self.preedit_string) == 0:
+            self.logger.debug("key_state: KEY_STATE_PRECOMPOSITION")
+            return KEY_STATE_PRECOMPOSITION
+        else:
+            if self.in_henkan_mode():
+                self.logger.debug("key_state: KEY_STATE_CONVERSION")
+                return KEY_STATE_CONVERSION
+            else:
+                self.logger.debug("key_state: KEY_STATE_COMPOSITION")
+                return KEY_STATE_COMPOSITION
+
     def _do_process_key_event(self, keyval, keycode, state):
         self.logger.debug("process_key_event(%04x, %04x, %04x)" % (keyval, keycode, state))
 
@@ -207,127 +216,11 @@ g
         if not is_press:
             return False
 
-        # 入力モードの切り替え機能。
-        if keyval == IBus.Henkan or (
-                (state & IBus.ModifierType.CONTROL_MASK) > 0
-                and keyval == ord('J')):
-            self._set_input_mode(INPUT_MODE_HIRAGANA)
+        got_method = keymap.get(self._get_key_state(), keyval, state)
+        if got_method is not None:
+            self.logger.debug(f"Calling method: {got_method}")
+            getattr(self, got_method)()
             return True
-        elif keyval == IBus.Muhenkan or (
-                (state & IBus.ModifierType.CONTROL_MASK) > 0
-                and keyval == ord(':')):
-            self._set_input_mode(INPUT_MODE_ALNUM)
-            return True
-        elif ((state & IBus.ModifierType.CONTROL_MASK) > 0
-              and keyval == ord('L')):
-            self._set_input_mode(INPUT_MODE_FULLWIDTH_ALNUM)
-            return True
-        elif ((state & IBus.ModifierType.CONTROL_MASK) > 0
-              and keyval == ord('K')):
-            self._set_input_mode(INPUT_MODE_KATAKANA)
-            return True
-
-        if self.preedit_string:
-            if keyval in (IBus.Return, IBus.KP_Enter):
-                if self.in_henkan_mode():
-                    self.commit_candidate()
-                else:
-                    # 無変換状態では、ひらがなに変換してコミットします。
-                    yomi, word = self._make_preedit_word()
-                    self.commit_string(word)
-                return True
-            elif keyval == IBus.Escape:
-                self.preedit_string = ''
-                self.update_candidates()
-                return True
-            elif keyval == IBus.BackSpace:
-                if self.in_henkan_mode():
-                    # 変換中の場合、無変換モードにもどす。
-                    self.lookup_table.clear()
-                    self.hide_auxiliary_text()
-                    self.hide_lookup_table()
-                else:
-                    # サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
-                    self.preedit_string = re.sub('(?:z[hjkl.-]|n+|[kstnhmyrwgzjdbp]?[aiueo]|.)$', '',
-                                                 self.preedit_string)
-                # 変換していないときのレンダリングをする。
-                self.update_preedit_text_before_henkan()
-                return True
-            elif keyval in num_keys and self.in_henkan_mode():
-                # TODO: 変換候補が表示されている状態の時にのみハンドリングされるべき。
-                index = num_keys.index(keyval)
-                if self.set_lookup_table_cursor_pos_in_current_page(index):
-                    self.refresh()
-                    return True
-                return False
-            elif keyval in numpad_keys and self.in_henkan_mode():
-                # TODO: 変換候補が表示されている状態の時にのみハンドリングされるべき。
-                index = numpad_keys.index(keyval)
-                if self.set_lookup_table_cursor_pos_in_current_page(index):
-                    self.refresh()
-                    return True
-                return False
-            elif keyval in (IBus.Page_Up, IBus.KP_Page_Up):
-                self.page_up()
-                return True
-            elif keyval in (IBus.Page_Down, IBus.KP_Page_Down):
-                self.page_down()
-                return True
-            elif keyval in (IBus.Up, IBus.KP_Up):
-                self.cursor_up()
-                return True
-            elif keyval in (IBus.Down, IBus.KP_Down):
-                self.cursor_down()
-                return True
-            elif keyval in (IBus.Right, IBus.KP_Right):
-                if state & IBus.ModifierType.SHIFT_MASK == 0:
-                    self.cursor_right()
-                else:
-                    self.extend_clause_right()
-                return True
-            elif keyval in (IBus.Left, IBus.KP_Left):
-                if state & IBus.ModifierType.SHIFT_MASK == 0:
-                    self.cursor_left()
-                else:
-                    self.extend_clause_left()
-                return True
-            elif keyval == IBus.F6:
-                # F6 convert selected word/characters to full-width hiragana (standard hiragana): ホワイト → ほわいと
-                self.convert_to_full_hiragana()
-                return True
-            elif keyval == IBus.F7:
-                # F7 convert to full-width katakana (standard katakana): ほわいと → ホワイト
-                self.convert_to_full_katakana()
-                return True
-            elif keyval == IBus.F8:
-                # F8 convert to half-width katakana (katakana for specific purpose): ホワイト → ﾎﾜｲﾄ
-                self.convert_to_half_katakana()
-                return True
-            elif keyval == IBus.F9:
-                # F9 convert to full-width romaji, all-capitals, proper noun capitalization (latin script inside
-                # Japanese text): ホワイト → ｈｏｗａｉｔｏ → ＨＯＷＡＩＴＯ → Ｈｏｗａｉｔｏ
-                self.convert_to_full_romaji()
-                return True
-            elif keyval == IBus.F10:
-                # F10 convert to half-width romaji, all-capitals, proper noun capitalization (latin script like
-                # standard English): ホワイト → howaito → HOWAITO → Howaito
-                self.convert_to_half_romaji()
-                return True
-
-        # スペース
-        if keyval == IBus.space:
-            if len(self.preedit_string) == 0:
-                # もし、まだなにもはいっていなければ、ただの空白をそのままいれる。
-                return False
-            else:
-                if self.in_henkan_mode():
-                    self.logger.debug("cursor down.")
-                    self.cursor_down()
-                else:
-                    # 実際に変換していく。
-                    self.logger.debug("update_candidates.")
-                    self.update_candidates()
-                return True
 
         if self.input_mode in (INPUT_MODE_HIRAGANA, INPUT_MODE_KATAKANA, INPUT_MODE_HALFWIDTH_KATAKANA):
             # Allow typing all ASCII letters and punctuation
@@ -371,6 +264,18 @@ g
 
         self.input_mode = mode
 
+    def set_input_mode_hiragana(self):
+        self._set_input_mode(INPUT_MODE_HIRAGANA)
+
+    def set_input_mode_katakana(self):
+        self._set_input_mode(INPUT_MODE_KATAKANA)
+
+    def set_input_mode_alnum(self):
+        self._set_input_mode(INPUT_MODE_ALNUM)
+
+    def set_input_mode_fullwidth_alnum(self):
+        self._set_input_mode(INPUT_MODE_FULLWIDTH_ALNUM)
+
     def do_property_activate(self, prop_name, state):
         """
         Set props
@@ -397,44 +302,61 @@ g
         return self.lookup_table.get_number_of_candidates() > 0
 
     def convert_to_full_katakana(self):
+        """
+        convert to full-width katakana (standard katakana): ほわいと → ホワイト
+        """
         self.logger.info("Convert to full katakana")
 
         # カタカナ候補のみを表示するようにする。
-        hira = romkan.to_hiragana(self.preedit_string)
+        hira = self.romkan.to_hiragana(self.preedit_string)
         kata = jaconv.hira2kata(hira)
 
         self.convert_to_single(hira, kata)
 
     def convert_to_full_hiragana(self):
+        """
+        convert selected word/characters to full-width hiragana (standard hiragana): ホワイト → ほわいと
+        """
         self.logger.info("Convert to full hiragana")
 
         # カタカナ候補のみを表示するようにする。
-        hira = romkan.to_hiragana(self.preedit_string)
+        hira = self.romkan.to_hiragana(self.preedit_string)
         self.convert_to_single(hira, hira)
 
     def convert_to_half_katakana(self):
+        """
+        convert to half-width katakana (katakana for specific purpose): ホワイト → ﾎﾜｲﾄ
+        """
         self.logger.info("Convert to half katakana")
 
         # 半角カタカナ候補のみを表示するようにする。
-        hira = romkan.to_hiragana(self.preedit_string)
+        hira = self.romkan.to_hiragana(self.preedit_string)
         kata = jaconv.hira2kata(hira)
         kata = jaconv.z2h(kata)
 
         self.convert_to_single(hira, kata)
 
     def convert_to_half_romaji(self):
+        """
+        convert to half-width romaji, all-capitals, proper noun capitalization (latin script like
+        standard English): ホワイト → howaito → HOWAITO → Howaito
+        """
         self.logger.info("Convert to half romaji")
 
         # 半角カタカナ候補のみを表示するようにする。
-        hira = romkan.to_hiragana(self.preedit_string)
+        hira = self.romkan.to_hiragana(self.preedit_string)
         romaji = jaconv.z2h(self.preedit_string)
 
         self.convert_to_single(hira, romaji)
 
     def convert_to_full_romaji(self):
+        """
+        convert to full-width romaji, all-capitals, proper noun capitalization (latin script inside
+        Japanese text): ホワイト → ｈｏｗａｉｔｏ → ＨＯＷＡＩＴＯ → Ｈｏｗａｉｔｏ
+        """
         self.logger.info("Convert to full romaji")
 
-        hira = romkan.to_hiragana(self.preedit_string)
+        hira = self.romkan.to_hiragana(self.preedit_string)
         romaji = jaconv.h2z(self.preedit_string, kana=True, digit=True, ascii=True)
 
         self.convert_to_single(hira, romaji)
@@ -523,8 +445,6 @@ g
 
         self.refresh()
 
-        # 選択する分節を左にずらす。
-
     def cursor_left(self):
         self.logger.info(f"left cursor")
         # いっこしか分節がない場合は、何もせぬ
@@ -601,6 +521,11 @@ g
         self.force_selected_clause = [x for x in self.force_selected_clause if x.start != x.stop]
         self._update_candidates()
         # TODO: もし、分節の長さをいじったら、self.node_selected も変更するべき。
+
+    def commit_preedit(self):
+        # 無変換状態では、ひらがなに変換してコミットします。
+        yomi, word = self._make_preedit_word()
+        self.commit_string(word)
 
     def commit_string(self, text):
         self.logger.info("commit_string.")
@@ -699,7 +624,7 @@ g
         """
         preedict string をよい感じに見せる。
         """
-        yomi = romkan.to_hiragana(self.preedit_string)
+        yomi = self.romkan.to_hiragana(self.preedit_string)
         if self.input_mode == INPUT_MODE_KATAKANA:
             return yomi, jaconv.hira2kata(yomi)
         elif self.input_mode == INPUT_MODE_HALFWIDTH_KATAKANA:
@@ -780,3 +705,34 @@ g
 
     def do_cursor_down(self):
         return self.cursor_down()
+
+    def erase_character_before_cursor(self):
+        if self.in_henkan_mode():
+            # 変換中の場合、無変換モードにもどす。
+            self.lookup_table.clear()
+            self.hide_auxiliary_text()
+            self.hide_lookup_table()
+        else:
+            # サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
+            self.preedit_string = re.sub(r'(?:z[hjkl.-\[\]]|n+|[kstnhmyrwgzjdbp]?[aiueo]|.)$', '',
+                                         self.preedit_string)
+        # 変換していないときのレンダリングをする。
+        self.update_preedit_text_before_henkan()
+
+    def escape(self):
+        self.preedit_string = ''
+        self.update_candidates()
+
+
+for n in range(0, 10):
+    def create_cb(nn):
+        idx = 9 if nn == 0 else nn - 1
+
+        def cb(self):
+            if self.set_lookup_table_cursor_pos_in_current_page(idx):
+                self.refresh()
+
+        return cb
+
+
+    setattr(AkazaIBusEngine, f"press_number_{n}", create_cb(n))

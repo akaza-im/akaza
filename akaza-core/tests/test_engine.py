@@ -1,17 +1,17 @@
-from tempfile import NamedTemporaryFile
-import sys
 import pathlib
+import sys
+from tempfile import NamedTemporaryFile
 
 sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
 import pytest
-from akaza_data.system_language_model import SystemLanguageModel
 from akaza import Akaza
 from akaza.user_language_model import UserLanguageModel
 from akaza_data.system_dict import SystemDict
 from akaza_data.system_language_model import SystemLanguageModel
 from akaza.language_model import LanguageModel
 from akaza.graph import GraphResolver
+from akaza.romkan import RomkanConverter
 
 tmpfile = NamedTemporaryFile(delete=False)
 user_language_model = UserLanguageModel(tmpfile.name)
@@ -30,7 +30,9 @@ resolver = GraphResolver(
     user_dict=None,
 )
 
-akaza = Akaza(resolver=resolver)
+romkan = RomkanConverter()
+
+akaza = Akaza(resolver=resolver, romkan=romkan)
 
 
 @pytest.mark.parametrize('src, expected', [
