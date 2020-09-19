@@ -45,8 +45,9 @@ from __future__ import unicode_literals
 import re
 
 # This table is imported from KAKASI <http://kakasi.namazu.org/> and modified.
+from typing import Dict
 
-ROMKAN_H = {
+DEFAULT_ROMKAN_H = {
     "xa": "ぁ", "a": "あ", "xi": "ぃ", "i": "い", "xu": "ぅ", "u": "う", "vu": "う゛",
     "va": "う゛ぁ", "vi": "う゛ぃ", "ve": "う゛ぇ", "vo": "う゛ぉ",
     "xe": "ぇ", "e": "え",
@@ -157,29 +158,32 @@ ROMKAN_H = {
 }
 
 
-# Sort in long order so that a longer Romaji sequence precedes.
+# Sort in long order so that a longer Roma-ji sequence precedes.
 
 def _len_cmp(x):
     return -len(x)
 
 
-def normalize_double_n(s):
+def _normalize_double_n(s):
     """
     Normalize double n.
     """
 
     # Replace double n with n'
     s = re.sub("nn", "n'", s)
-    # Remove unnecessary apostrophes
-    s = re.sub("n'(?=[^aiueoyn]|$)", "n", s)
 
     return s
 
 
 class RomkanConverter:
-    def __init__(self):
+    def __init__(self, additional=None):
+        self.map = DEFAULT_ROMKAN_H.copy()
+
+        if additional is not None:
+            self.map.update(additional)
+
         self.pattern = re.compile(
-            '(' + "|".join(sorted([re.escape(x) for x in ROMKAN_H.keys()], key=_len_cmp)) + ')'
+            '(' + "|".join(sorted([re.escape(x) for x in self.map.keys()], key=_len_cmp)) + ')'
         )
 
     def to_hiragana(self, s: str) -> str:
@@ -188,7 +192,5 @@ class RomkanConverter:
         """
 
         s = s.lower()
-        s = normalize_double_n(s)
-
-        tmp = self.pattern.sub(lambda x: ROMKAN_H[x.group(1)], s)
-        return tmp
+        s = _normalize_double_n(s)
+        return self.pattern.sub(lambda x: self.map[x.group(1)], s)

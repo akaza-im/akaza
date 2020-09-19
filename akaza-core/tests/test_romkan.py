@@ -6,20 +6,15 @@ sys.path.append('../akaza-data/')
 from akaza.romkan import RomkanConverter
 
 
-def test_foo():
-    romkan = RomkanConverter()
-    assert romkan.to_hiragana('a') == 'あ'
-    assert romkan.to_hiragana('ba') == 'ば'
-    assert romkan.to_hiragana('hi') == 'ひ'
-    assert romkan.to_hiragana('wahaha') == 'わはは'
-    assert romkan.to_hiragana('thi') == 'てぃ'
-    assert romkan.to_hiragana('better') == 'べってr'
-    assert romkan.to_hiragana('[') == '「'
-    assert romkan.to_hiragana(']') == '」'
-
-
 @pytest.mark.parametrize('src, expected', [
     ('a', 'あ'),
+    ('ba', 'ば'),
+    ('hi', 'ひ'),
+    ('wahaha', 'わはは'),
+    ('thi', 'てぃ'),
+    ('better', 'べってr'),
+    ('[', '「'),
+    (']', '」'),
     ('wo', 'を'),
     ('du', 'づ'),
     ('we', 'うぇ'),
@@ -45,5 +40,3 @@ def test_foo():
 def test_bar(src, expected):
     romkan = RomkanConverter()
     assert romkan.to_hiragana(src) == expected
-
-# ROMKAN_H.update({})
