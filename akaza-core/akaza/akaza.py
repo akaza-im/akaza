@@ -58,7 +58,6 @@ class Akaza:
         self.logger.info(
             f"graph_constructed: src={src} hiragana={hiragana} katakana={katakana}: {time.time() - t0} seconds")
         clauses = self.resolver.viterbi(graph)
-        print(graph)
         self.logger.info(
             f"converted: src={src} hiragana={hiragana} katakana={katakana}: {time.time() - t0} seconds")
 
