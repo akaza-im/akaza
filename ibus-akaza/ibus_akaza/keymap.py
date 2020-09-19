@@ -51,7 +51,7 @@ class Keymap:
                 self.do_register(state, key, method)
 
     def get(self, key_state: int, keyval: int, state: int) -> Optional[str]:
-        if keyval in self.keys[key_state]:
+        if keyval in self.keys[key_state] and state in self.keys[key_state][keyval]:
             got_method = self.keys[key_state][keyval][state]
             self.logger.debug(f"keyval={keyval}(j:{ord('j')}, J:{ord('J')}) {state} -> {got_method}")
             return got_method

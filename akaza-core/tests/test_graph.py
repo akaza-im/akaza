@@ -3,11 +3,11 @@ from tempfile import TemporaryDirectory
 import sys
 import pathlib
 
-from akaza.node import Node
-
 sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
 import pytest
+from akaza.dictionary import Dictionary
+from akaza.node import Node
 from akaza.graph import GraphResolver
 from akaza.language_model import LanguageModel
 from akaza.user_language_model import UserLanguageModel
@@ -22,6 +22,10 @@ user_language_model = UserLanguageModel(tmpdir.name)
 language_model = LanguageModel(system_language_model, user_language_model=user_language_model)
 
 system_dict = SystemDict.load()
+dictionary = Dictionary(
+    system_dict=system_dict,
+    user_dicts=[],
+)
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -43,12 +47,13 @@ logging.basicConfig(level=logging.DEBUG)
     ('げすとだけ', 'ゲストだけ'),
     ('ぜんぶでてるやつ', '全部でてる奴'),
     ('えらべる', '選べる'),
+    ('わたしだよ', '私だよ'),
     # ('そうみたいですね', 'そうみたいですね'),
     # ('きめつのやいば', '鬼滅の刃'),
     #    ('れいわ', '令和'),
 ])
 def test_expected(src, expected):
-    resolver = GraphResolver(language_model=language_model, system_dict=system_dict)
+    resolver = GraphResolver(language_model=language_model, dictionary=dictionary)
 
     ht = dict(resolver.lookup(src))
     graph = resolver.graph_construct(src, ht)
@@ -63,7 +68,7 @@ def test_wnn():
     src = 'わたしのなまえはなかのです'
     expected = '私の名前は中野です'
 
-    resolver = GraphResolver(language_model=language_model, system_dict=system_dict)
+    resolver = GraphResolver(language_model=language_model, dictionary=dictionary)
     ht = dict(resolver.lookup(src))
     graph = resolver.graph_construct(src, ht)
 
@@ -77,7 +82,7 @@ def test_wnn():
 
 def test_graph_extend():
     src = 'はなか'
-    resolver = GraphResolver(language_model=language_model, system_dict=system_dict)
+    resolver = GraphResolver(language_model=language_model, dictionary=dictionary)
     ht = dict(resolver.lookup(src))
     # (0,2) の文節を強制指定する
     graph = resolver.graph_construct(src, ht, [
@@ -90,7 +95,7 @@ def test_graph_extend():
 # 「ひょいー」のような辞書に登録されていない単語に対して、カタカナ候補を提供すべき。
 def test_katakana_candidates():
     src = 'ひょいー'
-    resolver = GraphResolver(language_model=language_model, system_dict=system_dict)
+    resolver = GraphResolver(language_model=language_model, dictionary=dictionary)
     ht = dict(resolver.lookup(src))
     for k, v in ht.items():
         print(f"{k}:{v}")
@@ -133,7 +138,7 @@ def test_katakana_candidates_for_unknown_word():
     print(my_user_language_model.has_unigram_cost_by_yomi('ひょいー'))
     print(my_language_model.has_unigram_cost_by_yomi('ひょいー'))
 
-    resolver = GraphResolver(language_model=my_language_model, system_dict=system_dict)
+    resolver = GraphResolver(language_model=my_language_model, dictionary=dictionary)
     ht = dict(resolver.lookup(src))
     graph = resolver.graph_construct(src, ht)
     assert 'ひょいー' in set([node.yomi for node in graph.all_nodes()])

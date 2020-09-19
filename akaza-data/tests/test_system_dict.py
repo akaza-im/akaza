@@ -17,3 +17,14 @@ def test_system_dict2():
     assert system_dict.prefixes('あいう') == ['あ', 'あい', 'あいう']
     assert system_dict['あいう'] == ['藍宇']
     assert len(system_dict['あい']) > 7
+
+
+def test_has_item():
+    system_dict = SystemDict.load()
+    assert system_dict.has_item('あいう')
+    assert not system_dict.has_item('あいうじゃぱぱぱーん')
+
+
+def test_prefixes():
+    system_dict = SystemDict.load()
+    assert system_dict.prefixes('あい') == ['あ', 'あい']
