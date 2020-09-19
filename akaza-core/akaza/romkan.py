@@ -164,6 +164,17 @@ def _len_cmp(x):
     return -len(x)
 
 
+def _normalize_double_n(s):
+    """
+    Normalize double n.
+    """
+
+    # Replace double n with n'
+    s = re.sub("nn", "n'", s)
+
+    return s
+
+
 class RomkanConverter:
     def __init__(self, additional=None):
         self.map = DEFAULT_ROMKAN_H.copy()
@@ -181,4 +192,5 @@ class RomkanConverter:
         """
 
         s = s.lower()
+        s = _normalize_double_n(s)
         return self.pattern.sub(lambda x: self.map[x.group(1)], s)
