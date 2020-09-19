@@ -192,11 +192,3 @@ class RomkanConverter:
 
         tmp = self.pattern.sub(lambda x: ROMKAN_H[x.group(1)], s)
         return tmp
-
-
-def to_hiragana(s: str) -> str:
-    """
-    Convert a Romaji (ローマ字) to a Hiragana (平仮名).
-    """
-
-    return RomkanConverter().to_hiragana(s)
