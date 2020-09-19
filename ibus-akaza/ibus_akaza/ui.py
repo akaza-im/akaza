@@ -84,9 +84,23 @@ try:
     user_language_model, akaza, romkan = build_akaza()
 
     keymap = Keymap()
-    keymap.register(KEY_STATE_COMPOSITION, 'Henkan', 'set_input_mode_hiragana')
-    keymap.register(KEY_STATE_PRECOMPOSITION, 'Henkan', 'set_input_mode_hiragana')
-    keymap.register(KEY_STATE_CONVERSION, 'Henkan', 'set_input_mode_hiragana')
+
+    for state in [KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION]:
+        # 入力モードの切り替え
+        keymap.register(state, 'Henkan', 'set_input_mode_hiragana')
+        keymap.register(state, 'C-S-J', 'set_input_mode_hiragana')
+        keymap.register(state, 'Muhenkan', 'set_input_mode_alnum')
+        keymap.register(state, 'C-S-:', 'set_input_mode_alnum')
+        keymap.register(state, 'C-S-L', 'set_input_mode_fullwidth_alnum')
+        keymap.register(state, 'C-S-K', 'set_input_mode_katakana')
+
+    # 後から文字タイプを指定する
+    for state in [KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION]:
+        keymap.register(state, 'F6', 'convert_to_full_hiragana')
+        keymap.register(state, 'F7', 'convert_to_full_katakana')
+        keymap.register(state, 'F8', 'convert_to_half_katakana')
+        keymap.register(state, 'F9', 'convert_to_full_romaji')
+        keymap.register(state, 'F10', 'convert_to_half_romaji')
 
     logging.info(f"Loaded Akaza in {time.time() - t0} seconds")
 except:
@@ -234,25 +248,6 @@ g
             getattr(self, got_method)()
             return True
 
-        # 入力モードの切り替え機能。
-        if ((state & IBus.ModifierType.CONTROL_MASK) > 0
-                and keyval == ord('J')):
-            self._set_input_mode(INPUT_MODE_HIRAGANA)
-            return True
-        elif keyval == IBus.Muhenkan or (
-                (state & IBus.ModifierType.CONTROL_MASK) > 0
-                and keyval == ord(':')):
-            self._set_input_mode(INPUT_MODE_ALNUM)
-            return True
-        elif ((state & IBus.ModifierType.CONTROL_MASK) > 0
-              and keyval == ord('L')):
-            self._set_input_mode(INPUT_MODE_FULLWIDTH_ALNUM)
-            return True
-        elif ((state & IBus.ModifierType.CONTROL_MASK) > 0
-              and keyval == ord('K')):
-            self._set_input_mode(INPUT_MODE_KATAKANA)
-            return True
-
         if self.preedit_string:
             if keyval in (IBus.Return, IBus.KP_Enter):
                 if self.in_henkan_mode():
@@ -317,28 +312,6 @@ g
                 else:
                     self.extend_clause_left()
                 return True
-            elif keyval == IBus.F6:
-                # F6 convert selected word/characters to full-width hiragana (standard hiragana): ホワイト → ほわいと
-                self.convert_to_full_hiragana()
-                return True
-            elif keyval == IBus.F7:
-                # F7 convert to full-width katakana (standard katakana): ほわいと → ホワイト
-                self.convert_to_full_katakana()
-                return True
-            elif keyval == IBus.F8:
-                # F8 convert to half-width katakana (katakana for specific purpose): ホワイト → ﾎﾜｲﾄ
-                self.convert_to_half_katakana()
-                return True
-            elif keyval == IBus.F9:
-                # F9 convert to full-width romaji, all-capitals, proper noun capitalization (latin script inside
-                # Japanese text): ホワイト → ｈｏｗａｉｔｏ → ＨＯＷＡＩＴＯ → Ｈｏｗａｉｔｏ
-                self.convert_to_full_romaji()
-                return True
-            elif keyval == IBus.F10:
-                # F10 convert to half-width romaji, all-capitals, proper noun capitalization (latin script like
-                # standard English): ホワイト → howaito → HOWAITO → Howaito
-                self.convert_to_half_romaji()
-                return True
 
         # スペース
         if keyval == IBus.space:
@@ -400,6 +373,15 @@ g
     def set_input_mode_hiragana(self):
         self._set_input_mode(INPUT_MODE_HIRAGANA)
 
+    def set_input_mode_katakana(self):
+        self._set_input_mode(INPUT_MODE_KATAKANA)
+
+    def set_input_mode_alnum(self):
+        self._set_input_mode(INPUT_MODE_ALNUM)
+
+    def set_input_mode_fullwidth_alnum(self):
+        self._set_input_mode(INPUT_MODE_FULLWIDTH_ALNUM)
+
     def do_property_activate(self, prop_name, state):
         """
         Set props
@@ -426,6 +408,9 @@ g
         return self.lookup_table.get_number_of_candidates() > 0
 
     def convert_to_full_katakana(self):
+        """
+        convert to full-width katakana (standard katakana): ほわいと → ホワイト
+        """
         self.logger.info("Convert to full katakana")
 
         # カタカナ候補のみを表示するようにする。
@@ -435,6 +420,9 @@ g
         self.convert_to_single(hira, kata)
 
     def convert_to_full_hiragana(self):
+        """
+        convert selected word/characters to full-width hiragana (standard hiragana): ホワイト → ほわいと
+        """
         self.logger.info("Convert to full hiragana")
 
         # カタカナ候補のみを表示するようにする。
@@ -442,6 +430,9 @@ g
         self.convert_to_single(hira, hira)
 
     def convert_to_half_katakana(self):
+        """
+        convert to half-width katakana (katakana for specific purpose): ホワイト → ﾎﾜｲﾄ
+        """
         self.logger.info("Convert to half katakana")
 
         # 半角カタカナ候補のみを表示するようにする。
@@ -452,6 +443,10 @@ g
         self.convert_to_single(hira, kata)
 
     def convert_to_half_romaji(self):
+        """
+        convert to half-width romaji, all-capitals, proper noun capitalization (latin script like
+        standard English): ホワイト → howaito → HOWAITO → Howaito
+        """
         self.logger.info("Convert to half romaji")
 
         # 半角カタカナ候補のみを表示するようにする。
@@ -461,6 +456,10 @@ g
         self.convert_to_single(hira, romaji)
 
     def convert_to_full_romaji(self):
+        """
+        convert to full-width romaji, all-capitals, proper noun capitalization (latin script inside
+        Japanese text): ホワイト → ｈｏｗａｉｔｏ → ＨＯＷＡＩＴＯ → Ｈｏｗａｉｔｏ
+        """
         self.logger.info("Convert to full romaji")
 
         hira = self.romkan.to_hiragana(self.preedit_string)

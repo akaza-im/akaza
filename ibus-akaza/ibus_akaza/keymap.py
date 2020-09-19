@@ -7,11 +7,11 @@ gi.require_version('IBus', '1.0')
 from gi.repository import IBus
 
 # なにも入力されてない
-KEY_STATE_PRECOMPOSITION = 0
+KEY_STATE_PRECOMPOSITION = 1
 # 入力中
-KEY_STATE_COMPOSITION = 1
+KEY_STATE_COMPOSITION = 2
 # 変換中
-KEY_STATE_CONVERSION = 2
+KEY_STATE_CONVERSION = 4
 
 
 class Keymap:
@@ -27,13 +27,25 @@ class Keymap:
         # IBus.ModifierType.CONTROL_MASK
 
     def register(self, state, key: str, method: str):
-        keyval = getattr(IBus, key)
-        self.register_ibus(state, keyval, 0, method)
+        mask = 0
+        while '-' in key:
+            if key.startswith('C-'):
+                key = key[2:]
+                mask |= int(IBus.ModifierType.CONTROL_MASK)
+            elif key.startswith('S-'):
+                key = key[2:]
+                mask |= int(IBus.ModifierType.SHIFT_MASK)
+            else:
+                raise RuntimeError(f"Unknown key: {key}")
+
+        keyval = ord(key) if len(key) == 1 else getattr(IBus, key)
+        self.register_ibus(state, keyval, mask, method)
 
     def get(self, key_state: int, keyval: int, state: int) -> Optional[str]:
         if keyval in self.keys[key_state]:
             got = self.keys[key_state][keyval]
             (got_method, got_mask) = got
+            # logging.info(f"!!!!!! KJKJKJKJKJK keyval={keyval}(j:{ord('j')}, J:{ord('J')}) {state} ^ {got_mask} (CTRL: {int(IBus.ModifierType.CONTROL_MASK)})")
             if state ^ got_mask == 0:
                 return got_method
         return None
