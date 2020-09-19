@@ -25,7 +25,7 @@ from akaza.user_dict import load_user_dict_from_json_config
 from akaza.graph import GraphResolver
 from akaza.language_model import LanguageModel
 
-from .keymap import Keymap, KEY_STATE_PRECOMPOSITION, KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION
+from .keymap import build_default_keymap, KEY_STATE_PRECOMPOSITION, KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION
 from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_ALNUM, INPUT_MODE_HIRAGANA, \
     get_all_input_modes, INPUT_MODE_FULLWIDTH_ALNUM, INPUT_MODE_KATAKANA, INPUT_MODE_HALFWIDTH_KATAKANA
 
@@ -67,64 +67,11 @@ def build_akaza():
     return user_language_model, Akaza(resolver=resolver, romkan=romkan), romkan
 
 
-def build_keymap() -> Keymap:
-    keymap = Keymap()
-
-    # 入力モードの切り替え
-    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION], ['Henkan'],
-                    'set_input_mode_hiragana')
-    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION], ['C-S-J'],
-                    'set_input_mode_hiragana')
-    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION], ['Muhenkan'],
-                    'set_input_mode_alnum')
-    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION], ['C-S-:'],
-                    'set_input_mode_alnum')
-    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION], ['C-S-L'],
-                    'set_input_mode_fullwidth_alnum')
-    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION], ['C-S-K'],
-                    'set_input_mode_katakana')
-
-    # 後から文字タイプを指定する
-    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F6'], 'convert_to_full_hiragana')
-    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F7'], 'convert_to_full_katakana')
-    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F8'], 'convert_to_half_katakana')
-    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F9'], 'convert_to_full_romaji')
-    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F10'], 'convert_to_half_romaji')
-
-    keymap.register([KEY_STATE_CONVERSION], ['space'], 'cursor_down')
-    keymap.register([KEY_STATE_COMPOSITION], ['space'], 'update_candidates')
-
-    keymap.register([KEY_STATE_CONVERSION], ['Return', 'KP_Enter'], 'commit_candidate')
-    keymap.register([KEY_STATE_COMPOSITION], ['Return', 'KP_Enter'], 'commit_preedit')
-
-    keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['Escape'], 'escape')
-
-    keymap.register([KEY_STATE_CONVERSION], ['BackSpace'], 'erase_character_before_cursor')
-    keymap.register([KEY_STATE_COMPOSITION], ['BackSpace'], 'erase_character_before_cursor')
-
-    for n in range(0, 10):
-        keymap.register([KEY_STATE_CONVERSION], [str(n), f"KP_{n}"], f"press_number_{n}")
-
-    keymap.register([KEY_STATE_CONVERSION], ['Page_Up', 'KP_Page_Up'], 'page_up')
-    keymap.register([KEY_STATE_CONVERSION], ['Page_Down', 'KP_Page_Down'], 'page_down')
-
-    keymap.register([KEY_STATE_CONVERSION], ['Up', 'KP_Up'], 'cursor_up')
-    keymap.register([KEY_STATE_CONVERSION], ['Down', 'KP_Down'], 'cursor_down')
-
-    keymap.register([KEY_STATE_CONVERSION], ['Right', 'KP_Right'], 'cursor_right')
-    keymap.register([KEY_STATE_CONVERSION], ['S-Right', 'S-KP_Right'], 'extend_clause_right')
-
-    keymap.register([KEY_STATE_CONVERSION], ['Left', 'KP_Left'], 'cursor_left')
-    keymap.register([KEY_STATE_CONVERSION], ['S-Left', 'S-KP_Left'], 'extend_clause_left')
-
-    return keymap
-
-
 try:
     t0 = time.time()
 
     user_language_model, akaza, romkan = build_akaza()
-    keymap = build_keymap()
+    keymap = build_default_keymap()
 
     logging.info(f"Loaded Akaza in {time.time() - t0} seconds")
 except:
@@ -497,8 +444,6 @@ g
         self.create_lookup_table()
 
         self.refresh()
-
-        # 選択する分節を左にずらす。
 
     def cursor_left(self):
         self.logger.info(f"left cursor")
