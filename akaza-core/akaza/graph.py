@@ -171,6 +171,14 @@ class GraphResolver:
         """
         ビタビアルゴリズムにもとづき、最短の経路を求めて、N-Best 解を求める。
         """
+
+        self.fill_cost(graph)
+        return self.find_nbest(graph)
+
+    def fill_cost(self, graph: Graph):
+        """
+        Graph の各ノードについて最短のノードをえる。
+        """
         # BOS にスコアを設定。
         graph.get_bos().cost = 0
 
@@ -199,13 +207,10 @@ class GraphResolver:
                     node.prev = shortest_prev
                     node.cost = cost
 
-        # print(graph)
-
+    def find_nbest(self, graph: Graph):
         # find EOS.
         node = graph.get_eos()
-        # node = graph.get_item(len(graph) - 1)[0]
 
-        # print(node)
         result = []
         last_node = None
         while not node.is_bos():
@@ -223,3 +228,4 @@ class GraphResolver:
             last_node = node
             node = node.prev
         return list(reversed(result))
+
