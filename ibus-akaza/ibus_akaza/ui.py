@@ -43,7 +43,7 @@ def build_akaza():
     user_dicts = list(config.load_user_dict())
 
     user_language_model_path = configdir.joinpath('user_language_model')
-    user_language_model_path.mkdir(parents=True, exist_ok=True)
+    user_language_model_path.mkdir(parents=True, exist_ok=True, mode=0o700)
     user_language_model = UserLanguageModel(str(user_language_model_path))
 
     system_dict = SystemDict.load()
