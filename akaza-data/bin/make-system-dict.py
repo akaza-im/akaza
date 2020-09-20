@@ -44,6 +44,16 @@ def make_vocab_dict():
     return okuri_nasi
 
 
+def make_lisp_dict():
+    return {
+        'きょう': [
+            '(strftime (current-datetime) "%Y-%m-%d")',
+            '(strftime (current-datetime) "%Y年%m月%d日")',
+            '(strftime (current-datetime) "%Y年%m月%d日(%a)")',
+        ]
+    }
+
+
 def main():
     dictionary_sources = [
         # 先の方が優先される
@@ -61,6 +71,7 @@ def main():
         dicts.append(ari2nasi(ari))
 
     dicts.append(make_vocab_dict())
+    dicts.append(make_lisp_dict())
     merged_dict = merge_skkdict(dicts)
 
     entries = []

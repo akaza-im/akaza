@@ -19,7 +19,7 @@ import gettext
 
 from jaconv import jaconv
 
-from akaza import Akaza
+from akaza import Akaza, tinylisp
 from akaza.romkan import RomkanConverter
 from akaza.node import Node
 from akaza.user_language_model import UserLanguageModel
@@ -66,13 +66,15 @@ def build_akaza():
 
     romkan = RomkanConverter(additional=config.get('romaji'))
 
-    return user_language_model, Akaza(resolver=resolver, romkan=romkan), romkan
+    lisp_evaluator = tinylisp.Evaluator()
+
+    return user_language_model, Akaza(resolver=resolver, romkan=romkan), romkan, lisp_evaluator
 
 
 try:
     t0 = time.time()
 
-    user_language_model, akaza, romkan = build_akaza()
+    user_language_model, akaza, romkan, lisp_evaluator = build_akaza()
 
     user_language_model_save_thread = threading.Thread(
         name='user_language_model_save_thread',
@@ -564,7 +566,7 @@ g
     def build_string(self):
         result = ''
         for clauseid, nodes in enumerate(self.clauses):
-            result += nodes[self.node_selected.get(clauseid, 0)].word
+            result += nodes[self.node_selected.get(clauseid, 0)].surface(lisp_evaluator)
         return result
 
     def commit_candidate(self):
@@ -615,13 +617,13 @@ g
         # 全部に下線をひく。
         preedit_attrs.append(IBus.Attribute.new(IBus.AttrType.UNDERLINE,
                                                 IBus.AttrUnderline.SINGLE, 0, len(text)))
-        bgstart = sum([len(self.clauses[i][0].word) for i in range(0, self.current_clause)])
+        bgstart = sum([len(self.clauses[i][0].surface(lisp_evaluator)) for i in range(0, self.current_clause)])
         # 背景色を設定する。
         preedit_attrs.append(IBus.Attribute.new(
             IBus.AttrType.BACKGROUND,
             0x00333333,
             bgstart,
-            bgstart + len(current_node.word)))
+            bgstart + len(current_node.surface(lisp_evaluator))))
         preedit_text = IBus.Text.new_from_string(text)
         preedit_text.set_attributes(preedit_attrs)
         self.update_preedit_text(preedit_text, len(text), len(text) > 0)
@@ -683,7 +685,7 @@ g
         if len(self.clauses) > 0:
             # lookup table に候補を詰め込んでいく。
             for node in self.clauses[self.current_clause]:
-                candidate = IBus.Text.new_from_string(node.word)
+                candidate = IBus.Text.new_from_string(node.surface(lisp_evaluator))
                 self.lookup_table.append_candidate(candidate)
 
     def _update_lookup_table(self):
