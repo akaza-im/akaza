@@ -23,7 +23,7 @@ class Dictionary:
         return set(prefixes)
 
     def __getitem__(self, yomi):
-        print(f"SkkFileDict: {yomi}---- __getitem__")
+        # print(f"SkkFileDict: {yomi}---- __getitem__")
         result = []
         for user_dict in self.user_dicts:
             if user_dict.has_item(yomi):
