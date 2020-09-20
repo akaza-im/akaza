@@ -1,4 +1,5 @@
 from typing import List
+import gettext
 
 
 class InputMode:
@@ -21,11 +22,13 @@ class InputMode:
         return f"<InputMode {self.prop_name}>"
 
 
-INPUT_MODE_ALNUM = InputMode('InputMode.Alphanumeric', 0, '_A', 'Alphanumeric (C-S-;)')
-INPUT_MODE_HIRAGANA = InputMode('InputMode.Hiragana', 1, 'あ', 'ひらがな (C-S-j)')
-INPUT_MODE_KATAKANA = InputMode('InputMode.Katakana', 2, 'ア', 'Katakana (C-S-K)')
-INPUT_MODE_HALFWIDTH_KATAKANA = InputMode('InputMode.HalfWidthKatakana', 3, '_ｱ', 'Halfwidth Katakana')
-INPUT_MODE_FULLWIDTH_ALNUM = InputMode('InputMode.FullWidthAlnum', 4, 'Ａ', 'Fullwidth Alphanumeric (C-S-l)')
+_ = lambda a: gettext.dgettext('ibus-akaza', a)
+
+INPUT_MODE_ALNUM = InputMode('InputMode.Alphanumeric', 0, '_A', _('Alphanumeric (C-S-;)'))
+INPUT_MODE_HIRAGANA = InputMode('InputMode.Hiragana', 1, 'あ', _('Hiragana (C-S-j)'))
+INPUT_MODE_KATAKANA = InputMode('InputMode.Katakana', 2, 'ア', _('Katakana (C-S-K)'))
+INPUT_MODE_HALFWIDTH_KATAKANA = InputMode('InputMode.HalfWidthKatakana', 3, '_ｱ', _('Half-width Katakana'))
+INPUT_MODE_FULLWIDTH_ALNUM = InputMode('InputMode.FullWidthAlnum', 4, 'Ａ', _('Full-width Alphanumeric (C-S-l)'))
 
 _ALL_INPUT_MODE = [
     INPUT_MODE_ALNUM, INPUT_MODE_HIRAGANA, INPUT_MODE_KATAKANA,

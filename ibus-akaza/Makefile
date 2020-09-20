@@ -5,10 +5,17 @@ DESTDIR ?=
 
 PYTHON ?= /usr/bin/python3
 
-all: akaza.xml ibus_akaza/config.py
+all: akaza.xml ibus_akaza/config.py po/ibus-akaza.pot po/ja.mo
 
-install: ibus_akaza/config.py akaza.xml
+po/ibus-akaza.pot: ibus_akaza/ui.py ibus_akaza/input_mode.py
+	xgettext -d ibus-akaza -o po/ibus-akaza.pot ibus_akaza/*.py
+
+po/ja.mo: po/ja.po
+	msgfmt -o po/ja.mo po/ja.po
+
+install: ibus_akaza/config.py akaza.xml po/ja.mo
 	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-akaza/ibus_akaza $(DESTDIR)$(SYSCONFDIR)/xdg/akaza $(DESTDIR)$(DATADIR)/ibus/component
+	install -m 0755 -d $(DESTDIR)$(DATADIR)/locale
 
 	install -m 0644 akaza.svg $(DESTDIR)$(DATADIR)/ibus-akaza
 	install -m 0644 ibus.py $(DESTDIR)$(DATADIR)/ibus-akaza
@@ -19,6 +26,8 @@ install: ibus_akaza/config.py akaza.xml
 	install -m 0644 ibus_akaza/config_loader.py $(DESTDIR)$(DATADIR)/ibus-akaza/ibus_akaza/
 	install -m 0644 ibus_akaza/__init__.py $(DESTDIR)$(DATADIR)/ibus-akaza/ibus_akaza/
 	install -m 0644 akaza.xml $(DESTDIR)$(DATADIR)/ibus/component
+
+	install -m 0644 po/ja.mo $(DESTDIR)$(DATADIR)/locale/ja/LC_MESSAGES/ibus-akaza.mo
 
 ibus_akaza/config.py: ibus_akaza/config.py.in
 	sed -e "s:@SYSCONFDIR@:$(SYSCONFDIR):g" \
