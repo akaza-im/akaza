@@ -12,7 +12,7 @@ text/BE/wiki_13: jawiki-latest-pages-articles.xml
 dat/BE/wiki_13: text/BE/wiki_13 bin/wiki2text-runner.py bin/wiki2text.py
 	python bin/wiki2text-runner.py
 
-jawiki.wfreq: dat/BE/wiki_13
+jawiki.wfreq: dat/BE/wiki_13 bin/text2wfreq.py
 	python bin/text2wfreq.py
 
 # 118,334=entry count of libkkc-data.
