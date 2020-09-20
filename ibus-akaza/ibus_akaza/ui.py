@@ -15,6 +15,7 @@ import re
 import logging
 import pathlib
 import threading
+import gettext
 
 from jaconv import jaconv
 
@@ -31,6 +32,8 @@ from ibus_akaza import config_loader
 from .keymap import build_default_keymap, KEY_STATE_PRECOMPOSITION, KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION
 from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_ALNUM, INPUT_MODE_HIRAGANA, \
     get_all_input_modes, INPUT_MODE_FULLWIDTH_ALNUM, INPUT_MODE_KATAKANA, INPUT_MODE_HALFWIDTH_KATAKANA
+
+_ = lambda a: gettext.dgettext('ibus-akaza', a)
 
 
 def build_akaza():
@@ -141,9 +144,9 @@ class AkazaIBusEngine(IBus.Engine):
         prop_list = IBus.PropList()
         self.input_mode_prop = IBus.Property(key=u'InputMode',
                                              prop_type=IBus.PropType.MENU,
-                                             label=IBus.Text.new_from_string("Input mode (あ)"),
+                                             label=IBus.Text.new_from_string(_("Input mode (%s)") % 'あ'),
                                              icon='',
-                                             tooltip=IBus.Text.new_from_string("Switch input mode"),
+                                             tooltip=IBus.Text.new_from_string(_("Switch input mode")),
                                              sensitive=True,
                                              visible=True,
                                              state=IBus.PropState.UNCHECKED,
@@ -216,7 +219,10 @@ g
                 return KEY_STATE_COMPOSITION
 
     def _do_process_key_event(self, keyval, keycode, state):
-        self.logger.debug("process_key_event(%04x, %04x, %04x)" % (keyval, keycode, state))
+        import gettext
+        self.logger.debug(
+            "process_key_event(%04x, %04x, %04x)::: %s-%s" % (keyval, keycode, state, gettext.textdomain(),
+                                                              gettext.bindtextdomain('ibus-akaza')))
 
         # ignore key release events
         is_press = ((state & IBus.ModifierType.RELEASE_MASK) == 0)
@@ -260,7 +266,7 @@ g
         # 変換候補をいったんコミットする。
         self.commit_candidate()
 
-        label = f"Input mode: ({mode.symbol})"
+        label = _("Input mode (%s)") % mode.symbol
         prop = self.input_mode_prop
         prop.set_symbol(IBus.Text.new_from_string(mode.symbol))
         prop.set_label(IBus.Text.new_from_string(label))
