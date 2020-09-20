@@ -8,7 +8,7 @@
     <author>Tokuhiro Matsuno &lt;tokuhirom@gmail.com&gt;</author>
     <homepage>https://github.com/tokuhirom/ibus-akaza</homepage>
     <exec>@PYTHON@ @DATADIR@/ibus-akaza/ibus.py --ibus</exec>
-    <textdomain>akaza</textdomain>
+    <textdomain>ibus-akaza</textdomain>
     <engines>
         <engine>
             <name>akaza</name>

@@ -32,6 +32,7 @@ import sys
 import getopt
 import locale
 import logging
+import gettext
 
 # set_prgname before importing factory to show the name in warning
 # messages when import modules are failed. E.g. Gtk.
