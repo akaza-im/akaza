@@ -200,7 +200,7 @@ class GraphResolver:
                             logging.error(f"Missing prev_node.cost--- {prev_node}")
                         tmp_cost = prev_node.cost + self.language_model.calc_bigram_cost(
                             prev_node, node) + node_cost
-                        if cost < tmp_cost:
+                        if cost < tmp_cost:  # コストが最大になる経路をえらんでいる。
                             cost = tmp_cost
                             shortest_prev = prev_node
                     # print(f"    SSSHORTEST: {shortest_prev} in {prev_nodes}")
@@ -228,4 +228,3 @@ class GraphResolver:
             last_node = node
             node = node.prev
         return list(reversed(result))
-
