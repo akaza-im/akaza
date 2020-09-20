@@ -30,7 +30,7 @@ def split(a, n):
 def main():
     numprocs = mp.cpu_count()
 
-    files = glob.glob('dat/*/wiki_*')
+    files = glob.glob('work/text/*/wiki_*')
     chunks = split(files, numprocs)
 
     result_pool = []
@@ -50,7 +50,7 @@ def main():
                 result_pool.remove(r)
         time.sleep(0.1)
 
-    with open('jawiki.wfreq', 'w') as wfp:
+    with open('work/jawiki.wfreq', 'w') as wfp:
         for key in sorted(merged_wfreq.keys()):
             count = merged_wfreq[key]
             if key != '</S>/</S>':

@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.DEBUG)
 numcpu = multiprocessing.cpu_count()
 logging.info(f"numcpu={numcpu}")
 
-files = glob.glob('text/*/wiki_*')
+files = glob.glob('work/extracted/*/wiki_*')
 chunks = split(files, numcpu)
 
 t0 = time.time()

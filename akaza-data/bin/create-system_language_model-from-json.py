@@ -26,7 +26,7 @@ def write_model():
     retval = []
 
     print('# 1gram')
-    with open('jawiki.1gram.json') as fp:
+    with open('work/jawiki.1gram.json') as fp:
         data = json.load(fp)
 
         total = sum(data.values())
@@ -41,7 +41,7 @@ def write_model():
     unigram_size = len(retval)
 
     print('# 2gram')
-    with open('jawiki.2gram.json', 'r') as fp:
+    with open('work/jawiki.2gram.json', 'r') as fp:
         data = json.load(fp)
 
         for word1, word2data in data.items():
