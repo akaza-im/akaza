@@ -1,5 +1,7 @@
 from typing import Optional
 
+from akaza import tinylisp
+
 
 class Node:
     cost: Optional[float]
@@ -40,3 +42,9 @@ class Node:
     def __hash__(self):
         # necessary for instances to behave sanely in dicts and sets.
         return hash((self.start_pos, self.word, self.yomi, self.prev, self.cost))
+
+    def surface(self, evaluator: tinylisp.Evaluator):
+        if self.word.startswith('('):
+            return evaluator.run(self.word)
+        else:
+            return self.word
