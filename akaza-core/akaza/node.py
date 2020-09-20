@@ -28,8 +28,9 @@ class Node:
 
     def get_key(self) -> str:
         if self.is_bos():
-            return '<S>'
+            return '<S>/<S>'
         elif self.is_eos():
+            # FIXME: care the EOS in bigram.
             return '</S>'
         else:
             return f"{self.word}/{self.yomi}"

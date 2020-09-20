@@ -7,7 +7,7 @@ import glob
 def text2wfreq(fname, wfreq):
     with open(fname, 'r') as fp:
         for line in fp:
-            words = line.split(' ')
+            words = line.rstrip().split(' ')
             for word in words:
                 wfreq[word] = wfreq.get(word, 0) + 1
 
@@ -53,12 +53,13 @@ def main():
     with open('jawiki.wfreq', 'w') as wfp:
         for key in sorted(merged_wfreq.keys()):
             count = merged_wfreq[key]
-            if len(key.split('/')) != 2:
-                continue
-            if '/' not in key:
-                continue
-            if key.endswith('/UNK'):
-                continue
+            if key != '</S>/</S>':
+                if len(key.split('/')) != 2:
+                    continue
+                if '/' not in key:
+                    continue
+                if key.endswith('/UNK'):
+                    continue
             wfp.write(f"{key} {count}\n")
 
 

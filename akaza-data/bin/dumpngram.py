@@ -40,7 +40,7 @@ class UniGram:
 
     def dump(self, fname):
         with open(fname, 'w') as fp:
-            json.dump(self.d, fp, ensure_ascii=False)
+            json.dump(self.d, fp, ensure_ascii=False, indent=1)
 
 
 class BiGram:
@@ -72,7 +72,7 @@ class BiGram:
                         removelist.append((word1, word2))
             for word1, word2 in removelist:
                 del self.d[word1][word2]
-            json.dump(self.d, fp, ensure_ascii=False)
+            json.dump(self.d, fp, ensure_ascii=False, indent=1)
 
 
 def main():
