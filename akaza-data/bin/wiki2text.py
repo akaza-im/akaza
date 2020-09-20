@@ -68,7 +68,7 @@ def main():
     count = 0
     total = len(sys.argv[1:])
     for ifile in sys.argv[1:]:
-        ofile = ifile.replace('text/', 'dat/')
+        ofile = ifile.replace('work/extracted/', 'work/text/')
 
         pathlib.Path(ofile).parent.mkdir(parents=True, exist_ok=True)
 

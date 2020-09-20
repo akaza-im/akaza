@@ -83,9 +83,9 @@ def main():
     unigram = UniGram(vocab)
     bigram = BiGram(vocab)
 
-    all_files = len(glob.glob('dat/*/*'))
+    all_files = len(glob.glob('work/text/*/*'))
     file_count = 0
-    for fname in glob.glob('dat/*/*'):
+    for fname in glob.glob('work/text/*/*'):
         with open(fname) as rfp:
             process = psutil.Process(os.getpid())
             print(f"{fname} {file_count}/{all_files} "
@@ -101,8 +101,8 @@ def main():
 
     print(f"Proceeded all files: {time.time() - t0}")
 
-    unigram.dump('jawiki.1gram.json')
-    bigram.dump('jawiki.2gram.json')
+    unigram.dump('work/jawiki.1gram.json')
+    bigram.dump('work/jawiki.2gram.json')
 
     print(f"Finished: {time.time() - t0}")
 

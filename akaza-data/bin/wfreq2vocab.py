@@ -1,7 +1,7 @@
 import logging
 
-with open('jawiki.wfreq', 'r') as rfp, \
-        open('jawiki.vocab', 'w') as wfp:
+with open('work/jawiki.wfreq', 'r') as rfp, \
+        open('work/jawiki.vocab', 'w') as wfp:
     vocab = []
     for line in rfp:
         m = line.rstrip().split(' ')

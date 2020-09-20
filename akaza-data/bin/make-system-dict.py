@@ -20,7 +20,7 @@ HIRAGANA_PATTERN = re.compile(r'^[' + HIRAGANA_BLOCK + ']+$')
 
 
 def scan_vocab():
-    with open('jawiki.vocab', 'r') as rfp:
+    with open('work/jawiki.vocab', 'r') as rfp:
         for line in rfp:
             word = line.rstrip()
             m = word.split('/')
