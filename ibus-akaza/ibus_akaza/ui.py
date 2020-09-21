@@ -5,6 +5,7 @@ import gi
 
 from akaza.dictionary import Dictionary
 
+gi.require_version('GLib', '2.0')
 gi.require_version('IBus', '1.0')
 
 from gi.repository import IBus
@@ -199,6 +200,7 @@ g
         return True
 
     def do_candidate_clicked(self, index, dummy_button, dummy_state):
+        self.logger.info("do_candidate_clicked")
         if self.set_lookup_table_cursor_pos_in_current_page(index):
             self.commit_candidate()
 
@@ -231,8 +233,7 @@ g
     def _do_process_key_event(self, keyval, keycode, state):
         import gettext
         self.logger.debug(
-            "process_key_event(%04x, %04x, %04x)::: %s-%s" % (keyval, keycode, state, gettext.textdomain(),
-                                                              gettext.bindtextdomain('ibus-akaza')))
+            "process_key_event(%s=%04x, %04x, %04x)" % (IBus.keyval_name(keyval), keyval, keycode, state))
 
         # ignore key release events
         is_press = ((state & IBus.ModifierType.RELEASE_MASK) == 0)
@@ -250,6 +251,7 @@ g
             if ord('!') <= keyval <= ord('~'):
                 if state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.MOD1_MASK) == 0:
                     if self.in_henkan_mode():
+                        self.logger.info("Call `commit_candidate()` since it's in henkan mode...")
                         self.commit_candidate()
 
                     self.preedit_string += chr(keyval)
@@ -573,9 +575,9 @@ g
         self.force_selected_clause = []
 
         self.lookup_table.clear()
+        self.update_lookup_table(self.lookup_table, False)
 
         self.hide_auxiliary_text()
-        self.hide_lookup_table()
         self.hide_preedit_text()
 
     def build_string(self):
@@ -670,7 +672,7 @@ g
         """
         無変換状態で、どんどん入力していくフェーズ。
         """
-        self.logger.debug(f"update_preedit_text_before_henkan")
+        self.logger.debug(f"update_preedit_text_before_henkan: {self.preedit_string}")
 
         if len(self.preedit_string) == 0:
             self.hide_preedit_text()
@@ -716,11 +718,13 @@ g
         self.register_properties(self.prop_list)
 
     def do_focus_out(self):
-        # self.logger.debug("focus_out")
-        self.do_reset()
+        # フォーカスアウトイベントは、かなりマメに実行される。
+        # どういうきっかけで発火しているのかよくわからない。
+        self.logger.debug("do_focus_out")
+        # self.do_reset()
 
     def do_reset(self):
-        # self.logger.debug("reset")
+        self.logger.debug("do_reset")
         self.preedit_string = ''
         self.force_selected_clause = []
         self.clauses = []
@@ -744,6 +748,7 @@ g
         return self.cursor_down()
 
     def erase_character_before_cursor(self):
+        self.logger.info(f"erase_character_before_cursor: {self.preedit_string}")
         if self.in_henkan_mode():
             # 変換中の場合、無変換モードにもどす。
             self.lookup_table.clear()
@@ -757,6 +762,7 @@ g
         self.update_preedit_text_before_henkan()
 
     def escape(self):
+        self.logger.info(f"escape: {self.preedit_string}")
         self.preedit_string = ''
         self.update_candidates()
 
