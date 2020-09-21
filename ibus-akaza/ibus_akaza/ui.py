@@ -135,14 +135,16 @@ class AkazaIBusEngine(IBus.Engine):
 
         self.romkan = romkan
 
-        try:
-            self.__prop_dict = {}
-            self.prop_list = self._init_props()
-            self.logger.debug("Create Akaza engine OK: 20200916")
-        except:
-            self.logger.error("Cannot initialize Akaza engine.", exc_info=True)
+        # タスクメニューからポップアップで選べるメニューについて、セットアップする。
+        self.__prop_dict = {}
+        self.prop_list = self._init_props()
+
+        self.logger.debug("Create Akaza engine OK: 20200916")
 
     def _init_props(self) -> IBus.PropList:
+        """
+        タスクメニューからポップアップして選べるメニューを構築する。
+        """
         prop_list = IBus.PropList()
         self.input_mode_prop = IBus.Property(key=u'InputMode',
                                              prop_type=IBus.PropType.MENU,
@@ -209,14 +211,20 @@ g
             return False
 
     def _get_key_state(self):
+        """
+        キー入力状態を返す。
+        """
         if len(self.preedit_string) == 0:
+            # 未入力
             self.logger.debug("key_state: KEY_STATE_PRECOMPOSITION")
             return KEY_STATE_PRECOMPOSITION
         else:
             if self.in_henkan_mode():
+                # 変換中
                 self.logger.debug("key_state: KEY_STATE_CONVERSION")
                 return KEY_STATE_CONVERSION
             else:
+                # 入力されているがまだ変換されていない
                 self.logger.debug("key_state: KEY_STATE_COMPOSITION")
                 return KEY_STATE_COMPOSITION
 
@@ -263,6 +271,9 @@ g
         return False
 
     def _set_input_mode(self, mode: InputMode):
+        """
+        入力モードの変更
+        """
         self.logger.info(f"input mode activate: {mode}")
 
         # 変換候補をいったんコミットする。
@@ -561,7 +572,11 @@ g
         self.node_selected = {}
         self.force_selected_clause = []
 
-        self.update_candidates()
+        self.lookup_table.clear()
+
+        self.hide_auxiliary_text()
+        self.hide_lookup_table()
+        self.hide_preedit_text()
 
     def build_string(self):
         result = ''
@@ -638,6 +653,7 @@ g
         """
         self.logger.debug(f"_make_preedit_word: {self.preedit_string}")
 
+        # 先頭が大文字だと、
         if len(self.preedit_string) > 0 and self.preedit_string[0].isupper() \
                 and len(self.force_selected_clause) == 0:
             return self.preedit_string, self.preedit_string
@@ -672,7 +688,7 @@ g
                                                 IBus.AttrUnderline.SINGLE, 0, len(word)))
         preedit_text = IBus.Text.new_from_string(word)
         preedit_text.set_attributes(preedit_attrs)
-        self.update_preedit_text(preedit_text, len(word), len(word) > 0)
+        self.update_preedit_text(text=preedit_text, cursor_pos=len(word), visible=(len(word) > 0))
 
     def create_lookup_table(self):
         """
@@ -709,6 +725,8 @@ g
         self.force_selected_clause = []
         self.clauses = []
         self.current_clause = 0
+        self.node_selected = {}
+
         self.lookup_table.clear()
         self.hide_auxiliary_text()
         self.hide_lookup_table()
