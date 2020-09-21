@@ -200,6 +200,7 @@ g
         return True
 
     def do_candidate_clicked(self, index, dummy_button, dummy_state):
+        self.logger.info("do_candidate_clicked")
         if self.set_lookup_table_cursor_pos_in_current_page(index):
             self.commit_candidate()
 
@@ -231,7 +232,8 @@ g
 
     def _do_process_key_event(self, keyval, keycode, state):
         import gettext
-        self.logger.debug("process_key_event(%04x, %04x, %04x)" % (keyval, keycode, state))
+        self.logger.debug(
+            "process_key_event(%s=%04x, %04x, %04x)" % (IBus.keyval_name(keyval), keyval, keycode, state))
 
         # ignore key release events
         is_press = ((state & IBus.ModifierType.RELEASE_MASK) == 0)
@@ -249,6 +251,7 @@ g
             if ord('!') <= keyval <= ord('~'):
                 if state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.MOD1_MASK) == 0:
                     if self.in_henkan_mode():
+                        self.logger.info("Call `commit_candidate()` since it's in henkan mode...")
                         self.commit_candidate()
 
                     self.preedit_string += chr(keyval)
@@ -571,6 +574,7 @@ g
         self.node_selected = {}
         self.force_selected_clause = []
 
+        self.lookup_table.clear()
         self.update_lookup_table(self.lookup_table, False)
 
         self.hide_auxiliary_text()
@@ -714,8 +718,10 @@ g
         self.register_properties(self.prop_list)
 
     def do_focus_out(self):
+        # フォーカスアウトイベントは、かなりマメに実行される。
+        # どういうきっかけで発火しているのかよくわからない。
         self.logger.debug("do_focus_out")
-        self.do_reset()
+        # self.do_reset()
 
     def do_reset(self):
         self.logger.debug("do_reset")
