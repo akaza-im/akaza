@@ -21,33 +21,12 @@ Yet another kana-kanji-converter on IBus, written in Python.
 
 ## Install 方法
 
- * `make && sudo make install && ibus restart`
+    cd akaza-data/ && pip install -r requirements.txt
+    cd akaza-core/ && pip install -r requirements.txt
+    cd ibus-akaza/ && pip install -r requirements.txt
+    make && sudo make install && ibus restart
 
-とかして、ibus 側の設定をすればOKです。
-
-wikipedia の全データをダウンロードして言語モデルと辞書のロードが行われるために、ディスク容量とメモリと CPU がある程度必要です。
-
-## 設計方針
-
- * モデル
-   * モデルは 日本語 wikipedia 等から自動生成されて、誰でもチューニング可能なようにしたい。
-   * 現状、@tokuhirom は、 Wikipedia から生成された言語モデルで割と満足しています。
-   * anthy よりも変換精度が高い気がしています
- * クローラーの提供
-   * ユーザーが自分でクローラーを走らせることにより、言語モデルのトレーニングができるようにしたい。
- * なにか面白い改善方法が思いついたら、fork して実装できるように。
-   * 改造しやすい IME をめざす。
- * 辞書のメンテや実装において、品詞を扱わなくてもよいようにした
-
-## ファイル形式
-
- * system_dict.trie
-   * `(u'読み', u'漢字1/漢字2/漢字3'.encode('utf-8'))` で入れている。
-   * common prefix search している。
- * system_language_model.trie
-   * `("漢字/かな", score)`
-   * `("漢字/かな\t漢字/かな", score)`
-   * key でそのままひく
+ibus 側の設定をすればOKです。
 
 ## 設定方法
 
@@ -67,6 +46,32 @@ XDG の設定ファイルディレクトリ以下、通常であれば `$HOME/.c
     user_dicts:    # ユーザー辞書の設定
       - path: /home/tokuhirom/dotfiles/skk/SKK-JISYO.tokuhirom
         encoding: utf-8
+
+## HACKING
+
+ * wikipedia の全データをダウンロードして言語モデルと辞書のロードが行われるために、ディスク容量とメモリと CPU がある程度必要です。
+
+## 設計方針
+
+ * モデル
+   * モデルは 日本語 wikipedia 等から自動生成されて、誰でもチューニング可能なようにしたい。
+   * 現状、@tokuhirom は、 Wikipedia から生成された言語モデルで割と満足しています。
+   * anthy よりも変換精度が高い気がしています
+ * クローラーの提供
+   * (未実装) ユーザーが自分でクローラーを走らせることにより、言語モデルのトレーニングができるようにしたい。
+ * なにか面白い改善方法が思いついたら、fork して実装できるように。
+   * 改造しやすい IME をめざす。
+ * 辞書のメンテや実装において、品詞を扱わなくてもよいようにした
+
+## ファイル形式
+
+ * system_dict.trie
+   * `(u'読み', u'漢字1/漢字2/漢字3'.encode('utf-8'))` で入れている。
+   * common prefix search している。
+ * system_language_model.trie
+   * `("漢字/かな", score)`
+   * `("漢字/かな\t漢字/かな", score)`
+   * key でそのままひく
 
 ## See also
 
