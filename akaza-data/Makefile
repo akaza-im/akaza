@@ -17,7 +17,7 @@ work/jawiki.wfreq: work/text/BE/wiki_13 bin/text2wfreq.py
 	python bin/text2wfreq.py
 
 # 118,334=entry count of libkkc-data.
-work/jawiki.vocab: work/jawiki.wfreq
+work/jawiki.vocab: work/jawiki.wfreq bin/wfreq2vocab.py
 	python bin/wfreq2vocab.py
 
 work/jawiki.1gram.json: work/jawiki.vocab  bin/dumpngram.py

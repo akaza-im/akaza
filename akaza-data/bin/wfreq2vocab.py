@@ -11,7 +11,7 @@ with open('work/jawiki.wfreq', 'r') as rfp, \
                 logging.info(f"Skip: {word}(unknown word)")
             elif '/' not in word:
                 logging.info(f"Skip: {word}(no slash)")
-            elif int(cnt) > 15 and len(word) > 0:
+            elif int(cnt) >= 15 and len(word) > 0:
                 vocab.append(word)
             else:
                 logging.info(f"Skip: {word}: {cnt}(few count)")
