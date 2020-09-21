@@ -75,8 +75,17 @@ def main():
         logging.info(f"[{os.getpid()}] {ifile} -> {ofile} ({count}/{total})")
         with open(ifile, 'r') as rfp, \
                 open(ofile, 'w') as wfp:
+            last_line_is_open_tag = False
             for line in rfp:
+                # タグはじまりの行の次の行はスキップする。
+                if last_line_is_open_tag:
+                    last_line_is_open_tag = False
+                    continue
+
                 # タグ始まりの行をスキップする
+                if line.startswith('<doc'):
+                    last_line_is_open_tag = True
+                    continue
                 if line.startswith('<'):
                     continue
 
