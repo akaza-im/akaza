@@ -29,7 +29,7 @@ work/jawiki.2gram.json: work/jawiki.vocab bin/merge2gram.py
 akaza_data/data/system_language_model.trie: work/jawiki.2gram.json work/jawiki.vocab bin/create-system_language_model-from-json.py
 	python bin/create-system_language_model-from-json.py
 
-akaza_data/data/system_dict.trie: work/jawiki.vocab
+akaza_data/data/system_dict.trie: work/jawiki.vocab dict/SKK-JISYO.akaza
 	python bin/make-system-dict.py
 
 .PHONY: all
