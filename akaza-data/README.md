@@ -24,11 +24,11 @@ System dictionary/language model package for Akaza.
  6. text2wfreq.py で頻度ファイルを生成する。 jawiki.wfreq
  7. wfreq2vocab.py で語彙ファイルを生成する。jawiki.vocab
    * ここの足切りラインを大きくすると変換精度は高まるが、生成データがでかくなる。
-   * 現在は、「ペパボ」が入るという理由で 16 回以上登場したものとしている。
+   * 現在は、「ペパボ」が入るという理由で 15 回以上登場したものとしている。
 
 ### system_language_model.trie
 
- a. bin/dumpngram.py で、vocab と text から、jawiki.1gram.json/jawiki.2gram.json を生成する。
+ a. bin/dumpngram.py で、vocab と text から、jawiki.2gram.json を生成する。
  b. json から system_language_model.trie を生成する。
 
 ### system_dict.trie
@@ -45,7 +45,7 @@ marisa-trie 形式のデータです。1gram, 2gram のデータが素直に格�
 
   愛/あい\tは/は   => -0.525252
 
-浮動小数点数がスコアです。このスコアは、n-gram の確率の log10 をとって - をつけたものです。
+浮動小数点数がスコアです。このスコアは、n-gram の確率の log10 をとったものです。
 
 ## Size に関するメモ
 
