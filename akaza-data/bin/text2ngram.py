@@ -14,9 +14,6 @@ import psutil
 
 vocabfname = sys.argv[1]
 
-BIGRAM_CUTOFF = 3
-
-
 def split(a, n):
     k, m = divmod(len(a), n)
     return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
@@ -49,13 +46,6 @@ class BiGram:
 
     def dump(self, fname):
         with open(fname, 'w') as fp:
-            removelist = []
-            for word1 in self.d:
-                for word2 in self.d[word1]:
-                    if self.d[word1][word2] <= BIGRAM_CUTOFF:
-                        removelist.append((word1, word2))
-            for word1, word2 in removelist:
-                del self.d[word1][word2]
             json.dump(self.d, fp, ensure_ascii=False, indent=1)
 
 
@@ -89,6 +79,7 @@ def main():
     t0 = time.time()
 
     vocab = set(read_vocab())
+    assert 'で/で' in vocab
 
     numprocs = mp.cpu_count()
     pool = mp.Pool(numprocs)

@@ -24,7 +24,7 @@ work/2gram/BE/wiki_13.2gram.json: work/jawiki.vocab bin/text2ngram.py
 	python bin/text2ngram.py work/jawiki.vocab
 
 work/jawiki.2gram.json: work/jawiki.vocab bin/merge2gram.py
-	python bin/merge2gram.py
+	python bin/merge2gram.py --bigram-cutoff=3
 
 akaza_data/data/system_language_model.trie: work/jawiki.2gram.json work/jawiki.vocab bin/create-system_language_model-from-json.py
 	python bin/create-system_language_model-from-json.py
