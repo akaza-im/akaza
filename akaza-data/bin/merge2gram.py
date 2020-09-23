@@ -28,17 +28,7 @@ def main(bigram_cutoff=3):
     #  basic entries.
     assert 'で/で' in result['中野/なかの']
 
-    print("Writing result")
-    with open('work/jawiki.2gram.json', 'w') as wfp:
-        remove_entries = set()
-        for word1, word2items in dat.items():
-            if word1 not in result:
-                result[word1] = {}
-            for word2, cnt in word2items.items():
-                if cnt < bigram_cutoff:
-                    remove_entries.add((word1, word2))
-        for word1, word2 in remove_entries:
-            del result[word1][word2]
+    with open('work/jawiki.2gram-merged.json', 'w') as wfp:
         json.dump(result, wfp, ensure_ascii=False, indent=1, sort_keys=True)
 
     print(f"Elapsed: {time.time() - t0} seconds")
@@ -48,7 +38,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(prog='PROG')
-    parser.add_argument('--bigram-cutoff', nargs=1, default=3, type=int)
+    parser.add_argument('--bigram-cutoff', nargs=1, default=[3], type=int)
     args = parser.parse_args()
 
     main(bigram_cutoff=args.bigram_cutoff[0])

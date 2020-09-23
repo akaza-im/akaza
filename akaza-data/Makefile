@@ -23,8 +23,11 @@ work/jawiki.vocab: work/jawiki.wfreq bin/wfreq2vocab.py
 work/2gram/BE/wiki_13.2gram.json: work/jawiki.vocab bin/text2ngram.py
 	python bin/text2ngram.py work/jawiki.vocab
 
-work/jawiki.2gram.json: work/jawiki.vocab bin/merge2gram.py
-	python bin/merge2gram.py --bigram-cutoff=3
+work/jawiki.2gram-merged.json: work/jawiki.vocab bin/merge2gram.py
+	python bin/merge2gram.py
+
+work/jawiki.2gram.json: work/jawiki.2gram-merged.json bin/ngram-cutoff.py
+	python bin/ngram-cutoff.py --bigram-cutoff=3
 
 akaza_data/data/system_language_model.trie: work/jawiki.2gram.json work/jawiki.vocab bin/create-system_language_model-from-json.py
 	python bin/create-system_language_model-from-json.py
