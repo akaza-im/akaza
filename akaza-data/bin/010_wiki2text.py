@@ -4,6 +4,10 @@ import pathlib
 import sys
 from Mykytea import Mykytea
 import re
+import multiprocessing as mp
+import glob
+import time
+import psutil
 
 kytea = Mykytea('-model /usr/share/kytea/model.bin')
 
@@ -64,10 +68,10 @@ def parse_line_simple(line):
     yield '</S>', '</S>'  # EOS
 
 
-def main():
+def process_files(files):
     count = 0
-    total = len(sys.argv[1:])
-    for ifile in sys.argv[1:]:
+    total = len(files)
+    for ifile in files:
         ofile = ifile.replace('work/extracted/', 'work/text/')
 
         pathlib.Path(ofile).parent.mkdir(parents=True, exist_ok=True)
@@ -91,13 +95,44 @@ def main():
 
                 line = line.rstrip()
                 # strip <nowiki> tag.
-                line = re.sub('<nowiki>(.*?)</nowiki>', r'\1',  line)
+                line = re.sub('<nowiki>(.*?)</nowiki>', r'\1', line)
+                line = re.sub('<br>', r' ', line, flags=re.I)
 
                 if len(line) == 0:
                     continue
 
                 wfp.write(' '.join([x[0] + '/' + x[1] for x in parse_line_simple(line)]) + "\n")
         count += 1
+
+
+def split(a, n):
+    k, m = divmod(len(a), n)
+    return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
+
+
+def main():
+    numprocs = mp.cpu_count()
+    logging.info(f"numprocs={numprocs}")
+
+    files = glob.glob('work/extracted/*/wiki_*')
+    chunks = split(files, numprocs)
+    pool = mp.Pool(numprocs)
+
+    t0 = time.time()
+
+    result_pool = []
+    for chunk in chunks:
+        result_pool.append(pool.apply_async(process_files, args=(chunk,)))
+
+    while len(result_pool) > 0:
+        print(f"Remains: {len(result_pool)}")
+        for r in result_pool:
+            if r.ready():
+                r.get()
+                result_pool.remove(r)
+        time.sleep(1)
+
+    print(f"Finished: {time.time() - t0}")
 
 
 if __name__ == '__main__':

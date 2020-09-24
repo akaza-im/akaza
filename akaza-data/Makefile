@@ -10,8 +10,8 @@ work/jawiki-latest-pages-articles.xml: work/jawiki-latest-pages-articles.xml.bz2
 work/extracted/BE/wiki_13: work/jawiki-latest-pages-articles.xml
 	python -m wikiextractor.WikiExtractor --quiet --processes 8 --out work/extracted/ work/jawiki-latest-pages-articles.xml
 
-work/text/BE/wiki_13: work/extracted/BE/wiki_13 bin/wiki2text-runner.py bin/wiki2text.py
-	python bin/wiki2text-runner.py
+work/text/BE/wiki_13: work/extracted/BE/wiki_13 bin/010_wiki2text.py
+	python bin/010_wiki2text.py
 
 work/jawiki.wfreq: work/text/BE/wiki_13 bin/text2wfreq.py
 	python bin/text2wfreq.py
