@@ -1,11 +1,10 @@
+import sys
 import glob
 import json
 import time
 
 
-def main(bigram_cutoff=3):
-    print(f"bigram-cutoff={bigram_cutoff}")
-
+def main():
     t0 = time.time()
 
     files = glob.glob('work/2gram/*/wiki_*.2gram.json')
@@ -24,21 +23,12 @@ def main(bigram_cutoff=3):
                     result[word1][word2] += cnt
         finished += 1
 
-    # assertion
-    #  basic entries.
-    assert 'で/で' in result['中野/なかの']
-
-    with open('work/jawiki.2gram-merged.json', 'w') as wfp:
+    print("Writing result")
+    with open('work/jawiki.2gram.json', 'w') as wfp:
         json.dump(result, wfp, ensure_ascii=False, indent=1, sort_keys=True)
 
     print(f"Elapsed: {time.time() - t0} seconds")
 
 
 if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser(prog='PROG')
-    parser.add_argument('--bigram-cutoff', nargs=1, default=[3], type=int)
-    args = parser.parse_args()
-
-    main(bigram_cutoff=args.bigram_cutoff[0])
+    main()
