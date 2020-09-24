@@ -20,13 +20,10 @@ work/jawiki.wfreq: work/text/BE/wiki_13 bin/text2wfreq.py
 work/jawiki.vocab: work/jawiki.wfreq bin/wfreq2vocab.py
 	python bin/wfreq2vocab.py
 
-work/2gram/BE/wiki_13.2gram.json: work/jawiki.vocab bin/text2ngram.py
-	python bin/text2ngram.py work/jawiki.vocab
+work/jawiki.1gram.json: work/jawiki.vocab  bin/dumpngram.py
+	python bin/dumpngram.py work/jawiki.vocab
 
-work/jawiki.2gram.json: work/jawiki.vocab bin/merge2gram.py
-	python bin/merge2gram.py
-
-akaza_data/data/system_language_model.trie: work/jawiki.2gram.json work/jawiki.vocab bin/create-system_language_model-from-json.py
+akaza_data/data/system_language_model.trie: work/jawiki.1gram.json work/jawiki.2gram.json work/jawiki.vocab bin/create-system_language_model-from-json.py
 	python bin/create-system_language_model-from-json.py
 
 akaza_data/data/system_dict.trie: work/jawiki.vocab

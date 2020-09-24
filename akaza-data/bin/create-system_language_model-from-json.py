@@ -1,12 +1,24 @@
 import json
 import math
+import re
 import time
 
 import marisa_trie
 
-# jawiki.wfreq/jawiki.2gram.json から言語モデルを出力する。
+# jawiki.1gram.json/jawiki.2gram.json から言語モデルを出力する。
+
+SPACES = re.compile(r'\s+')
 
 BIGRAM_CUTOFF = 2
+
+
+# 漢字/よみ → よみ/漢字 に変更する。
+def reverse_word(word):
+    m = word.split('/')
+    if len(m) != 2:
+        raise RuntimeError(f"---{word}---")
+    kanji, yomi = m
+    return f"{yomi}/{kanji}"
 
 
 def write_model():
@@ -14,20 +26,10 @@ def write_model():
     retval = []
 
     print('# 1gram')
-    with open('work/jawiki.wfreq') as fp:
-        total = 0
-        data = {}
+    with open('work/jawiki.1gram.json') as fp:
+        data = json.load(fp)
 
-        for line in fp:
-            line = line.rstrip()
-            m = line.split(' ')
-            if len(m) == 2:
-                word, cnt = m
-                cnt = int(cnt)
-                if cnt < 15:
-                    continue
-                data[word] = cnt
-                total += cnt
+        total = sum(data.values())
 
         for word in sorted(data.keys()):
             count = data[word]
