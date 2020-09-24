@@ -1,7 +1,7 @@
 all: akaza_data/data/system_dict.trie akaza_data/data/system_language_model.trie
 
 work/jawiki-latest-pages-articles.xml.bz2:
-	mkdir work/
+	mkdir -p work/
 	wget --no-verbose --no-clobber -O work/jawiki-latest-pages-articles.xml.bz2 https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-pages-articles.xml.bz2
 
 work/jawiki-latest-pages-articles.xml: work/jawiki-latest-pages-articles.xml.bz2
