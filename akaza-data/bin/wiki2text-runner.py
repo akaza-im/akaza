@@ -25,7 +25,7 @@ finished = 0
 
 procs = []
 for chunk in chunks:
-    cmd = ['python', 'bin/011_wiki2text.py'] + chunk
+    cmd = ['python', 'bin/wiki2text.py'] + chunk
     proc = subprocess.Popen(cmd)
     procs.append(proc)
 
