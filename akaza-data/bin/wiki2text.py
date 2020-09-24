@@ -92,7 +92,6 @@ def main():
                 line = line.rstrip()
                 # strip <nowiki> tag.
                 line = re.sub('<nowiki>(.*?)</nowiki>', r'\1',  line)
-                line = re.sub('<br>', r' ',  line, flags=re.I)
 
                 if len(line) == 0:
                     continue
