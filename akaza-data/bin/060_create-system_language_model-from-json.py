@@ -58,9 +58,6 @@ def build_2gram():
 
 
 def write_model():
-    # bigram かいていく
-    retval = []
-
     print('# 1gram')
     unigram = build_1gram()
 
