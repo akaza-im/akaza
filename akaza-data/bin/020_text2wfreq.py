@@ -2,6 +2,7 @@ import multiprocessing as mp
 import os
 import time
 import glob
+import sys
 
 
 def text2wfreq(fname, wfreq):
@@ -16,7 +17,7 @@ def worker(chunk):
     wfreq = {}
     finished = 0
     for fname in chunk:
-        print(f"[{os.getpid()}] {fname} ({finished}/{len(chunk)})")
+        print(f"[{os.getpid()}] [{sys.argv[0]}] {fname} ({finished}/{len(chunk)})")
         text2wfreq(fname, wfreq)
         finished += 1
     return wfreq

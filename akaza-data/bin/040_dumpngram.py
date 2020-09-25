@@ -88,7 +88,7 @@ def main():
     for fname in glob.glob('work/text/*/*'):
         with open(fname) as rfp:
             process = psutil.Process(os.getpid())
-            print(f"{fname} {file_count}/{all_files} "
+            print(f"[{sys.argv[0]}] {fname} {file_count}/{all_files} "
                   f"({process.memory_info().rss / 1024 / 1024} MB): {time.time() - t0}."
                   f" unigram: {len(unigram)}. bigram: {len(bigram)}")
             for line in rfp:

@@ -7,7 +7,6 @@ import re
 import multiprocessing as mp
 import glob
 import time
-import psutil
 
 kytea = Mykytea('-model /usr/share/kytea/model.bin')
 
@@ -125,7 +124,7 @@ def main():
         result_pool.append(pool.apply_async(process_files, args=(chunk,)))
 
     while len(result_pool) > 0:
-        print(f"Remains: {len(result_pool)}")
+        print(f"[{sys.argv[0]}] Remains: {len(result_pool)}")
         for r in result_pool:
             if r.ready():
                 r.get()
