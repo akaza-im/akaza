@@ -75,6 +75,41 @@ class BiGram:
             json.dump(self.d, fp, ensure_ascii=False, indent=1)
 
 
+class TriGram:
+    wfreq: Set[str]
+
+    def __init__(self, vocab: Set[str]):
+        self.d = {}
+        self.vocab = vocab
+
+    def register(self, word1, word2, word3):
+        if word1 not in self.vocab or word2 not in self.vocab or word3 not in self.vocab:
+            return
+
+        if word1 not in self.d:
+            self.d[word1] = {}
+        if word2 not in self.d[word1]:
+            self.d[word1][word2] = {}
+        if word3 not in self.d[word1][word2]:
+            self.d[word1][word2][word3] = 0
+        self.d[word1][word2][word3] += 1
+
+    def __len__(self):
+        return len(self.d)
+
+    def dump(self, fname):
+        with open(fname, 'w') as fp:
+            removelist = []
+            for word1 in self.d:
+                for word2 in self.d[word1]:
+                    for word3, cnt in self.d[word1][word2].items():
+                        if cnt <= BIGRAM_CUTOFF:
+                            removelist.append((word1, word2, word3))
+            for word1, word2, word3 in removelist:
+                del self.d[word1][word2][word3]
+            json.dump(self.d, fp, ensure_ascii=False, indent=1)
+
+
 def main():
     t0 = time.time()
 
@@ -82,6 +117,7 @@ def main():
 
     unigram = UniGram(vocab)
     bigram = BiGram(vocab)
+    trigram = TriGram(vocab)
 
     all_files = len(glob.glob('work/text/*/*'))
     file_count = 0
@@ -90,23 +126,27 @@ def main():
             process = psutil.Process(os.getpid())
             print(f"[{sys.argv[0]}] {fname} {file_count}/{all_files} "
                   f"({process.memory_info().rss / 1024 / 1024} MB): {time.time() - t0}."
-                  f" unigram: {len(unigram)}. bigram: {len(bigram)}")
+                  f" unigram: {len(unigram)}. bigram: {len(bigram)}. trigram: {len(trigram)}")
             for line in rfp:
                 words = SPACES.split(line.rstrip())
-                for i in range(0, len(words) - 1):
+                for i in range(0, len(words)):
                     unigram.register(words[i])
-                    bigram.register(words[i], words[i + 1])
-                unigram.register(words[-1])
+                    if i + 1 < len(words):
+                        bigram.register(words[i], words[i + 1])
+                    if i + 2 < len(words) - 1:
+                        trigram.register(words[i], words[i + 1], words[i + 2])
         file_count += 1
 
     print(f"Proceeded all files: {time.time() - t0}")
 
     unigram.dump('work/jawiki.1gram.json')
     bigram.dump('work/jawiki.2gram.json')
+    trigram.dump('work/jawiki.3gram.json')
 
     print(f"Finished: {time.time() - t0}")
 
     # 2gram なら、全部オンメモリで5分ぐらいで終る。
 
 
-main()
+if __name__ == '__main__':
+    main()
