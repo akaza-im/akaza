@@ -756,8 +756,7 @@ g
             self.hide_lookup_table()
         else:
             # サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
-            self.preedit_string = re.sub(r'(?:z[hjkl.-\[\]]|n+|[kstnhmyrwgzjdbp]?[aiueo]|.)$', '',
-                                         self.preedit_string)
+            self.preedit_string = self.romkan.remove_last_char(self.preedit_string)
         # 変換していないときのレンダリングをする。
         self.update_preedit_text_before_henkan()
 

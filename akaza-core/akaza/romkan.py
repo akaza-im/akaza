@@ -45,7 +45,7 @@ from __future__ import unicode_literals
 import re
 
 # This table is imported from KAKASI <http://kakasi.namazu.org/> and modified.
-from typing import Dict
+from typing import Dict, Pattern
 
 DEFAULT_ROMKAN_H = {
     "xa": "ぁ", "a": "あ", "xi": "ぃ", "i": "い", "xu": "ぅ", "u": "う", "vu": "う゛",
@@ -140,7 +140,7 @@ DEFAULT_ROMKAN_H = {
     "ro": "ろ",
     "xwa": "ゎ", "wa": "わ",
     "wo": "を",
-    "n": "ん", "n'": "ん",
+    "n": "ん", "n'": "ん", "nn": "ん",
     "dyi": "でぃ",
     "-": "ー",
     "che": "ちぇ", "tye": "ちぇ",
@@ -176,6 +176,8 @@ def _normalize_double_n(s):
 
 
 class RomkanConverter:
+    last_char_pattern: Pattern[str]
+
     def __init__(self, additional=None):
         self.map = DEFAULT_ROMKAN_H.copy()
 
@@ -184,6 +186,10 @@ class RomkanConverter:
 
         self.pattern = re.compile(
             '(' + "|".join(sorted([re.escape(x) for x in self.map.keys()], key=_len_cmp)) + ')'
+        )
+        print('(' + "|".join(sorted([re.escape(x) for x in self.map.keys()], key=_len_cmp)) + r'|.)$')
+        self.last_char_pattern = re.compile(
+            '(?:' + "|".join(sorted([re.escape(x) for x in self.map.keys()], key=_len_cmp)) + r'|.)$'
         )
 
     def to_hiragana(self, s: str) -> str:
@@ -194,3 +200,6 @@ class RomkanConverter:
         s = s.lower()
         s = _normalize_double_n(s)
         return self.pattern.sub(lambda x: self.map[x.group(1)], s)
+
+    def remove_last_char(self, s: str) -> str:
+        return self.last_char_pattern.sub('', s)
