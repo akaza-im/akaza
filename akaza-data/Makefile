@@ -26,7 +26,7 @@ work/jawiki.1gram.json: work/jawiki.vocab  bin/040_dumpngram.py
 akaza_data/data/system_language_model.trie: work/jawiki.1gram.json work/jawiki.2gram.json work/jawiki.vocab bin/050_create-system_language_model-from-json.py
 	python bin/050_create-system_language_model-from-json.py
 
-akaza_data/data/system_dict.trie: work/jawiki.vocab
+akaza_data/data/system_dict.trie: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki
 	python bin/060_make-system-dict.py
 
 .PHONY: all
