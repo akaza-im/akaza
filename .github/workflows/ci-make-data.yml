@@ -22,9 +22,9 @@ jobs:
         python-version: 3.8
     - name: Install kytea
       run: |
-        wget http://www.phontron.com/kytea/download/kytea-0.4.7.tar.gz
-        tar xzvf kytea-0.4.7.tar.gz
-        cd kytea-0.4.7 && ./configure && make && sudo make install
+        sudo apt-get install autoconf
+        git clone https://github.com/neubig/kytea.git
+        cd kytea && autoreconf -i && ./configure && make && sudo make install
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
