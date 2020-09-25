@@ -21,17 +21,17 @@ class Node:
                f" cost={self.cost}, prev={self.prev.word if self.prev else '-'} yomi={self.yomi}>"
 
     def is_bos(self):
-        return self.word == '<S>'
+        return self.word == '__BOS__'
 
     def is_eos(self):
-        return self.word == '</S>'
+        return self.word == '__EOS__'
 
     def get_key(self) -> str:
         if self.is_bos():
-            return '<S>/<S>'
+            return '__BOS__/__BOS__'
         elif self.is_eos():
             # FIXME: care the EOS in bigram.
-            return '</S>'
+            return '__EOS__'
         else:
             return f"{self.word}/{self.yomi}"
 

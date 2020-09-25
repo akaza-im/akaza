@@ -54,7 +54,7 @@ def main():
     with open('work/jawiki.wfreq', 'w') as wfp:
         for key in sorted(merged_wfreq.keys()):
             count = merged_wfreq[key]
-            if key != '</S>/</S>':
+            if key != '__EOS__/__EOS__':
                 if len(key.split('/')) != 2:
                     continue
                 if '/' not in key:

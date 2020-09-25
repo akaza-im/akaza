@@ -24,7 +24,7 @@ def is_hiragana(s):
 def parse_line(line):
     words = kytea.getTags(line)
 
-    yield '<S>', '<S>'  # BOS
+    yield '__BOS__', '__BOS__'  # BOS
 
     # 連続する平仮名エントリーを、連結する。
     hiragana_queue = []
@@ -48,13 +48,13 @@ def parse_line(line):
         kana = ''.join(hiragana_queue)
         yield kana, kana
 
-    yield '</S>', '</S>'  # EOS
+    yield '__EOS__', '__EOS__'  # EOS
 
 
 def parse_line_simple(line):
     words = kytea.getTags(line)
 
-    yield '<S>', '<S>'  # BOS
+    yield '__BOS__', '__BOS__'
 
     for word in words:
         kanji = word.surface
@@ -64,7 +64,7 @@ def parse_line_simple(line):
             continue
         yield kanji, yomi
 
-    yield '</S>', '</S>'  # EOS
+    yield '__EOS__', '__EOS__'  # EOS
 
 
 def process_files(files):
