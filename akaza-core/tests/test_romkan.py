@@ -41,3 +41,16 @@ from akaza.romkan import RomkanConverter
 def test_bar(src, expected):
     romkan = RomkanConverter()
     assert romkan.to_hiragana(src) == expected
+
+
+@pytest.mark.parametrize('src, expected', [
+    ('aka', 'a'),
+    ('sona', 'so'),
+    ('son', 'so'),
+    ('sonn', 'so'),
+    ('sonnna', 'sonn'),
+    ('sozh', 'so'),
+])
+def test_remove_last_char(src, expected):
+    romkan = RomkanConverter()
+    assert romkan.remove_last_char(src) == expected
