@@ -22,11 +22,8 @@ def reverse_word(word):
     return f"{yomi}/{kanji}"
 
 
-def write_model():
-    # bigram かいていく
+def build_1gram():
     retval = []
-
-    print('# 1gram')
     with open('work/jawiki.1gram.json') as fp:
         data = json.load(fp)
 
@@ -38,10 +35,12 @@ def write_model():
 
             retval.append((word, (float(score),),))
 
-    print(f"1gram. size={len(retval)}")
-    unigram_size = len(retval)
+    return retval
 
-    print('# 2gram')
+
+def build_2gram():
+    retval = []
+
     with open('work/jawiki.2gram.json', 'r') as fp:
         data = json.load(fp)
 
@@ -55,11 +54,26 @@ def write_model():
                 score = math.log10(count / total)
                 retval.append((f"{word1}\t{word2}", (float(score),),))
 
-    print(f"[{sys.argv[0]}] 2gram. size={len(retval) - unigram_size}")
+    return retval
 
-    trie = marisa_trie.RecordTrie('<f', retval)
+
+def write_model():
+    # bigram かいていく
+    retval = []
+
+    print('# 1gram')
+    unigram = build_1gram()
+
+    print(f"1gram. size={len(unigram)}")
+
+    print('# 2gram')
+    bigram = build_2gram()
+
+    print(f"[{sys.argv[0]}] 2gram. size={len(bigram)}")
+
+    trie = marisa_trie.RecordTrie('<f', unigram + bigram)
     fname = 'akaza_data/data/system_language_model.trie'
-    print(f"writing {fname}. size={len(retval)}")
+    print(f"writing {fname}.")
     trie.save(fname)
 
 
