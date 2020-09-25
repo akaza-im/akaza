@@ -9,7 +9,7 @@ DESTDIR ?=
 PYTHON ?= /usr/bin/python3
 
 test:
-	cd akaza-data && pytest
+	cd akaza-data && pytest tests
 	cd akaza-core && pytest
 	cd ibus-akaza && pytest
 
