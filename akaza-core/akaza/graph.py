@@ -16,9 +16,9 @@ class Graph:
 
     def __init__(self, size: int, logger=logging.getLogger(__name__)):
         self.d = {
-            0: [Node(start_pos=-9999, word='<S>', yomi='<S>')],
+            0: [Node(start_pos=-9999, word='__BOS__', yomi='__BOS__')],
             size + 1: [
-                Node(start_pos=size, word='</S>', yomi='</S>')],
+                Node(start_pos=size, word='__EOS__', yomi='__EOS__')],
         }
         self.logger = logger
 
