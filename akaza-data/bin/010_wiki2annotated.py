@@ -41,12 +41,16 @@ def parse_line(line):
 def process_files(files):
     count = 0
     total = len(files)
+    t0 = time.time()
     for ifile in files:
         ofile = ifile.replace('work/extracted/', 'work/annotated/')
 
         pathlib.Path(ofile).parent.mkdir(parents=True, exist_ok=True)
 
-        logging.info(f"[{os.getpid()}] {ifile} -> {ofile} ({count}/{total})")
+        elapsed = time.time() - t0
+        logging.info(
+            f"[{os.getpid()}] {ifile} -> {ofile} ({count}/{total}) elapsed={elapsed}"
+            f" expected={(total * elapsed) / max(count, 1)}")
         with open(ifile, 'r') as rfp, \
                 open(ofile, 'w') as wfp:
             last_line_is_open_tag = False
