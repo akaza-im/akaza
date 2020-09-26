@@ -57,23 +57,26 @@ def build_model(pattern, cutoff, t0, prev_dict=None):
     return d, retval
 
 
+def write_trie(path, data):
+    trie = marisa_trie.RecordTrie('<f', data)
+    print(f"writing {path}.")
+    trie.save(path)
+
+
 def write_model():
     t0 = time.time()
 
     print('# 1gram')
     unigram_dict, unigram = build_model('work/ngram/*/wiki*.1gram.txt', cutoff=0, t0=t0)
+    write_trie('akaza_data/data/system_language_model.1gram.trie', unigram)
 
     print(f"1gram. size={len(unigram)}")
 
     print('# 2gram')
     bigram_dict, bigram = build_model('work/ngram/*/wiki*.2gram.txt', cutoff=3, t0=t0, prev_dict=unigram_dict)
+    write_trie('akaza_data/data/system_language_model.2gram.trie', bigram)
 
     print(f"[{sys.argv[0]}] 2gram. size={len(bigram)}")
-
-    trie = marisa_trie.RecordTrie('<f', unigram + bigram)
-    fname = 'akaza_data/data/system_language_model.trie'
-    print(f"writing {fname}.")
-    trie.save(fname)
 
 
 def main():
