@@ -1,4 +1,4 @@
-from akaza_data import SystemDict, SystemLanguageModel
+from akaza_data import SystemLanguageModel
 
 
 def test_unigram():

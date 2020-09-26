@@ -1,152 +1,115 @@
-import sys
 import glob
-import re
 import os
-import psutil
-import json
+import sys
 import time
+from typing import Set
+import pathlib
+import logging
+import multiprocessing as mp
+
+import psutil
 
 # jawiki.vocab と dat/*/* を元に、jawiki.1gram.json と jawiki.2gram.json を構築する。
 
-# Usage: $0 wfreq
-from typing import Set
-
-vocabfname = sys.argv[1]
-
-SPACES = re.compile(r'\s+')
 BIGRAM_CUTOFF = 3
+TRIGRAM_CUTOFF = 100
 
 
 def read_vocab():
-    with open(vocabfname, 'r') as fp:
+    with open('work/jawiki.vocab', 'r') as fp:
         return [line.rstrip() for line in fp.readlines()]
 
 
-class UniGram:
-    def __init__(self, vocab: Set[str]):
-        self.d = {}
-        self.vocab = vocab
-
-    def register(self, word):
-        if word not in self.vocab:
-            return
-
-        if word not in self.d:
-            self.d[word] = 0
-        self.d[word] += 1
-
-    def __len__(self):
-        return len(self.d)
-
-    def dump(self, fname):
-        with open(fname, 'w') as fp:
-            json.dump(self.d, fp, ensure_ascii=False, indent=1)
-
-
-class BiGram:
+class NGram:
     wfreq: Set[str]
 
     def __init__(self, vocab: Set[str]):
         self.d = {}
         self.vocab = vocab
 
-    def register(self, word1, word2):
-        if word1 not in self.vocab or word2 not in self.vocab:
-            return
+    def register(self, words):
+        for word in words:
+            if word not in self.vocab:
+                return
 
-        if word1 not in self.d:
-            self.d[word1] = {}
-        if word2 not in self.d[word1]:
-            self.d[word1][word2] = 0
-        self.d[word1][word2] += 1
+        self.d[words] = self.d.get(words, 0) + 1
 
     def __len__(self):
         return len(self.d)
 
     def dump(self, fname):
+        pathlib.Path(fname).parent.mkdir(parents=True, exist_ok=True)
         with open(fname, 'w') as fp:
-            removelist = []
-            for word1 in self.d:
-                for word2 in self.d[word1]:
-                    if self.d[word1][word2] <= BIGRAM_CUTOFF:
-                        removelist.append((word1, word2))
-            for word1, word2 in removelist:
-                del self.d[word1][word2]
-            json.dump(self.d, fp, ensure_ascii=False, indent=1)
+            for words in sorted(self.d.keys()):
+                word = "\t".join(words)
+                fp.write(f"""{word} {self.d[words]}\n""")
 
 
-class TriGram:
-    wfreq: Set[str]
-
-    def __init__(self, vocab: Set[str]):
-        self.d = {}
-        self.vocab = vocab
-
-    def register(self, word1, word2, word3):
-        if word1 not in self.vocab or word2 not in self.vocab or word3 not in self.vocab:
-            return
-
-        if word1 not in self.d:
-            self.d[word1] = {}
-        if word2 not in self.d[word1]:
-            self.d[word1][word2] = {}
-        if word3 not in self.d[word1][word2]:
-            self.d[word1][word2][word3] = 0
-        self.d[word1][word2][word3] += 1
-
-    def __len__(self):
-        return len(self.d)
-
-    def dump(self, fname):
-        with open(fname, 'w') as fp:
-            removelist = []
-            for word1 in self.d:
-                for word2 in self.d[word1]:
-                    for word3, cnt in self.d[word1][word2].items():
-                        if cnt <= BIGRAM_CUTOFF:
-                            removelist.append((word1, word2, word3))
-            for word1, word2, word3 in removelist:
-                del self.d[word1][word2][word3]
-            json.dump(self.d, fp, ensure_ascii=False, indent=1)
-
-
-def main():
+def worker(chunk):
     t0 = time.time()
 
     vocab = set(read_vocab())
 
-    unigram = UniGram(vocab)
-    bigram = BiGram(vocab)
-    trigram = TriGram(vocab)
-
-    all_files = len(glob.glob('work/text/*/*'))
     file_count = 0
-    for fname in glob.glob('work/text/*/*'):
+    for fname in chunk:
+        elapsed = time.time() - t0
+        process = psutil.Process(os.getpid())
+        dest = fname.replace('work/text/', 'work/ngram/')
+
+        print(f"[{sys.argv[0]}] {fname} -> {dest} {file_count}/{len(chunk)} "
+              f"({process.memory_info().rss / 1024 / 1024} MB) "
+              f" elapsed={elapsed}"
+              f" remains={elapsed / max(file_count, 1) * (len(chunk) - file_count)}")
+
+        unigram = NGram(vocab)
+        bigram = NGram(vocab)
         with open(fname) as rfp:
-            process = psutil.Process(os.getpid())
-            print(f"[{sys.argv[0]}] {fname} {file_count}/{all_files} "
-                  f"({process.memory_info().rss / 1024 / 1024} MB): {time.time() - t0}."
-                  f" unigram: {len(unigram)}. bigram: {len(bigram)}. trigram: {len(trigram)}")
             for line in rfp:
-                words = SPACES.split(line.rstrip())
+                words = line.rstrip().split(' ')
                 for i in range(0, len(words)):
-                    unigram.register(words[i])
+                    unigram.register((words[i],))
                     if i + 1 < len(words):
-                        bigram.register(words[i], words[i + 1])
-                    if i + 2 < len(words) - 1:
-                        trigram.register(words[i], words[i + 1], words[i + 2])
+                        bigram.register((words[i], words[i + 1]))
+                    # if i + 2 < len(words) - 1:
+                    #     trigram.register((words[i], words[i + 1], words[i + 2]))
+            unigram.dump(f'{dest}.1gram.txt')
+            bigram.dump(f'{dest}.2gram.txt')
+
         file_count += 1
 
     print(f"Proceeded all files: {time.time() - t0}")
 
-    unigram.dump('work/jawiki.1gram.json')
-    bigram.dump('work/jawiki.2gram.json')
-    trigram.dump('work/jawiki.3gram.json')
+    # trigram.dump('work/jawiki.3gram.json', cutoff=TRIGRAM_CUTOFF)
 
     print(f"Finished: {time.time() - t0}")
 
-    # 2gram なら、全部オンメモリで5分ぐらいで終る。
+
+def split(a, n):
+    k, m = divmod(len(a), n)
+    return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
+
+
+def main():
+    numprocs = mp.cpu_count()
+
+    files = glob.glob('work/text/*/*')
+    chunks = split(files, numprocs)
+
+    result_pool = []
+    pool = mp.Pool(numprocs)
+
+    for chunk in chunks:
+        result_pool.append(pool.apply_async(worker, args=(chunk,)))
+
+    while len(result_pool) > 0:
+        print(f"Remains: {len(result_pool)}")
+        for r in result_pool:
+            if r.ready():
+                r.get()
+                result_pool.remove(r)
+        time.sleep(0.1)
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     main()
