@@ -25,18 +25,16 @@ def load_skk_dict():
     return merge_skkdict(dicts)
 
 
-def process2(tuples, skkdict, merged: Set[Tuple[str]]):
+def process2(tuples, skkdict, merged: Set[str]):
     i = 0
     while i < len(tuples):
         if i + 1 < len(tuples):  # 次の単語がある
             kanji = tuples[i][0] + tuples[i + 1][0]
             kana = tuples[i][2] + tuples[i + 1][2]
             if kana in skkdict and kanji in skkdict[kana] and (
-                    tuples[i][1] == '接頭辞' or tuples[i][2] == '語尾'
+                    tuples[i][1] == '接頭辞' or tuples[i + 1][1] == '語尾'
             ):
-                merged.add( \
-                    f"{tuples[i][0]}/{tuples[i][1]}{tuples[i][2]} ->" + \
-                    f" {tuples[i + 1][0]}/{tuples[i + 1][1]}/{tuples[i + 1][2]}")
+                merged.add(f"{kana} -> {kanji} {tuples[i][1]}/{tuples[i + 1][1]}")
                 # print(f"Merged: {kanji}/{kana}")
                 yield kanji, kana
                 i += 2
@@ -69,10 +67,13 @@ def annotated2text(fname, dest, skkdict, merged):
 def worker(chunk, skkdict):
     finished = 0
     merged = set()
+    t0 = time.time()
     for fname in chunk:
         dest = fname.replace('work/annotated/', 'work/text/')
         pathlib.Path(dest).parent.mkdir(parents=True, exist_ok=True)
-        print(f"[{os.getpid()}] [{sys.argv[0]}] {fname} -> {dest} ({finished}/{len(chunk)})")
+        print(
+            f"[{os.getpid()}] [{sys.argv[0]}] {fname} -> {dest} ({finished}/{len(chunk)})"
+            f" elapsed: {time.time() - t0}")
         annotated2text(fname, dest, skkdict, merged)
         finished += 1
     return merged

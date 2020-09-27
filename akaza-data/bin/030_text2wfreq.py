@@ -18,8 +18,10 @@ def text2wfreq(fname, wfreq):
 def worker(chunk):
     wfreq = {}
     finished = 0
+    t0 = time.time()
     for fname in chunk:
-        print(f"[{os.getpid()}] [{sys.argv[0]}] {fname} ({finished}/{len(chunk)})")
+        print(f"[{os.getpid()}] [{sys.argv[0]}] {fname} ({finished}/{len(chunk)})"
+              f" elapsed={time.time()-t0}")
         text2wfreq(fname, wfreq)
         finished += 1
     return wfreq
