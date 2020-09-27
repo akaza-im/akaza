@@ -61,7 +61,9 @@ def annotated2text(fname, dest, skkdict, merged):
         for line in rfp:
             words = line.rstrip().split(' ')
             wfp.write(
-                ' '.join(['/'.join(got) for got in process2([x for x in process(words)], skkdict, merged)]))
+                ' '.join(
+                    ['/'.join(got) for got in process2([x for x in process(words)], skkdict, merged)]
+                ) + "\n")
 
 
 def worker(chunk, skkdict):
