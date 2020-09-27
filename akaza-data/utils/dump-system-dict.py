@@ -4,7 +4,8 @@ import subprocess
 
 import marisa_trie
 
-hash = subprocess.run(["git", "rev-parse", "--short", 'HEAD'], capture_output=True).stdout.decode('utf-8')
+hash = subprocess.run(["git", "rev-parse", "--short", 'HEAD'], capture_output=True).stdout.decode(
+    'utf-8').rstrip()
 sig = datetime.datetime.now().strftime('%Y%m%d-%H%M') + "-" + hash
 
 trie = marisa_trie.BytesTrie()
