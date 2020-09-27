@@ -75,7 +75,7 @@ def test_wnn():
     clauses = resolver.viterbi(graph)
     got = ''.join([clause[0].word for clause in clauses])
 
-    print(graph)
+    # print(graph)
 
     assert got == expected
 
