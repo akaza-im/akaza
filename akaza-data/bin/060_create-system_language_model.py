@@ -66,15 +66,20 @@ def write_trie(path, data):
 def write_model():
     t0 = time.time()
 
-    print('# 1gram')
+    print(f'[{sys.argv[0]}] # 1gram')
     unigram_dict, unigram = build_model('work/ngram/*/wiki*.1gram.txt', cutoff=0, t0=t0)
     write_trie('akaza_data/data/system_language_model.1gram.trie', unigram)
 
     print(f"1gram. size={len(unigram)}")
 
-    print('# 2gram')
+    print(f'[{sys.argv[0]}] # 2gram')
     bigram_dict, bigram = build_model('work/ngram/*/wiki*.2gram.txt', cutoff=3, t0=t0, prev_dict=unigram_dict)
     write_trie('akaza_data/data/system_language_model.2gram.trie', bigram)
+
+    print(f'[{sys.argv[0]}] # 3gram')
+    trigram_dict, trigram = build_model('work/ngram/*/wiki*.3gram.txt', cutoff=100, t0=t0,
+                                        prev_dict=bigram_dict)
+    write_trie('akaza_data/data/system_language_model.3gram.trie', trigram)
 
     print(f"[{sys.argv[0]}] 2gram. size={len(bigram)}")
 

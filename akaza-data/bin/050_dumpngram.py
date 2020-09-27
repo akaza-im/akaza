@@ -9,10 +9,8 @@ import multiprocessing as mp
 
 import psutil
 
-# jawiki.vocab と dat/*/* を元に、jawiki.1gram.json と jawiki.2gram.json を構築する。
 
-BIGRAM_CUTOFF = 3
-TRIGRAM_CUTOFF = 100
+# jawiki.vocab と work/text/*/* を元に、work/ngram/ を構築する。
 
 
 def read_vocab():
@@ -63,6 +61,7 @@ def worker(chunk):
 
         unigram = NGram(vocab)
         bigram = NGram(vocab)
+        trigram = NGram(vocab)
         with open(fname) as rfp:
             for line in rfp:
                 words = line.rstrip().split(' ')
@@ -70,10 +69,11 @@ def worker(chunk):
                     unigram.register((words[i],))
                     if i + 1 < len(words):
                         bigram.register((words[i], words[i + 1]))
-                    # if i + 2 < len(words) - 1:
-                    #     trigram.register((words[i], words[i + 1], words[i + 2]))
+                    if i + 2 < len(words):
+                        trigram.register((words[i], words[i + 1], words[i + 2]))
             unigram.dump(f'{dest}.1gram.txt')
             bigram.dump(f'{dest}.2gram.txt')
+            trigram.dump(f'{dest}.3gram.txt')
 
         file_count += 1
 
@@ -107,7 +107,7 @@ def main():
             if r.ready():
                 r.get()
                 result_pool.remove(r)
-        time.sleep(0.1)
+        time.sleep(1)
 
 
 if __name__ == '__main__':
