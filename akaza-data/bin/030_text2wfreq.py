@@ -4,6 +4,8 @@ import time
 import glob
 import sys
 
+from akaza_data_utils import copy_snapshot
+
 
 def text2wfreq(fname, wfreq):
     with open(fname, 'r') as fp:
@@ -62,6 +64,8 @@ def main():
                 if key.endswith('/UNK'):
                     continue
             wfp.write(f"{key} {count}\n")
+
+    copy_snapshot('work/jawiki.wfreq')
 
 
 if __name__ == '__main__':

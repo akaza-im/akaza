@@ -1,13 +1,12 @@
+import glob
 import multiprocessing as mp
 import os
-import subprocess
-import time
-import glob
-import sys
 import pathlib
+import sys
+import time
 from typing import Set, Tuple
-import datetime
 
+from akaza_data_utils import get_sig
 from skkdictutils import parse_skkdict, merge_skkdict, ari2nasi
 
 
@@ -32,7 +31,9 @@ def process2(tuples, skkdict, merged: Set[Tuple[str]]):
         if i + 1 < len(tuples):  # 次の単語がある
             kanji = tuples[i][0] + tuples[i + 1][0]
             kana = tuples[i][2] + tuples[i + 1][2]
-            if kana in skkdict and kanji in skkdict[kana] and tuples[i][1] == '接頭辞':
+            if kana in skkdict and kanji in skkdict[kana] and (
+                    tuples[i][1] == '接頭辞' or tuples[i][2] == '語尾'
+            ):
                 merged.add( \
                     f"{tuples[i][0]}/{tuples[i][1]}{tuples[i][2]} ->" + \
                     f" {tuples[i + 1][0]}/{tuples[i + 1][1]}/{tuples[i + 1][2]}")
@@ -108,9 +109,7 @@ def main():
                 result_pool.remove(r)
         time.sleep(1)
 
-    hash = subprocess.run(["git", "rev-parse", "--short", 'HEAD'], capture_output=True).stdout.decode(
-        'utf-8').rstrip()
-    sig = datetime.datetime.now().strftime('%Y%m%d-%H%M') + "-" + hash
+    sig = get_sig()
     with open(f'work/dump/{sig}-merged-annotated2text.txt', 'w') as wfp:
         for row in sorted(merged):
             wfp.write(f"{row}\n")

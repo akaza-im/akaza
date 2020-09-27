@@ -1,5 +1,7 @@
 import logging
 
+from akaza_data_utils import copy_snapshot
+
 with open('work/jawiki.wfreq', 'r') as rfp, \
         open('work/jawiki.vocab', 'w') as wfp:
     vocab = []
@@ -18,3 +20,5 @@ with open('work/jawiki.wfreq', 'r') as rfp, \
 
     for word in sorted(vocab):
         wfp.write(word + "\n")
+
+copy_snapshot('work/jawiki.vocab')
