@@ -1,16 +1,15 @@
 import glob
+import logging
+import multiprocessing as mp
 import os
 import sys
 import time
 from typing import Set
-import pathlib
-import logging
-import multiprocessing as mp
 
 import psutil
 
-
 # jawiki.vocab と work/text/*/* を元に、work/ngram/ を構築する。
+from akaza_data_utils import mkdir_p
 
 
 def read_vocab():
@@ -36,7 +35,7 @@ class NGram:
         return len(self.d)
 
     def dump(self, fname):
-        pathlib.Path(fname).parent.mkdir(parents=True, exist_ok=True)
+        mkdir_p(fname)
         with open(fname, 'w') as fp:
             for words in sorted(self.d.keys()):
                 word = "\t".join(words)
