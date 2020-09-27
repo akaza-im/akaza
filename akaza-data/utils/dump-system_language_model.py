@@ -19,7 +19,8 @@ def process(type_name: str, sig):
 
 
 def main():
-    hash = subprocess.run(["git", "rev-parse", "--short", 'HEAD'], capture_output=True).stdout.decode('utf-8')
+    hash = subprocess.run(["git", "rev-parse", "--short", 'HEAD'], capture_output=True).stdout.decode(
+        'utf-8').rstrip()
     sig = datetime.datetime.now().strftime('%Y%m%d-%H%M') + "-" + hash
 
     process('1gram', sig)
