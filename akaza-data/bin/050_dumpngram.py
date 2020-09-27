@@ -2,6 +2,7 @@ import glob
 import logging
 import multiprocessing as mp
 import os
+import pathlib
 import sys
 import time
 from typing import Set
@@ -35,7 +36,7 @@ class NGram:
         return len(self.d)
 
     def dump(self, fname):
-        mkdir_p(fname)
+        pathlib.Path(fname).parent.mkdir(exist_ok=True, parents=True)
         with open(fname, 'w') as fp:
             for words in sorted(self.d.keys()):
                 word = "\t".join(words)
