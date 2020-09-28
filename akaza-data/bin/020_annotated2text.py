@@ -5,7 +5,8 @@ import pathlib
 import sys
 import time
 
-from akaza_data_utils import get_sig, merge_terms, load_skk_dict
+from akaza_data_utils import get_sig
+from akaza_data_utils.merge_terms import merge_terms, load_skk_dict
 
 
 def process(words):
