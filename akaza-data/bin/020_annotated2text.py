@@ -25,15 +25,13 @@ def load_skk_dict():
     return merge_skkdict(dicts)
 
 
-def process2(tuples, skkdict, merged: Set[str]):
+def merge_terms(tuples, skkdict, merged: Set[str]):
     i = 0
     while i < len(tuples):
         if i + 1 < len(tuples):  # 次の単語がある
             kanji = tuples[i][0] + tuples[i + 1][0]
             kana = tuples[i][2] + tuples[i + 1][2]
-            if kana in skkdict and kanji in skkdict[kana] and (
-                    tuples[i][1] == '接頭辞' or tuples[i + 1][1] == '語尾'
-            ):
+            if kana in skkdict and kanji in skkdict[kana]:
                 merged.add(f"{kana} -> {kanji} {tuples[i][1]}/{tuples[i + 1][1]}")
                 # print(f"Merged: {kanji}/{kana}")
                 yield kanji, kana
@@ -62,7 +60,7 @@ def annotated2text(fname, dest, skkdict, merged):
             words = line.rstrip().split(' ')
             wfp.write(
                 ' '.join(
-                    ['/'.join(got) for got in process2([x for x in process(words)], skkdict, merged)]
+                    ['/'.join(got) for got in merge_terms([x for x in process(words)], skkdict, merged)]
                 ) + "\n")
 
 
