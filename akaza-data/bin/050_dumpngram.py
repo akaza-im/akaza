@@ -9,8 +9,8 @@ from typing import Set
 
 import psutil
 
+
 # jawiki.vocab と work/text/*/* を元に、work/ngram/ を構築する。
-from akaza_data_utils import mkdir_p
 
 
 def read_vocab():

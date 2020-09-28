@@ -1,7 +1,7 @@
 import datetime
 import pathlib
-import subprocess
 import shutil
+import subprocess
 
 
 def get_sig():
