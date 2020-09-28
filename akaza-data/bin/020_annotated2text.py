@@ -4,45 +4,9 @@ import os
 import pathlib
 import sys
 import time
-from typing import Set, Tuple
 
 from akaza_data_utils import get_sig
-from skkdictutils import parse_skkdict, merge_skkdict, ari2nasi
-
-
-def load_skk_dict():
-    dictionary_sources = [
-        # 先の方が優先される
-        ('skk-dev-dict/SKK-JISYO.L', 'euc-jp'),
-    ]
-    dicts = []
-
-    for path, encoding in dictionary_sources:
-        ari, nasi = parse_skkdict(path, encoding)
-        dicts.append(nasi)
-        dicts.append(ari2nasi(ari))
-
-    return merge_skkdict(dicts)
-
-
-def process2(tuples, skkdict, merged: Set[str]):
-    i = 0
-    while i < len(tuples):
-        if i + 1 < len(tuples):  # 次の単語がある
-            kanji = tuples[i][0] + tuples[i + 1][0]
-            kana = tuples[i][2] + tuples[i + 1][2]
-            if kana in skkdict and kanji in skkdict[kana] and (
-                    tuples[i][1] == '接頭辞' or tuples[i + 1][1] == '語尾'
-            ):
-                merged.add(f"{kana} -> {kanji} {tuples[i][1]}/{tuples[i + 1][1]}")
-                # print(f"Merged: {kanji}/{kana}")
-                yield kanji, kana
-                i += 2
-                continue
-
-        yield tuples[i][0], tuples[i][2]
-
-        i += 1
+from akaza_data_utils.merge_terms import merge_terms, load_skk_dict
 
 
 def process(words):
@@ -62,7 +26,7 @@ def annotated2text(fname, dest, skkdict, merged):
             words = line.rstrip().split(' ')
             wfp.write(
                 ' '.join(
-                    ['/'.join(got) for got in process2([x for x in process(words)], skkdict, merged)]
+                    ['/'.join(got) for got in merge_terms([x for x in process(words)], skkdict, merged)]
                 ) + "\n")
 
 

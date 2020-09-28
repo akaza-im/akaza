@@ -13,7 +13,7 @@ work/extracted/BE/wiki_13: work/jawiki-latest-pages-articles.xml
 work/annotated/BE/wiki_13: work/extracted/BE/wiki_13 bin/010_wiki2annotated.py
 	python bin/010_wiki2annotated.py
 
-work/text/BE/wiki_13: work/annotated/BE/wiki_13 bin/020_annotated2text.py
+work/text/BE/wiki_13: work/annotated/BE/wiki_13 bin/020_annotated2text.py bin/akaza_data_utils/merge_terms.py
 	python bin/020_annotated2text.py
 
 work/jawiki.wfreq: work/text/BE/wiki_13 bin/030_text2wfreq.py
