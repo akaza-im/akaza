@@ -31,6 +31,9 @@ class BosNode(AbstractNode):
     def surface(self, evaluator: tinylisp.Evaluator):
         return '__BOS__'
 
+    def __repr__(self):
+        return f"<BosNode: start_pos={self.start_pos}, prev={self.prev.word if self.prev else '-'}>"
+
 
 class EosNode(AbstractNode):
     def __init__(self, start_pos):
@@ -53,6 +56,8 @@ class EosNode(AbstractNode):
     def surface(self, evaluator: tinylisp.Evaluator):
         return '__EOS__'
 
+    def __repr__(self):
+        return f"<EosNode: start_pos={self.start_pos}, prev={self.prev.word if self.prev else '-'}>"
 
 class Node(AbstractNode):
     cost: Optional[float]
