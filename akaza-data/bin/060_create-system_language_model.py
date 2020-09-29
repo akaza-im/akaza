@@ -76,10 +76,10 @@ def write_model():
     bigram_dict, bigram = build_model('work/ngram/*/wiki*.2gram.txt', cutoff=3, t0=t0, prev_dict=unigram_dict)
     write_trie('akaza_data/data/system_language_model.2gram.trie', bigram)
 
-    print(f'[{sys.argv[0]}] # 3gram')
-    trigram_dict, trigram = build_model('work/ngram/*/wiki*.3gram.txt', cutoff=100, t0=t0,
-                                        prev_dict=bigram_dict)
-    write_trie('akaza_data/data/system_language_model.3gram.trie', trigram)
+    # print(f'[{sys.argv[0]}] # 3gram')
+    # trigram_dict, trigram = build_model('work/ngram/*/wiki*.3gram.txt', cutoff=100, t0=t0,
+    #                                     prev_dict=bigram_dict)
+    # write_trie('akaza_data/data/system_language_model.3gram.trie', trigram)
 
     print(f"[{sys.argv[0]}] 2gram. size={len(bigram)}")
 

@@ -13,6 +13,10 @@ kytea = Mykytea('-model /usr/share/kytea/model.bin')
 HIRAGANA_BLOCK = r'\u3041-\u309F'
 HIRAGANA_PATTERN = re.compile(r'^[' + HIRAGANA_BLOCK + ']+$')
 
+# 上級個人情報保護士（じょうきゅうこじんじょうほうほごし）は、財団法人全日本情報学習振興協会が設けている民間資格の称号。
+# → 上級個人情報保護士は、財団法人全日本情報学習振興協会が設けている民間資格の称号。
+YOMIGANA_PATTERN = re.compile(r'[（\(][' + HIRAGANA_BLOCK + r']+[）)]')
+
 
 def is_hiragana(s):
     if HIRAGANA_PATTERN.match(s):
@@ -21,7 +25,13 @@ def is_hiragana(s):
         return False
 
 
+def cleanup(s):
+    return re.sub(YOMIGANA_PATTERN, '', s)
+
+
 def parse_line(line):
+    line = cleanup(line)
+
     words = kytea.getTags(line)
 
     yield '__BOS__', '__BOS__'
