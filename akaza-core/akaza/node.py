@@ -87,7 +87,7 @@ class Node(AbstractNode):
 
     def __hash__(self):
         # necessary for instances to behave sanely in dicts and sets.
-        return hash((self.start_pos, self.word, self.yomi, self.prev, self.cost))
+        return hash((self.start_pos, self.word, self.yomi))
 
     def surface(self, evaluator: tinylisp.Evaluator):
         if self.word.startswith('('):
