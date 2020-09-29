@@ -3,7 +3,63 @@ from typing import Optional
 from akaza import tinylisp
 
 
-class Node:
+class AbstractNode:
+    def is_eos(self):
+        raise NotImplemented()
+
+    def is_bos(self):
+        raise NotImplemented()
+
+
+class BosNode(AbstractNode):
+    def __init__(self):
+        self.start_pos = -9999
+        self.word = '__BOS__'
+        self.yomi = '__BOS__'
+        self.prev = None
+        self.cost = 0
+
+    def is_bos(self):
+        return True
+
+    def is_eos(self):
+        return False
+
+    def get_key(self):
+        return '__BOS__/__BOS__'
+
+    def surface(self, evaluator: tinylisp.Evaluator):
+        return '__BOS__'
+
+    def __repr__(self):
+        return f"<BosNode: start_pos={self.start_pos}, prev={self.prev.word if self.prev else '-'}>"
+
+
+class EosNode(AbstractNode):
+    def __init__(self, start_pos):
+        self.start_pos = start_pos
+        self.word = '__EOS__'
+        self.yomi = '__EOS__'
+        self.prev = None
+        self.cost = 0
+
+    def is_bos(self):
+        return False
+
+    def is_eos(self):
+        return True
+
+    def get_key(self):
+        return '__EOS__'  # わざと使わない。__EOS__ 考慮すると変換精度が落ちるので。。今は使わない。
+        # うまく使えることが確認できれば、__EOS__/__EOS__ にする。
+
+    def surface(self, evaluator: tinylisp.Evaluator):
+        return '__EOS__'
+
+    def __repr__(self):
+        return f"<EosNode: start_pos={self.start_pos}, prev={self.prev.word if self.prev else '-'}>"
+
+class Node(AbstractNode):
     cost: Optional[float]
 
     def __init__(self, start_pos, word, yomi):
@@ -21,19 +77,13 @@ class Node:
                f" cost={self.cost}, prev={self.prev.word if self.prev else '-'} yomi={self.yomi}>"
 
     def is_bos(self):
-        return self.word == '__BOS__'
+        return False
 
     def is_eos(self):
-        return self.word == '__EOS__'
+        return False
 
     def get_key(self) -> str:
-        if self.is_bos():
-            return '__BOS__/__BOS__'
-        elif self.is_eos():
-            # FIXME: care the EOS in bigram.
-            return '__EOS__'
-        else:
-            return f"{self.word}/{self.yomi}"
+        return f"{self.word}/{self.yomi}"
 
     def __eq__(self, other):
         if other is None:
@@ -42,7 +92,7 @@ class Node:
 
     def __hash__(self):
         # necessary for instances to behave sanely in dicts and sets.
-        return hash((self.start_pos, self.word, self.yomi, self.prev, self.cost))
+        return hash((self.start_pos, self.word, self.yomi))
 
     def surface(self, evaluator: tinylisp.Evaluator):
         if self.word.startswith('('):

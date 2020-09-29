@@ -156,7 +156,7 @@ class UserLanguageModel:
         return yomi in self.unigram_kanas
 
     def get_bigram_cost(self, key1: str, key2: str) -> Optional[float]:
-        key = key1 + "\t" + key2
+        key = f"{key1}\t{key2}"
         if key in self.bigram:
             count = self.bigram[key]
             return math.log10(count / self.bigram_total[key1])

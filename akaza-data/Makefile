@@ -31,5 +31,6 @@ akaza_data/data/system_language_model.trie: work/jawiki.1gram.json work/jawiki.2
 
 akaza_data/data/system_dict.trie: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki
 	python bin/070_make-system-dict.py
+	python bin/080_system_dump.py
 
 .PHONY: all
