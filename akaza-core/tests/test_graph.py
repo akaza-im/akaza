@@ -50,8 +50,8 @@ logging.basicConfig(level=logging.DEBUG)
     ('わたしだよ', '私だよ'),
     # ('にほんごじょうほう', '日本語情報'),
     # ('そうみたいですね', 'そうみたいですね'),
-    # ('きめつのやいば', '鬼滅の刃'),
-    #    ('れいわ', '令和'),
+    ('きめつのやいば', '鬼滅の刃'),
+    ('れいわ', '令和'),
 ])
 def test_expected(src, expected):
     resolver = GraphResolver(language_model=language_model, dictionary=dictionary)
