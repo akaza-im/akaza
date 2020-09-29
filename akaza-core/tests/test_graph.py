@@ -45,12 +45,13 @@ logging.basicConfig(level=logging.DEBUG)
     # ('どっぐふーでぃんぐしづらい', 'ドッグフーディング仕辛い'),
     ('しょうがっこう', '小学校'),
     ('げすとだけ', 'ゲストだけ'),
-    ('ぜんぶでてるやつ', '全部でてる奴'),
+    ('ぜんぶでてるやつ', '全部でてるやつ'),
     ('えらべる', '選べる'),
     ('わたしだよ', '私だよ'),
+    # ('にほんごじょうほう', '日本語情報'),
     # ('そうみたいですね', 'そうみたいですね'),
-    # ('きめつのやいば', '鬼滅の刃'),
-    #    ('れいわ', '令和'),
+    ('きめつのやいば', '鬼滅の刃'),
+    ('れいわ', '令和'),
 ])
 def test_expected(src, expected):
     resolver = GraphResolver(language_model=language_model, dictionary=dictionary)
@@ -59,6 +60,7 @@ def test_expected(src, expected):
     graph = resolver.graph_construct(src, ht)
 
     clauses = resolver.viterbi(graph)
+    print(graph)
     got = ''.join([clause[0].word for clause in clauses])
 
     assert got == expected

@@ -7,18 +7,17 @@ import jaconv
 
 from akaza.dictionary import Dictionary
 from akaza.language_model import LanguageModel
-from akaza.node import Node
+from akaza.node import Node, BosNode, EosNode, AbstractNode
 
 
 class Graph:
     logger: Logger
-    d: Dict[int, List[Node]]
+    d: Dict[int, List[AbstractNode]]
 
     def __init__(self, size: int, logger=logging.getLogger(__name__)):
         self.d = {
-            0: [Node(start_pos=-9999, word='__BOS__', yomi='__BOS__')],
-            size + 1: [
-                Node(start_pos=size, word='__EOS__', yomi='__EOS__')],
+            0: [BosNode()],
+            size + 1: [EosNode(start_pos=size)],
         }
         self.logger = logger
 
@@ -33,7 +32,7 @@ class Graph:
                 s += "\n".join(["\t" + str(x) for x in sorted(self.d[i], key=lambda x: x.cost)]) + "\n"
         return s
 
-    def append(self, index: int, node: Node) -> None:
+    def append(self, index: int, node: AbstractNode) -> None:
         if index not in self.d:
             self.d[index] = []
         # print(f"graph[{j}]={graph[j]} graph={graph}")
