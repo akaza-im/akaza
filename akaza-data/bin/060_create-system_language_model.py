@@ -8,7 +8,7 @@ import marisa_trie
 from tqdm import tqdm
 
 
-def build_model(pattern, cutoff, t0, prev_dict=None):
+def build_model(pattern, cutoff, t0):
     retval = []
 
     files = glob.glob(pattern)
@@ -24,7 +24,7 @@ def build_model(pattern, cutoff, t0, prev_dict=None):
     # stats info.
     print(f"Aggregation phase: {pattern}. elapsed={time.time() - t0}")
     done = 0
-    d = {}
+    wordcnt = {}
     for file in tqdm(files):
         with open(file) as rfp:
             for line in rfp:
@@ -34,27 +34,20 @@ def build_model(pattern, cutoff, t0, prev_dict=None):
                     cnt = int(cnt)
                     C += cnt
                     V += 1
-                    d[word] = d.get(word, 0) + cnt
+                    wordcnt[word] = wordcnt.get(word, 0) + cnt
         done += 1
 
     # calc score
     print(f"Scoring phase: {pattern}. elapsed={time.time() - t0}")
-    for word, cnt in tqdm(d.items()):
+    for word, cnt in tqdm(wordcnt.items()):
         if cnt > cutoff:
-            # score = math.log10((cnt + alpha) / (C + alpha * V))
-            if prev_dict is not None:
-                m = word.split("\t")
-                minus1gram = "\t".join(m[:-1])
-                prev_cnt = prev_dict[minus1gram]
-                score = math.log10(d[word] / prev_cnt)
-            else:
-                score = math.log10(d[word] / C)
+            score = math.log10((wordcnt[word] + alpha) / (C + alpha * V))
             retval.append((word, (float(score),),))
 
     default_score = math.log10((0 + alpha) / (C + alpha * V))
     print(f"{pattern} default score is `{default_score}`")
 
-    return d, retval
+    return retval
 
 
 def write_trie(path, data):
@@ -67,13 +60,13 @@ def write_model():
     t0 = time.time()
 
     print(f'[{sys.argv[0]}] # 1gram')
-    unigram_dict, unigram = build_model('work/ngram/*/wiki*.1gram.txt', cutoff=0, t0=t0)
+    unigram = build_model('work/ngram/*/wiki*.1gram.txt', cutoff=0, t0=t0)
     write_trie('akaza_data/data/system_language_model.1gram.trie', unigram)
 
     print(f"1gram. size={len(unigram)}")
 
     print(f'[{sys.argv[0]}] # 2gram')
-    bigram_dict, bigram = build_model('work/ngram/*/wiki*.2gram.txt', cutoff=3, t0=t0, prev_dict=unigram_dict)
+    bigram = build_model('work/ngram/*/wiki*.2gram.txt', cutoff=3, t0=t0)
     write_trie('akaza_data/data/system_language_model.2gram.trie', bigram)
 
     # print(f'[{sys.argv[0]}] # 3gram')
