@@ -2,7 +2,7 @@
 import sys
 
 from akaza.dictionary import Dictionary
-from akaza.graph import GraphResolver
+from akaza.graph_resolver import GraphResolver
 from akaza.language_model import LanguageModel
 from akaza.romkan import RomkanConverter
 from akaza.user_language_model import UserLanguageModel
@@ -11,6 +11,8 @@ from akaza_data import SystemLanguageModel, SystemDict
 import sys
 import akaza
 import pathlib
+
+from akaza_data.emoji import EmojiDict
 
 for line in sys.stdin:
     system_language_model = SystemLanguageModel.load()
@@ -27,8 +29,11 @@ for line in sys.stdin:
         user_language_model=user_language_model,
     )
 
+    emoji_dict = EmojiDict.load()
+
     dictionary = Dictionary(
         system_dict=system_dict,
+        emoji_dict=emoji_dict,
         user_dicts=[],
     )
 

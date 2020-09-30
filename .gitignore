@@ -6,3 +6,4 @@ __pycache__
 /akaza.xml
 *.egg-info/
 dist/
+*.lprof
