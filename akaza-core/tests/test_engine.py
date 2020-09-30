@@ -13,6 +13,7 @@ from akaza_data.system_language_model import SystemLanguageModel
 from akaza.language_model import LanguageModel
 from akaza.graph_resolver import GraphResolver
 from akaza.romkan import RomkanConverter
+from akaza_data.emoji import EmojiDict
 
 tmpfile = NamedTemporaryFile(delete=False)
 user_language_model = UserLanguageModel(tmpfile.name)
@@ -25,8 +26,11 @@ language_model = LanguageModel(
     user_language_model=user_language_model,
 )
 
+emoji_dict = EmojiDict.load()
+
 dictionary = Dictionary(
     system_dict=system_dict,
+    emoji_dict=emoji_dict,
     user_dicts=[],
 )
 

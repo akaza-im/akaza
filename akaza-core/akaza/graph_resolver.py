@@ -8,6 +8,7 @@ from akaza.graph import Graph
 from akaza.language_model import LanguageModel
 from akaza.node import Node, AbstractNode
 
+
 class GraphResolver:
     def __init__(self,
                  language_model: LanguageModel,
@@ -33,6 +34,12 @@ class GraphResolver:
                     if kata not in kanjis:
                         kanjis.append(kata)
 
+                    if word == yomi:
+                        if self.dictionary.emoji_dict.has_item(yomi):
+                            for emoji in self.dictionary.emoji_dict[yomi]:
+                                if emoji not in kanjis:
+                                    kanjis.append(emoji)
+
                     yield word, kanjis
 
                 if yomi not in words and self.language_model.has_unigram_cost_by_yomi(yomi):
@@ -42,15 +49,23 @@ class GraphResolver:
                     kata = jaconv.hira2kata(yomi)
                     if kata not in kanjis:
                         kanjis.append(kata)
+                    if self.dictionary.emoji_dict.has_item(yomi):
+                        for emoji in self.dictionary.emoji_dict[yomi]:
+                            if emoji not in kanjis:
+                                kanjis.append(emoji)
 
                     yield yomi, kanjis
             else:
                 # print(f"YOMI~~~~:::: {yomi}")
-                targets = [yomi[0]]
+                kanjis = [yomi[0]]
                 hira = jaconv.hira2kata(yomi[0])
-                if hira not in targets:
-                    targets.append(hira)
-                yield yomi[0], targets
+                if hira not in kanjis:
+                    kanjis.append(hira)
+                if self.dictionary.emoji_dict.has_item(yomi):
+                    for emoji in self.dictionary.emoji_dict[yomi]:
+                        if emoji not in kanjis:
+                            kanjis.append(emoji)
+                yield yomi[0], kanjis
 
     # n文字目でおわる単語リストを作成する
     def graph_construct(self, s, ht, force_selected_clause: List[slice] = None) -> Graph:

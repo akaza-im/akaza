@@ -16,10 +16,12 @@ from akaza.language_model import LanguageModel
 from akaza.romkan import RomkanConverter
 from akaza.user_language_model import UserLanguageModel
 from akaza_data import SystemLanguageModel, SystemDict
+from akaza_data.emoji import EmojiDict
 
 system_language_model = SystemLanguageModel.load()
 system_dict = SystemDict.load()
 system_dict = SystemDict.load()
+emoji_dict = EmojiDict.load()
 system_language_model = SystemLanguageModel.load()
 
 user_language_model_path = pathlib.Path('/tmp/user_language_model')
@@ -33,6 +35,7 @@ language_model = LanguageModel(
 
 dictionary = Dictionary(
     system_dict=system_dict,
+    emoji_dict=emoji_dict,
     user_dicts=[],
 )
 

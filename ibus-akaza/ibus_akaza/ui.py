@@ -3,8 +3,6 @@ from typing import List, Dict
 
 import gi
 
-from akaza.dictionary import Dictionary
-
 gi.require_version('GLib', '2.0')
 gi.require_version('IBus', '1.0')
 
@@ -12,7 +10,6 @@ from gi.repository import IBus
 from gi.repository import GLib
 
 import sys
-import re
 import logging
 import pathlib
 import threading
@@ -29,6 +26,8 @@ from akaza_data.system_language_model import SystemLanguageModel
 from akaza.graph_resolver import GraphResolver
 from akaza.language_model import LanguageModel
 from ibus_akaza import config_loader
+from akaza.dictionary import Dictionary
+from akaza_data.emoji import EmojiDict
 
 from .keymap import build_default_keymap, KEY_STATE_PRECOMPOSITION, KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION
 from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_ALNUM, INPUT_MODE_HIRAGANA, \
@@ -55,8 +54,11 @@ def build_akaza():
         user_language_model=user_language_model,
     )
 
+    emoji_dict = EmojiDict.load()
+
     dictionary = Dictionary(
         system_dict=system_dict,
+        emoji_dict=emoji_dict,
         user_dicts=user_dicts,
     )
 
@@ -233,7 +235,6 @@ g
                 return KEY_STATE_COMPOSITION
 
     def _do_process_key_event(self, keyval, keycode, state):
-        import gettext
         self.logger.debug(
             "process_key_event(%s=%04x, %04x, %04x)" % (IBus.keyval_name(keyval), keyval, keycode, state))
 
