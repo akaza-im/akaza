@@ -5,7 +5,7 @@ from logging import Logger
 from typing import List
 
 import jaconv
-from akaza.graph import GraphResolver
+from akaza.graph_resolver import GraphResolver
 from akaza.node import Node
 
 from akaza.romkan import RomkanConverter

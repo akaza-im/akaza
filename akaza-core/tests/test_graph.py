@@ -3,12 +3,12 @@ from tempfile import TemporaryDirectory
 import sys
 import pathlib
 
-sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
+sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
 import pytest
 from akaza.dictionary import Dictionary
 from akaza.node import Node
-from akaza.graph import GraphResolver
+from akaza.graph_resolver import GraphResolver
 from akaza.language_model import LanguageModel
 from akaza.user_language_model import UserLanguageModel
 from akaza_data.system_dict import SystemDict

@@ -26,7 +26,7 @@ from akaza.node import Node
 from akaza.user_language_model import UserLanguageModel
 from akaza_data.system_dict import SystemDict
 from akaza_data.system_language_model import SystemLanguageModel
-from akaza.graph import GraphResolver
+from akaza.graph_resolver import GraphResolver
 from akaza.language_model import LanguageModel
 from ibus_akaza import config_loader
 
