@@ -5,6 +5,7 @@ import pathlib
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
+from akaza_data.emoji import EmojiDict
 import pytest
 from akaza.dictionary import Dictionary
 from akaza.node import Node
@@ -22,8 +23,10 @@ user_language_model = UserLanguageModel(tmpdir.name)
 language_model = LanguageModel(system_language_model, user_language_model=user_language_model)
 
 system_dict = SystemDict.load()
+emoji_dict = EmojiDict.load()
 dictionary = Dictionary(
     system_dict=system_dict,
+    emoji_dict=emoji_dict,
     user_dicts=[],
 )
 
@@ -111,6 +114,24 @@ def test_katakana_candidates():
     got = '/'.join([node.word for node in clauses[0]])
 
     assert got == 'ひょいー/ヒョイー/hyoiー/ｈｙｏｉー'
+
+
+# 「ひょいー」のような辞書に登録されていない単語に対して、カタカナ候補を提供すべき。
+def test_emoji_candidates():
+    src = 'すし'
+    resolver = GraphResolver(language_model=language_model, dictionary=dictionary)
+    ht = dict(resolver.lookup(src))
+    for k, v in ht.items():
+        print(f"{k}:{v}")
+    graph = resolver.graph_construct(src, ht, [
+    ])
+    print(graph)
+
+    clauses = resolver.viterbi(graph)
+    print(clauses)
+    got = '/'.join([node.word for node in clauses[0]])
+
+    assert '🍣' in got
 
 
 # 「ひょいー」のような辞書に登録されていない単語に対して、カタカナ候補を提供すべき。
