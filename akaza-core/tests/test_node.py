@@ -3,7 +3,7 @@ import sys
 
 from akaza import tinylisp
 
-sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
+sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
 from akaza.node import Node
 

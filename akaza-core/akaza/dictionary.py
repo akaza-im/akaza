@@ -1,6 +1,7 @@
 from typing import List
 
 from akaza.skk_file_dict import SkkFileDict
+from akaza_data.emoji import EmojiDict
 from akaza_data.system_dict import SystemDict
 
 
@@ -8,8 +9,10 @@ class Dictionary:
     def __init__(
             self,
             system_dict: SystemDict,
+            emoji_dict: EmojiDict,
             user_dicts: List[SkkFileDict]):
         self.system_dict = system_dict
+        self.emoji_dict = emoji_dict
 
         if user_dicts is None:
             self.user_dicts = []

@@ -54,14 +54,13 @@ def make_lisp_dict():
     }
 
 
-def main():
+def make_system_dict():
     dictionary_sources = [
         # 先の方が優先される
         ('skk-dev-dict/SKK-JISYO.L', 'euc-jp'),
         ('skk-dev-dict/SKK-JISYO.jinmei', 'euc-jp'),
         ('skk-dev-dict/SKK-JISYO.station', 'euc-jp'),
         ('skk-dev-dict/zipcode/SKK-JISYO.zipcode', 'euc-jp'),
-        ('skk-dev-dict/SKK-JISYO.emoji', 'utf-8'),
         ('jawiki-kana-kanji-dict/SKK-JISYO.jawiki', 'utf-8'),
     ]
     dicts = []
@@ -79,10 +78,29 @@ def main():
     for yomi, kanjis in merged_dict.items():
         entries.append((yomi, '/'.join(kanjis).encode('utf-8')))
 
-    print(f"# of entries: {len(entries)}")
+    print(f"# of system dict entries: {len(entries)}")
 
     trie = marisa_trie.BytesTrie(entries)
     trie.save('akaza_data/data/system_dict.trie')
+
+
+def make_emoji_dict():
+    ari, nasi = parse_skkdict('skk-dev-dict/SKK-JISYO.emoji', 'utf-8')
+    merged_dict = merge_skkdict([ari2nasi(ari), nasi])
+
+    entries = []
+    for yomi, kanjis in merged_dict.items():
+        entries.append((yomi, '/'.join(kanjis).encode('utf-8')))
+
+    print(f"# of emoji entries: {len(entries)}")
+
+    trie = marisa_trie.BytesTrie(entries)
+    trie.save('akaza_data/data/emoji.trie')
+
+
+def main():
+    make_emoji_dict()
+    make_system_dict()
 
 
 if __name__ == '__main__':

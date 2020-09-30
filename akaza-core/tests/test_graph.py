@@ -3,12 +3,13 @@ from tempfile import TemporaryDirectory
 import sys
 import pathlib
 
-sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
+sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
+from akaza_data.emoji import EmojiDict
 import pytest
 from akaza.dictionary import Dictionary
 from akaza.node import Node
-from akaza.graph import GraphResolver
+from akaza.graph_resolver import GraphResolver
 from akaza.language_model import LanguageModel
 from akaza.user_language_model import UserLanguageModel
 from akaza_data.system_dict import SystemDict
@@ -22,8 +23,10 @@ user_language_model = UserLanguageModel(tmpdir.name)
 language_model = LanguageModel(system_language_model, user_language_model=user_language_model)
 
 system_dict = SystemDict.load()
+emoji_dict = EmojiDict.load()
 dictionary = Dictionary(
     system_dict=system_dict,
+    emoji_dict=emoji_dict,
     user_dicts=[],
 )
 
@@ -37,7 +40,7 @@ logging.basicConfig(level=logging.DEBUG)
     ('わーど', 'ワード'),
     ('にほん', '日本'),
     ('ややこしい', 'ややこしい'),
-    ('むずかしくない', '難しくない'),
+    ('むずかしくない', '難しく無い'),
     ('きぞん', '既存'),
     ('のぞましい', '望ましい'),
     ('こういう', 'こういう'),
@@ -47,7 +50,7 @@ logging.basicConfig(level=logging.DEBUG)
     ('げすとだけ', 'ゲストだけ'),
     ('ぜんぶでてるやつ', '全部でてるやつ'),
     ('えらべる', '選べる'),
-    ('わたしだよ', '私だよ'),
+    ('わたしだよ', 'わたしだよ'),
     # ('にほんごじょうほう', '日本語情報'),
     # ('そうみたいですね', 'そうみたいですね'),
     ('きめつのやいば', '鬼滅の刃'),
@@ -111,6 +114,24 @@ def test_katakana_candidates():
     got = '/'.join([node.word for node in clauses[0]])
 
     assert got == 'ひょいー/ヒョイー/hyoiー/ｈｙｏｉー'
+
+
+# 「ひょいー」のような辞書に登録されていない単語に対して、カタカナ候補を提供すべき。
+def test_emoji_candidates():
+    src = 'すし'
+    resolver = GraphResolver(language_model=language_model, dictionary=dictionary)
+    ht = dict(resolver.lookup(src))
+    for k, v in ht.items():
+        print(f"{k}:{v}")
+    graph = resolver.graph_construct(src, ht, [
+    ])
+    print(graph)
+
+    clauses = resolver.viterbi(graph)
+    print(clauses)
+    got = '/'.join([node.word for node in clauses[0]])
+
+    assert '🍣' in got
 
 
 # 「ひょいー」のような辞書に登録されていない単語に対して、カタカナ候補を提供すべき。

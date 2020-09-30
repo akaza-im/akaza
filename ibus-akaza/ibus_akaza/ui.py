@@ -3,8 +3,6 @@ from typing import List, Dict
 
 import gi
 
-from akaza.dictionary import Dictionary
-
 gi.require_version('GLib', '2.0')
 gi.require_version('IBus', '1.0')
 
@@ -12,7 +10,6 @@ from gi.repository import IBus
 from gi.repository import GLib
 
 import sys
-import re
 import logging
 import pathlib
 import threading
@@ -26,9 +23,11 @@ from akaza.node import Node
 from akaza.user_language_model import UserLanguageModel
 from akaza_data.system_dict import SystemDict
 from akaza_data.system_language_model import SystemLanguageModel
-from akaza.graph import GraphResolver
+from akaza.graph_resolver import GraphResolver
 from akaza.language_model import LanguageModel
 from ibus_akaza import config_loader
+from akaza.dictionary import Dictionary
+from akaza_data.emoji import EmojiDict
 
 from .keymap import build_default_keymap, KEY_STATE_PRECOMPOSITION, KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION
 from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_ALNUM, INPUT_MODE_HIRAGANA, \
@@ -40,8 +39,8 @@ _ = lambda a: gettext.dgettext('ibus-akaza', a)
 def build_akaza():
     configdir = pathlib.Path(GLib.get_user_config_dir(), 'ibus-akaza')
 
-    config = config_loader.ConfigLoader()
-    user_dicts = list(config.load_user_dict())
+    user_settings = config_loader.ConfigLoader()
+    user_dicts = list(user_settings.load_user_dict())
 
     user_language_model_path = configdir.joinpath('user_language_model')
     user_language_model_path.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -55,8 +54,11 @@ def build_akaza():
         user_language_model=user_language_model,
     )
 
+    emoji_dict = EmojiDict.load()
+
     dictionary = Dictionary(
         system_dict=system_dict,
+        emoji_dict=emoji_dict,
         user_dicts=user_dicts,
     )
 
@@ -65,17 +67,17 @@ def build_akaza():
         language_model=language_model,
     )
 
-    romkan = RomkanConverter(additional=config.get('romaji'))
+    romkan = RomkanConverter(additional=user_settings.get('romaji'))
 
     lisp_evaluator = tinylisp.Evaluator()
 
-    return user_language_model, Akaza(resolver=resolver, romkan=romkan), romkan, lisp_evaluator
+    return user_language_model, Akaza(resolver=resolver, romkan=romkan), romkan, lisp_evaluator, user_settings
 
 
 try:
     t0 = time.time()
 
-    user_language_model, akaza, romkan, lisp_evaluator = build_akaza()
+    user_language_model, akaza, romkan, lisp_evaluator, user_settings = build_akaza()
 
     user_language_model_save_thread = threading.Thread(
         name='user_language_model_save_thread',
@@ -139,6 +141,8 @@ class AkazaIBusEngine(IBus.Engine):
         # タスクメニューからポップアップで選べるメニューについて、セットアップする。
         self.__prop_dict = {}
         self.prop_list = self._init_props()
+
+        self.live_conversion_mode = user_settings.get('live_conversion', False)
 
         self.logger.debug("Create Akaza engine OK: 20200916")
 
@@ -231,7 +235,6 @@ g
                 return KEY_STATE_COMPOSITION
 
     def _do_process_key_event(self, keyval, keycode, state):
-        import gettext
         self.logger.debug(
             "process_key_event(%s=%04x, %04x, %04x)" % (IBus.keyval_name(keyval), keyval, keycode, state))
 
@@ -250,14 +253,20 @@ g
             # Allow typing all ASCII letters and punctuation
             if ord('!') <= keyval <= ord('~'):
                 if state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.MOD1_MASK) == 0:
-                    if self.in_henkan_mode():
-                        self.logger.info("Call `commit_candidate()` since it's in henkan mode...")
-                        self.commit_candidate()
+                    if self.live_conversion_mode:
+                        self.preedit_string += chr(keyval)
+                        # この時点では、preedit string にだけ、追加して表示するひつようがあります。
+                        self.update_candidates()
+                        return True
+                    else:
+                        if self.in_henkan_mode():
+                            self.logger.info("Call `commit_candidate()` since it's in henkan mode...")
+                            self.commit_candidate()
 
-                    self.preedit_string += chr(keyval)
-                    # この時点では、preedit string にだけ、追加して表示するひつようがあります。
-                    self.update_preedit_text_before_henkan()
-                    return True
+                        self.preedit_string += chr(keyval)
+                        # この時点では、preedit string にだけ、追加して表示する必要があります。
+                        self.update_preedit_text_before_henkan()
+                        return True
             else:
                 if keyval < 128 and self.preedit_string:
                     self.commit_string(self.preedit_string)

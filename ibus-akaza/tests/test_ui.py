@@ -3,8 +3,8 @@ import sys
 import pathlib
 import pytest
 
-sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
-sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-core/').absolute().resolve()))
+sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
+sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-core/').absolute().resolve()))
 
 os.environ['AKAZA_DICTIONARY_DIR'] = 'model/'
 os.environ['AKAZA_MODEL_DIR'] = 'model/'

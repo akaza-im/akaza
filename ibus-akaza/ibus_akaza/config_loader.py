@@ -31,5 +31,8 @@ class ConfigLoader:
             self.logger.info(f"Loading path={path}, encoding={encoding}.")
             yield load_skk_file_dict(path, encoding)
 
-    def get(self, key):
-        return self._data.get(key)
+    def get(self, key, default=None):
+        if default is not None:
+            return self._data.get(key, default)
+        else:
+            return self._data.get(key)
