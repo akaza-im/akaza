@@ -2,6 +2,12 @@
 
 import pathlib
 
+import sys
+
+path = str(pathlib.Path(__file__).parent.parent.absolute())
+print(path)
+sys.path.insert(0, path)
+
 import akaza
 from akaza.dictionary import Dictionary
 from akaza.graph import GraphResolver
@@ -39,7 +45,23 @@ akaza = akaza.Akaza(
     romkan=romkan,
 )
 
-for i in range(10):
-    for line in ['watasinonamaehanakanodseu', 'tonarinokyakuhayokukakikuukyakuda', 'kyounotenkihakumoridana.',
-                 'souieba,asitanotenkihadonoyounakanjininarunodarouka,watasinihamattaakuwakaranai.']:
-        akaza.convert(line)
+# for i in range(10):
+#     for line in ['watasinonamaehanakanodseu', 'tonarinokyakuhayokukakikuukyakuda', 'kyounotenkihakumoridana.',
+#                  'souieba,asitanotenkihadonoyounakanjininarunodarouka,watasinihamattaakuwakaranai.',
+#                  # '長くなってくると、変換に如実に時間がかかるようになってくる。'
+#                  'nagakunattekuruto,henkannninyojitunijikanngakakaruyouninattekuru.'
+#                  ]:
+#         akaza.convert(line)
+
+from timethese import cmpthese, pprint_cmp
+
+print("START")
+
+cmp_res_dict = cmpthese(
+    10,
+    {
+        "term1": lambda: akaza.convert('nagakunattekuruto,henkannninyojitunijikanngakakaruyouninattekuru.'),
+    },
+    repeat=10,
+)
+print(pprint_cmp(cmp_res_dict))
