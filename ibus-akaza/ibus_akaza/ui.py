@@ -40,8 +40,8 @@ _ = lambda a: gettext.dgettext('ibus-akaza', a)
 def build_akaza():
     configdir = pathlib.Path(GLib.get_user_config_dir(), 'ibus-akaza')
 
-    config = config_loader.ConfigLoader()
-    user_dicts = list(config.load_user_dict())
+    user_settings = config_loader.ConfigLoader()
+    user_dicts = list(user_settings.load_user_dict())
 
     user_language_model_path = configdir.joinpath('user_language_model')
     user_language_model_path.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -65,17 +65,17 @@ def build_akaza():
         language_model=language_model,
     )
 
-    romkan = RomkanConverter(additional=config.get('romaji'))
+    romkan = RomkanConverter(additional=user_settings.get('romaji'))
 
     lisp_evaluator = tinylisp.Evaluator()
 
-    return user_language_model, Akaza(resolver=resolver, romkan=romkan), romkan, lisp_evaluator
+    return user_language_model, Akaza(resolver=resolver, romkan=romkan), romkan, lisp_evaluator, user_settings
 
 
 try:
     t0 = time.time()
 
-    user_language_model, akaza, romkan, lisp_evaluator = build_akaza()
+    user_language_model, akaza, romkan, lisp_evaluator, user_settings = build_akaza()
 
     user_language_model_save_thread = threading.Thread(
         name='user_language_model_save_thread',
@@ -139,6 +139,8 @@ class AkazaIBusEngine(IBus.Engine):
         # タスクメニューからポップアップで選べるメニューについて、セットアップする。
         self.__prop_dict = {}
         self.prop_list = self._init_props()
+
+        self.live_conversion_mode = user_settings.get('live_conversion', False)
 
         self.logger.debug("Create Akaza engine OK: 20200916")
 
@@ -250,14 +252,20 @@ g
             # Allow typing all ASCII letters and punctuation
             if ord('!') <= keyval <= ord('~'):
                 if state & (IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.MOD1_MASK) == 0:
-                    if self.in_henkan_mode():
-                        self.logger.info("Call `commit_candidate()` since it's in henkan mode...")
-                        self.commit_candidate()
+                    if self.live_conversion_mode:
+                        self.preedit_string += chr(keyval)
+                        # この時点では、preedit string にだけ、追加して表示するひつようがあります。
+                        self.update_candidates()
+                        return True
+                    else:
+                        if self.in_henkan_mode():
+                            self.logger.info("Call `commit_candidate()` since it's in henkan mode...")
+                            self.commit_candidate()
 
-                    self.preedit_string += chr(keyval)
-                    # この時点では、preedit string にだけ、追加して表示するひつようがあります。
-                    self.update_preedit_text_before_henkan()
-                    return True
+                        self.preedit_string += chr(keyval)
+                        # この時点では、preedit string にだけ、追加して表示する必要があります。
+                        self.update_preedit_text_before_henkan()
+                        return True
             else:
                 if keyval < 128 and self.preedit_string:
                     self.commit_string(self.preedit_string)
