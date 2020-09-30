@@ -8,7 +8,6 @@ from akaza.graph import Graph
 from akaza.language_model import LanguageModel
 from akaza.node import Node, AbstractNode
 
-
 class GraphResolver:
     def __init__(self,
                  language_model: LanguageModel,
@@ -101,6 +100,7 @@ class GraphResolver:
 
         return graph
 
+    # @profile
     def viterbi(self, graph: Graph) -> List[List[AbstractNode]]:
         """
         ビタビアルゴリズムにもとづき、最短の経路を求めて、N-Best 解を求める。
@@ -131,7 +131,7 @@ class GraphResolver:
                     node.cost = node_cost
                 else:
                     for prev_node in prev_nodes:
-                        bigram_cost = self.language_model.calc_bigram_cost(prev_node, node)
+                        bigram_cost = prev_node.get_bigram_cost(self.language_model, node)
                         tmp_cost = prev_node.cost + bigram_cost + node_cost
                         if cost < tmp_cost:  # コストが最大になる経路をえらんでいる。
                             cost = tmp_cost
@@ -140,6 +140,7 @@ class GraphResolver:
                     node.prev = shortest_prev
                     node.cost = cost
 
+    # @profile
     def find_nbest(self, graph: Graph):
         # find EOS.
         node = graph.get_eos()
@@ -155,7 +156,7 @@ class GraphResolver:
                 # 他の候補を追加する。
                 nodes = sorted(
                     [n for n in graph.get_item(node.start_pos + len(node.yomi)) if node.yomi == n.yomi],
-                    key=lambda x: x.cost + self.language_model.calc_bigram_cost(x, last_node), reverse=True)
+                    key=lambda x: x.cost + x.get_bigram_cost(self.language_model, last_node), reverse=True)
                 result.append(nodes)
 
             last_node = node
