@@ -7,6 +7,7 @@ import sys
 path = str(pathlib.Path(__file__).parent.parent.absolute())
 print(path)
 sys.path.insert(0, path)
+sys.path.insert(0, pathlib.Path(__file__).parent.parent.parent.joinpath('akaza-data').absolute())
 
 import akaza
 from akaza.dictionary import Dictionary

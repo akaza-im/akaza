@@ -32,7 +32,6 @@ class LanguageModel:
     def has_unigram_cost_by_yomi(self, yomi: str):
         return self.user_language_model.has_unigram_cost_by_yomi(yomi)
 
-    @functools.lru_cache
     def calc_bigram_cost(self, prev_node, next_node) -> float:
         # self → node で処理する。
         prev_key = prev_node.get_key()

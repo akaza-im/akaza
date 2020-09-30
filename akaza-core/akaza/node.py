@@ -4,15 +4,27 @@ from akaza import tinylisp
 
 
 class AbstractNode:
+    def __init__(self):
+        self._bigram_cache = {}
+
     def is_eos(self):
         raise NotImplemented()
 
     def is_bos(self):
         raise NotImplemented()
 
+    def get_bigram_cost(self, language_model, next_node):
+        if next_node in self._bigram_cache:
+            return self._bigram_cache[next_node]
+        else:
+            cost = language_model.calc_bigram_cost(self, next_node)
+            self._bigram_cache[next_node] = cost
+            return cost
+
 
 class BosNode(AbstractNode):
     def __init__(self):
+        super().__init__()
         self.start_pos = -9999
         self.word = '__BOS__'
         self.yomi = '__BOS__'
@@ -37,6 +49,7 @@ class BosNode(AbstractNode):
 
 class EosNode(AbstractNode):
     def __init__(self, start_pos):
+        super().__init__()
         self.start_pos = start_pos
         self.word = '__EOS__'
         self.yomi = '__EOS__'
@@ -59,10 +72,12 @@ class EosNode(AbstractNode):
     def __repr__(self):
         return f"<EosNode: start_pos={self.start_pos}, prev={self.prev.word if self.prev else '-'}>"
 
+
 class Node(AbstractNode):
     cost: Optional[float]
 
     def __init__(self, start_pos, word, yomi):
+        super().__init__()
         if len(word) == 0:
             raise AssertionError(f"len(word) should not be 0")
 
@@ -71,6 +86,7 @@ class Node(AbstractNode):
         self.yomi = yomi
         self.prev = None
         self.cost = 0
+        self._key = f"{self.word}/{self.yomi}"
 
     def __repr__(self):
         return f"<Node: start_pos={self.start_pos}, word={self.word}," \
@@ -83,7 +99,7 @@ class Node(AbstractNode):
         return False
 
     def get_key(self) -> str:
-        return f"{self.word}/{self.yomi}"
+        return self._key
 
     def __eq__(self, other):
         if other is None:
