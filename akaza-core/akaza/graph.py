@@ -52,7 +52,7 @@ class Graph:
                     continue
                 yield node
 
-    def get_item(self, i: int) -> List[Node]:
+    def get_item(self, i: int) -> List[AbstractNode]:
         return self.d[i]
 
     def dump(self, path: str):
@@ -166,7 +166,7 @@ class GraphResolver:
 
         return graph
 
-    def viterbi(self, graph: Graph) -> List[List[Node]]:
+    def viterbi(self, graph: Graph) -> List[List[AbstractNode]]:
         """
         ビタビアルゴリズムにもとづき、最短の経路を求めて、N-Best 解を求める。
         """
@@ -174,6 +174,7 @@ class GraphResolver:
         self.fill_cost(graph)
         return self.find_nbest(graph)
 
+    # @profile
     def fill_cost(self, graph: Graph):
         """
         Graph の各ノードについて最短のノードをえる。
@@ -195,10 +196,8 @@ class GraphResolver:
                     node.cost = node_cost
                 else:
                     for prev_node in prev_nodes:
-                        if prev_node.cost is None:
-                            logging.error(f"Missing prev_node.cost--- {prev_node}")
-                        tmp_cost = prev_node.cost + self.language_model.calc_bigram_cost(
-                            prev_node, node) + node_cost
+                        bigram_cost = self.language_model.calc_bigram_cost(prev_node, node)
+                        tmp_cost = prev_node.cost + bigram_cost + node_cost
                         if cost < tmp_cost:  # コストが最大になる経路をえらんでいる。
                             cost = tmp_cost
                             shortest_prev = prev_node
