@@ -2,7 +2,7 @@ import pathlib
 import sys
 from tempfile import NamedTemporaryFile
 
-sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
+sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
 import pytest
 from akaza.dictionary import Dictionary
@@ -11,7 +11,7 @@ from akaza.user_language_model import UserLanguageModel
 from akaza_data.system_dict import SystemDict
 from akaza_data.system_language_model import SystemLanguageModel
 from akaza.language_model import LanguageModel
-from akaza.graph import GraphResolver
+from akaza.graph_resolver import GraphResolver
 from akaza.romkan import RomkanConverter
 
 tmpfile = NamedTemporaryFile(delete=False)

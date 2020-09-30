@@ -10,7 +10,7 @@ sys.path.insert(0, path)
 
 import akaza
 from akaza.dictionary import Dictionary
-from akaza.graph import GraphResolver
+from akaza.graph_resolver import GraphResolver
 from akaza.language_model import LanguageModel
 from akaza.romkan import RomkanConverter
 from akaza.user_language_model import UserLanguageModel

@@ -1,7 +1,7 @@
 import pathlib
 import sys
 
-sys.path.append(str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
+sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
 from akaza.node import Node
 from akaza.user_language_model import UserLanguageModel
