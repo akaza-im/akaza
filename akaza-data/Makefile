@@ -1,4 +1,6 @@
-all: akaza_data/data/system_dict.trie akaza_data/data/system_language_model.trie
+CXX=clang++
+
+all: akaza_data/data/system_dict.trie akaza_data/data/system_language_model.trie akaza_data/data/lm_v2_2gram.trie
 
 work/jawiki-latest-pages-articles.xml.bz2:
 	mkdir -p work/
@@ -32,5 +34,11 @@ akaza_data/data/system_language_model.trie: work/jawiki.1gram.json work/jawiki.2
 akaza_data/data/system_dict.trie: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki
 	python bin/070_make-system-dict.py
 	python bin/080_system_dump.py
+
+bin/090_effective_lm: bin/090_effective_lm.cc
+	$(CXX) -l marisa bin/090_effective_lm.cc -o bin/090_effective_lm
+
+akaza_data/data/lm_v2_2gram.trie: bin/090_effective_lm akaza_data/data/system_language_model.trie
+	./bin/090_effective_lm
 
 .PHONY: all
