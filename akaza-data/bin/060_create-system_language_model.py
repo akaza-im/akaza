@@ -7,6 +7,8 @@ import marisa_trie
 # jawiki.1gram.json/jawiki.2gram.json から言語モデルを出力する。
 from tqdm import tqdm
 
+from akaza_data_utils import mkdir_p, copy_snapshot
+
 
 def build_model(pattern, cutoff, t0):
     retval = []
@@ -50,24 +52,29 @@ def build_model(pattern, cutoff, t0):
     return retval
 
 
-def write_trie(path, data):
-    trie = marisa_trie.RecordTrie('<f', data)
+def write_ngram(path, data):
     print(f"writing {path}.")
-    trie.save(path)
+    with open(path, 'w') as wfp:
+        for word, values in sorted(data):
+            wfp.write(f"{word} {values[0]}\n")
 
 
 def write_model():
     t0 = time.time()
 
+    mkdir_p('work')
+
     print(f'[{sys.argv[0]}] # 1gram')
     unigram = build_model('work/ngram/*/wiki*.1gram.txt', cutoff=0, t0=t0)
-    write_trie('akaza_data/data/system_language_model.1gram.trie', unigram)
+    write_ngram('work/jawiki.merged-1gram.txt', unigram)
+    copy_snapshot('work/jawiki.merged-1gram.txt')
 
     print(f"1gram. size={len(unigram)}")
 
     print(f'[{sys.argv[0]}] # 2gram')
     bigram = build_model('work/ngram/*/wiki*.2gram.txt', cutoff=3, t0=t0)
-    write_trie('akaza_data/data/system_language_model.2gram.trie', bigram)
+    write_ngram('work/jawiki.merged-2gram.txt', bigram)
+    copy_snapshot('work/jawiki.merged-2gram.txt')
 
     # print(f'[{sys.argv[0]}] # 3gram')
     # trigram_dict, trigram = build_model('work/ngram/*/wiki*.3gram.txt', cutoff=100, t0=t0,

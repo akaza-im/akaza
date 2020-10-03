@@ -1,4 +1,9 @@
-all: akaza_data/data/system_dict.trie akaza_data/data/system_language_model.trie
+CXX=clang++
+# Note: `shell` is a gnu make extension.
+EXT_SUFFIX:=$(shell python3-config --extension-suffix)
+
+all: akaza_data/data/system_dict.trie akaza_data/data/lm_v2_2gram.trie akaza_data/data/lm_v2_2gram.trie binary
+binary: akaza_data/systemlm_loader$(EXT_SUFFIX)
 
 work/jawiki-latest-pages-articles.xml.bz2:
 	mkdir -p work/
@@ -26,11 +31,32 @@ work/jawiki.vocab: work/jawiki.wfreq bin/040_wfreq2vocab.py
 work/jawiki.1gram.json: work/jawiki.vocab  bin/050_dumpngram.py
 	python bin/050_dumpngram.py work/jawiki.vocab
 
-akaza_data/data/system_language_model.trie: work/jawiki.1gram.json work/jawiki.2gram.json work/jawiki.vocab bin/060_create-system_language_model.py
+work/jawiki.merged-2gram.txt: work/jawiki.1gram.json work/jawiki.2gram.json work/jawiki.vocab bin/060_create-system_language_model.py
 	python bin/060_create-system_language_model.py
 
 akaza_data/data/system_dict.trie: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki
 	python bin/070_make-system-dict.py
 	python bin/080_system_dump.py
 
-.PHONY: all
+bin/090_effective_lm: bin/090_effective_lm.cc
+	$(CXX) -l marisa bin/090_effective_lm.cc -o bin/090_effective_lm
+
+akaza_data/data/lm_v2_2gram.trie: bin/090_effective_lm work/jawiki.merged-2gram.txt
+	./bin/090_effective_lm
+
+# -------------------------------------------------------------------------
+
+akaza_data/systemlm_loader$(EXT_SUFFIX): akaza_data/systemlm_loader.cc src/system_lm.h
+	$(CXX) -O3 -Wall -shared -lmarisa -std=c++11 -fPIC `python3 -m pybind11 --includes` akaza_data/systemlm_loader.cc \
+		-o akaza_data/systemlm_loader$(EXT_SUFFIX)
+
+# -------------------------------------------------------------------------
+
+t/00_systemlm: t/00_systemlm.cc
+	$(CXX) -std=c++17 -l marisa -o t/00_systemlm t/00_systemlm.cc
+
+test: t/00_systemlm
+	./t/00_systemlm
+	pytest tests
+
+.PHONY: all test

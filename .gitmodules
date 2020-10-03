@@ -7,3 +7,6 @@
 [submodule "akaza-data/jawiki-kana-kanji-dict"]
 	path = akaza-data/jawiki-kana-kanji-dict
 	url = https://github.com/tokuhirom/jawiki-kana-kanji-dict.git
+[submodule "akaza-data/pybind11"]
+	path = akaza-data/pybind11
+	url = https://github.com/pybind/pybind11.git
