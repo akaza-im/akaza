@@ -16,10 +16,6 @@ def test_node():
            ]
 
 
-def test_node_hash():
-    assert hash(Node(word='ひょい', yomi='ひょい', start_pos=0))
-
-
 def test_surface():
     e = tinylisp.Evaluator()
     node = Node(word='(+ 1 2)', yomi='たしざんてすと', start_pos=0)

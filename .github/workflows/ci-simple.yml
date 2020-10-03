@@ -25,8 +25,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest
         # deps for akaza-data building
-        pip install wikiextractor kytea psutil
-        sudo apt-get install ibus libgirepository1.0-dev
+        pip install wikiextractor kytea psutil wheel pybind11
+        sudo apt-get install ibus libgirepository1.0-dev libmarisa-dev
+        git submodule init
+        git submodule update
     #- name: Lint with flake8
     #  run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -37,7 +39,8 @@ jobs:
       run: |
         cd akaza-data
         pip install -r requirements.txt
-        pytest
+        make binary
+        pytest tests
         sudo python setup.py install
     - name: Test akaza-core
       run: |

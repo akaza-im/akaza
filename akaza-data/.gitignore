@@ -13,3 +13,6 @@
 /jawiki.1gram.json
 /jawiki.2gram.json
 *.orig
+/a.out
+/bin/090_effective_lm
+t/00_systemlm
