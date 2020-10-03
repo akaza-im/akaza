@@ -9,7 +9,7 @@ from akaza.dictionary import Dictionary
 from akaza import Akaza
 from akaza.user_language_model import UserLanguageModel
 from akaza_data.system_dict import SystemDict
-from akaza_data.system_language_model import SystemLanguageModel
+from akaza_data.system_language_modelv2 import SystemLanguageModelV2
 from akaza.language_model import LanguageModel
 from akaza.graph_resolver import GraphResolver
 from akaza.romkan import RomkanConverter
@@ -19,7 +19,7 @@ tmpfile = NamedTemporaryFile(delete=False)
 user_language_model = UserLanguageModel(tmpfile.name)
 system_dict = SystemDict.load()
 
-system_language_model = SystemLanguageModel.load()
+system_language_model = SystemLanguageModelV2.load()
 
 language_model = LanguageModel(
     system_language_model=system_language_model,

@@ -13,7 +13,7 @@ setup(
     packages=['akaza_data', 'akaza_data.data'],
     package_data={
         'akaza_data': ['*.so'],
-        'akaza_data.data': ['system_*.trie', 'emoji.trie']
+        'akaza_data.data': ['system_*.trie', 'emoji.trie', 'lm_*.trie']
     },
     extras_require={
     },
