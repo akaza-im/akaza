@@ -52,12 +52,6 @@ def build_model(pattern, cutoff, t0):
     return retval
 
 
-def write_trie(path, data):
-    trie = marisa_trie.RecordTrie('<f', data)
-    print(f"writing {path}.")
-    trie.save(path)
-
-
 def write_ngram(path, data):
     print(f"writing {path}.")
     with open(path, 'w') as wfp:
@@ -74,7 +68,6 @@ def write_model():
     unigram = build_model('work/ngram/*/wiki*.1gram.txt', cutoff=0, t0=t0)
     write_ngram('work/jawiki.merged-1gram.txt', unigram)
     copy_snapshot('work/jawiki.merged-1gram.txt')
-    write_trie('akaza_data/data/system_language_model.1gram.trie', unigram)
 
     print(f"1gram. size={len(unigram)}")
 
@@ -82,7 +75,6 @@ def write_model():
     bigram = build_model('work/ngram/*/wiki*.2gram.txt', cutoff=3, t0=t0)
     write_ngram('work/jawiki.merged-2gram.txt', bigram)
     copy_snapshot('work/jawiki.merged-2gram.txt')
-    write_trie('akaza_data/data/system_language_model.2gram.trie', bigram)
 
     # print(f'[{sys.argv[0]}] # 3gram')
     # trigram_dict, trigram = build_model('work/ngram/*/wiki*.3gram.txt', cutoff=100, t0=t0,

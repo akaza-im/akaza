@@ -65,6 +65,8 @@ def main():
                     continue
                 if key.endswith('/UNK'):
                     continue
+                if '/' == key:
+                    continue
             wfp.write(f"{key} {count}\n")
 
     copy_snapshot('work/jawiki.wfreq')
