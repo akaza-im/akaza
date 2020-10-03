@@ -57,5 +57,6 @@ t/00_systemlm: t/00_systemlm.cc
 
 test: t/00_systemlm
 	./t/00_systemlm
+	pytest tests
 
 .PHONY: all test

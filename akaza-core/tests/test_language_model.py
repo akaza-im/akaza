@@ -9,7 +9,7 @@ from akaza.user_language_model import UserLanguageModel
 from tempfile import TemporaryDirectory
 
 from akaza.language_model import LanguageModel
-from akaza_data import SystemLanguageModel
+from akaza_data import SystemLanguageModelV2
 
 
 def test_read():
@@ -19,6 +19,6 @@ def test_read():
     d.add_entry([Node(start_pos=0, word='単語', yomi='たんご')])
     d.add_entry([Node(start_pos=0, word='熟語', yomi='じゅくご')])
 
-    d = LanguageModel(SystemLanguageModel.load(), d)
+    d = LanguageModel(SystemLanguageModelV2.load(), d)
     assert d.calc_node_cost(Node(start_pos=0, word='単語', yomi='たんご')) > d.calc_node_cost(
         Node(start_pos=0, word='熟語', yomi='じゅくご'))
