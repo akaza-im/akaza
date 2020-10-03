@@ -17,11 +17,12 @@ class AbstractNode:
         raise NotImplemented()
 
     def get_bigram_cost(self, language_model, next_node):
-        if next_node in self._bigram_cache:
-            return self._bigram_cache[next_node]
+        next_node_key = next_node.get_key()
+        if next_node_key in self._bigram_cache:
+            return self._bigram_cache[next_node_key]
         else:
             cost = language_model.calc_bigram_cost(self, next_node)
-            self._bigram_cache[next_node] = cost
+            self._bigram_cache[next_node_key] = cost
             return cost
 
 
@@ -108,10 +109,6 @@ class Node(AbstractNode):
         if other is None:
             return False
         return self.__dict__ == other.__dict__
-
-    def __hash__(self):
-        # necessary for instances to behave sanely in dicts and sets.
-        return hash((self.start_pos, self.word, self.yomi))
 
     def surface(self, evaluator: tinylisp.Evaluator):
         if self.word.startswith('('):
