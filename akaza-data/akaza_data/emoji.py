@@ -12,7 +12,7 @@ class EmojiDict:
         self._trie = trie
 
     @staticmethod
-    def load(path: str = str(pathlib.Path(__file__).parent.absolute().joinpath('data/emoji.trie'))):
+    def load(path: str = str(pathlib.Path(__file__).parent.absolute().joinpath('data/single_term.trie'))):
         print(path)
         trie = marisa_trie.BytesTrie()
         trie.mmap(path)

@@ -71,7 +71,6 @@ def make_system_dict():
         dicts.append(ari2nasi(ari))
 
     dicts.append(make_vocab_dict())
-    dicts.append(make_lisp_dict())
     merged_dict = merge_skkdict(dicts)
 
     entries = []
@@ -84,9 +83,20 @@ def make_system_dict():
     trie.save('akaza_data/data/system_dict.trie')
 
 
-def make_emoji_dict():
-    ari, nasi = parse_skkdict('skk-dev-dict/SKK-JISYO.emoji', 'utf-8')
-    merged_dict = merge_skkdict([ari2nasi(ari), nasi])
+def make_single_term_dict():
+    dictionary_sources = [
+        # 先の方が優先される
+        ('skk-dev-dict/SKK-JISYO.emoji', 'utf-8'),
+        ('skk-dev-dict/zipcode/SKK-JISYO.zipcode', 'euc-jp'),
+    ]
+    dicts = []
+
+    for path, encoding in dictionary_sources:
+        ari, nasi = parse_skkdict(path, encoding)
+        dicts.append(nasi)
+        dicts.append(ari2nasi(ari))
+    dicts.append(make_lisp_dict())
+    merged_dict = merge_skkdict(dicts)
 
     entries = []
     for yomi, kanjis in merged_dict.items():
@@ -95,11 +105,11 @@ def make_emoji_dict():
     print(f"# of emoji entries: {len(entries)}")
 
     trie = marisa_trie.BytesTrie(entries)
-    trie.save('akaza_data/data/emoji.trie')
+    trie.save('akaza_data/data/single_term.trie')
 
 
 def main():
-    make_emoji_dict()
+    make_single_term_dict()
     make_system_dict()
 
 
