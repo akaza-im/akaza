@@ -1,5 +1,5 @@
 CXX=clang++
-CXXOPTS=-W -g
+CXXOPTS=-W -g -std=c++20
 # Note: `shell` is a gnu make extension.
 EXT_SUFFIX:=$(shell python3-config --extension-suffix)
 
@@ -53,7 +53,7 @@ akaza_data/data/system_dict.trie: bin/100_effective_dict work/jawiki.single_dict
 
 # -------------------------------------------------------------------------
 
-akaza_data/systemlm_loader$(EXT_SUFFIX): akaza_data/systemlm_loader.cc src/system_lm.h
+akaza_data/systemlm_loader$(EXT_SUFFIX): akaza_data/systemlm_loader.cc src/system_lm.h src/binary_dict.h src/nanoutf8.h
 	$(CXX) -O3 -Wall -shared -lmarisa -std=c++11 -fPIC `python3 -m pybind11 --includes` akaza_data/systemlm_loader.cc \
 		-o akaza_data/systemlm_loader$(EXT_SUFFIX)
 
