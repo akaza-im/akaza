@@ -1,5 +1,7 @@
 #pragma once
 
+// https://github.com/tokuhirom/nanoutf8
+
 static size_t nanoutf8_byte_count_from_first_char(char c) {
   if ((c & 0x80) == 0x00)
     return 1;
