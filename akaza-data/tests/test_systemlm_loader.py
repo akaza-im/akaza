@@ -1,5 +1,6 @@
 import os
 import sys
+import pytest
 
 sys.path.insert(0, '.')
 
@@ -27,6 +28,7 @@ def test_find_bigram():
     assert score < 0
 
 
+@pytest.mark.skip(reason="slow test")
 def test_find_unigram_test_all():
     path = 'work/jawiki.merged-1gram.txt'
     if not os.path.exists(path):
@@ -39,6 +41,7 @@ def test_find_unigram_test_all():
             assert abs(trie_score - float(txt_score)) < 0.000001
 
 
+@pytest.mark.skip(reason="slow test")
 def test_find_bigram_test_all():
     path = 'work/jawiki.merged-2gram.txt'
     if not os.path.exists(path):
@@ -52,6 +55,7 @@ def test_find_bigram_test_all():
             trie_score = lm.find_bigram(id1, id2)
             print(f"word='{word1}-{word2}' id={id1}-{id2} trie_score={trie_score} txt_score={txt_score}")
             assert abs(trie_score - float(txt_score)) < 0.000001
+
 
 if __name__ == '__main__':
     # test_find_unigram_test_all()
