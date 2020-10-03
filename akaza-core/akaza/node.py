@@ -4,8 +4,11 @@ from akaza import tinylisp
 
 
 class AbstractNode:
+    id: Optional[int]
+
     def __init__(self):
         self._bigram_cache = {}
+        self.id = None
 
     def is_eos(self):
         raise NotImplemented()
