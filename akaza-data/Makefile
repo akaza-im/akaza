@@ -44,8 +44,18 @@ bin/090_effective_lm: bin/090_effective_lm.cc
 akaza_data/data/lm_v2_2gram.trie: bin/090_effective_lm akaza_data/data/system_language_model.trie
 	./bin/090_effective_lm
 
+# -------------------------------------------------------------------------
+
 akaza_data/systemlm_loader$(EXT_SUFFIX): akaza_data/systemlm_loader.cc src/system_lm.h
 	$(CXX) -O3 -Wall -shared -lmarisa -std=c++11 -fPIC `python3 -m pybind11 --includes` akaza_data/systemlm_loader.cc \
 		-o akaza_data/systemlm_loader$(EXT_SUFFIX)
 
-.PHONY: all
+# -------------------------------------------------------------------------
+
+t/00_systemlm: t/00_systemlm.cc
+	$(CXX) -std=c++17 -l marisa -o t/00_systemlm t/00_systemlm.cc
+
+test: t/00_systemlm
+	./t/00_systemlm
+
+.PHONY: all test

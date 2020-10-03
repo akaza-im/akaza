@@ -12,7 +12,6 @@ int main() {
     akaza::SystemLM lm;
     lm.load("akaza_data/data/lm_v2_1gram.trie", "akaza_data/data/lm_v2_2gram.trie");
     get_id(lm, "三/み");
-    exit(1);
 
     // get_id(lm, "堂嶋/どうじま");
 
