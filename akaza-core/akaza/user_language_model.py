@@ -2,7 +2,7 @@ import logging
 import math
 import os
 import time
-from typing import List, Dict, Optional, Set, Any
+from typing import List, Dict, Optional, Set
 
 from atomicwrites import atomic_write
 
