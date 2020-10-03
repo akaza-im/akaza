@@ -41,13 +41,3 @@ class LanguageModel:
             self.logger.info(f"Use user's bigram score: {prev_key},{next_key} -> {u}")
             return u
         return self.system_language_model.get_bigram_cost(prev_key, next_key)
-
-    @functools.lru_cache
-    def calc_trigram_cost(self, node1, node2, node3) -> float:
-        # user → system で処理する。
-        u = self.user_language_model.get_trigram_cost(node1.get_key(), node2.get_key(), node3.get_key())
-        if u:
-            self.logger.info(
-                f"Use user's bigram score: {node1.get_key()},{node2.get_key()},{node3.get_key()} -> {u}")
-            return u
-        return self.system_language_model.get_trigram_cost(node1.get_key(), node2.get_key(), node3.get_key())
