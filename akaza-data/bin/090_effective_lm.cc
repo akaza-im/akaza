@@ -54,10 +54,20 @@ void process_1gram(std::map<std::string, uint32_t> &word2id) {
 
         // packed float  # score: 4 bytes
         std::memcpy(scorebuf, &score, sizeof(score));
-        keybuf += std::string(scorebuf, scorebuf+4);
+        keybuf += std::string(scorebuf, scorebuf+sizeof(score));
 
-        if (word == "私/わたし") {
+        if (word == "私/わたし" || word == "三/み") {
             std::cout << "WATASHI(1) " << keybuf << " " << ((id>>16) & 0xff)  << " SCORE=" <<score
+                << " id=" << id << " HEX=";
+            const char * q=keybuf.c_str();
+            for (int i=0; i<keybuf.size(); i++) {
+                std::cout << +((uint8_t)q[i]) << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        if (word == "/") {
+            std::cout << "SLASH(1) " << keybuf << " " << ((id>>16) & 0xff)  << " SCORE=" <<score
                 << " id=" << id << " HEX=";
             const char * q=keybuf.c_str();
             for (int i=0; i<keybuf.size(); i++) {

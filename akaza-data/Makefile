@@ -1,6 +1,9 @@
 CXX=clang++
+# Note: `shell` is a gnu make extension.
+EXT_SUFFIX:=$(shell python3-config --extension-suffix)
 
 all: akaza_data/data/system_dict.trie akaza_data/data/system_language_model.trie akaza_data/data/lm_v2_2gram.trie
+binary: akaza_data/systemlm_loader$(EXT_SUFFIX)
 
 work/jawiki-latest-pages-articles.xml.bz2:
 	mkdir -p work/
@@ -40,5 +43,9 @@ bin/090_effective_lm: bin/090_effective_lm.cc
 
 akaza_data/data/lm_v2_2gram.trie: bin/090_effective_lm akaza_data/data/system_language_model.trie
 	./bin/090_effective_lm
+
+akaza_data/systemlm_loader$(EXT_SUFFIX): akaza_data/systemlm_loader.cc src/system_lm.h
+	$(CXX) -O3 -Wall -shared -lmarisa -std=c++11 -fPIC `python3 -m pybind11 --includes` akaza_data/systemlm_loader.cc \
+		-o akaza_data/systemlm_loader$(EXT_SUFFIX)
 
 .PHONY: all
