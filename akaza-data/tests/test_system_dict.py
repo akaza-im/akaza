@@ -20,6 +20,7 @@ def test_system_dict2():
 
 def test_has_item():
     system_dict = SystemDict.load()
+    print(system_dict.has_item('あいう'))
     assert system_dict.has_item('あいう')
     assert not system_dict.has_item('あいうじゃぱぱぱーん')
 
