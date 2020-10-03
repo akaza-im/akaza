@@ -14,9 +14,8 @@ from akaza.language_model import LanguageModel
 from akaza.user_language_model import UserLanguageModel
 from akaza_data.system_dict import SystemDict
 from akaza_data.system_language_model import SystemLanguageModel
-from akaza_data.system_language_modelv2 import SystemLanguageModelV2
 
-system_language_model = SystemLanguageModelV2.load()
+system_language_model = SystemLanguageModel.load()
 
 tmpdir = TemporaryDirectory()
 user_language_model = UserLanguageModel(tmpdir.name)

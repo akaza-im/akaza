@@ -15,14 +15,12 @@ from akaza.graph_resolver import GraphResolver
 from akaza.language_model import LanguageModel
 from akaza.romkan import RomkanConverter
 from akaza.user_language_model import UserLanguageModel
-from akaza_data import SystemLanguageModel, SystemLanguageModelV2, SystemDict
+from akaza_data import SystemLanguageModel, SystemDict
 from akaza_data.emoji import EmojiDict
 
 system_language_model = SystemLanguageModel.load()
 system_dict = SystemDict.load()
-system_dict = SystemDict.load()
 emoji_dict = EmojiDict.load()
-system_language_model = SystemLanguageModelV2.load()
 
 user_language_model_path = pathlib.Path('/tmp/user_language_model')
 user_language_model_path.mkdir(parents=True, exist_ok=True, mode=0o700)
