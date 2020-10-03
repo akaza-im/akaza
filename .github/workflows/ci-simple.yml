@@ -25,7 +25,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest
         # deps for akaza-data building
-        pip install wikiextractor kytea psutil wheel
+        pip install wikiextractor kytea psutil wheel pybind11
         sudo apt-get install ibus libgirepository1.0-dev
     #- name: Lint with flake8
     #  run: |
