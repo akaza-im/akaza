@@ -1,10 +1,9 @@
-import subprocess
+import os
 
 from setuptools import setup
 
-subprocess.run(["make", "binary"])
-extsuffix = subprocess.run(["python3-config", "--extension-suffix"], capture_output=True).stdout
-
+os.system("make binary")
+# extsuffix = subprocess.run(["python3-config", "--extension-suffix"], capture_output=True).stdout
 
 setup(
     name="akaza-data",
