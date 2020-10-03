@@ -44,7 +44,7 @@ jobs:
         make
         make binary
         pip install -r requirements.txt
-        pytest
+        pytest tests
         sudo python setup.py install
     - name: Test akaza-core
       run: |
