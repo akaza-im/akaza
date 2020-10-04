@@ -2,20 +2,19 @@ import sys
 from typing import List
 
 import jaconv
+from akaza_data.systemlm_loader import BinaryDict
 
-from akaza.dictionary import Dictionary
 from akaza.graph import Graph
 from akaza.language_model import LanguageModel
 from akaza.node import Node, AbstractNode
-from akaza_data.systemlm_loader import BinaryDict
 
 
 class GraphResolver:
     def __init__(self,
                  language_model: LanguageModel,
-                 dictionary: Dictionary,
+                 normal_dicts: List[BinaryDict],
                  single_term_dicts: List[BinaryDict]):
-        self.dictionary = dictionary
+        self.normal_dicts = normal_dicts
         self.language_model = language_model
         self.single_term_dicts = single_term_dicts
 
@@ -25,11 +24,12 @@ class GraphResolver:
         for i in range(0, len(s)):
             yomi = s[i:]
             # print(f"YOMI:::: {yomi}")
-            words = self.dictionary.prefixes(yomi)
+            words = set().union(*[normal_dict.prefixes(yomi) for normal_dict in self.normal_dicts])
             if len(words) > 0:
                 # print(f"YOMI:::: {yomi} {words}")
                 for word in words:
-                    kanjis = self.dictionary[word]
+                    kanjis = list(
+                        set().union(*[normal_dict.find_kanjis(word) for normal_dict in self.normal_dicts]))
                     if word not in kanjis:
                         kanjis.append(word)
 
