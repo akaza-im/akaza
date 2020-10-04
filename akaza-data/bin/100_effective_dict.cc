@@ -27,11 +27,10 @@ void make_system_dict(std::string ifname, std::string ofname) {
     std::string kanjis;
     marisa::Keyset keyset;
 
-    char buffer[1024*1024];
+    std::string buffer;
 
-    while (ifs.good()) {
-        ifs.getline(buffer, sizeof(buffer)-1);
-        auto data = split(std::string(buffer));
+    while (std::getline(ifs, buffer)) {
+        auto data = split(buffer);
         if (data.size() != 2) {
             std::cout << buffer << std::endl;
             break;
