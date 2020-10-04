@@ -65,9 +65,13 @@ t/00_systemlm: t/00_systemlm.cc
 t/01_binary_dict: t/01_binary_dict.cc src/binary_dict.h
 	$(CXX) -std=c++17 -l marisa -o t/01_binary_dict t/01_binary_dict.cc
 
-test: t/00_systemlm t/01_binary_dict
+t/02_skk_dict: t/02_skk_dict.cc src/skkdict.h
+	$(CXX) -std=c++17 -l marisa -o t/02_skk_dict t/02_skk_dict.cc
+
+test: t/00_systemlm t/01_binary_dict t/02_skk_dict
 	./t/00_systemlm
 	./t/01_binary_dict
+	./t/02_skk_dict
 	pytest tests
 
 .PHONY: all test
