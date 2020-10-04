@@ -1,3 +1,7 @@
+PREFIX ?= /usr
+DATADIR ?= $(PREFIX)/share
+DESTDIR ?=
+
 CXX=clang++
 CXXOPTS=-Wall -g -std=c++20
 # Note: `shell` is a gnu make extension.
@@ -74,4 +78,10 @@ test: t/00_systemlm t/01_binary_dict t/02_skk_dict
 	./t/02_skk_dict
 	pytest tests
 
-.PHONY: all test
+# -------------------------------------------------------------------------
+
+install:
+	install -m 0755 -d $(DESTDIR)$(DATADIR)/akaza-data
+	install -m 0644 akaza_data/data/*.trie $(DESTDIR)$(DATADIR)/akaza-data
+
+.PHONY: all test install

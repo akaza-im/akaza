@@ -7,14 +7,17 @@ from akaza.dictionary import Dictionary
 from akaza.graph import Graph
 from akaza.language_model import LanguageModel
 from akaza.node import Node, AbstractNode
+from akaza_data.systemlm_loader import BinaryDict
 
 
 class GraphResolver:
     def __init__(self,
                  language_model: LanguageModel,
-                 dictionary: Dictionary):
+                 dictionary: Dictionary,
+                 single_term_dicts: List[BinaryDict]):
         self.dictionary = dictionary
         self.language_model = language_model
+        self.single_term_dicts = single_term_dicts
 
     def lookup(self, s: str):
         assert self.language_model
@@ -35,8 +38,8 @@ class GraphResolver:
                         kanjis.append(kata)
 
                     if word == yomi:
-                        if self.dictionary.emoji_dict.has_item(yomi):
-                            for emoji in self.dictionary.emoji_dict[yomi]:
+                        for single_term_dict in self.single_term_dicts:
+                            for emoji in single_term_dict.find_kanjis(yomi):
                                 if emoji not in kanjis:
                                     kanjis.append(emoji)
 
@@ -49,8 +52,8 @@ class GraphResolver:
                     kata = jaconv.hira2kata(yomi)
                     if kata not in kanjis:
                         kanjis.append(kata)
-                    if self.dictionary.emoji_dict.has_item(yomi):
-                        for emoji in self.dictionary.emoji_dict[yomi]:
+                    for single_term_dict in self.single_term_dicts:
+                        for emoji in single_term_dict.find_kanjis(yomi):
                             if emoji not in kanjis:
                                 kanjis.append(emoji)
 
@@ -61,8 +64,8 @@ class GraphResolver:
                 hira = jaconv.hira2kata(yomi[0])
                 if hira not in kanjis:
                     kanjis.append(hira)
-                if self.dictionary.emoji_dict.has_item(yomi):
-                    for emoji in self.dictionary.emoji_dict[yomi]:
+                for single_term_dict in self.single_term_dicts:
+                    for emoji in single_term_dict.find_kanjis(yomi):
                         if emoji not in kanjis:
                             kanjis.append(emoji)
                 yield yomi[0], kanjis
