@@ -31,7 +31,7 @@ install: ibus_akaza/config.py akaza.xml po/ja.mo
 
 ibus_akaza/config.py: ibus_akaza/config.py.in
 	sed -e "s:@SYSCONFDIR@:$(SYSCONFDIR):g" \
-	    -e "s:@MODELDIR@:$(DESTDIR)/$(DATADIR)/ibus-akaza/model:g" \
+	    -e "s:@MODELDIR@:$(DESTDIR)/$(DATADIR)/akaza-data/:g" \
 	    -e "s:@DICTIONARYDIR@:$(DESTDIR)/$(DATADIR)/ibus-akaza/dictionary:g" \
 		$< > $@
 

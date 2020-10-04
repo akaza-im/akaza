@@ -9,7 +9,13 @@ from akaza.user_language_model import UserLanguageModel
 from tempfile import TemporaryDirectory
 
 from akaza.language_model import LanguageModel
-from akaza_data import SystemLanguageModel
+from akaza_data.systemlm_loader import BinaryDict, SystemLM
+
+system_language_model = SystemLM()
+system_language_model.load(
+    "../akaza-data/akaza_data/data/lm_v2_1gram.trie",
+    "../akaza-data/akaza_data/data/lm_v2_2gram.trie"
+)
 
 
 def test_read():
@@ -19,6 +25,6 @@ def test_read():
     d.add_entry([Node(start_pos=0, word='単語', yomi='たんご')])
     d.add_entry([Node(start_pos=0, word='熟語', yomi='じゅくご')])
 
-    d = LanguageModel(SystemLanguageModel.load(), d)
+    d = LanguageModel(system_language_model, d)
     assert d.calc_node_cost(Node(start_pos=0, word='単語', yomi='たんご')) > d.calc_node_cost(
         Node(start_pos=0, word='熟語', yomi='じゅくご'))

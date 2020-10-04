@@ -7,7 +7,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/
 sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-core/').absolute().resolve()))
 
 os.environ['AKAZA_DICTIONARY_DIR'] = 'model/'
-os.environ['AKAZA_MODEL_DIR'] = 'model/'
+os.environ['AKAZA_MODEL_DIR'] = '../akaza-data/akaza_data/data/'
 
 from akaza.node import Node
 from ibus_akaza.ui import AkazaIBusEngine

@@ -5,29 +5,34 @@ import pathlib
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
-from akaza_data.emoji import EmojiDict
 import pytest
 from akaza.dictionary import Dictionary
 from akaza.node import Node
 from akaza.graph_resolver import GraphResolver
 from akaza.language_model import LanguageModel
 from akaza.user_language_model import UserLanguageModel
-from akaza_data.system_dict import SystemDict
-from akaza_data.system_language_model import SystemLanguageModel
+from akaza_data.systemlm_loader import BinaryDict, SystemLM
 
-system_language_model = SystemLanguageModel.load()
+system_language_model = SystemLM()
+system_language_model.load(
+    "../akaza-data/akaza_data/data/lm_v2_1gram.trie",
+    "../akaza-data/akaza_data/data/lm_v2_2gram.trie"
+)
 
 tmpdir = TemporaryDirectory()
 user_language_model = UserLanguageModel(tmpdir.name)
 
 language_model = LanguageModel(system_language_model, user_language_model=user_language_model)
 
-system_dict = SystemDict.load()
-emoji_dict = EmojiDict.load()
+system_dict = BinaryDict()
+system_dict.load("../akaza-data/akaza_data/data/system_dict.trie")
+
+# TODO rename variable to single_term
+emoji_dict = BinaryDict()
+emoji_dict.load("../akaza-data/akaza_data/data/single_term.trie")
+
 dictionary = Dictionary(
-    system_dict=system_dict,
-    emoji_dict=emoji_dict,
-    user_dicts=[],
+    normal_dicts=[system_dict],
 )
 
 logging.basicConfig(level=logging.DEBUG)
@@ -57,7 +62,11 @@ logging.basicConfig(level=logging.DEBUG)
     ('れいわ', '令和'),
 ])
 def test_expected(src, expected):
-    resolver = GraphResolver(language_model=language_model, dictionary=dictionary)
+    resolver = GraphResolver(
+        language_model=language_model,
+        dictionary=dictionary,
+        single_term_dicts=[emoji_dict],
+    )
 
     ht = dict(resolver.lookup(src))
     graph = resolver.graph_construct(src, ht)
@@ -73,7 +82,11 @@ def test_wnn():
     src = 'わたしのなまえはなかのです'
     expected = '私の名前は中野です'
 
-    resolver = GraphResolver(language_model=language_model, dictionary=dictionary)
+    resolver = GraphResolver(
+        language_model=language_model,
+        dictionary=dictionary,
+        single_term_dicts=[emoji_dict],
+    )
     ht = dict(resolver.lookup(src))
     graph = resolver.graph_construct(src, ht)
 
@@ -87,7 +100,11 @@ def test_wnn():
 
 def test_graph_extend():
     src = 'はなか'
-    resolver = GraphResolver(language_model=language_model, dictionary=dictionary)
+    resolver = GraphResolver(
+        language_model=language_model,
+        dictionary=dictionary,
+        single_term_dicts=[emoji_dict],
+    )
     ht = dict(resolver.lookup(src))
     # (0,2) の文節を強制指定する
     graph = resolver.graph_construct(src, ht, [
@@ -100,7 +117,11 @@ def test_graph_extend():
 # 「ひょいー」のような辞書に登録されていない単語に対して、カタカナ候補を提供すべき。
 def test_katakana_candidates():
     src = 'ひょいー'
-    resolver = GraphResolver(language_model=language_model, dictionary=dictionary)
+    resolver = GraphResolver(
+        language_model=language_model,
+        dictionary=dictionary,
+        single_term_dicts=[emoji_dict],
+    )
     ht = dict(resolver.lookup(src))
     for k, v in ht.items():
         print(f"{k}:{v}")
@@ -119,7 +140,11 @@ def test_katakana_candidates():
 # 「ひょいー」のような辞書に登録されていない単語に対して、カタカナ候補を提供すべき。
 def test_emoji_candidates():
     src = 'すし'
-    resolver = GraphResolver(language_model=language_model, dictionary=dictionary)
+    resolver = GraphResolver(
+        language_model=language_model,
+        dictionary=dictionary,
+        single_term_dicts=[emoji_dict],
+    )
     ht = dict(resolver.lookup(src))
     for k, v in ht.items():
         print(f"{k}:{v}")
@@ -161,7 +186,11 @@ def test_katakana_candidates_for_unknown_word():
     print(my_user_language_model.has_unigram_cost_by_yomi('ひょいー'))
     print(my_language_model.has_unigram_cost_by_yomi('ひょいー'))
 
-    resolver = GraphResolver(language_model=my_language_model, dictionary=dictionary)
+    resolver = GraphResolver(
+        language_model=my_language_model,
+        dictionary=dictionary,
+        single_term_dicts=[emoji_dict],
+    )
     ht = dict(resolver.lookup(src))
     graph = resolver.graph_construct(src, ht)
     assert 'ひょいー' in set([node.yomi for node in graph.all_nodes()])

@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <tuple>
 
 #include "nanoutf8.h"
 #include <marisa.h>

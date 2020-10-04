@@ -9,6 +9,5 @@ def test_read2():
 
     path = str(pathlib.Path(__file__).parent.joinpath('data', 'SKK-JISYO.test'))
     d = load_skk_file_dict(path)
-    assert d['たばた'] == ['田端']
-    assert d.has_item('たばた')
+    assert d.find_kanjis('たばた') == ['田端']
     assert d.prefixes('たばた') == ['た', 'たば', 'たばた']
