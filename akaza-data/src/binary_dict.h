@@ -37,10 +37,11 @@ public:
     std::cout << "[Save] " << dict_path << ": " << dict_trie.num_keys() << std::endl;
   }
 
-  void build(marisa::Keyset & keyset) {
+  void build_by_keyset(marisa::Keyset & keyset) {
     dict_trie.build(keyset);
   }
 
+  // vector of "とくひろ" => "徳宏/徳大/徳寛/督弘"
   void build(std::vector<std::tuple<std::string, std::string>> data) {
     marisa::Keyset keyset;
     for (auto &d: data) {
@@ -48,7 +49,7 @@ public:
         std::string kanjis = std::get<1>(d);
         keyset.push_back((yomi + "\xff" + kanjis).c_str());
     }
-    this->build(keyset);
+    this->build_by_keyset(keyset);
   }
 
   std::vector<std::string> find_kanjis(std::string word) {
