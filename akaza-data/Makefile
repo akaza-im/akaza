@@ -1,5 +1,5 @@
 CXX=clang++
-CXXOPTS=-W -g -std=c++20
+CXXOPTS=-Wall -g -std=c++20
 # Note: `shell` is a gnu make extension.
 EXT_SUFFIX:=$(shell python3-config --extension-suffix)
 
