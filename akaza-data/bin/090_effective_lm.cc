@@ -19,8 +19,6 @@
     {word2 ID}    # 3 bytes
     packed float  # score: 4 bytes
 
-TODO: word2id を除外。Maybe, ID を別途振る必要はない。
-
 */
 
 void process_1gram(std::map<std::string, uint32_t> &word2id) {
