@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <marisa.h>
+#include "../src/binary_dict.h"
 
 static std::vector<std::string> split(const std::string &s) {
     std::vector<std::string> elems;
@@ -23,11 +24,9 @@ void make_system_dict(std::string ifname, std::string ofname) {
     std::cout << "[100_effective_dict.cc] " << ifname << std::endl;
 
     std::ifstream ifs(ifname, std::ifstream::in);
-    std::string word;
-    std::string kanjis;
-    marisa::Keyset keyset;
 
     std::string buffer;
+    std::vector<std::tuple<std::string, std::string>> set;
 
     while (std::getline(ifs, buffer)) {
         auto data = split(buffer);
@@ -35,23 +34,15 @@ void make_system_dict(std::string ifname, std::string ofname) {
             std::cout << buffer << std::endl;
             break;
         }
-        word = data[0];
-        kanjis = data[1];
+        auto word = data[0];
+        auto kanjis = data[1];
 
-        std::string keybuf(word);
-
-        // std::cout << word << "\t--- " << kanjis << std::endl;
-
-        // marker
-        keybuf += "\xff";
-        keybuf += kanjis;
-
-        keyset.push_back(keybuf.c_str(), keybuf.size());
+        set.push_back(std::make_tuple(word, kanjis));
     }
 
-    marisa::Trie trie;
-    trie.build(keyset);
-    trie.save(ofname.c_str());
+    akaza::BinaryDict dict;
+    dict.build(set);
+    dict.save(ofname);
 }
 
 int main() {

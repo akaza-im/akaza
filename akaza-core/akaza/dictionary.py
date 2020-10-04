@@ -6,6 +6,8 @@ from akaza_data.system_dict import SystemDict
 
 
 class Dictionary:
+    # 通常辞書リスト
+    # 単文節辞書リスト
     def __init__(
             self,
             system_dict: SystemDict,

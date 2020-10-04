@@ -4,7 +4,6 @@
 #include <vector>
 #include <sstream>
 
-#include "debug.h"
 #include "nanoutf8.h"
 #include <marisa.h>
 
@@ -31,6 +30,25 @@ public:
   void load(std::string dict_path) {
     dict_trie.load(dict_path.c_str());
     std::cout << dict_path << ": " << dict_trie.num_keys() << std::endl;
+  }
+
+  void save(std::string dict_path) {
+    dict_trie.save(dict_path.c_str());
+    std::cout << "[Save] " << dict_path << ": " << dict_trie.num_keys() << std::endl;
+  }
+
+  void build(marisa::Keyset & keyset) {
+    dict_trie.build(keyset);
+  }
+
+  void build(std::vector<std::tuple<std::string, std::string>> data) {
+    marisa::Keyset keyset;
+    for (auto &d: data) {
+        std::string yomi = std::get<0>(d);
+        std::string kanjis = std::get<1>(d);
+        keyset.push_back((yomi + "\xff" + kanjis).c_str());
+    }
+    this->build(keyset);
   }
 
   std::vector<std::string> find_kanjis(std::string word) {
