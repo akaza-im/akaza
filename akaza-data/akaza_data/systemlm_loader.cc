@@ -19,6 +19,8 @@ PYBIND11_MODULE(systemlm_loader, m) {
     py::class_<akaza::BinaryDict>(m, "BinaryDict")
         .def(py::init())
         .def("load", &akaza::BinaryDict::load)
+        .def("save", &akaza::BinaryDict::save)
+        .def("build", &akaza::BinaryDict::build)
         .def("find_kanjis", &akaza::BinaryDict::find_kanjis)
         .def("prefixes", &akaza::BinaryDict::prefixes)
         ;
