@@ -1,11 +1,10 @@
 import re
 import sys
 
-import marisa_trie
-
 sys.path.append('../')
 
 from skkdictutils import parse_skkdict, merge_skkdict, ari2nasi
+from akaza_data_utils import copy_snapshot
 
 # jawiki.vocab から system_dict.trie を作成する。
 
@@ -54,13 +53,21 @@ def make_lisp_dict():
     }
 
 
+def write_dict(ofname, dicts):
+    merged_dict = merge_skkdict(dicts)
+    with open(ofname, 'w') as wfp:
+        for yomi, kanjis in merged_dict.items():
+            kanjis = '/'.join(kanjis)
+            wfp.write(f"{yomi} {kanjis}\n")
+    copy_snapshot(ofname)
+
+
 def make_system_dict():
     dictionary_sources = [
         # 先の方が優先される
         ('skk-dev-dict/SKK-JISYO.L', 'euc-jp'),
         ('skk-dev-dict/SKK-JISYO.jinmei', 'euc-jp'),
         ('skk-dev-dict/SKK-JISYO.station', 'euc-jp'),
-        ('skk-dev-dict/zipcode/SKK-JISYO.zipcode', 'euc-jp'),
         ('jawiki-kana-kanji-dict/SKK-JISYO.jawiki', 'utf-8'),
     ]
     dicts = []
@@ -71,16 +78,8 @@ def make_system_dict():
         dicts.append(ari2nasi(ari))
 
     dicts.append(make_vocab_dict())
-    merged_dict = merge_skkdict(dicts)
 
-    entries = []
-    for yomi, kanjis in merged_dict.items():
-        entries.append((yomi, '/'.join(kanjis).encode('utf-8')))
-
-    print(f"# of system dict entries: {len(entries)}")
-
-    trie = marisa_trie.BytesTrie(entries)
-    trie.save('akaza_data/data/system_dict.trie')
+    write_dict('work/jawiki.system_dict.txt', dicts)
 
 
 def make_single_term_dict():
@@ -96,16 +95,7 @@ def make_single_term_dict():
         dicts.append(nasi)
         dicts.append(ari2nasi(ari))
     dicts.append(make_lisp_dict())
-    merged_dict = merge_skkdict(dicts)
-
-    entries = []
-    for yomi, kanjis in merged_dict.items():
-        entries.append((yomi, '/'.join(kanjis).encode('utf-8')))
-
-    print(f"# of emoji entries: {len(entries)}")
-
-    trie = marisa_trie.BytesTrie(entries)
-    trie.save('akaza_data/data/single_term.trie')
+    write_dict("work/jawiki.single_term.txt", dicts)
 
 
 def main():
