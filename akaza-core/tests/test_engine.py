@@ -5,7 +5,6 @@ from tempfile import NamedTemporaryFile
 sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
 import pytest
-from akaza.dictionary import Dictionary
 from akaza import Akaza
 from akaza.user_language_model import UserLanguageModel
 from akaza.language_model import LanguageModel
@@ -33,13 +32,9 @@ language_model = LanguageModel(
 emoji_dict = BinaryDict()
 emoji_dict.load("../akaza-data/akaza_data/data/single_term.trie")
 
-dictionary = Dictionary(
-    normal_dicts=[system_dict],
-)
-
 resolver = GraphResolver(
     language_model=language_model,
-    dictionary=dictionary,
+    normal_dicts=[system_dict],
     single_term_dicts=[emoji_dict],
 )
 

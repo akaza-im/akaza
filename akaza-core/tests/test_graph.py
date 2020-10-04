@@ -6,7 +6,6 @@ import pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
 import pytest
-from akaza.dictionary import Dictionary
 from akaza.node import Node
 from akaza.graph_resolver import GraphResolver
 from akaza.language_model import LanguageModel
@@ -30,10 +29,6 @@ system_dict.load("../akaza-data/akaza_data/data/system_dict.trie")
 # TODO rename variable to single_term
 emoji_dict = BinaryDict()
 emoji_dict.load("../akaza-data/akaza_data/data/single_term.trie")
-
-dictionary = Dictionary(
-    normal_dicts=[system_dict],
-)
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -64,7 +59,7 @@ logging.basicConfig(level=logging.DEBUG)
 def test_expected(src, expected):
     resolver = GraphResolver(
         language_model=language_model,
-        dictionary=dictionary,
+        normal_dicts=[system_dict],
         single_term_dicts=[emoji_dict],
     )
 
@@ -84,7 +79,7 @@ def test_wnn():
 
     resolver = GraphResolver(
         language_model=language_model,
-        dictionary=dictionary,
+        normal_dicts=[system_dict],
         single_term_dicts=[emoji_dict],
     )
     ht = dict(resolver.lookup(src))
@@ -102,7 +97,7 @@ def test_graph_extend():
     src = 'はなか'
     resolver = GraphResolver(
         language_model=language_model,
-        dictionary=dictionary,
+        normal_dicts=[system_dict],
         single_term_dicts=[emoji_dict],
     )
     ht = dict(resolver.lookup(src))
@@ -119,7 +114,7 @@ def test_katakana_candidates():
     src = 'ひょいー'
     resolver = GraphResolver(
         language_model=language_model,
-        dictionary=dictionary,
+        normal_dicts=[system_dict],
         single_term_dicts=[emoji_dict],
     )
     ht = dict(resolver.lookup(src))
@@ -142,7 +137,7 @@ def test_emoji_candidates():
     src = 'すし'
     resolver = GraphResolver(
         language_model=language_model,
-        dictionary=dictionary,
+        normal_dicts=[system_dict],
         single_term_dicts=[emoji_dict],
     )
     ht = dict(resolver.lookup(src))
@@ -188,7 +183,7 @@ def test_katakana_candidates_for_unknown_word():
 
     resolver = GraphResolver(
         language_model=my_language_model,
-        dictionary=dictionary,
+        normal_dicts=[system_dict],
         single_term_dicts=[emoji_dict],
     )
     ht = dict(resolver.lookup(src))
