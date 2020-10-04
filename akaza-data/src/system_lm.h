@@ -3,7 +3,7 @@
 #include <string>
 #include <tuple>
 
-#include "debug.h"
+// #include "debug.h"
 #include <marisa.h>
 
 namespace akaza {
