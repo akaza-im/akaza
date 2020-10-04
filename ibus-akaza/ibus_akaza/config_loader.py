@@ -6,7 +6,7 @@ import yaml
 import logging
 import pathlib
 
-from akaza.skk_file_dict import load_skk_file_dict
+from ibus_akaza.skk_file_dict import load_skk_file_dict
 
 
 def load_config() -> Dict:
