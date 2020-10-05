@@ -1,6 +1,10 @@
+import math
 from typing import Optional
 
 from akaza import tinylisp
+
+UNIGRAM_DEFAULT_COST = math.log10(1e-20)
+BIGRAM_DEFAULT_COST = math.log10(1e-20)
 
 
 class AbstractNode:
@@ -16,14 +20,41 @@ class AbstractNode:
     def is_bos(self):
         raise NotImplemented()
 
-    def get_bigram_cost(self, language_model, next_node):
+    @staticmethod
+    def _calc_bigram_cost(prev_node, next_node, user_language_model, system_language_model) -> float:
+        # self → node で処理する。
+        prev_key = prev_node.get_key()
+        next_key = next_node.get_key()
+        u = user_language_model.get_bigram_cost(prev_key, next_key)
+        if u:
+            return u
+
+        id1 = prev_node.id
+        id2 = next_node.id
+        if id1 is None or id2 is None or id1 < 0 or id2 < 0:
+            # print(f"BI MISS(NO KEY): {key1} {key2}")
+            return BIGRAM_DEFAULT_COST
+        score = system_language_model.find_bigram(id1, id2)
+
+        # print(f"bigram: id1={id1}, id2={id2} score={score}")
+        if score != 0.0:
+            # print(f"BI HIT: {key1} {key2} -> {score}")
+            return score
+        else:
+            # print(f"BI MISS: {key1} {key2}")
+            return BIGRAM_DEFAULT_COST
+
+    def get_bigram_cost(self, next_node, user_language_model, system_language_model):
         next_node_key = next_node.get_key()
         if next_node_key in self._bigram_cache:
             return self._bigram_cache[next_node_key]
         else:
-            cost = language_model.calc_bigram_cost(self, next_node)
+            cost = self._calc_bigram_cost(self, next_node, user_language_model, system_language_model)
             self._bigram_cache[next_node_key] = cost
             return cost
+
+    def calc_node_cost(self, user_language_model, system_language_model):
+        raise NotImplemented()
 
 
 class BosNode(AbstractNode):
@@ -50,6 +81,9 @@ class BosNode(AbstractNode):
     def __repr__(self):
         return f"<BosNode: start_pos={self.start_pos}, prev={self.prev.word if self.prev else '-'}>"
 
+    def calc_node_cost(self, user_language_model, system_language_model):
+        return 0
+
 
 class EosNode(AbstractNode):
     def __init__(self, start_pos):
@@ -75,6 +109,9 @@ class EosNode(AbstractNode):
 
     def __repr__(self):
         return f"<EosNode: start_pos={self.start_pos}, prev={self.prev.word if self.prev else '-'}>"
+
+    def calc_node_cost(self, user_language_model, system_language_model):
+        return 0
 
 
 class Node(AbstractNode):
@@ -115,3 +152,14 @@ class Node(AbstractNode):
             return evaluator.run(self.word)
         else:
             return self.word
+
+    def calc_node_cost(self, user_language_model, system_language_model) -> float:
+        key = self.get_key()
+        u = user_language_model.get_unigram_cost(key)
+        if u is not None:
+            # self.logger.info(f"Use user score: {node.get_key()} -> {u}")
+            return u
+        # print(f"SYSTEM LANGUAGE MODEL UNIGRAM: {key}")
+        word_id, score = system_language_model.find_unigram(key)
+        self.id = word_id
+        return score if word_id >= 0 else UNIGRAM_DEFAULT_COST

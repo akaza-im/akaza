@@ -39,7 +39,7 @@ for line in sys.stdin:
 
     resolver = GraphResolver(
         dictionary=dictionary,
-        language_model=language_model,
+        user_language_model=language_model,
     )
     romkan = RomkanConverter()
     akaza = akaza.Akaza(

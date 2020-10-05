@@ -8,7 +8,6 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/
 import pytest
 from akaza.node import Node
 from akaza.graph_resolver import GraphResolver
-from akaza.language_model import LanguageModel
 from akaza.user_language_model import UserLanguageModel
 from akaza_data.systemlm_loader import BinaryDict, SystemLM
 
@@ -20,8 +19,6 @@ system_language_model.load(
 
 tmpdir = TemporaryDirectory()
 user_language_model = UserLanguageModel(tmpdir.name)
-
-language_model = LanguageModel(system_language_model, user_language_model=user_language_model)
 
 system_dict = BinaryDict()
 system_dict.load("../akaza-data/akaza_data/data/system_dict.trie")
@@ -58,7 +55,8 @@ logging.basicConfig(level=logging.DEBUG)
 ])
 def test_expected(src, expected):
     resolver = GraphResolver(
-        language_model=language_model,
+        user_language_model=user_language_model,
+        system_language_model=system_language_model,
         normal_dicts=[system_dict],
         single_term_dicts=[emoji_dict],
     )
@@ -78,7 +76,8 @@ def test_wnn():
     expected = '私の名前は中野です'
 
     resolver = GraphResolver(
-        language_model=language_model,
+        user_language_model=user_language_model,
+        system_language_model=system_language_model,
         normal_dicts=[system_dict],
         single_term_dicts=[emoji_dict],
     )
@@ -96,7 +95,8 @@ def test_wnn():
 def test_graph_extend():
     src = 'はなか'
     resolver = GraphResolver(
-        language_model=language_model,
+        user_language_model=user_language_model,
+        system_language_model=system_language_model,
         normal_dicts=[system_dict],
         single_term_dicts=[emoji_dict],
     )
@@ -113,7 +113,8 @@ def test_graph_extend():
 def test_katakana_candidates():
     src = 'ひょいー'
     resolver = GraphResolver(
-        language_model=language_model,
+        user_language_model=user_language_model,
+        system_language_model=system_language_model,
         normal_dicts=[system_dict],
         single_term_dicts=[emoji_dict],
     )
@@ -136,7 +137,8 @@ def test_katakana_candidates():
 def test_emoji_candidates():
     src = 'すし'
     resolver = GraphResolver(
-        language_model=language_model,
+        user_language_model=user_language_model,
+        system_language_model=system_language_model,
         normal_dicts=[system_dict],
         single_term_dicts=[emoji_dict],
     )
@@ -174,15 +176,11 @@ def test_katakana_candidates_for_unknown_word():
 
     src = 'ひょいー'
 
-    my_language_model = LanguageModel(
-        system_language_model=system_language_model,
-        user_language_model=my_user_language_model
-    )
     print(my_user_language_model.has_unigram_cost_by_yomi('ひょいー'))
-    print(my_language_model.has_unigram_cost_by_yomi('ひょいー'))
 
     resolver = GraphResolver(
-        language_model=my_language_model,
+        user_language_model=my_user_language_model,
+        system_language_model=system_language_model,
         normal_dicts=[system_dict],
         single_term_dicts=[emoji_dict],
     )
