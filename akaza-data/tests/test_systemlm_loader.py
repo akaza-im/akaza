@@ -14,6 +14,14 @@ def test_foobar():
     assert 'find_unigram' in dir(SystemLM)
 
 
+def test_unigram2():
+    assert lm.find_unigram('愛/あい')[1] != lm.find_unigram('安威/あい')[1]
+
+
+def test_unigram_siin():
+    assert lm.find_unigram('子音/しいん')[1] != lm.find_unigram('試飲/しいん')[1]
+
+
 def test_find_unigram():
     id, score = lm.find_unigram('私/わたし')
     print([id, score])

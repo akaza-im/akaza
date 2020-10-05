@@ -14,7 +14,7 @@ test:
 	cd ibus-akaza && pytest
 
 install:
-	cd akaza-data && $(PYTHON) setup.py install
+	cd akaza-data && $(PYTHON) setup.py install && make install
 	cd akaza-core && $(PYTHON) setup.py install
 	cd ibus-akaza && make install
 

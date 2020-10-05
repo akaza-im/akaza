@@ -5,38 +5,37 @@ from tempfile import NamedTemporaryFile
 sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
 import pytest
-from akaza.dictionary import Dictionary
 from akaza import Akaza
 from akaza.user_language_model import UserLanguageModel
-from akaza_data.system_dict import SystemDict
-from akaza_data.system_language_model import SystemLanguageModel
 from akaza.language_model import LanguageModel
 from akaza.graph_resolver import GraphResolver
 from akaza.romkan import RomkanConverter
-from akaza_data.emoji import EmojiDict
+from akaza_data.systemlm_loader import BinaryDict, SystemLM
 
 tmpfile = NamedTemporaryFile(delete=False)
 user_language_model = UserLanguageModel(tmpfile.name)
-system_dict = SystemDict.load()
 
-system_language_model = SystemLanguageModel.load()
+system_dict = BinaryDict()
+system_dict.load("../akaza-data/akaza_data/data/system_dict.trie")
+
+system_language_model = SystemLM()
+system_language_model.load(
+    "../akaza-data/akaza_data/data/lm_v2_1gram.trie",
+    "../akaza-data/akaza_data/data/lm_v2_2gram.trie"
+)
 
 language_model = LanguageModel(
     system_language_model=system_language_model,
     user_language_model=user_language_model,
 )
 
-emoji_dict = EmojiDict.load()
-
-dictionary = Dictionary(
-    system_dict=system_dict,
-    emoji_dict=emoji_dict,
-    user_dicts=[],
-)
+emoji_dict = BinaryDict()
+emoji_dict.load("../akaza-data/akaza_data/data/single_term.trie")
 
 resolver = GraphResolver(
     language_model=language_model,
-    dictionary=dictionary,
+    normal_dicts=[system_dict],
+    single_term_dicts=[emoji_dict],
 )
 
 romkan = RomkanConverter()

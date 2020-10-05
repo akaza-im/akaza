@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-09-20 16:01+0900\n"
+"POT-Creation-Date: 2020-10-04 23:30+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,31 +17,31 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ibus_akaza/input_mode.py:26
+#: ibus_akaza/input_mode.py:27
 msgid "Alphanumeric (C-S-;)"
 msgstr ""
 
-#: ibus_akaza/input_mode.py:27
+#: ibus_akaza/input_mode.py:28
 msgid "Hiragana (C-S-j)"
 msgstr ""
 
-#: ibus_akaza/input_mode.py:28
+#: ibus_akaza/input_mode.py:29
 msgid "Katakana (C-S-K)"
 msgstr ""
 
-#: ibus_akaza/input_mode.py:29
+#: ibus_akaza/input_mode.py:30
 msgid "Half-width Katakana"
 msgstr ""
 
-#: ibus_akaza/input_mode.py:30
+#: ibus_akaza/input_mode.py:31
 msgid "Full-width Alphanumeric (C-S-l)"
 msgstr ""
 
-#: ibus_akaza/ui.py:148 ibus_akaza/ui.py:270
+#: ibus_akaza/ui.py:156 ibus_akaza/ui.py:293
 #, python-format
 msgid "Input mode (%s)"
 msgstr ""
 
-#: ibus_akaza/ui.py:150
+#: ibus_akaza/ui.py:158
 msgid "Switch input mode"
 msgstr ""

@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Python application
+name: Akaza data building test
 
 on:
   push:
@@ -42,10 +42,12 @@ jobs:
       run: |
         cd akaza-data
         make
-        make binary
+
         pip install -r requirements.txt
-        pytest tests
+        make binary
+        make test
         sudo python setup.py install
+        sudo make install
     - name: Test akaza-core
       run: |
         cd akaza-core
@@ -56,5 +58,6 @@ jobs:
       run: |
         cd ibus-akaza
         pip install -r requirements.txt
+        make ibus_akaza/config.py
         pytest
         sudo python setup.py install
