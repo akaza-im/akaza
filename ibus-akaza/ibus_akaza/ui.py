@@ -25,7 +25,6 @@ from akaza.graph_resolver import GraphResolver
 from akaza.language_model import LanguageModel
 from ibus_akaza import config_loader
 from ibus_akaza.config import MODEL_DIR
-from akaza.dictionary import Dictionary
 from akaza_data.systemlm_loader import BinaryDict, SystemLM
 
 from .keymap import build_default_keymap, KEY_STATE_PRECOMPOSITION, KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION
@@ -63,12 +62,8 @@ def build_akaza():
     emoji_dict = BinaryDict()
     emoji_dict.load(MODEL_DIR + "/single_term.trie")
 
-    dictionary = Dictionary(
-        [system_dict] + user_dicts
-    )
-
     resolver = GraphResolver(
-        dictionary=dictionary,
+        normal_dicts=[system_dict] + user_dicts,
         language_model=language_model,
         single_term_dicts=[emoji_dict],
     )
