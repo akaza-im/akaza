@@ -22,7 +22,6 @@ from akaza.romkan import RomkanConverter
 from akaza.node import Node
 from akaza.user_language_model import UserLanguageModel
 from akaza.graph_resolver import GraphResolver
-from akaza.language_model import LanguageModel
 from ibus_akaza import config_loader
 from ibus_akaza.config import MODEL_DIR
 from akaza_data.systemlm_loader import BinaryDict, SystemLM
@@ -54,17 +53,13 @@ def build_akaza():
         MODEL_DIR + "/lm_v2_2gram.trie"
     )
 
-    language_model = LanguageModel(
-        system_language_model=system_language_model,
-        user_language_model=user_language_model,
-    )
-
     emoji_dict = BinaryDict()
     emoji_dict.load(MODEL_DIR + "/single_term.trie")
 
     resolver = GraphResolver(
         normal_dicts=[system_dict] + user_dicts,
-        language_model=language_model,
+        system_language_model=system_language_model,
+        user_language_model=user_language_model,
         single_term_dicts=[emoji_dict],
     )
 

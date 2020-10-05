@@ -13,6 +13,9 @@ ALPHA = 0.00001
 
 
 # ユーザーの言語モデル。
+# By my knowledge, user_language_model's C/V is smaller than systemLM's.
+# As a result, user_language_model is effective.
+
 #
 # unigram score
 # bigram score
