@@ -16,7 +16,8 @@ def test_read():
     d.add_entry([Node(start_pos=0, word='単語', yomi='たんご')])
     d.add_entry([Node(start_pos=0, word='熟語', yomi='じゅくご')])
     assert d.unigram == {'単語/たんご': 2, '熟語/じゅくご': 1}
-    assert d.total == 3
+    assert d.unigram_C == 2
+    assert d.unigram_V == 3
     assert d.get_unigram_cost('単語/たんご') > d.get_unigram_cost('熟語/じゅくご')
 
 
@@ -49,7 +50,9 @@ def test_read2():
     ])
 
     assert d.unigram == {'それは/それは': 1, 'だよ/だよ': 2, '私/わたし': 3, 'です/です': 1}
-    assert d.total == 7
+    assert d.unigram_C == 4
+    assert d.unigram_V == 7
 
     assert d.bigram == {'それは/それは\t私/わたし': 1, '私/わたし\tだよ/だよ': 2, '私/わたし\tです/です': 1}
-    assert d.bigram_total == {'それは/それは': 1, '私/わたし': 3}
+    assert d.bigram_C == 3
+    assert d.bigram_V == 4
