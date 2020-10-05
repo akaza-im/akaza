@@ -1,13 +1,17 @@
 import logging
+import math
 
 from akaza.node import Node
 from akaza.user_language_model import UserLanguageModel
-from akaza_data.system_language_model import SystemLanguageModel
+from akaza_data.systemlm_loader import SystemLM
+
+UNIGRAM_DEFAULT_COST = math.log10(1e-20)
+BIGRAM_DEFAULT_COST = math.log10(1e-20)
 
 
 class LanguageModel:
     def __init__(self,
-                 system_language_model: SystemLanguageModel,
+                 system_language_model: SystemLM,
                  user_language_model: UserLanguageModel,
                  logger: logging.Logger = logging.getLogger(__name__)):
         self.logger = logger
@@ -26,7 +30,9 @@ class LanguageModel:
                 # self.logger.info(f"Use user score: {node.get_key()} -> {u}")
                 return u
             # print(f"SYSTEM LANGUAGE MODEL UNIGRAM: {key}")
-            word_id, score = self.system_language_model.get_unigram_cost(key)
+            word_id, score = self.system_language_model.find_unigram(key)
+            if word_id < 0:
+                score = UNIGRAM_DEFAULT_COST
             node.id = word_id
             return score
 
@@ -41,4 +47,18 @@ class LanguageModel:
         if u:
             self.logger.info(f"Use user's bigram score: {prev_key},{next_key} -> {u}")
             return u
-        return self.system_language_model.get_bigram_cost(prev_node.id, next_node.id)
+
+        id1 = prev_node.id
+        id2 = next_node.id
+        if id1 is None or id2 is None or id1 < 0 or id2 < 0:
+            # print(f"BI MISS(NO KEY): {key1} {key2}")
+            return BIGRAM_DEFAULT_COST
+        score = self.system_language_model.find_bigram(id1, id2)
+
+        # print(f"bigram: id1={id1}, id2={id2} score={score}")
+        if score != 0.0:
+            # print(f"BI HIT: {key1} {key2} -> {score}")
+            return score
+        else:
+            # print(f"BI MISS: {key1} {key2}")
+            return BIGRAM_DEFAULT_COST

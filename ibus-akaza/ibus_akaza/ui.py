@@ -21,13 +21,11 @@ from akaza import Akaza, tinylisp
 from akaza.romkan import RomkanConverter
 from akaza.node import Node
 from akaza.user_language_model import UserLanguageModel
-from akaza_data.system_dict import SystemDict
-from akaza_data.system_language_model import SystemLanguageModel
 from akaza.graph_resolver import GraphResolver
 from akaza.language_model import LanguageModel
 from ibus_akaza import config_loader
-from akaza.dictionary import Dictionary
-from akaza_data.emoji import EmojiDict
+from ibus_akaza.config import MODEL_DIR
+from akaza_data.systemlm_loader import BinaryDict, SystemLM
 
 from .keymap import build_default_keymap, KEY_STATE_PRECOMPOSITION, KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION
 from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_ALNUM, INPUT_MODE_HIRAGANA, \
@@ -46,25 +44,28 @@ def build_akaza():
     user_language_model_path.mkdir(parents=True, exist_ok=True, mode=0o700)
     user_language_model = UserLanguageModel(str(user_language_model_path))
 
-    system_dict = SystemDict.load()
-    system_language_model = SystemLanguageModel.load()
+    system_dict = BinaryDict()
+    print(f"{MODEL_DIR + '/system_dict.trie'}")
+    system_dict.load(MODEL_DIR + "/system_dict.trie")
+
+    system_language_model = SystemLM()
+    system_language_model.load(
+        MODEL_DIR + "/lm_v2_1gram.trie",
+        MODEL_DIR + "/lm_v2_2gram.trie"
+    )
 
     language_model = LanguageModel(
         system_language_model=system_language_model,
         user_language_model=user_language_model,
     )
 
-    emoji_dict = EmojiDict.load()
-
-    dictionary = Dictionary(
-        system_dict=system_dict,
-        emoji_dict=emoji_dict,
-        user_dicts=user_dicts,
-    )
+    emoji_dict = BinaryDict()
+    emoji_dict.load(MODEL_DIR + "/single_term.trie")
 
     resolver = GraphResolver(
-        dictionary=dictionary,
+        normal_dicts=[system_dict] + user_dicts,
         language_model=language_model,
+        single_term_dicts=[emoji_dict],
     )
 
     romkan = RomkanConverter(additional=user_settings.get('romaji'))
