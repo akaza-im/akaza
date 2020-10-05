@@ -1,4 +1,8 @@
 import pathlib
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
+sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-core/').absolute().resolve()))
 
 from ibus_akaza.skk_file_dict import load_skk_file_dict
 
