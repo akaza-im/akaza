@@ -3,3 +3,4 @@ jaconv>=0.2.4
 PyGObject>=3.38.0
 PyYAML>=5.3.1
 plyvel>=1.2.0
+akaza_data>=0.0.1
