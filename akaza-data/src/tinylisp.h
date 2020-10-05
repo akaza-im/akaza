@@ -1,16 +1,19 @@
 #pragma once
 
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <ctime>
+#include <cassert>
 
 namespace akaza {
 namespace tinylisp {
 
-enum NodeType { NODE_LIST, NODE_SYMBOL, NODE_STRING };
+enum NodeType { NODE_LIST, NODE_SYMBOL, NODE_STRING, NODE_FUNCTION, NODE_POINTER };
 
 class Node {
 private:
@@ -21,6 +24,7 @@ protected:
 
 public:
   NodeType type() { return this->_type; }
+  // TODO Implement method like `as_ptr`
 };
 
 class ListNode : public Node {
@@ -52,6 +56,50 @@ public:
   SymbolNode(std::string symbol) : Node(NODE_SYMBOL) { this->_symbol = symbol; }
   std::string symbol() { return _symbol; }
 };
+
+using function_node_func =
+    std::shared_ptr<Node>(std::vector<std::shared_ptr<Node>> &);
+
+class FunctionNode : public Node {
+private:
+  function_node_func* cb;
+
+public:
+  FunctionNode(function_node_func *cb) : Node(NODE_FUNCTION) { this->cb = cb; }
+  std::shared_ptr<Node> call(std::vector<std::shared_ptr<Node>> &exps) {
+    return cb(exps);
+  }
+};
+
+class PointerNode : public Node {
+private:
+  void *_ptr;
+
+public:
+  PointerNode(void* ptr) : Node(NODE_POINTER) { this->_ptr = ptr; }
+  void * ptr() { return _ptr; }
+};
+
+// TODO move to libakaza.so
+
+static std::shared_ptr<Node> builtin_current_datetime(std::vector<std::shared_ptr<Node>> &expr) {
+  time_t rawtime;
+  time(&rawtime);
+  struct tm* timeinfo = localtime(&rawtime);
+  return std::shared_ptr<Node>(new PointerNode(timeinfo));
+}
+
+static std::shared_ptr<Node> builtin_strftime(std::vector<std::shared_ptr<Node>> &expr) {
+  auto dt = expr[0];
+  auto fmt = expr[1];
+  std::string fmt_str = static_cast<StringNode*>(&*fmt)->str();
+  size_t len = fmt_str.size() * 4;
+  char* buffer = new char[len];
+  size_t got_len = std::strftime(buffer, len,fmt_str.c_str(), static_cast<const struct tm*>(static_cast<PointerNode*>(&*dt)->ptr()));
+  auto retval = std::shared_ptr<Node>(new StringNode(std::string(buffer, got_len)));
+  delete [] buffer;
+  return retval;
+}
 
 class TinyLisp {
 private:
@@ -119,6 +167,44 @@ public:
   std::shared_ptr<Node> parse(std::string src) {
     auto tokens = tokenize(src);
     return _read_from(tokens, 0);
+  }
+
+  std::shared_ptr<Node> eval(std::shared_ptr<Node> x) {
+    if (x->type() == NODE_SYMBOL) {
+      // RETURN SYMBOL VALUE FROM ENV
+      // TODO TODO
+      std::string symbol = static_cast<SymbolNode*>(&*x)->symbol();
+      if (symbol == "current-datetime") {
+        return std::shared_ptr<Node>(new FunctionNode(builtin_current_datetime));
+      } else if (symbol == "strftime") {
+        return std::shared_ptr<Node>(new FunctionNode(builtin_strftime));
+      } else {
+        throw std::runtime_error(std::string("Unknown function: ") + symbol);
+      }
+    } else if (x->type() == NODE_LIST) { // (proc exp*)
+      std::vector<std::shared_ptr<Node>> exps;
+      for (auto &exp : *static_cast<ListNode *>(&*x)->children()) {
+        exps.push_back(eval(exp));
+      }
+
+      std::function<std::shared_ptr<Node>(std::vector<std::shared_ptr<Node>> &)>
+          glambda = [](std::vector<std::shared_ptr<Node>> &exp) {
+            return std::shared_ptr<Node>(new StringNode("HAHAH"));
+          };
+
+      auto proc = exps[0];
+      exps.erase(exps.begin());
+      return static_cast<FunctionNode *>(&*proc)->call(exps);
+      //            exps = [self.eval(exp, env) for exp in x]
+      //            proc = exps.pop(0)
+      //            return proc(*exps)
+    } else {
+      return x;
+    }
+  }
+
+  std::shared_ptr<Node> run(std::string sexp) {
+    return this->eval(parse(sexp));
   }
 };
 
