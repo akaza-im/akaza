@@ -1,3 +1,6 @@
+#include "../picotest/picotest.h"
+#include "../picotest/picotest.c"
+
 #include "../src/system_lm.h"
 
 static int get_id(akaza::SystemLM &lm, std::string word) {
@@ -17,6 +20,7 @@ int main() {
 
     int id_watasi = get_id(lm, "私/わたし");
     int id_ha = get_id(lm, "は/は");
+    ok(id_ha > 0);
     int id_ja = get_id(lm, "じゃ/じゃ");
     // lm.dump_unigram();
     // lm.dump_bigram();
@@ -30,5 +34,7 @@ int main() {
     {
         float score = lm.find_bigram(id_watasi, id_ja);
         std::cout << " score=" << score << std::endl;
+        ok(score < 0);
     }
+    done_testing();
 }

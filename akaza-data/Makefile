@@ -73,9 +73,7 @@ t/02_skk_dict: t/02_skk_dict.cc src/skkdict.h
 	$(CXX) $(CXXOPTS) -l marisa -o t/02_skk_dict t/02_skk_dict.cc
 
 test: t/00_systemlm t/01_binary_dict t/02_skk_dict
-	./t/00_systemlm
-	./t/01_binary_dict
-	./t/02_skk_dict
+	prove --exec '/bin/sh -c' ./t/00_systemlm ./t/01_binary_dict ./t/02_skk_dict
 	pytest tests
 
 # -------------------------------------------------------------------------

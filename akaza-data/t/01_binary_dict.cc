@@ -1,5 +1,7 @@
 #include "../src/binary_dict.h"
 #include <iostream>
+#include "../picotest/picotest.h"
+#include "../picotest/picotest.c"
 
 int main() {
     akaza::BinaryDict dic;
@@ -10,6 +12,7 @@ int main() {
         for (auto & kanji: kanjis) {
             std::cout << kanji << std::endl;
         }
+        ok(kanjis.size() > 0);
     }
     std::cout << "PREFIXES" << std::endl;
     {
@@ -18,4 +21,5 @@ int main() {
             std::cout << kanji << std::endl;
         }
     }
+    done_testing();
 }
