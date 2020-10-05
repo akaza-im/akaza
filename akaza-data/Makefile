@@ -3,7 +3,7 @@ DATADIR ?= $(PREFIX)/share
 DESTDIR ?=
 
 CXX=clang++
-CXXOPTS=-Wall -g -std=c++20
+CXXOPTS=-Wall -g -std=c++11
 # Note: `shell` is a gnu make extension.
 EXT_SUFFIX:=$(shell python3-config --extension-suffix)
 
@@ -58,19 +58,19 @@ akaza_data/data/system_dict.trie: bin/100_effective_dict work/jawiki.single_dict
 # -------------------------------------------------------------------------
 
 akaza_data/systemlm_loader$(EXT_SUFFIX): akaza_data/systemlm_loader.cc src/system_lm.h src/binary_dict.h src/nanoutf8.h
-	$(CXX) -O3 -Wall -shared -lmarisa -std=c++11 -fPIC `python3 -m pybind11 --includes` akaza_data/systemlm_loader.cc \
+	$(CXX) -O3 -Wall -shared -lmarisa $(CXXOPTS) -fPIC `python3 -m pybind11 --includes` akaza_data/systemlm_loader.cc \
 		-o akaza_data/systemlm_loader$(EXT_SUFFIX)
 
 # -------------------------------------------------------------------------
 
 t/00_systemlm: t/00_systemlm.cc
-	$(CXX) -std=c++17 -l marisa -o t/00_systemlm t/00_systemlm.cc
+	$(CXX) $(CXXOPTS) -l marisa -o t/00_systemlm t/00_systemlm.cc
 
 t/01_binary_dict: t/01_binary_dict.cc src/binary_dict.h
-	$(CXX) -std=c++17 -l marisa -o t/01_binary_dict t/01_binary_dict.cc
+	$(CXX) $(CXXOPTS) -l marisa -o t/01_binary_dict t/01_binary_dict.cc
 
 t/02_skk_dict: t/02_skk_dict.cc src/skkdict.h
-	$(CXX) -std=c++17 -l marisa -o t/02_skk_dict t/02_skk_dict.cc
+	$(CXX) $(CXXOPTS) -l marisa -o t/02_skk_dict t/02_skk_dict.cc
 
 test: t/00_systemlm t/01_binary_dict t/02_skk_dict
 	./t/00_systemlm
