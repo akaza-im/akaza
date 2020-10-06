@@ -10,6 +10,10 @@
 #include <ctime>
 #include <cassert>
 
+// 簡易 LISP のインタープリタ for akaza。
+// No variables.
+// ref. http://norvig.com/lispy.html
+
 namespace akaza {
 namespace tinylisp {
 
@@ -81,6 +85,14 @@ public:
 };
 
 // TODO move to libakaza.so
+
+static std::shared_ptr<Node> builtin_string_concat(std::vector<std::shared_ptr<Node>> &expr) {
+  auto a = expr[0];
+  auto b = expr[1];
+  std::string a_str = static_cast<StringNode*>(&*a)->str();
+  std::string b_str = static_cast<StringNode*>(&*b)->str();
+  return std::shared_ptr<Node>(new StringNode(a_str + b_str));
+}
 
 static std::shared_ptr<Node> builtin_current_datetime(std::vector<std::shared_ptr<Node>> &expr) {
   time_t rawtime;
@@ -178,6 +190,8 @@ public:
         return std::shared_ptr<Node>(new FunctionNode(builtin_current_datetime));
       } else if (symbol == "strftime") {
         return std::shared_ptr<Node>(new FunctionNode(builtin_strftime));
+      } else if (symbol == ".") {
+        return std::shared_ptr<Node>(new FunctionNode(builtin_string_concat));
       } else {
         throw std::runtime_error(std::string("Unknown function: ") + symbol);
       }
@@ -195,15 +209,17 @@ public:
       auto proc = exps[0];
       exps.erase(exps.begin());
       return static_cast<FunctionNode *>(&*proc)->call(exps);
-      //            exps = [self.eval(exp, env) for exp in x]
-      //            proc = exps.pop(0)
-      //            return proc(*exps)
     } else {
       return x;
     }
   }
 
-  std::shared_ptr<Node> run(std::string sexp) {
+  std::string run(std::string sexp) {
+    std::shared_ptr<Node> node = this->run_node(sexp);
+    return static_cast<StringNode*>(&*node)->str();
+  }
+
+  std::shared_ptr<Node> run_node(std::string sexp) {
     return this->eval(parse(sexp));
   }
 };

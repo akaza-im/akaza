@@ -1,8 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "../src/system_lm.h"
-#include "../src/binary_dict.h"
+#include "../src/akaza.h"
 
 namespace py = pybind11;
 
@@ -24,5 +23,10 @@ PYBIND11_MODULE(systemlm_loader, m) {
         .def("build_by_keyset", &akaza::BinaryDict::build_by_keyset)
         .def("find_kanjis", &akaza::BinaryDict::find_kanjis)
         .def("prefixes", &akaza::BinaryDict::prefixes)
+        ;
+
+    py::class_<akaza::tinylisp::TinyLisp>(m, "TinyLisp")
+        .def(py::init())
+        .def("run", &akaza::tinylisp::TinyLisp::run)
         ;
 }

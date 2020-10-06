@@ -1,2 +1,0 @@
-from .lisp import *
-
