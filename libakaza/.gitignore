@@ -8,3 +8,5 @@ Makefile
 cmake-build-debug
 Testing
 CMakeFiles
+install_manifest.txt
+akaza.pc
