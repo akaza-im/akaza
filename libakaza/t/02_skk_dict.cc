@@ -1,16 +1,16 @@
 #include "../picotest/picotest.h"
 #include "../picotest/picotest.c"
 
-#include "../src/skkdict.h"
+#include "../include/skkdict.h"
 #include <iostream>
 
 int main() {
-    auto got = akaza::parse_skkdict("dict/SKK-JISYO.akaza");
+    auto got = akaza::parse_skkdict("t/data/SKK-JISYO.akaza");
 
     auto ari = std::get<0>(got);
     auto nasi = std::get<1>(got);
 
-    ok(ari.size() == 0);
+    ok(ari.empty());
     ok(nasi.size() == 2);
 
     {
