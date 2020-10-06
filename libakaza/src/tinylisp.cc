@@ -3,6 +3,35 @@
 
 using namespace akaza::tinylisp;
 
+static std::shared_ptr<Node> builtin_string_concat(std::vector<std::shared_ptr<Node>> &expr) {
+    auto a = expr[0];
+    auto b = expr[1];
+    std::string a_str = dynamic_cast<StringNode *>(&*a)->str();
+    std::string b_str = dynamic_cast<StringNode *>(&*b)->str();
+    return std::shared_ptr<Node>(new StringNode(a_str + b_str));
+}
+
+static std::shared_ptr<Node> builtin_current_datetime(std::vector<std::shared_ptr<Node>> &expr) {
+    time_t rawtime;
+    time(&rawtime);
+    struct tm *timeinfo = localtime(&rawtime);
+    return std::shared_ptr<Node>(new PointerNode(timeinfo));
+}
+
+static std::shared_ptr<Node> builtin_strftime(std::vector<std::shared_ptr<Node>> &expr) {
+    auto dt = expr[0];
+    auto fmt = expr[1];
+    std::string fmt_str = dynamic_cast<StringNode *>(&*fmt)->str();
+    size_t len = fmt_str.size() * 4;
+    char *buffer = new char[len];
+    size_t got_len = std::strftime(buffer, len, fmt_str.c_str(),
+                                   static_cast<const struct tm *>(dynamic_cast<PointerNode *>(&*dt)->ptr()));
+    auto retval = std::shared_ptr<Node>(new StringNode(std::string(buffer, got_len)));
+    delete[] buffer;
+    return retval;
+}
+
+
 std::shared_ptr<Node> TinyLisp::eval(std::shared_ptr<Node> x) {
     if (x->type() == NODE_SYMBOL) {
         std::string symbol = dynamic_cast<SymbolNode *>(&*x)->symbol();
