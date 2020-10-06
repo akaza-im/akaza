@@ -59,7 +59,7 @@ class Graph:
             for i, nodes in self.d.items():
                 for node in nodes:
                     fp.write(f"  {node.start_pos} -> {i} [label=\"{node.word}:"
-                             f" {node.cost}: node={node.calc_node_cost()} {node.prev.word if node.prev else '-'}\"]\n")
+                             f" {node.cost}: {node.prev.word if node.prev else '-'}\"]\n")
             fp.write("""}\n""")
 
     def get_eos(self):

@@ -8,8 +8,14 @@ from atomicwrites import atomic_write
 
 from akaza.node import Node
 
+# additive factor
+ALPHA = 0.00001
+
 
 # ユーザーの言語モデル。
+# By my knowledge, user_language_model's C/V is smaller than systemLM's.
+# As a result, user_language_model is effective.
+
 #
 # unigram score
 # bigram score
@@ -23,17 +29,17 @@ class UserLanguageModel:
 
         self.need_save = False
 
-        self.unigram = {}
         self.unigram_kanas = set()
-        if os.path.exists(self.unigram_path()):
-            self.read_unigram()
-        else:
-            self.total = 0
 
-        self.bigram = {}
-        self.bigram_total = {}
+        if os.path.exists(self.unigram_path()):
+            self.unigram_C, self.unigram_V, self.unigram = self.read(self.unigram_path(), is_unigram=True)
+        else:
+            self.unigram_C, self.unigram_V, self.unigram = 0, 0, {}
+
         if os.path.exists(self.bigram_path()):
-            self.read_bigram()
+            self.bigram_C, self.bigram_V, self.bigram = self.read(self.bigram_path())
+        else:
+            self.bigram_C, self.bigram_V, self.bigram = 0, 0, {}
 
     def unigram_path(self):
         return os.path.join(self.path, '1gram.txt')
@@ -41,54 +47,49 @@ class UserLanguageModel:
     def bigram_path(self):
         return os.path.join(self.path, '2gram.txt')
 
-    def read_unigram(self):
-        total = 0
-        with open(self.unigram_path()) as fp:
+    def read(self, path, is_unigram=False):
+        # 単語数
+        V = 0
+        # 総単語出現数
+        C = 0
+        word_data = {}
+        with open(path) as fp:
             for line in fp:
                 m = line.rstrip().split(" ")
                 if len(m) == 2:
-                    kanji_kana, count = m
-                    kanji, kana = kanji_kana.split('/')
-                    self.unigram_kanas.add(kana)
+                    key, count = m
                     count = int(count)
-                    self.unigram[kanji_kana] = count
-                    total += count
-            self.total = total
-
-    def read_bigram(self):
-        with open(self.bigram_path()) as fp:
-            for line in fp:
-                m = line.rstrip().split(" ")
-                if len(m) == 2:
-                    words, count = m
-                    count = int(count)
-                    self.bigram[words] = count
-                    minus1 = "\t".join(words.split("\t")[:-1])
-                    self.bigram_total[minus1] = self.bigram_total.get(minus1, 0) + 1
+                    word_data[key] = count
+                    if is_unigram:
+                        kanji, kana = key.split('/')
+                        self.unigram_kanas.add(kana)
+                    V += 1
+                    C += count
+        return V, C, word_data
 
     def add_entry(self, nodes: List[Node]):
         # unigram
         for node in nodes:
-            kanji = node.word
-            kana = node.yomi
-
             key = node.get_key()
 
-            self.logger.info(f"add user_language_model entry: kana='{kana}' kanji='{kanji}' key={key}")
-            print(f"add user_language_model entry: key={key}")
+            self.logger.info(f"add user_language_model entry: key={key}")
 
+            if key not in self.unigram:
+                self.unigram_C += 1
+            self.unigram_V += 1
+            kanji, kana = key.split('/')
             self.unigram_kanas.add(kana)
-
             self.unigram[key] = self.unigram.get(key, 0) + 1
-            self.total += 1
 
         # bigram
         for i in range(1, len(nodes)):
             node1 = nodes[i - 1]
             node2 = nodes[i]
             key = node1.get_key() + "\t" + node2.get_key()
+            if key not in self.bigram:
+                self.bigram_C += 1
+            self.bigram_V += 1
             self.bigram[key] = self.bigram.get(key, 0) + 1
-            self.bigram_total[node1.get_key()] = self.bigram_total.get(node1.get_key(), 0) + 1
 
         self.need_save = True
 
@@ -114,7 +115,7 @@ class UserLanguageModel:
     def get_unigram_cost(self, key: str) -> Optional[float]:
         if key in self.unigram:
             count = self.unigram[key]
-            return math.log10(count / self.total)
+            return math.log10((count + ALPHA) / (self.unigram_C + ALPHA * self.unigram_V))
         return None
 
     def has_unigram_cost_by_yomi(self, yomi: str) -> bool:
@@ -124,7 +125,7 @@ class UserLanguageModel:
         key = f"{key1}\t{key2}"
         if key in self.bigram:
             count = self.bigram[key]
-            return math.log10(count / self.bigram_total[key1])
+            return math.log10((count + ALPHA) / (self.bigram_C + ALPHA * self.bigram_V))
         return None
 
     def save_periodically(self):

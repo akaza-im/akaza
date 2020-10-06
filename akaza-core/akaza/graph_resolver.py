@@ -3,24 +3,25 @@ from typing import List
 
 import jaconv
 from akaza_data.systemlm_loader import BinaryDict
+from akaza_data.systemlm_loader import SystemLM
 
 from akaza.graph import Graph
-from akaza.language_model import LanguageModel
 from akaza.node import Node, AbstractNode
+from akaza.user_language_model import UserLanguageModel
 
 
 class GraphResolver:
     def __init__(self,
-                 language_model: LanguageModel,
+                 user_language_model: UserLanguageModel,
+                 system_language_model: SystemLM,
                  normal_dicts: List[BinaryDict],
                  single_term_dicts: List[BinaryDict]):
+        self.user_language_model = user_language_model
+        self.system_language_model = system_language_model
         self.normal_dicts = normal_dicts
-        self.language_model = language_model
         self.single_term_dicts = single_term_dicts
 
     def lookup(self, s: str):
-        assert self.language_model
-
         for i in range(0, len(s)):
             yomi = s[i:]
             # print(f"YOMI:::: {yomi}")
@@ -45,7 +46,7 @@ class GraphResolver:
 
                     yield word, kanjis
 
-                if yomi not in words and self.language_model.has_unigram_cost_by_yomi(yomi):
+                if yomi not in words and self.user_language_model.has_unigram_cost_by_yomi(yomi):
                     # システム辞書に入ってないがユーザー言語モデルには入っているという場合は候補にいれる。
                     kanjis = [yomi]
 
@@ -110,7 +111,7 @@ class GraphResolver:
                             node = Node(i, kanji, yomi)
                             graph.append(index=j, node=node)
                     else:
-                        if self.language_model.has_unigram_cost_by_yomi(yomi):
+                        if self.user_language_model.has_unigram_cost_by_yomi(yomi):
                             for word in [yomi, jaconv.hira2kata(yomi), jaconv.kana2alphabet(yomi),
                                          jaconv.h2z(jaconv.kana2alphabet(yomi), ascii=True)]:
                                 node = Node(start_pos=i, word=word, yomi=yomi)
@@ -139,7 +140,8 @@ class GraphResolver:
             # print(f"fFFFF {nodes}")
             for node in nodes:
                 # print(f"  PPPP {node}")
-                node_cost = self.language_model.calc_node_cost(node)
+                node_cost = node.calc_node_cost(self.user_language_model,
+                                                self.system_language_model)
                 # print(f"  NC {node.word} {node_cost}")
                 cost = -sys.maxsize
                 shortest_prev = None
@@ -149,7 +151,8 @@ class GraphResolver:
                     node.cost = node_cost
                 else:
                     for prev_node in prev_nodes:
-                        bigram_cost = prev_node.get_bigram_cost(self.language_model, node)
+                        bigram_cost = prev_node.get_bigram_cost(node, self.user_language_model,
+                                                                self.system_language_model)
                         tmp_cost = prev_node.cost + bigram_cost + node_cost
                         if cost < tmp_cost:  # コストが最大になる経路をえらんでいる。
                             cost = tmp_cost
@@ -174,7 +177,9 @@ class GraphResolver:
                 # 他の候補を追加する。
                 nodes = sorted(
                     [n for n in graph.get_item(node.start_pos + len(node.yomi)) if node.yomi == n.yomi],
-                    key=lambda x: x.cost + x.get_bigram_cost(self.language_model, last_node), reverse=True)
+                    key=lambda x: x.cost + x.get_bigram_cost(last_node,
+                                                             self.user_language_model,
+                                                             self.system_language_model), reverse=True)
                 result.append(nodes)
 
             last_node = node
