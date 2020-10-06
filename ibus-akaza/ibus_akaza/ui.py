@@ -17,15 +17,14 @@ import gettext
 
 from jaconv import jaconv
 
-from akaza import Akaza, tinylisp
+from akaza import Akaza
 from akaza.romkan import RomkanConverter
 from akaza.node import Node
 from akaza.user_language_model import UserLanguageModel
 from akaza.graph_resolver import GraphResolver
-from akaza.language_model import LanguageModel
 from ibus_akaza import config_loader
 from ibus_akaza.config import MODEL_DIR
-from akaza_data.systemlm_loader import BinaryDict, SystemLM
+from akaza_data.systemlm_loader import BinaryDict, SystemLM, TinyLisp
 
 from .keymap import build_default_keymap, KEY_STATE_PRECOMPOSITION, KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION
 from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_ALNUM, INPUT_MODE_HIRAGANA, \
@@ -54,23 +53,19 @@ def build_akaza():
         MODEL_DIR + "/lm_v2_2gram.trie"
     )
 
-    language_model = LanguageModel(
-        system_language_model=system_language_model,
-        user_language_model=user_language_model,
-    )
-
     emoji_dict = BinaryDict()
     emoji_dict.load(MODEL_DIR + "/single_term.trie")
 
     resolver = GraphResolver(
         normal_dicts=[system_dict] + user_dicts,
-        language_model=language_model,
+        system_language_model=system_language_model,
+        user_language_model=user_language_model,
         single_term_dicts=[emoji_dict],
     )
 
     romkan = RomkanConverter(additional=user_settings.get('romaji'))
 
-    lisp_evaluator = tinylisp.Evaluator()
+    lisp_evaluator = TinyLisp()
 
     return user_language_model, Akaza(resolver=resolver, romkan=romkan), romkan, lisp_evaluator, user_settings
 

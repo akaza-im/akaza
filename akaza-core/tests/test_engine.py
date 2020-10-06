@@ -7,7 +7,6 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/
 import pytest
 from akaza import Akaza
 from akaza.user_language_model import UserLanguageModel
-from akaza.language_model import LanguageModel
 from akaza.graph_resolver import GraphResolver
 from akaza.romkan import RomkanConverter
 from akaza_data.systemlm_loader import BinaryDict, SystemLM
@@ -24,16 +23,12 @@ system_language_model.load(
     "../akaza-data/akaza_data/data/lm_v2_2gram.trie"
 )
 
-language_model = LanguageModel(
-    system_language_model=system_language_model,
-    user_language_model=user_language_model,
-)
-
 emoji_dict = BinaryDict()
 emoji_dict.load("../akaza-data/akaza_data/data/single_term.trie")
 
 resolver = GraphResolver(
-    language_model=language_model,
+    system_language_model=system_language_model,
+    user_language_model=user_language_model,
     normal_dicts=[system_dict],
     single_term_dicts=[emoji_dict],
 )
