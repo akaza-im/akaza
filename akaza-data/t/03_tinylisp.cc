@@ -26,10 +26,17 @@ int main() {
     }
 
     {
-        std::shared_ptr<Node> got = tinylisp.run("(strftime (current-datetime) \"%Y-%m-%d\")");
+        std::shared_ptr<Node> got = tinylisp.run_node("(strftime (current-datetime) \"%Y-%m-%d\")");
         ok(got->type() == NODE_STRING);
         std::string got_str = static_cast<StringNode*>(&*got)->str();
         note("%s", got_str.c_str());
+    }
+
+    {
+        std::shared_ptr<Node> got = tinylisp.run_node("(. \"a\" \"b\")");
+        ok(got->type() == NODE_STRING);
+        std::string got_str = static_cast<StringNode*>(&*got)->str();
+        ok(got_str == "ab");
     }
 
     done_testing();

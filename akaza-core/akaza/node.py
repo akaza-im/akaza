@@ -1,7 +1,7 @@
 import math
 from typing import Optional
 
-from akaza import tinylisp
+from akaza_data.systemlm_loader import TinyLisp
 
 UNIGRAM_DEFAULT_COST = math.log10(1e-20)
 BIGRAM_DEFAULT_COST = math.log10(1e-20)
@@ -75,7 +75,7 @@ class BosNode(AbstractNode):
     def get_key(self):
         return '__BOS__/__BOS__'
 
-    def surface(self, evaluator: tinylisp.Evaluator):
+    def surface(self, evaluator):
         return '__BOS__'
 
     def __repr__(self):
@@ -104,7 +104,7 @@ class EosNode(AbstractNode):
         return '__EOS__'  # わざと使わない。__EOS__ 考慮すると変換精度が落ちるので。。今は使わない。
         # うまく使えることが確認できれば、__EOS__/__EOS__ にする。
 
-    def surface(self, evaluator: tinylisp.Evaluator):
+    def surface(self, evaluator):
         return '__EOS__'
 
     def __repr__(self):
@@ -147,7 +147,7 @@ class Node(AbstractNode):
             return False
         return self.__dict__ == other.__dict__
 
-    def surface(self, evaluator: tinylisp.Evaluator):
+    def surface(self, evaluator: TinyLisp):
         if self.word.startswith('('):
             return evaluator.run(self.word)
         else:
