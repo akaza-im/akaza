@@ -1,10 +1,23 @@
 cmake_minimum_required(VERSION 3.17)
 project(libakaza)
 
+include(GNUInstallDirs)
+
 set(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_C_FLAGS "-Wall -O2 -g ${CC_WARNING_FLAGS} ${CMAKE_C_FLAGS}")
 
+
 add_library(akaza SHARED include/tinylisp.h src/tinylisp.cc)
+
+install(TARGETS akaza
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+file(GLOB HEADERS include/*.h)
+install(FILES ${HEADERS} DESTINATION include/akaza/)
+
+configure_file(akaza.pc.in akaza.pc @ONLY)
+install(FILES ${CMAKE_BINARY_DIR}/akaza.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
+
 
 add_executable(00_systemlm.t t/00_systemlm.cc)
 set_target_properties(00_systemlm.t PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/t/")
