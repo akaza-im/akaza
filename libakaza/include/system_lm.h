@@ -5,7 +5,7 @@
 #include <string>
 #include <tuple>
 
-#include "debug.h"
+#include "../src/debug.h"
 #include <marisa.h>
 
 namespace akaza {
