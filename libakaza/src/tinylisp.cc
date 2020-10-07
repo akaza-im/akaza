@@ -32,7 +32,7 @@ static std::shared_ptr<Node> builtin_strftime(std::vector<std::shared_ptr<Node>>
 }
 
 
-std::shared_ptr<Node> TinyLisp::eval(std::shared_ptr<Node> x) {
+std::shared_ptr<Node> TinyLisp::eval(std::shared_ptr<Node> x) const {
     if (x->type() == NODE_SYMBOL) {
         std::string symbol = dynamic_cast<SymbolNode *>(&*x)->symbol();
         if (symbol == "current-datetime") {

@@ -12,7 +12,8 @@ SET(CMAKE_C_FLAGS "-Wall -O2 -g ${CC_WARNING_FLAGS} ${CMAKE_C_FLAGS}")
 #
 # =============================================================================================
 
-add_library(akaza SHARED include/tinylisp.h src/tinylisp.cc src/binary_dict.cc)
+add_library(akaza SHARED include/tinylisp.h src/tinylisp.cc src/binary_dict.cc include/user_language_model.h
+        src/user_language_model.cc src/split.h include/node.h src/node.cc)
 
 install(TARGETS akaza
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -67,6 +68,16 @@ add_executable(03_tinylisp.t t/03_tinylisp.cc)
 set_target_properties(03_tinylisp.t PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/t/")
 target_link_libraries(03_tinylisp.t marisa akaza)
 SET(TEST_EXES ${TEST_EXES} 03_tinylisp.t)
+
+add_executable(04_user_language_model.t t/04_user_language_model.cc)
+set_target_properties(04_user_language_model.t PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/t/")
+target_link_libraries(04_user_language_model.t marisa akaza)
+SET(TEST_EXES ${TEST_EXES} 04_user_language_model.t)
+
+add_executable(05_node.t t/05_node.cc)
+set_target_properties(05_node.t PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/t/")
+target_link_libraries(05_node.t marisa akaza)
+SET(TEST_EXES ${TEST_EXES} 05_node.t)
 
 
 ADD_CUSTOM_TARGET(test env BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR} prove --exec '' -v t/*.t

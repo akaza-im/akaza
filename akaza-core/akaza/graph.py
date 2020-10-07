@@ -2,17 +2,16 @@ import logging
 from logging import Logger
 from typing import Dict, List
 
-from akaza.node import BosNode, EosNode, AbstractNode
-
+from akaza_data.systemlm_loader import Node, UserLanguageModel
 
 class Graph:
     logger: Logger
-    d: Dict[int, List[AbstractNode]]
+    d: Dict[int, List[Node]]
 
     def __init__(self, size: int, logger=logging.getLogger(__name__)):
         self.d = {
-            0: [BosNode()],
-            size + 1: [EosNode(start_pos=size)],
+            0: [Node(0, "__BOS__", "__BOS__")],
+            size + 1: [Node(size, "__EOS__", "__EOS__")],
         }
         self.logger = logger
 
@@ -24,10 +23,10 @@ class Graph:
         for i in sorted(self.d.keys()):
             if i in self.d:
                 s += f"{i}:\n"
-                s += "\n".join(["\t" + str(x) for x in sorted(self.d[i], key=lambda x: x.cost)]) + "\n"
+                s += "\n".join(["\t" + str(x) for x in sorted(self.d[i], key=lambda x: x.get_cost())]) + "\n"
         return s
 
-    def append(self, index: int, node: AbstractNode) -> None:
+    def append(self, index: int, node: Node) -> None:
         if index not in self.d:
             self.d[index] = []
         # print(f"graph[{j}]={graph[j]} graph={graph}")
@@ -47,7 +46,7 @@ class Graph:
                     continue
                 yield node
 
-    def get_item(self, i: int) -> List[AbstractNode]:
+    def get_item(self, i: int) -> List[Node]:
         return self.d[i]
 
     def dump(self, path: str):
