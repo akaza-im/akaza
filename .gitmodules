@@ -10,9 +10,6 @@
 [submodule "akaza-data/pybind11"]
 	path = akaza-data/pybind11
 	url = https://github.com/pybind/pybind11.git
-[submodule "akaza-data/picotest"]
-	path = akaza-data/picotest
-	url = https://github.com/h2o/picotest.git
 [submodule "libakaza/picotest"]
 	path = libakaza/picotest
 	url = https://github.com/h2o/picotest.git

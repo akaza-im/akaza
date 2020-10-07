@@ -1,18 +1,23 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "../src/akaza.h"
+#include <akaza/akaza.h>
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(systemlm_loader, m) {
     m.doc() = "system lm"; // optional module docstring
 
-    py::class_<akaza::SystemLM>(m, "SystemLM")
+    py::class_<akaza::SystemUnigramLM>(m, "SystemUnigramLM")
         .def(py::init())
-        .def("load", &akaza::SystemLM::load)
-        .def("find_unigram", &akaza::SystemLM::find_unigram)
-        .def("find_bigram", &akaza::SystemLM::find_bigram)
+        .def("load", &akaza::SystemUnigramLM::load)
+        .def("find_unigram", &akaza::SystemUnigramLM::find_unigram)
+        ;
+
+    py::class_<akaza::SystemBigramLM>(m, "SystemBigramLM")
+        .def(py::init())
+        .def("load", &akaza::SystemBigramLM::load)
+        .def("find_bigram", &akaza::SystemBigramLM::find_bigram)
         ;
 
     py::class_<akaza::BinaryDict>(m, "BinaryDict")

@@ -12,18 +12,13 @@ int main() {
     // vector of "とくひろ" => "徳宏/徳大/徳寛/督弘"
     // void build(std::vector<std::tuple<std::string, std::string>> data) {
     {
-        // building
-        akaza::BinaryDict dic;
-        std::vector<std::tuple<std::string, std::string>> list;
-        list.emplace_back("あいう", "藍宇");
-        dic.build(list);
-        dic.save(dictfile);
-    }
-
-    {
         // saving
         akaza::BinaryDict dic;
-        dic.load(dictfile);
+        {
+            std::vector<std::tuple<std::string, std::string>> list;
+            list.emplace_back("あいう", "藍宇");
+            dic.build(list);
+        }
         {
             auto kanjis = dic.find_kanjis("あいう");
             for (auto & kanji: kanjis) {

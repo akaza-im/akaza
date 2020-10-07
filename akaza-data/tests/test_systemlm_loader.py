@@ -4,35 +4,38 @@ import pytest
 
 sys.path.insert(0, '.')
 
-from akaza_data.systemlm_loader import SystemLM
+from akaza_data.systemlm_loader import SystemUnigramLM, SystemBigramLM
 
-lm = SystemLM()
-lm.load('akaza_data/data/lm_v2_1gram.trie', 'akaza_data/data/lm_v2_2gram.trie')
+ulm = SystemUnigramLM()
+ulm.load('akaza_data/data/lm_v2_1gram.trie')
+
+blm = SystemBigramLM()
+blm.load('akaza_data/data/lm_v2_2gram.trie')
 
 
 def test_foobar():
-    assert 'find_unigram' in dir(SystemLM)
+    assert 'find_unigram' in dir(SystemUnigramLM)
 
 
 def test_unigram2():
-    assert lm.find_unigram('愛/あい')[1] != lm.find_unigram('安威/あい')[1]
+    assert ulm.find_unigram('愛/あい')[1] != ulm.find_unigram('安威/あい')[1]
 
 
 def test_unigram_siin():
-    assert lm.find_unigram('子音/しいん')[1] != lm.find_unigram('試飲/しいん')[1]
+    assert ulm.find_unigram('子音/しいん')[1] != ulm.find_unigram('試飲/しいん')[1]
 
 
 def test_find_unigram():
-    id, score = lm.find_unigram('私/わたし')
+    id, score = ulm.find_unigram('私/わたし')
     print([id, score])
     assert id > 0
     assert score < 0
 
 
 def test_find_bigram():
-    id_watasi, _ = lm.find_unigram('私/わたし')
-    id_ja, _ = lm.find_unigram('じゃ/じゃ')
-    score = lm.find_bigram(id_watasi, id_ja)
+    id_watasi, _ = ulm.find_unigram('私/わたし')
+    id_ja, _ = ulm.find_unigram('じゃ/じゃ')
+    score = blm.find_bigram(id_watasi, id_ja)
     assert score < 0
 
 
@@ -44,7 +47,7 @@ def test_find_unigram_test_all():
     with open(path, 'r') as fp:
         for line in fp:
             word, txt_score = line.rstrip().split(' ')
-            id, trie_score = lm.find_unigram(word)
+            id, trie_score = ulm.find_unigram(word)
             print(f"word='{word}' id={id} trie_score={trie_score} txt_score={txt_score}")
             assert abs(trie_score - float(txt_score)) < 0.000001
 
@@ -58,9 +61,9 @@ def test_find_bigram_test_all():
         for line in fp:
             words, txt_score = line.rstrip().split(' ')
             word1, word2 = words.split("\t")
-            id1, _ = lm.find_unigram(word1)
-            id2, _ = lm.find_unigram(word2)
-            trie_score = lm.find_bigram(id1, id2)
+            id1, _ = ulm.find_unigram(word1)
+            id2, _ = ulm.find_unigram(word2)
+            trie_score = blm.find_bigram(id1, id2)
             print(f"word='{word1}-{word2}' id={id1}-{id2} trie_score={trie_score} txt_score={txt_score}")
             assert abs(trie_score - float(txt_score)) < 0.000001
 

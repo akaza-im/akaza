@@ -2,8 +2,7 @@ import sys
 from typing import List
 
 import jaconv
-from akaza_data.systemlm_loader import BinaryDict
-from akaza_data.systemlm_loader import SystemLM
+from akaza_data.systemlm_loader import BinaryDict, SystemUnigramLM, SystemBigramLM
 
 from akaza.graph import Graph
 from akaza.node import Node, AbstractNode
@@ -13,11 +12,13 @@ from akaza.user_language_model import UserLanguageModel
 class GraphResolver:
     def __init__(self,
                  user_language_model: UserLanguageModel,
-                 system_language_model: SystemLM,
+                 system_unigram_lm: SystemUnigramLM,
+                 system_bigram_lm: SystemBigramLM,
                  normal_dicts: List[BinaryDict],
                  single_term_dicts: List[BinaryDict]):
         self.user_language_model = user_language_model
-        self.system_language_model = system_language_model
+        self.system_unigram_lm = system_unigram_lm
+        self.system_bigram_lm = system_bigram_lm
         self.normal_dicts = normal_dicts
         self.single_term_dicts = single_term_dicts
 
@@ -141,7 +142,7 @@ class GraphResolver:
             for node in nodes:
                 # print(f"  PPPP {node}")
                 node_cost = node.calc_node_cost(self.user_language_model,
-                                                self.system_language_model)
+                                                self.system_unigram_lm)
                 # print(f"  NC {node.word} {node_cost}")
                 cost = -sys.maxsize
                 shortest_prev = None
@@ -152,7 +153,7 @@ class GraphResolver:
                 else:
                     for prev_node in prev_nodes:
                         bigram_cost = prev_node.get_bigram_cost(node, self.user_language_model,
-                                                                self.system_language_model)
+                                                                self.system_bigram_lm)
                         tmp_cost = prev_node.cost + bigram_cost + node_cost
                         if cost < tmp_cost:  # コストが最大になる経路をえらんでいる。
                             cost = tmp_cost
@@ -179,7 +180,7 @@ class GraphResolver:
                     [n for n in graph.get_item(node.start_pos + len(node.yomi)) if node.yomi == n.yomi],
                     key=lambda x: x.cost + x.get_bigram_cost(last_node,
                                                              self.user_language_model,
-                                                             self.system_language_model), reverse=True)
+                                                             self.system_bigram_lm), reverse=True)
                 result.append(nodes)
 
             last_node = node
