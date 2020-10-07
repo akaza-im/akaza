@@ -6,7 +6,7 @@ from typing import List
 
 import jaconv
 from akaza.graph_resolver import GraphResolver
-from akaza.node import Node
+from akaza_data.systemlm_loader import Node, UserLanguageModel
 
 from akaza.romkan import RomkanConverter
 

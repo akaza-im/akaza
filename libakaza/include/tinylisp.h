@@ -95,7 +95,7 @@ namespace akaza {
 
         class TinyLisp {
         private:
-            std::vector<std::string> split(const std::string &s) {
+            static std::vector<std::string> split(const std::string &s) {
                 std::vector<std::string> elems;
                 std::stringstream ss(s);
                 std::string item;
@@ -108,7 +108,7 @@ namespace akaza {
             }
 
             std::string replace_string(std::string target, std::string pattern,
-                                       std::string format) {
+                                       std::string format) const {
                 std::string::size_type pos(target.find(pattern));
 
                 while (pos != std::string::npos) {
@@ -119,14 +119,14 @@ namespace akaza {
                 return target;
             }
 
-            std::vector<std::string> tokenize(std::string src) {
+            std::vector<std::string> tokenize(std::string src) const {
                 src = replace_string(src, "(", " ( ");
                 src = replace_string(src, ")", " ) ");
                 return split(src);
             }
 
             std::shared_ptr<Node> _read_from(std::vector<std::string> &tokens,
-                                             int depth) {
+                                             int depth) const {
                 if (tokens.size() == 0) {
                     throw std::runtime_error("Unexpected EOF while reading(LISP)");
                 }
@@ -146,7 +146,7 @@ namespace akaza {
                 }
             }
 
-            std::shared_ptr<Node> _atom(std::string token) {
+            std::shared_ptr<Node> _atom(std::string token) const {
                 if (token.size() > 0 && token[0] == '"') {
                     return std::shared_ptr<Node>(
                             new StringNode(token.substr(1, token.size() - 2)));
@@ -156,19 +156,19 @@ namespace akaza {
             }
 
         public:
-            std::shared_ptr<Node> parse(std::string src) {
+            std::shared_ptr<Node> parse(std::string src) const {
                 auto tokens = tokenize(src);
                 return _read_from(tokens, 0);
             }
 
-            std::shared_ptr<Node> eval(std::shared_ptr<Node> x);
+            std::shared_ptr<Node> eval(std::shared_ptr<Node> x) const;
 
-            std::string run(std::string sexp) {
+            std::string run(std::string sexp) const {
                 std::shared_ptr<Node> node = this->run_node(sexp);
                 return static_cast<StringNode *>(&*node)->str();
             }
 
-            std::shared_ptr<Node> run_node(std::string sexp) {
+            std::shared_ptr<Node> run_node(std::string sexp) const {
                 return this->eval(parse(sexp));
             }
         };

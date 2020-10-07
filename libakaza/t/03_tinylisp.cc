@@ -3,7 +3,6 @@
 
 #include "../include/tinylisp.h"
 #include <iostream>
-#include <typeinfo>
 
 using namespace akaza::tinylisp;
 

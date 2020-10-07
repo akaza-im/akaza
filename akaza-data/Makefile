@@ -3,7 +3,7 @@ DATADIR ?= $(PREFIX)/share
 DESTDIR ?=
 
 CXX=clang++
-CXXOPTS=-W -Wno-unused-parameter -Wno-unused-variable -g -std=c++11
+CXXOPTS=-W -Wno-unused-parameter -Wno-unused-variable -g -std=c++17
 # Note: `shell` is a gnu make extension.
 EXT_SUFFIX:=$(shell python3-config --extension-suffix)
 

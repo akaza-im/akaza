@@ -2,12 +2,9 @@ import sys
 from typing import List
 
 import jaconv
-from akaza_data.systemlm_loader import BinaryDict, SystemUnigramLM, SystemBigramLM
+from akaza_data.systemlm_loader import BinaryDict, SystemUnigramLM, SystemBigramLM, Node, UserLanguageModel
 
 from akaza.graph import Graph
-from akaza.node import Node, AbstractNode
-from akaza.user_language_model import UserLanguageModel
-
 
 class GraphResolver:
     def __init__(self,
@@ -121,7 +118,7 @@ class GraphResolver:
         return graph
 
     # @profile
-    def viterbi(self, graph: Graph) -> List[List[AbstractNode]]:
+    def viterbi(self, graph: Graph) -> List[List[Node]]:
         """
         ビタビアルゴリズムにもとづき、最短の経路を求めて、N-Best 解を求める。
         """
@@ -135,7 +132,7 @@ class GraphResolver:
         Graph の各ノードについて最短のノードをえる。
         """
         # BOS にスコアを設定。
-        graph.get_bos().cost = 0
+        graph.get_bos().set_cost(0)
 
         for nodes in graph.get_items():
             # print(f"fFFFF {nodes}")
@@ -146,10 +143,10 @@ class GraphResolver:
                 # print(f"  NC {node.word} {node_cost}")
                 cost = -sys.maxsize
                 shortest_prev = None
-                prev_nodes = graph.get_item(node.start_pos)
+                prev_nodes = graph.get_item(node.get_start_pos())
                 if prev_nodes[0].is_bos():
-                    node.prev = prev_nodes[0]
-                    node.cost = node_cost
+                    node.set_prev(prev_nodes[0])
+                    node.set_cost(node_cost)
                 else:
                     for prev_node in prev_nodes:
                         bigram_cost = prev_node.get_bigram_cost(node, self.user_language_model,

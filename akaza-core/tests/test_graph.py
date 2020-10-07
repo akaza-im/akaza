@@ -6,10 +6,8 @@ import pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
 import pytest
-from akaza.node import Node
 from akaza.graph_resolver import GraphResolver
-from akaza.user_language_model import UserLanguageModel
-from akaza_data.systemlm_loader import BinaryDict, SystemUnigramLM, SystemBigramLM
+from akaza_data.systemlm_loader import BinaryDict, SystemUnigramLM, SystemBigramLM, Node, UserLanguageModel
 
 system_unigram_lm = SystemUnigramLM()
 system_unigram_lm.load("../akaza-data/akaza_data/data/lm_v2_1gram.trie")
@@ -19,7 +17,10 @@ system_bigram_lm.load("../akaza-data/akaza_data/data/lm_v2_2gram.trie")
 
 
 tmpdir = TemporaryDirectory()
-user_language_model = UserLanguageModel(tmpdir.name)
+user_language_model = UserLanguageModel(
+    tmpdir.name + "/uni",
+    tmpdir.name + "/bi"
+)
 
 system_dict = BinaryDict()
 system_dict.load("../akaza-data/akaza_data/data/system_dict.trie")
@@ -165,18 +166,21 @@ def test_emoji_candidates():
 def test_katakana_candidates_for_unknown_word():
     # ユーザー言語モデルで「ヒョイー」のコストを高めておく。
     my_tmpdir = TemporaryDirectory()
-    my_user_language_model = UserLanguageModel(my_tmpdir.name)
-    my_user_language_model.add_entry(
-        [Node(start_pos=0, word='ヒョイー', yomi='ひょいー')]
+    my_user_language_model = UserLanguageModel(
+        my_tmpdir.name + "/uni",
+        my_tmpdir.name + "/bi"
     )
     my_user_language_model.add_entry(
-        [Node(start_pos=0, word='ヒョイー', yomi='ひょいー')]
+        [Node(0, 'ひょいー', 'ヒョイー')]
     )
     my_user_language_model.add_entry(
-        [Node(start_pos=0, word='ヒョイー', yomi='ひょいー')]
+        [Node(0, 'ひょいー', 'ヒョイー')]
     )
     my_user_language_model.add_entry(
-        [Node(start_pos=0, word='ヒョイー', yomi='ひょいー')]
+        [Node(0, 'ひょいー', 'ヒョイー')]
+    )
+    my_user_language_model.add_entry(
+        [Node(0, 'ひょいー', 'ヒョイー')]
     )
 
     src = 'ひょいー'
@@ -192,7 +196,7 @@ def test_katakana_candidates_for_unknown_word():
     )
     ht = dict(resolver.lookup(src))
     graph = resolver.graph_construct(src, ht)
-    assert 'ひょいー' in set([node.yomi for node in graph.all_nodes()])
+    assert 'ひょいー' in set([node.get_yomi() for node in graph.all_nodes()])
     # print(graph)
 
     clauses = resolver.viterbi(graph)

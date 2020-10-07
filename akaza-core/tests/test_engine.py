@@ -6,10 +6,9 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/
 
 import pytest
 from akaza import Akaza
-from akaza.user_language_model import UserLanguageModel
 from akaza.graph_resolver import GraphResolver
 from akaza.romkan import RomkanConverter
-from akaza_data.systemlm_loader import BinaryDict, SystemUnigramLM, SystemBigramLM
+from akaza_data.systemlm_loader import BinaryDict, SystemUnigramLM, SystemBigramLM, UserLanguageModel
 
 system_unigram_lm = SystemUnigramLM()
 system_unigram_lm.load("../akaza-data/akaza_data/data/lm_v2_1gram.trie")
@@ -18,7 +17,10 @@ system_bigram_lm = SystemBigramLM()
 system_bigram_lm.load("../akaza-data/akaza_data/data/lm_v2_2gram.trie")
 
 tmpfile = NamedTemporaryFile(delete=False)
-user_language_model = UserLanguageModel(tmpfile.name)
+user_language_model = UserLanguageModel(
+    tmpfile.name + "/uni",
+    tmpfile.name + "/bi"
+)
 
 system_dict = BinaryDict()
 system_dict.load("../akaza-data/akaza_data/data/system_dict.trie")

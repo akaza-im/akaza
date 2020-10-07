@@ -5,7 +5,6 @@
 #include <string>
 #include <tuple>
 
-#include "../src/debug.h"
 #include <marisa.h>
 
 namespace akaza {
@@ -64,6 +63,10 @@ namespace akaza {
             }
             return std::tuple<int32_t, float>(UNKNOWN_WORD_ID, 0);
         }
+
+        float get_default_cost() const {
+            return -20.0; // log10(1e-20)
+        }
     };
 
     class SystemBigramLMBuilder {
@@ -107,7 +110,7 @@ namespace akaza {
             trie.load(path);
         }
 
-        float find_bigram(int32_t word_id1, int32_t word_id2) {
+        float find_bigram(int32_t word_id1, int32_t word_id2) const {
             uint32_t uword_id1 = word_id1;
             uint32_t uword_id2 = word_id2;
             uint8_t idbuf[4];
@@ -127,6 +130,10 @@ namespace akaza {
                 return score;
             }
             return 0;
+        }
+
+        float get_default_score() const {
+            return -20.0; // log10(1e-20)
         }
     };
 } // namespace akaza
