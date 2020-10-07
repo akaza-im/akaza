@@ -6,6 +6,11 @@ include(GNUInstallDirs)
 set(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_C_FLAGS "-Wall -O2 -g ${CC_WARNING_FLAGS} ${CMAKE_C_FLAGS}")
 
+# =============================================================================================
+#
+# library
+#
+# =============================================================================================
 
 add_library(akaza SHARED include/tinylisp.h src/tinylisp.cc)
 
@@ -15,9 +20,33 @@ install(TARGETS akaza
 file(GLOB HEADERS include/*.h)
 install(FILES ${HEADERS} DESTINATION include/akaza/)
 
+# =============================================================================================
+#
+# bin
+#
+# =============================================================================================
+add_executable(akaza-make-system-lm bin/akaza-make-system-lm.cc)
+target_link_libraries(akaza-make-system-lm marisa)
+install(TARGETS akaza-make-system-lm DESTINATION bin/)
+
+add_executable(akaza-make-binary-dict bin/akaza-make-binary-dict.cc)
+target_link_libraries(akaza-make-binary-dict marisa)
+install(TARGETS akaza-make-binary-dict DESTINATION bin/)
+
+# =============================================================================================
+#
+# pkg-config
+#
+# =============================================================================================
+
 configure_file(akaza.pc.in akaza.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/akaza.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
 
+# =============================================================================================
+#
+# test
+#
+# =============================================================================================
 
 add_executable(00_systemlm.t t/00_systemlm.cc)
 set_target_properties(00_systemlm.t PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/t/")

@@ -9,13 +9,14 @@ import pytest
 from akaza.node import Node
 from akaza.graph_resolver import GraphResolver
 from akaza.user_language_model import UserLanguageModel
-from akaza_data.systemlm_loader import BinaryDict, SystemLM
+from akaza_data.systemlm_loader import BinaryDict, SystemUnigramLM, SystemBigramLM
 
-system_language_model = SystemLM()
-system_language_model.load(
-    "../akaza-data/akaza_data/data/lm_v2_1gram.trie",
-    "../akaza-data/akaza_data/data/lm_v2_2gram.trie"
-)
+system_unigram_lm = SystemUnigramLM()
+system_unigram_lm.load("../akaza-data/akaza_data/data/lm_v2_1gram.trie")
+
+system_bigram_lm = SystemBigramLM()
+system_bigram_lm.load("../akaza-data/akaza_data/data/lm_v2_2gram.trie")
+
 
 tmpdir = TemporaryDirectory()
 user_language_model = UserLanguageModel(tmpdir.name)
@@ -23,9 +24,8 @@ user_language_model = UserLanguageModel(tmpdir.name)
 system_dict = BinaryDict()
 system_dict.load("../akaza-data/akaza_data/data/system_dict.trie")
 
-# TODO rename variable to single_term
-emoji_dict = BinaryDict()
-emoji_dict.load("../akaza-data/akaza_data/data/single_term.trie")
+single_term = BinaryDict()
+single_term.load("../akaza-data/akaza_data/data/single_term.trie")
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -56,9 +56,10 @@ logging.basicConfig(level=logging.DEBUG)
 def test_expected(src, expected):
     resolver = GraphResolver(
         user_language_model=user_language_model,
-        system_language_model=system_language_model,
+        system_unigram_lm=system_unigram_lm,
+        system_bigram_lm=system_bigram_lm,
         normal_dicts=[system_dict],
-        single_term_dicts=[emoji_dict],
+        single_term_dicts=[single_term],
     )
 
     ht = dict(resolver.lookup(src))
@@ -77,9 +78,10 @@ def test_wnn():
 
     resolver = GraphResolver(
         user_language_model=user_language_model,
-        system_language_model=system_language_model,
+        system_unigram_lm=system_unigram_lm,
+        system_bigram_lm=system_bigram_lm,
         normal_dicts=[system_dict],
-        single_term_dicts=[emoji_dict],
+        single_term_dicts=[single_term],
     )
     ht = dict(resolver.lookup(src))
     graph = resolver.graph_construct(src, ht)
@@ -96,9 +98,10 @@ def test_graph_extend():
     src = 'はなか'
     resolver = GraphResolver(
         user_language_model=user_language_model,
-        system_language_model=system_language_model,
+        system_unigram_lm=system_unigram_lm,
+        system_bigram_lm=system_bigram_lm,
         normal_dicts=[system_dict],
-        single_term_dicts=[emoji_dict],
+        single_term_dicts=[single_term],
     )
     ht = dict(resolver.lookup(src))
     # (0,2) の文節を強制指定する
@@ -114,9 +117,10 @@ def test_katakana_candidates():
     src = 'ひょいー'
     resolver = GraphResolver(
         user_language_model=user_language_model,
-        system_language_model=system_language_model,
+        system_unigram_lm=system_unigram_lm,
+        system_bigram_lm=system_bigram_lm,
         normal_dicts=[system_dict],
-        single_term_dicts=[emoji_dict],
+        single_term_dicts=[single_term],
     )
     ht = dict(resolver.lookup(src))
     for k, v in ht.items():
@@ -138,9 +142,10 @@ def test_emoji_candidates():
     src = 'すし'
     resolver = GraphResolver(
         user_language_model=user_language_model,
-        system_language_model=system_language_model,
+        system_unigram_lm=system_unigram_lm,
+        system_bigram_lm=system_bigram_lm,
         normal_dicts=[system_dict],
-        single_term_dicts=[emoji_dict],
+        single_term_dicts=[single_term],
     )
     ht = dict(resolver.lookup(src))
     for k, v in ht.items():
@@ -180,9 +185,10 @@ def test_katakana_candidates_for_unknown_word():
 
     resolver = GraphResolver(
         user_language_model=my_user_language_model,
-        system_language_model=system_language_model,
+        system_unigram_lm=system_unigram_lm,
+        system_bigram_lm=system_bigram_lm,
         normal_dicts=[system_dict],
-        single_term_dicts=[emoji_dict],
+        single_term_dicts=[single_term],
     )
     ht = dict(resolver.lookup(src))
     graph = resolver.graph_construct(src, ht)

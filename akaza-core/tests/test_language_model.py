@@ -8,13 +8,13 @@ from akaza.user_language_model import UserLanguageModel
 
 from tempfile import TemporaryDirectory
 
-from akaza_data.systemlm_loader import BinaryDict, SystemLM
+from akaza_data.systemlm_loader import BinaryDict, SystemUnigramLM, SystemBigramLM
 
-system_language_model = SystemLM()
-system_language_model.load(
-    "../akaza-data/akaza_data/data/lm_v2_1gram.trie",
-    "../akaza-data/akaza_data/data/lm_v2_2gram.trie"
-)
+system_unigram_lm = SystemUnigramLM()
+system_unigram_lm.load("../akaza-data/akaza_data/data/lm_v2_1gram.trie")
+
+system_bigram_lm = SystemBigramLM()
+system_bigram_lm.load("../akaza-data/akaza_data/data/lm_v2_2gram.trie")
 
 
 def test_read():
@@ -26,7 +26,7 @@ def test_read():
 
     assert Node(start_pos=0, word='単語', yomi='たんご'
                 ).calc_node_cost(
-        user_language_model, system_language_model
+        user_language_model, system_unigram_lm
     ) > Node(
         start_pos=0, word='熟語', yomi='じゅくご'
-    ).calc_node_cost(user_language_model, system_language_model)
+    ).calc_node_cost(user_language_model, system_unigram_lm)

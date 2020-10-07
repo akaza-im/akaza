@@ -10,3 +10,5 @@ Testing
 CMakeFiles
 install_manifest.txt
 akaza.pc
+akaza-make-system-lm
+akaza-make-binary-dict

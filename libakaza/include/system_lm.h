@@ -36,6 +36,8 @@ namespace akaza {
     public:
         SystemUnigramLM() {}
 
+        ~SystemUnigramLM() {}
+
         void load(const char *path) {
             trie.load(path);
             std::cout << path << " size: " << trie.size() << std::endl;
@@ -44,7 +46,7 @@ namespace akaza {
         /**
          * @return {word_id}, {score}
          */
-        std::tuple<int32_t, float> find_unigram(const std::string &word) {
+        std::tuple<int32_t, float> find_unigram(const std::string &word) const {
             std::string query(word);
             query += "\xff"; // add marker
 
