@@ -13,7 +13,9 @@ SET(CMAKE_C_FLAGS "-Wall -O2 -g ${CC_WARNING_FLAGS} ${CMAKE_C_FLAGS}")
 # =============================================================================================
 
 add_library(akaza SHARED include/tinylisp.h src/tinylisp.cc src/binary_dict.cc include/user_language_model.h
-        src/user_language_model.cc src/split.h include/node.h src/node.cc)
+        src/user_language_model.cc src/split.h include/node.h src/node.cc include/graph.h include/graph_resolver.h
+        src/graph_resolver.cc src/graph.cc src/debug_log.h include/romkan.h src/romkan.cc src/romkan_default.h
+        src/akaza.cc)
 
 install(TARGETS akaza
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -78,6 +80,21 @@ add_executable(05_node.t t/05_node.cc)
 set_target_properties(05_node.t PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/t/")
 target_link_libraries(05_node.t marisa akaza)
 SET(TEST_EXES ${TEST_EXES} 05_node.t)
+
+add_executable(06_graph_resolver.t t/06_graph_resolver.cc)
+set_target_properties(06_graph_resolver.t PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/t/")
+target_link_libraries(06_graph_resolver.t marisa akaza)
+SET(TEST_EXES ${TEST_EXES} 06_graph_resolver.t)
+
+add_executable(07_romkan.t t/07_romkan.cc)
+set_target_properties(07_romkan.t PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/t/")
+target_link_libraries(07_romkan.t marisa akaza)
+SET(TEST_EXES ${TEST_EXES} 07_romkan.t)
+
+add_executable(08_akaza.t t/08_akaza.cc)
+set_target_properties(08_akaza.t PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/t/")
+target_link_libraries(08_akaza.t marisa akaza)
+SET(TEST_EXES ${TEST_EXES} 08_akaza.t)
 
 
 ADD_CUSTOM_TARGET(test env BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR} prove --exec '' -v t/*.t

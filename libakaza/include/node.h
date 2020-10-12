@@ -1,10 +1,9 @@
 #ifndef LIBAKAZA_NODE_H
 #define LIBAKAZA_NODE_H
 
-#include "user_language_model.h"
-
 #include <map>
 #include <string>
+#include <assert.h>
 
 namespace akaza {
 
@@ -12,16 +11,16 @@ namespace akaza {
 
     class Node {
     private:
-        size_t start_pos;
+        int start_pos;
         std::string yomi;
         std::string word;
         std::string _key;
-        std::shared_ptr<Node> prev;
+        std::shared_ptr<Node> _prev;
         float _cost;
         int32_t word_id;
         std::map<std::string, float> _bigram_cache;
     public:
-        Node(size_t start_pos, const std::string &yomi, const std::string &word) {
+        Node(int start_pos, const std::string &yomi, const std::string &word) {
             this->start_pos = start_pos;
             this->yomi = yomi;
             this->word = word;
@@ -32,6 +31,8 @@ namespace akaza {
             } else {
                 this->_key = word + "/" + yomi;
             }
+            this->_cost = 0;
+            this->word_id = -1;
         }
 
         std::string get_key() const {
@@ -80,22 +81,20 @@ namespace akaza {
             _cost = cost;
         }
 
-        size_t get_start_pos() const {
+        int get_start_pos() const {
             return start_pos;
         }
 
         std::shared_ptr<Node> get_prev() const {
-            return prev;
+            return _prev;
         }
 
-        void set_prev(std::shared_ptr<Node> & prev) {
-            this->prev = prev;
-        }
-
-        static Node create_bos();
-
-        static Node create_eos();
+        void set_prev(std::shared_ptr<Node> &prev);
     };
+
+    std::shared_ptr<Node> create_bos_node();
+
+    std::shared_ptr<Node> create_eos_node(int start_pos);
 
 }
 

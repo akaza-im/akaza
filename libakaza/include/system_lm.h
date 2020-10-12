@@ -64,7 +64,7 @@ namespace akaza {
             return std::tuple<int32_t, float>(UNKNOWN_WORD_ID, 0);
         }
 
-        float get_default_cost() const {
+        inline float get_default_cost() const {
             return -20.0; // log10(1e-20)
         }
     };

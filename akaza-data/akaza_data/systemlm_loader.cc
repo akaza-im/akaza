@@ -35,6 +35,7 @@ PYBIND11_MODULE(systemlm_loader, m) {
         .def("run", &akaza::tinylisp::TinyLisp::run)
         ;
 
+    /*
     py::class_<akaza::Node>(m, "Node")
         .def(py::init<size_t, const std::string&, const std::string&>())
         .def("get_key", &akaza::Node::get_key)
@@ -51,9 +52,15 @@ PYBIND11_MODULE(systemlm_loader, m) {
         .def("calc_node_cost", &akaza::Node::calc_node_cost)
         .def("get_bigram_cost", &akaza::Node::get_bigram_cost)
         .def("get_word_id", &akaza::Node::get_word_id)
-        .def("create_bos", &akaza::Node::create_bos)
-        .def("create_eos", &akaza::Node::create_eos)
         ;
+        */
+
+    py::class_<akaza::GraphResolver>(m, "GraphResolver")
+            .def(py::init())
+            .def("graph_construct", &akaza::GraphResolver::graph_construct)
+            .def("fill_cost", &akaza::GraphResolver::fill_cost)
+            .def("find_nbest", &akaza::GraphResolver::find_nbest)
+            ;
 
     py::class_<akaza::UserLanguageModel>(m, "UserLanguageModel")
         .def(py::init<const std::string&, const std::string&>())
