@@ -5,25 +5,20 @@
 #include <cstdlib>
 #include <unistd.h>
 
+#include "tmpfile.h"
+
 
 void test_read() {
-    char *unigram_path = strdup("dict.XXXXXX");
-    mkstemp(unigram_path);
-    char *bigram_path = strdup("uni.XXXXXX");
-    mkstemp(bigram_path);
+    TmpFile unigram_path;
+    TmpFile bigram_path;
 
-    akaza::UserLanguageModel d(unigram_path, bigram_path);
+    akaza::UserLanguageModel d(unigram_path.get_name(), bigram_path.get_name());
 
     d.add_entry({akaza::Node(0, "たんご", "単語")});
     d.add_entry({akaza::Node(0, "たんご", "単語")});
     d.add_entry({akaza::Node(0, "じゅくご", "熟語")});
 
     ok(d.get_unigram_cost("単語/たんご") > d.get_unigram_cost("熟語/じゅくご"));
-
-    unlink(unigram_path);
-    free(unigram_path);
-    unlink(bigram_path);
-    free(bigram_path);
 }
 
 /*

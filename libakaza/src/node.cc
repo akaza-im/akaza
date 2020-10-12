@@ -1,11 +1,13 @@
 #include "../include/akaza.h"
 
-akaza::Node akaza::Node::create_bos() {
-    return akaza::Node(0, "__BOS__", "__BOS__");
+#include "debug_log.h"
+
+std::shared_ptr<akaza::Node> akaza::create_bos_node() {
+    return std::make_shared<akaza::Node>(akaza::Node(-1, "__BOS__", "__BOS__"));
 }
 
-akaza::Node akaza::Node::create_eos() {
-    return akaza::Node(0, "__EOS__", "__EOS__");
+std::shared_ptr<akaza::Node> akaza::create_eos_node(int start_pos) {
+    return std::make_shared<akaza::Node>(akaza::Node(start_pos, "__EOS__", "__EOS__"));
 }
 
 /*
@@ -32,8 +34,10 @@ float akaza::Node::calc_node_cost(
     auto[word_id, score] = ulm.find_unigram(key);
     this->word_id = word_id;
     if (word_id != akaza::UNKNOWN_WORD_ID) {
+        this->_cost = score;
         return score;
     } else {
+        this->_cost = ulm.get_default_cost();
         return ulm.get_default_cost();
     }
 }
@@ -110,4 +114,11 @@ float akaza::Node::get_bigram_cost(const akaza::Node &next_node, const akaza::Us
         _bigram_cache[next_node_key] = cost;
         return cost;
     }
+}
+
+void akaza::Node::set_prev(std::shared_ptr<Node> &prev) {
+    D(std::cout << this->get_key() << ":" << this->start_pos
+                << " -> " << prev->get_key() << ":" << prev->get_start_pos() << std::endl);
+    assert(this->start_pos != prev->start_pos);
+    this->_prev = prev;
 }
