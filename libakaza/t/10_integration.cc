@@ -21,6 +21,8 @@ std::string convert_test(const std::string &src, const std::string &expected) {
 }
 
 int main() {
+    convert_test("tanosiijikan", "楽しい時間");
+    convert_test("たのしいじかん", "楽しい時間");
     convert_test("zh", "←");
     convert_test("それなwww", "それなwww");
     convert_test("watasinonamaehanakanodesu.", "私の名前は中野です。");

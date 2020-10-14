@@ -7,5 +7,6 @@ setup(
     extras_require={
     },
     entry_points={
-    }
+    },
+    zip_safe=False
 )

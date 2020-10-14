@@ -9,6 +9,13 @@ std::string akaza::Akaza::get_version() {
 std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
         const std::string &src,
         const std::optional<std::vector<akaza::Slice>> &forceSelectedClauses) {
+    D(std::cout << "Akaza::convert '"
+                << src << "' (HASH="
+                << std::hash<std::string>{}(src)
+                << ")"
+                << " " << __FILE__ << ":" << __LINE__ << std::endl);
+    assert(!forceSelectedClauses.has_value() || !forceSelectedClauses.value().empty());
+
     if (!src.empty() && isupper(src[0]) && !forceSelectedClauses.has_value()) {
         return {{std::make_shared<akaza::Node>(0, src, src)}};
     }

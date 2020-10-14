@@ -123,3 +123,11 @@ void akaza::Node::set_prev(std::shared_ptr<Node> &prev) {
     assert(this->start_pos != prev->start_pos);
     this->_prev = prev;
 }
+
+bool akaza::Node::operator==(akaza::Node const &node) {
+    return this->word == node.word && this->yomi == node.yomi && this->start_pos == node.start_pos;
+}
+
+bool akaza::Node::operator!=(akaza::Node const &node) {
+    return this->word != node.word || this->yomi != node.yomi || this->start_pos != node.start_pos;
+}

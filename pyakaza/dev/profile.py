@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import pathlib
+from tempfile import TemporaryDirectory
 
 import sys
 
@@ -9,43 +10,37 @@ print(path)
 sys.path.insert(0, path)
 sys.path.insert(0, pathlib.Path(__file__).parent.parent.parent.joinpath('akaza-data').absolute())
 
-import akaza
-from akaza.dictionary import Dictionary
-from akaza.graph_resolver import GraphResolver
-from akaza.language_model import LanguageModel
-from akaza.romkan import RomkanConverter
-from akaza.user_language_model import UserLanguageModel
-from akaza_data import SystemLanguageModel, SystemDict
-from akaza_data.emoji import EmojiDict
+from pyakaza.bind import Akaza, GraphResolver, BinaryDict, SystemUnigramLM, SystemBigramLM, Node, UserLanguageModel, \
+    RomkanConverter
 
-system_language_model = SystemLanguageModel.load()
-system_dict = SystemDict.load()
-emoji_dict = EmojiDict.load()
+tmpdir = TemporaryDirectory()
 
-user_language_model_path = pathlib.Path('/tmp/user_language_model')
-user_language_model_path.mkdir(parents=True, exist_ok=True, mode=0o700)
-user_language_model = UserLanguageModel(str(user_language_model_path))
-
-language_model = LanguageModel(
-    system_language_model=system_language_model,
-    user_language_model=user_language_model,
+user_language_model = UserLanguageModel(
+    tmpdir.name + "/uni",
+    tmpdir.name + "/bi"
 )
 
-dictionary = Dictionary(
-    system_dict=system_dict,
-    emoji_dict=emoji_dict,
-    user_dicts=[],
-)
+system_unigram_lm = SystemUnigramLM()
+system_unigram_lm.load("../akaza-data/akaza_data/data/lm_v2_1gram.trie")
+
+system_bigram_lm = SystemBigramLM()
+system_bigram_lm.load("../akaza-data/akaza_data/data/lm_v2_2gram.trie")
+
+system_dict = BinaryDict()
+system_dict.load("../akaza-data/akaza_data/data/system_dict.trie")
+
+single_term = BinaryDict()
+single_term.load("../akaza-data/akaza_data/data/single_term.trie")
 
 resolver = GraphResolver(
-    dictionary=dictionary,
-    language_model=language_model,
+    user_language_model,
+    system_unigram_lm,
+    system_bigram_lm,
+    [system_dict],
+    [single_term],
 )
-romkan = RomkanConverter()
-akaza = akaza.Akaza(
-    resolver=resolver,
-    romkan=romkan,
-)
+romkanConverter = RomkanConverter({})
+akaza = Akaza(resolver, romkanConverter)
 
 # for i in range(10):
 #     for line in ['watasinonamaehanakanodseu', 'tonarinokyakuhayokukakikuukyakuda', 'kyounotenkihakumoridana.',
@@ -62,7 +57,7 @@ print("START")
 cmp_res_dict = cmpthese(
     10,
     {
-        "term1": lambda: akaza.convert('nagakunattekuruto,henkannninyojitunijikanngakakaruyouninattekuru.'),
+        "term1": lambda: akaza.convert('nagakunattekuruto,henkannninyojitunijikanngakakaruyouninattekuru.', None),
     },
     repeat=10,
 )

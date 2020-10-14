@@ -1,5 +1,5 @@
 import time
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 import gi
 
@@ -17,14 +17,11 @@ import gettext
 
 from jaconv import jaconv
 
-from akaza import Akaza
-from akaza.romkan import RomkanConverter
-from akaza.node import Node
-from akaza.user_language_model import UserLanguageModel
-from akaza.graph_resolver import GraphResolver
+from pyakaza.bind import Akaza, GraphResolver, BinaryDict, SystemUnigramLM, SystemBigramLM, Node, UserLanguageModel, \
+    Slice, RomkanConverter, TinyLisp
+
 from ibus_akaza import config_loader
 from ibus_akaza.config import MODEL_DIR
-from akaza_data.systemlm_loader import BinaryDict, SystemUnigramLM, SystemBigramLM, TinyLisp
 
 from .keymap import build_default_keymap, KEY_STATE_PRECOMPOSITION, KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION
 from .input_mode import get_input_mode_from_prop_name, InputMode, INPUT_MODE_ALNUM, INPUT_MODE_HIRAGANA, \
@@ -41,7 +38,10 @@ def build_akaza():
 
     user_language_model_path = configdir.joinpath('user_language_model')
     user_language_model_path.mkdir(parents=True, exist_ok=True, mode=0o700)
-    user_language_model = UserLanguageModel(str(user_language_model_path))
+    user_language_model = UserLanguageModel(
+        str(user_language_model_path.joinpath('unigram.txt')),
+        str(user_language_model_path.joinpath('bigram.txt'))
+    )
 
     system_dict = BinaryDict()
     print(f"{MODEL_DIR + '/system_dict.trie'}")
@@ -57,18 +57,18 @@ def build_akaza():
     emoji_dict.load(MODEL_DIR + "/single_term.trie")
 
     resolver = GraphResolver(
-        normal_dicts=[system_dict] + user_dicts,
-        system_unigram_lm=system_unigram_lm,
-        system_bigram_lm=system_bigram_lm,
-        user_language_model=user_language_model,
-        single_term_dicts=[emoji_dict],
+        user_language_model,
+        system_unigram_lm,
+        system_bigram_lm,
+        [system_dict] + user_dicts,
+        [emoji_dict],
     )
 
-    romkan = RomkanConverter(additional=user_settings.get('romaji'))
+    romkan = RomkanConverter(user_settings.get('romaji'))
 
     lisp_evaluator = TinyLisp()
 
-    return user_language_model, Akaza(resolver=resolver, romkan=romkan), romkan, lisp_evaluator, user_settings
+    return user_language_model, Akaza(resolver, romkan), romkan, lisp_evaluator, user_settings
 
 
 try:
@@ -76,9 +76,14 @@ try:
 
     user_language_model, akaza, romkan, lisp_evaluator, user_settings = build_akaza()
 
+    def save_periodically():
+        while True:
+            user_language_model.save()
+            time.sleep(10)
+
     user_language_model_save_thread = threading.Thread(
         name='user_language_model_save_thread',
-        target=lambda: user_language_model.save_periodically(),
+        target=lambda: save_periodically(),
         daemon=True,
     )
     user_language_model_save_thread.start()
@@ -104,7 +109,7 @@ class AkazaIBusEngine(IBus.Engine):
     prop_list: IBus.PropList
     akaza: Akaza
     input_mode: InputMode
-    force_selected_clause: List[slice]
+    force_selected_clause: Optional[List[slice]]
 
     __gtype_name__ = 'AkazaIBusEngine'
 
@@ -128,7 +133,7 @@ class AkazaIBusEngine(IBus.Engine):
         self.node_selected = {}
 
         # 文節を選びなおしたもの。
-        self.force_selected_clause = []
+        self.force_selected_clause = None
 
         # カーソル変更をしたばっかりかどうかを、みるフラグ。
         self.cursor_moved = False
@@ -401,10 +406,10 @@ g
         F6 などを押した時用。
         """
         # 候補を設定
-        self.clauses = [[Node(start_pos=0, word=word, yomi=yomi)]]
+        self.clauses = [[Node(0, yomi, word)]]
         self.current_clause = 0
         self.node_selected = {}
-        self.force_selected_clause = []
+        self.force_selected_clause = None
 
         # ルックアップテーブルに候補を設定
         self.lookup_table.clear()
@@ -504,7 +509,7 @@ g
         if len(self.clauses) == 0:
             return False
 
-        max_len = max([clause[0].start_pos + len(clause[0].yomi) for clause in self.clauses])
+        max_len = max([clause[0].get_start_pos() + len(clause[0].get_yomi()) for clause in self.clauses])
 
         self.force_selected_clause = []
         for i, clause in enumerate(self.clauses):
@@ -512,15 +517,15 @@ g
             if self.current_clause == i:
                 # 現在選択中の文節の場合、伸ばす。
                 self.force_selected_clause.append(
-                    slice(node.start_pos, min(node.start_pos + len(node.yomi) + 1, max_len)))
+                    slice(node.get_start_pos(), min(node.get_start_pos() + len(node.get_yomi()) + 1, max_len)))
             elif self.current_clause + 1 == i:
                 # 次の分節を一文字ヘラス
                 self.force_selected_clause.append(
-                    slice(node.start_pos + 1, node.start_pos + len(node.yomi)))
+                    slice(node.get_start_pos() + 1, node.get_start_pos() + len(node.get_yomi())))
             else:
                 # それ以外は現在指定の分節のまま
                 self.force_selected_clause.append(
-                    slice(node.start_pos, node.start_pos + len(node.yomi)))
+                    slice(node.get_start_pos(), node.get_start_pos() + len(node.get_yomi())))
 
         self.force_selected_clause = [x for x in self.force_selected_clause if x.start != x.stop]
         self._update_candidates()
@@ -542,15 +547,15 @@ g
             if target_clause == i:
                 # 現在選択中の文節の場合、伸ばす。
                 self.force_selected_clause.append(
-                    slice(node.start_pos - 1, node.start_pos + len(node.yomi)))
+                    slice(node.get_start_pos() - 1, node.get_start_pos() + len(node.get_yomi())))
             elif target_clause - 1 == i:
                 # 前の分節を一文字ヘラス
                 self.force_selected_clause.append(
-                    slice(node.start_pos, node.start_pos + len(node.yomi) - 1))
+                    slice(node.get_start_pos(), node.get_start_pos() + len(node.get_yomi()) - 1))
             else:
                 # それ以外は現在指定の分節のまま
                 self.force_selected_clause.append(
-                    slice(node.start_pos, node.start_pos + len(node.yomi)))
+                    slice(node.get_start_pos(), node.get_start_pos() + len(node.get_yomi())))
 
         self.force_selected_clause = [x for x in self.force_selected_clause if x.start != x.stop]
         self._update_candidates()
@@ -578,7 +583,7 @@ g
         self.clauses = []
         self.current_clause = 0
         self.node_selected = {}
-        self.force_selected_clause = []
+        self.force_selected_clause = None
 
         self.lookup_table.clear()
         self.update_lookup_table(self.lookup_table, False)
@@ -610,7 +615,12 @@ g
     def _update_candidates(self):
         if len(self.preedit_string) > 0:
             # 変換をかける
-            self.clauses = self.akaza.convert(self.preedit_string, self.force_selected_clause)
+            print(f"-------{self.preedit_string}-----{self.force_selected_clause}----PPP")
+            slices = None
+            if self.force_selected_clause:
+                slices = [Slice(s.start, s.stop-s.start) for s in self.force_selected_clause]
+            print(f"-------{self.preedit_string}-----{self.force_selected_clause}---{slices}----PPP")
+            self.clauses = self.akaza.convert(self.preedit_string, slices)
         else:
             self.clauses = []
         self.create_lookup_table()
@@ -630,7 +640,7 @@ g
         current_node = current_clause[0]
 
         # -- auxiliary text(ポップアップしてるやつのほう)
-        first_candidate = current_node.yomi
+        first_candidate = current_node.get_yomi()
         auxiliary_text = IBus.Text.new_from_string(first_candidate)
         auxiliary_text.set_attributes(IBus.AttrList())
         self.update_auxiliary_text(auxiliary_text, preedit_len > 0)
@@ -663,7 +673,7 @@ g
 
         # 先頭が大文字だと、
         if len(self.preedit_string) > 0 and self.preedit_string[0].isupper() \
-                and len(self.force_selected_clause) == 0:
+                and self.force_selected_clause is None:
             return self.preedit_string, self.preedit_string
 
         yomi = self.romkan.to_hiragana(self.preedit_string)
@@ -687,7 +697,7 @@ g
         # 平仮名にする。
         yomi, word = self._make_preedit_word()
         self.clauses = [
-            [Node(word=word, yomi=yomi, start_pos=0)]
+            [Node(0, yomi, word)]
         ]
         self.current_clause = 0
 
@@ -732,7 +742,7 @@ g
     def do_reset(self):
         self.logger.debug("do_reset")
         self.preedit_string = ''
-        self.force_selected_clause = []
+        self.force_selected_clause = None
         self.clauses = []
         self.current_clause = 0
         self.node_selected = {}
