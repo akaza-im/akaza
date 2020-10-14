@@ -9,8 +9,36 @@
 #include "romkan_default.h"
 
 static std::string quotemeta(const std::string &input) {
-    std::regex specialChars{R"([-\[\]{}()*+?.,\^$|#\s])"};
-    return std::regex_replace(input, specialChars, R"(\$&)");
+    std::string buffer;
+    for (char c: input) {
+        switch (c) {
+            case '-':
+            case '[':
+            case ']':
+            case '{':
+            case '}':
+            case '(':
+            case ')':
+            case '*':
+            case '+':
+            case '?':
+            case '.':
+            case ',':
+            case '\\':
+            case '^':
+            case '$':
+            case '|':
+            case '#':
+            case ' ':
+            case '\t':
+                buffer += '\\';
+                buffer += c;
+                break;
+            default:
+                buffer += c;
+        }
+    }
+    return buffer;
 }
 
 akaza::RomkanConverter::RomkanConverter(const std::map<std::string, std::string> &additional) {
