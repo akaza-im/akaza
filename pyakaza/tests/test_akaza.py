@@ -13,17 +13,18 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 def test_wnn():
+    tmpdir = TemporaryDirectory()
+
+    user_language_model = UserLanguageModel(
+        tmpdir.name + "/uni",
+        tmpdir.name + "/bi"
+    )
+
     system_unigram_lm = SystemUnigramLM()
     system_unigram_lm.load("../akaza-data/akaza_data/data/lm_v2_1gram.trie")
 
     system_bigram_lm = SystemBigramLM()
     system_bigram_lm.load("../akaza-data/akaza_data/data/lm_v2_2gram.trie")
-
-    tmpdir = TemporaryDirectory()
-    user_language_model = UserLanguageModel(
-        tmpdir.name + "/uni",
-        tmpdir.name + "/bi"
-    )
 
     system_dict = BinaryDict()
     system_dict.load("../akaza-data/akaza_data/data/system_dict.trie")
