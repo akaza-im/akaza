@@ -2,14 +2,9 @@ PREFIX ?= /usr
 DATADIR ?= $(PREFIX)/share
 DESTDIR ?=
 
-CXX=clang++
-CXXOPTS=-W -Wno-unused-parameter -Wno-unused-variable -g -std=c++17
-# Note: `shell` is a gnu make extension.
-EXT_SUFFIX:=$(shell python3-config --extension-suffix)
 
-all: akaza_data/data/system_dict.trie akaza_data/data/lm_v2_2gram.trie akaza_data/data/lm_v2_2gram.trie binary \
+all: akaza_data/data/system_dict.trie akaza_data/data/lm_v2_2gram.trie akaza_data/data/lm_v2_2gram.trie \
 	akaza_data/data/system_dict.trie akaza_data/data/single_term.trie
-binary: akaza_data/systemlm_loader$(EXT_SUFFIX)
 
 work/jawiki-latest-pages-articles.xml.bz2:
 	mkdir -p work/
@@ -60,14 +55,8 @@ akaza_data/data/single_term.trie: work/jawiki.single_term.txt
 
 # -------------------------------------------------------------------------
 
-akaza_data/systemlm_loader$(EXT_SUFFIX): akaza_data/systemlm_loader.cc
-	$(CXX) -O3 $(CXXOPTS) -shared -lakaza -lmarisa -fPIC `python3 -m pybind11 --includes` akaza_data/systemlm_loader.cc \
-		-o akaza_data/systemlm_loader$(EXT_SUFFIX)
-
-# -------------------------------------------------------------------------
-
 install:
 	install -m 0755 -d $(DESTDIR)$(DATADIR)/akaza-data
 	install -m 0644 akaza_data/data/*.trie $(DESTDIR)$(DATADIR)/akaza-data
 
-.PHONY: all test install
+.PHONY: all install

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LIBAKAZA_SYSTEM_LM_H_
+#define LIBAKAZA_SYSTEM_LM_H_
+
 
 #include <cstring>
 #include <iostream>
@@ -37,10 +39,11 @@ namespace akaza {
 
         ~SystemUnigramLM() {}
 
-        void load(const char *path) {
-            trie.load(path);
-            std::cout << path << " size: " << trie.size() << std::endl;
+        std::size_t size() {
+            return trie.size();
         }
+
+        void load(const char *path);
 
         /**
          * @return {word_id}, {score}
@@ -68,6 +71,7 @@ namespace akaza {
             return -20.0; // log10(1e-20)
         }
     };
+
 
     class SystemBigramLMBuilder {
     private:
@@ -106,9 +110,11 @@ namespace akaza {
         SystemBigramLM() {
         }
 
-        void load(const char *path) {
-            trie.load(path);
+        std::size_t size() {
+            return trie.size();
         }
+
+        void load(const char *path);
 
         float find_bigram(int32_t word_id1, int32_t word_id2) const {
             uint32_t uword_id1 = word_id1;
@@ -137,3 +143,5 @@ namespace akaza {
         }
     };
 } // namespace akaza
+
+#endif // LIBAKAZA_SYSTEM_LM_H_

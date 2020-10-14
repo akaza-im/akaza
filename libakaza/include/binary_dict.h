@@ -30,10 +30,7 @@ namespace akaza {
     public:
         BinaryDict() {}
 
-        void load(std::string dict_path) {
-            dict_trie.load(dict_path.c_str());
-            std::cout << dict_path << ": " << dict_trie.num_keys() << std::endl;
-        }
+        void load(const std::string& dict_path);
 
         void save(std::string dict_path) {
             dict_trie.save(dict_path.c_str());
@@ -69,6 +66,5 @@ namespace akaza {
             return std::vector<std::string>();
         }
 
-        std::vector<std::string> prefixes(std::string src);
     };
 } // namespace akaza

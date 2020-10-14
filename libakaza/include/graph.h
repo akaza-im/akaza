@@ -22,18 +22,6 @@ namespace akaza {
         }
 
         /*
-     def append(self, index: int, node: Node) -> None:
-        if index not in self.d:
-            self.d[index] = []
-        # print(f"graph[{j}]={graph[j]} graph={graph}")
-        self.d[index].append(node)
-
-         */
-        // hmmmm.....?
-        // TODO remove me
-        // void append(std::vector<std::shared_ptr<Node>> nodes);
-
-        /*
      def get_items(self):
         for i in sorted(self.d.keys()):
             if i == 0:  # skip bos

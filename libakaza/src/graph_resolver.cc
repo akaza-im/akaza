@@ -4,11 +4,25 @@
 
 #include "../include/akaza.h"
 #include "debug_log.h"
+#include "kana.h"
 
-static inline void insert_basic_candidates(std::set<std::tuple<std::string, std::string>> kanjiset,
+static std::string tojkata(const std::string &src) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
+    std::wstring wstr = cnv.from_bytes(src);
+    std::transform(wstr.begin(), wstr.end(), wstr.begin(), [](wchar_t c) {
+        return std::towctrans(c, std::wctrans("tojkata"));
+    });
+    std::string sstr = cnv.to_bytes(wstr);
+    D(std::cout << "TOJKATA: " << src << " -> " << sstr
+                << " " << __FILE__ << ":" << __LINE__ << std::endl);
+    return sstr;
+}
+
+static inline void insert_basic_candidates(std::set<std::tuple<std::string, std::string>> &kanjiset,
                                            const std::string &yomi) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
     kanjiset.insert(std::make_tuple(yomi, yomi));
-    // TODO: ひらがなから片仮名へ
+    kanjiset.insert(std::make_tuple(yomi, cnv.to_bytes(akaza::hira2kata(cnv.from_bytes(yomi)))));
     // TODO: 半角 alphabet 候補もいれたいかも？
     // TODO: 全角 alphabet 候補もいれたいかも？
 }
@@ -46,25 +60,33 @@ akaza::GraphResolver::construct_normal_graph(const std::string &s) {
             std::u32string yomi32 = s32.substr(i, j);
             std::string yomi = utf32conv.to_bytes(yomi32);
 
+            bool exist_kanjis = false;
+
             // 通常の辞書から検索してみる
             for (const auto &normal_dict: _normal_dicts) {
                 auto kanjis = normal_dict->find_kanjis(yomi);
                 for (auto &kanji: kanjis) {
                     kanjiset.insert(std::make_tuple(yomi, kanji));
+                    exist_kanjis = true;
                 }
             }
 
-            if (!kanjiset.empty() || _user_language_model->has_unigram_cost_by_yomi(yomi)) {
+            if (exist_kanjis || _user_language_model->has_unigram_cost_by_yomi(yomi)) {
                 insert_basic_candidates(kanjiset, yomi);
             }
 
             // 選択範囲が、文全体であった場合は単文節辞書を参照する。
-            if (i == 0 && s.size() == j) {
+            if (i == 0 && s32.size() == j) {
                 for (const auto &single_term_dict: _single_term_dicts) {
                     std::vector<std::string> kanjis = single_term_dict->find_kanjis(yomi);
                     for (auto &kanji: kanjis) {
                         kanjiset.insert(std::make_tuple(yomi, kanji));
                     }
+                }
+
+                // 候補がない場合は、Basic 候補をいれていく。
+                if (kanjiset.empty()) {
+                    insert_basic_candidates(kanjiset, yomi);
                 }
             }
         }
@@ -109,7 +131,6 @@ akaza::GraphResolver::force_selected_graph(const std::string &s, const std::vect
     std::u32string s32 = utf32conv.from_bytes(s);
     for (const auto &slice : slices) {
         std::set<std::tuple<std::string, std::string>> kanjiset;
-        // TODO: UTF32 対応
 
         std::u32string yomi32 = s32.substr(slice.start(), slice.len());
         std::string yomi = utf32conv.to_bytes(yomi32);
@@ -120,6 +141,15 @@ akaza::GraphResolver::force_selected_graph(const std::string &s, const std::vect
             for (auto &kanji: kanjis) {
                 kanjiset.insert(std::make_tuple(yomi, kanji));
             }
+        }
+        if (yomi32.size() == slice.len()) { // 全部はいってる。
+            for (const auto &single_term_dict: _single_term_dicts) {
+                auto kanjis = single_term_dict->find_kanjis(yomi);
+                for (auto &kanji: kanjis) {
+                    kanjiset.insert(std::make_tuple(yomi, kanji));
+                }
+            }
+
         }
 
         insert_basic_candidates(kanjiset, yomi);
@@ -175,12 +205,13 @@ void akaza::GraphResolver::fill_cost(akaza::Graph &graph) {
         D(std::cout << "fill_cost: " << node->get_key() << std::endl);
         auto node_cost = node->calc_node_cost(*_user_language_model, *_system_unigram_lm);
         auto cost = INT32_MIN;
-        std::shared_ptr<Node> shortest_prev;
         auto prev_nodes = graph.get_prev_items(node);
 
         if (!prev_nodes.empty()) {
+            std::shared_ptr<Node> shortest_prev;
             for (const auto &prev_node: prev_nodes) {
-                D(std::cout << "set prev: " << node->get_key() << " " << prev_node->get_key() << std::endl);
+//                D(std::cout << "set prev: " << node->get_key() << " " << prev_node->get_key()
+//                            << " " << __FILE__ << ":" << __LINE__ << std::endl);
                 auto bigram_cost = prev_node->get_bigram_cost(
                         *node,
                         *_user_language_model,
@@ -191,7 +222,8 @@ void akaza::GraphResolver::fill_cost(akaza::Graph &graph) {
                     shortest_prev = prev_node;
                 }
             }
-            D(std::cout << "set prev: " << node->get_key() << " " << shortest_prev->get_key() << std::endl);
+            D(std::cout << "[fill_cost] set prev: " << node->get_key() << " " << shortest_prev->get_key()
+                        << " " << __FILE__ << ":" << __LINE__ << std::endl);
             node->set_prev(shortest_prev);
             node->set_cost(cost);
         } else {
@@ -231,7 +263,7 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::GraphResolver::fin
     assert(node != nullptr);
 
     std::vector<std::vector<std::shared_ptr<akaza::Node>>> result;
-    std::shared_ptr<akaza::Node> last_node;
+    std::shared_ptr<akaza::Node> last_node = graph.get_eos();
     while (!node->is_bos()) {
         if (node == node->get_prev()) {
             throw std::runtime_error("invalid state");
