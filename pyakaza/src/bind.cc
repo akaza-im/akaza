@@ -2,6 +2,7 @@
 #include <pybind11/stl.h>
 
 #include <akaza/akaza.h>
+#include <codecvt>
 
 namespace py = pybind11;
 
@@ -63,7 +64,8 @@ PYBIND11_MODULE(bind, m) {
             .def("get_word_id", &akaza::Node::get_word_id)
             .def("__repr__",
                  [](const akaza::Node &node) {
-                     return "<akaza::Node yomi= '" + node.get_yomi() + " word=" + node.get_word() + "'>";
+                     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
+                     return "<akaza::Node yomi= '" + cnv.to_bytes(node.get_yomi()) + " word=" + node.get_word() + "'>";
                  }
             );
 
