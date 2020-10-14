@@ -12,6 +12,8 @@ int main() {
 
     akaza::SystemUnigramLMBuilder unibuilder;
     unibuilder.add("私/わたし", -0.01);
+    unibuilder.add("中野/なかの", -0.01);
+    unibuilder.add("名前/なまえ", -0.01);
     unibuilder.save(unigramPath.get_name());
 
     std::shared_ptr<akaza::SystemUnigramLM> system_unigram_lm(
@@ -43,7 +45,7 @@ int main() {
 
     std::vector<std::shared_ptr<akaza::BinaryDict>> single_term_dicts;
 
-    akaza::GraphResolver graphResolver(
+    auto graphResolver = std::make_shared<akaza::GraphResolver>(
             user_language_model,
             system_unigram_lm,
             system_bigram_lm,
@@ -51,11 +53,10 @@ int main() {
             single_term_dicts
     );
 
-    std::vector<std::tuple<std::string, std::string>> additional = {
-    };
-    auto romkan = akaza::RomkanConverter(additional);
+    std::vector<std::tuple<std::string, std::string>> additional = {};
+    auto romkan = std::make_shared<akaza::RomkanConverter>(additional);
 
-    akaza::Akaza akaza = akaza::Akaza(&graphResolver, &romkan);
+    akaza::Akaza akaza = akaza::Akaza(graphResolver, romkan);
     std::vector<akaza::Slice> slices;
     std::vector<std::vector<std::shared_ptr<akaza::Node>>> got = akaza.convert("watasinonamaehanakanodesu.",
                                                                                std::nullopt);

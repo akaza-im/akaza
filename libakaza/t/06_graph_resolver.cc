@@ -2,6 +2,48 @@
 #include "../picotest/picotest.h"
 #include "../picotest/picotest.c"
 #include "tmpfile.h"
+#include "test_akaza.h"
+
+// 「ひょいー」のような辞書に登録されていない単語に対して、カタカナ候補を提供すべき。
+static void test_katakana_candidates() {
+    auto graph_resolver = build_graph_resolver();
+    auto graph = graph_resolver->graph_construct(
+            "ひょいー",
+            std::make_optional<std::vector<akaza::Slice>>({
+                                                                  akaza::Slice(
+                                                                          0,
+                                                                          4)
+                                                          }));
+    graph_resolver->fill_cost(graph);
+    auto got = graph_resolver->find_nbest(graph);
+    std::set<std::string> words;
+    for (const auto &node: got[0]) {
+        words.insert(node->get_word());
+    }
+    ok(words.count("ひょいー") == 1);
+    ok(words.count("ヒョイー") == 1);
+}
+
+// 「すし」の変換結果。
+static void test_sushi() {
+    auto graph_resolver = build_graph_resolver();
+    auto graph = graph_resolver->graph_construct(
+            "すし",
+            std::make_optional<std::vector<akaza::Slice>>({
+                                                                  akaza::Slice(
+                                                                          0,
+                                                                          2)
+                                                          }));
+    graph_resolver->fill_cost(graph);
+    auto got = graph_resolver->find_nbest(graph);
+    std::set<std::string> words;
+    for (const auto &node: got[0]) {
+        words.insert(node->get_word());
+        std::cout << node->get_word() << std::endl;
+    }
+    ok(words.count("🍣") == 1);
+    ok(words.count("鮨") == 1);
+}
 
 int main() {
     /*
@@ -19,6 +61,8 @@ int main() {
 
     akaza::SystemUnigramLMBuilder unibuilder;
     unibuilder.add("私/わたし", -0.01);
+    unibuilder.add("中野/なかの", -0.01);
+    unibuilder.add("名前/なまえ", -0.01);
     unibuilder.save(unigramPath.get_name());
 
     std::shared_ptr<akaza::SystemUnigramLM> system_unigram_lm(
@@ -92,5 +136,9 @@ int main() {
     ok(g == "私の名前は中野です。");
     ok(!got.empty());
 
+    test_katakana_candidates();
+    test_sushi();
+
     done_testing();
 }
+

@@ -13,3 +13,6 @@
 [submodule "libakaza/picotest"]
 	path = libakaza/picotest
 	url = https://github.com/h2o/picotest.git
+[submodule "pyakaza/pybind11"]
+	path = pyakaza/pybind11
+	url = https://github.com/pybind/pybind11.git

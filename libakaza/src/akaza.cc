@@ -1,33 +1,44 @@
+#include <codecvt>
 #include "../include/akaza.h"
 #include "debug_log.h"
 
+std::string akaza::Akaza::get_version() {
+    return "202010140940";
+}
+
 std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
         const std::string &src,
-        const std::optional<std::vector<akaza::Slice>>& forceSelectedClauses) {
+        const std::optional<std::vector<akaza::Slice>> &forceSelectedClauses) {
     if (!src.empty() && isupper(src[0]) && !forceSelectedClauses.has_value()) {
         return {{std::make_shared<akaza::Node>(0, src, src)}};
     }
 
-    std::string hiragana = _romkanConverter->to_hiragana(src);
+    std::string hiragana = romkanConverter_->to_hiragana(src);
     D(std::cout << "HIRAGANA=" << hiragana << std::endl);
 
     // 子音だが、N は NN だと「ん」になるので処理しない。
-    std::regex trailing_consonant(R"(^(.*?)([qwrtypsdfghjklzxcvbm]+)$)");
-    std::smatch sm;
     std::string consonant;
-    if (std::regex_match(hiragana, sm, trailing_consonant)) {
-        hiragana = sm.str(1);
-        consonant = sm.str(2);
-        D(std::cout << "CONSONANT=" << consonant << std::endl);
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
+        const std::wstring whiragana = cnv.from_bytes(hiragana);
+        std::wregex trailing_consonant(cnv.from_bytes(R"(^(.*?)([qwrtypsdfghjklzxcvbm]+)$)"));
+        std::wsmatch sm;
+        if (std::regex_match(whiragana, sm, trailing_consonant)) {
+            hiragana = cnv.to_bytes(sm.str(1));
+            consonant = cnv.to_bytes(sm.str(2));
+            D(std::cout << "CONSONANT=" << consonant << std::endl);
+        }
     }
 
-    Graph graph = _graphResolver->graph_construct(hiragana, forceSelectedClauses);
-    _graphResolver->fill_cost(graph);
+
+    Graph graph = graphResolver_->graph_construct(hiragana, forceSelectedClauses);
+    graphResolver_->fill_cost(graph);
     D(graph.dump());
-    std::vector<std::vector<std::shared_ptr<akaza::Node>>> nodes = _graphResolver->find_nbest(graph);
+    std::vector<std::vector<std::shared_ptr<akaza::Node>>> nodes = graphResolver_->find_nbest(graph);
     if (consonant.empty()) {
         return nodes;
     } else {
+        D(std::cout << " Adding Consonant=" << consonant << std::endl);
         nodes.push_back({{
                                  std::make_shared<akaza::Node>(
                                          src.size(),

@@ -25,7 +25,7 @@ akaza::Graph::build(int size,
     this->_nodes.push_back(akaza::create_eos_node(size));
     for (const auto&[n, nodes]: nodemap) {
         for (const auto &node: nodes) {
-            D(std::cout << "Graph::build-- " << node->get_key() << std::endl);
+            // D(std::cout << "Graph::build-- " << node->get_key() << std::endl);
             this->_nodes.push_back(node);
         }
     }
@@ -44,6 +44,9 @@ std::vector<std::shared_ptr<akaza::Node>> akaza::Graph::get_prev_items(const std
     std::vector<std::shared_ptr<akaza::Node>> nodes;
     std::wstring_convert<std::codecvt_utf8_utf16<char32_t>, char32_t> utf32conv;
     for (const auto &node: this->_nodes) {
+        if (node->is_bos()) {
+            continue;
+        }
         if (target_node->is_eos()) {
             if (node->get_key() == "です/です") {
                 D(std::cout << "DDDDD: " << node->get_start_pos() << "\t"
@@ -58,6 +61,7 @@ std::vector<std::shared_ptr<akaza::Node>> akaza::Graph::get_prev_items(const std
         } else {
             if (node->get_start_pos() + utf32conv.from_bytes(node->get_yomi()).length() ==
                 target_node->get_start_pos()) {
+                assert(!node->is_bos());
                 nodes.push_back(node);
             }
         }

@@ -13,17 +13,19 @@
 namespace akaza {
     class Akaza {
     private:
-        GraphResolver *_graphResolver;
-        RomkanConverter *_romkanConverter;
+        std::shared_ptr<GraphResolver> graphResolver_;
+        std::shared_ptr<RomkanConverter> romkanConverter_;
     public:
-        Akaza(GraphResolver *graphResolver, RomkanConverter *romkanConverter) {
-            _graphResolver = graphResolver;
-            _romkanConverter = romkanConverter;
+        Akaza(std::shared_ptr<GraphResolver> &graphResolver, std::shared_ptr<RomkanConverter> &romkanConverter) {
+            graphResolver_ = graphResolver;
+            romkanConverter_ = romkanConverter;
         }
 
         std::vector<std::vector<std::shared_ptr<Node>>> convert(
                 const std::string &s,
-                const std::optional<std::vector<Slice>>& forceSelectedClauses);
+                const std::optional<std::vector<Slice>> &forceSelectedClauses);
+
+        std::string get_version();
     };
 }
 

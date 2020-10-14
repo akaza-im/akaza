@@ -20,14 +20,6 @@ int main() {
             }
             ok(!kanjis.empty());
         }
-
-        {
-            std::vector<std::string> kanjis = dic.prefixes("あいうえお");
-            for (auto &kanji: kanjis) {
-                note("%s", kanji.c_str());
-            }
-            ok(kanjis.size() == 1);
-        }
     }
 
     done_testing();

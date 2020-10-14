@@ -79,6 +79,7 @@ static void test_to_hiragana() {
             {"wi",     "うぃ"},
             {"we",     "うぇ"},
             {"wo",     "を"},
+            {"sorenawww",     "それなwww"},
     };
 
     for (const auto &[src, expected]: cases) {

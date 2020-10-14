@@ -119,6 +119,7 @@ float akaza::Node::get_bigram_cost(const akaza::Node &next_node, const akaza::Us
 void akaza::Node::set_prev(std::shared_ptr<Node> &prev) {
     D(std::cout << this->get_key() << ":" << this->start_pos
                 << " -> " << prev->get_key() << ":" << prev->get_start_pos() << std::endl);
+    assert(!(start_pos != 0 && prev->is_bos()));
     assert(this->start_pos != prev->start_pos);
     this->_prev = prev;
 }

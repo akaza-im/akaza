@@ -15,7 +15,7 @@ SET(CMAKE_C_FLAGS "-Wall -O2 -g ${CC_WARNING_FLAGS} ${CMAKE_C_FLAGS}")
 add_library(akaza SHARED include/tinylisp.h src/tinylisp.cc src/binary_dict.cc include/user_language_model.h
         src/user_language_model.cc src/split.h include/node.h src/node.cc include/graph.h include/graph_resolver.h
         src/graph_resolver.cc src/graph.cc src/debug_log.h include/romkan.h src/romkan.cc src/romkan_default.h
-        src/akaza.cc)
+        src/akaza.cc src/system_lm.cc src/kana.cc)
 
 install(TARGETS akaza
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -29,12 +29,18 @@ install(FILES ${HEADERS} DESTINATION include/akaza/)
 #
 # =============================================================================================
 add_executable(akaza-make-system-lm bin/akaza-make-system-lm.cc)
-target_link_libraries(akaza-make-system-lm marisa)
+target_link_libraries(akaza-make-system-lm marisa akaza)
 install(TARGETS akaza-make-system-lm DESTINATION bin/)
 
 add_executable(akaza-make-binary-dict bin/akaza-make-binary-dict.cc)
-target_link_libraries(akaza-make-binary-dict marisa)
+target_link_libraries(akaza-make-binary-dict marisa akaza)
 install(TARGETS akaza-make-binary-dict DESTINATION bin/)
+
+add_executable(binakaza bin/akaza.cc)
+target_link_libraries(binakaza marisa akaza)
+install(TARGETS binakaza DESTINATION bin/)
+set_target_properties(binakaza PROPERTIES OUTPUT_NAME "akaza")
+set_target_properties(binakaza PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/")
 
 # =============================================================================================
 #
@@ -95,6 +101,11 @@ add_executable(08_akaza.t t/08_akaza.cc)
 set_target_properties(08_akaza.t PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/t/")
 target_link_libraries(08_akaza.t marisa akaza)
 SET(TEST_EXES ${TEST_EXES} 08_akaza.t)
+
+add_executable(10_integration.t t/10_integration.cc)
+set_target_properties(10_integration.t PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/t/")
+target_link_libraries(10_integration.t marisa akaza)
+SET(TEST_EXES ${TEST_EXES} 10_integration.t)
 
 
 ADD_CUSTOM_TARGET(test env BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR} prove --exec '' -v t/*.t
