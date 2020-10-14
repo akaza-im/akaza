@@ -34,8 +34,7 @@ PYBIND11_MODULE(bind, m) {
             .def("save", &akaza::BinaryDict::save)
             .def("build", &akaza::BinaryDict::build)
             .def("build_by_keyset", &akaza::BinaryDict::build_by_keyset)
-            .def("find_kanjis", &akaza::BinaryDict::find_kanjis)
-            .def("prefixes", &akaza::BinaryDict::prefixes);
+            .def("find_kanjis", &akaza::BinaryDict::find_kanjis);
 
     py::class_<akaza::tinylisp::TinyLisp, std::shared_ptr<akaza::tinylisp::TinyLisp>>(m, "TinyLisp")
             .def(py::init())
@@ -55,10 +54,8 @@ PYBIND11_MODULE(bind, m) {
             .def("get_yomi", &akaza::Node::get_yomi)
             .def("get_word", &akaza::Node::get_word)
             .def("get_cost", &akaza::Node::get_cost)
-            .def("set_cost", &akaza::Node::set_cost)
             .def("get_start_pos", &akaza::Node::get_start_pos)
             .def("get_prev", &akaza::Node::get_prev)
-            .def("set_prev", &akaza::Node::set_prev)
             .def("calc_node_cost", &akaza::Node::calc_node_cost)
             .def("get_bigram_cost", &akaza::Node::get_bigram_cost)
             .def("get_word_id", &akaza::Node::get_word_id);
