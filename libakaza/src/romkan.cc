@@ -13,7 +13,7 @@ static std::string quotemeta(const std::string &input) {
     return std::regex_replace(input, specialChars, R"(\$&)");
 }
 
-akaza::RomkanConverter::RomkanConverter(const std::vector<std::tuple<std::string, std::string>> &additional) {
+akaza::RomkanConverter::RomkanConverter(const std::map<std::string, std::string> &additional) {
     // romaji -> hiragana
     for (const auto &[rom, hira]: DEFAULT_ROMKAN_H) {
         _map[rom] = hira;

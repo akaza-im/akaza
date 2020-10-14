@@ -8,3 +8,5 @@ __pycache__
 dist/
 *.lprof
 *.so
+perf.data
+callgrind.*

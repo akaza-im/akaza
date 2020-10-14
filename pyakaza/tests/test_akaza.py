@@ -39,15 +39,14 @@ def test_wnn():
         [system_dict],
         [single_term],
     )
-    romkanConverter = RomkanConverter([])
+    romkanConverter = RomkanConverter({})
     akaza = Akaza(resolver, romkanConverter)
 
-    src = 'わたしのなまえはなかのです'
-    expected = '私の名前は中野です'
+    src = 'わたしのなまえはなかのです。'
+    expected = '私の名前は中野です。'
 
     print(akaza.get_version())
 
     got = akaza.convert(src, None)
-    print([c[0].get_word() for c in got])
 
-    assert got == expected
+    assert ''.join([c[0].get_word() for c in got]) == expected

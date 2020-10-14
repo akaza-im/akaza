@@ -4,7 +4,7 @@ project(libakaza)
 include(GNUInstallDirs)
 
 set(CMAKE_CXX_STANDARD 17)
-SET(CMAKE_C_FLAGS "-Wall -O2 -g ${CC_WARNING_FLAGS} ${CMAKE_C_FLAGS}")
+SET(CMAKE_C_FLAGS "-Wall -O2 -pg -g ${CC_WARNING_FLAGS} ${CMAKE_C_FLAGS}")
 
 # =============================================================================================
 #
@@ -106,6 +106,11 @@ add_executable(10_integration.t t/10_integration.cc)
 set_target_properties(10_integration.t PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/t/")
 target_link_libraries(10_integration.t marisa akaza)
 SET(TEST_EXES ${TEST_EXES} 10_integration.t)
+
+add_executable(11_wnn.t t/11_wnn.cc)
+set_target_properties(11_wnn.t PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/t/")
+target_link_libraries(11_wnn.t marisa akaza)
+SET(TEST_EXES ${TEST_EXES} 11_wnn.t)
 
 
 ADD_CUSTOM_TARGET(test env BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR} prove --exec '' -v t/*.t

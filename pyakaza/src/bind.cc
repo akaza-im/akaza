@@ -12,11 +12,12 @@ PYBIND11_MODULE(bind, m) {
             .def(py::init<std::shared_ptr<akaza::GraphResolver> &,
                     std::shared_ptr<akaza::RomkanConverter> &>())
             .def("convert", &akaza::Akaza::convert)
-            .def("get_version", &akaza::Akaza::get_version)
-            ;
+            .def("get_version", &akaza::Akaza::get_version);
 
     py::class_<akaza::RomkanConverter, std::shared_ptr<akaza::RomkanConverter>>(m, "RomkanConverter")
-            .def(py::init<const std::vector<std::tuple<std::string, std::string>> &>());
+            .def(py::init<const std::map<std::string, std::string> &>())
+            .def("to_hiragana", &akaza::RomkanConverter::to_hiragana)
+            .def("remove_last_char", &akaza::RomkanConverter::remove_last_char);
 
     py::class_<akaza::SystemUnigramLM, std::shared_ptr<akaza::SystemUnigramLM>>(m, "SystemUnigramLM")
             .def(py::init())
@@ -47,6 +48,7 @@ PYBIND11_MODULE(bind, m) {
 
     py::class_<akaza::Node, std::shared_ptr<akaza::Node>>(m, "Node")
             .def(py::init<size_t, const std::string &, const std::string &>())
+            .def("__eq__", &akaza::Node::operator==, py::is_operator())
             .def("get_key", &akaza::Node::get_key)
             .def("is_bos", &akaza::Node::is_bos)
             .def("is_eos", &akaza::Node::is_eos)
@@ -58,7 +60,12 @@ PYBIND11_MODULE(bind, m) {
             .def("get_prev", &akaza::Node::get_prev)
             .def("calc_node_cost", &akaza::Node::calc_node_cost)
             .def("get_bigram_cost", &akaza::Node::get_bigram_cost)
-            .def("get_word_id", &akaza::Node::get_word_id);
+            .def("get_word_id", &akaza::Node::get_word_id)
+            .def("__repr__",
+                 [](const akaza::Node &node) {
+                     return "<akaza::Node yomi= '" + node.get_yomi() + " word=" + node.get_word() + "'>";
+                 }
+            );
 
     py::class_<akaza::GraphResolver, std::shared_ptr<akaza::GraphResolver>>(m, "GraphResolver")
             .def(py::init<const std::shared_ptr<akaza::UserLanguageModel> &,
@@ -82,5 +89,6 @@ PYBIND11_MODULE(bind, m) {
             .def("should_save", &akaza::UserLanguageModel::should_save);
 
     py::class_<akaza::Slice, std::shared_ptr<akaza::Slice>>(m, "Slice")
-            .def(py::init<size_t, size_t>());
+            .def(py::init<size_t, size_t>())
+            .def("__repr__", &akaza::Slice::repr);
 }

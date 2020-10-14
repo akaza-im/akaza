@@ -53,7 +53,7 @@ int main() {
             single_term_dicts
     );
 
-    std::vector<std::tuple<std::string, std::string>> additional = {};
+    std::map<std::string, std::string> additional = {};
     auto romkan = std::make_shared<akaza::RomkanConverter>(additional);
 
     akaza::Akaza akaza = akaza::Akaza(graphResolver, romkan);

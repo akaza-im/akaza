@@ -48,6 +48,14 @@ namespace akaza {
             this->bigram_path = bigram_path;
         }
 
+        size_t size_unigram() {
+            return unigram.size();
+        }
+
+        size_t size_bigram() {
+            return bigram.size();
+        }
+
         void load_unigram() {
             read(unigram_path, true, unigram_C, unigram_V, unigram);
         }

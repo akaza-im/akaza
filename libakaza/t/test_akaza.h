@@ -41,7 +41,7 @@ static std::shared_ptr<akaza::GraphResolver> build_graph_resolver() {
 
 static std::unique_ptr<akaza::Akaza> build_akaza() {
     auto graph_resolver = build_graph_resolver();
-    std::vector<std::tuple<std::string, std::string>> additional;
+    std::map<std::string, std::string> additional;
     auto romkanConverter = std::make_shared<akaza::RomkanConverter>(additional);
 
     return std::make_unique<akaza::Akaza>(graph_resolver, romkanConverter);

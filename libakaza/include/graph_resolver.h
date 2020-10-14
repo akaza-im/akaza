@@ -23,13 +23,15 @@ namespace akaza {
             _len = len;
         }
 
-        size_t start() const {
+        [[nodiscard]] size_t start() const {
             return _start;
         }
 
-        size_t len() const {
+        [[nodiscard]] size_t len() const {
             return _len;
         }
+
+        std::string repr();
 
     };
 
@@ -51,7 +53,7 @@ namespace akaza {
         self.single_term_dicts = single_term_dicts
          */
     private:
-        std::shared_ptr<UserLanguageModel> _user_language_model;
+        std::shared_ptr<UserLanguageModel> user_language_model_;
         std::shared_ptr<SystemUnigramLM> _system_unigram_lm;
         std::shared_ptr<SystemBigramLM> _system_bigram_lm;
         std::vector<std::shared_ptr<BinaryDict>> _normal_dicts;
@@ -69,13 +71,7 @@ namespace akaza {
                       const std::shared_ptr<SystemBigramLM> &system_bigram_lm,
                       const std::vector<std::shared_ptr<BinaryDict>> &normal_dicts,
                       const std::vector<std::shared_ptr<BinaryDict>> &single_term_dicts
-        ) {
-            _user_language_model = user_language_model;
-            _system_unigram_lm = system_unigram_lm;
-            _system_bigram_lm = system_bigram_lm;
-            _normal_dicts = normal_dicts;
-            _single_term_dicts = single_term_dicts;
-        }
+        );
 
         /*
     def lookup(self, s: str):

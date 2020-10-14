@@ -90,6 +90,9 @@ namespace akaza {
         }
 
         void set_prev(std::shared_ptr<Node> &prev);
+
+        bool operator==(const Node &node);
+        bool operator!=(const Node &node);
     };
 
     std::shared_ptr<Node> create_bos_node();

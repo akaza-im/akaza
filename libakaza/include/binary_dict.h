@@ -30,6 +30,10 @@ namespace akaza {
     public:
         BinaryDict() {}
 
+        size_t size() {
+            return dict_trie.size();
+        }
+
         void load(const std::string& dict_path);
 
         void save(std::string dict_path) {

@@ -5,14 +5,15 @@ os.system("make binary")
 
 setup(
     name="pyakaza",
-    version="0.0.2",
+    version="0.0.3",
     install_requires=[],
     packages=['pyakaza'],
     package_data={
-        'akaza_data': ['*.so'],
+        'pyakaza': ['*.so'],
     },
     extras_require={
     },
     entry_points={
-    }
+    },
+    zip_safe=False
 )
