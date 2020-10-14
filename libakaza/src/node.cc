@@ -1,4 +1,5 @@
 #include "../include/akaza.h"
+#include <codecvt>
 
 #include "debug_log.h"
 
@@ -32,12 +33,12 @@ float akaza::Node::calc_node_cost(
         return *u;
     }
     auto[word_id, score] = ulm.find_unigram(key);
-    this->word_id = word_id;
+    this->word_id_ = word_id;
     if (word_id != akaza::UNKNOWN_WORD_ID) {
-        this->_cost = score;
+        this->cost_ = score;
         return score;
     } else {
-        this->_cost = ulm.get_default_cost();
+        this->cost_ = ulm.get_default_cost();
         return ulm.get_default_cost();
     }
 }
@@ -119,15 +120,31 @@ float akaza::Node::get_bigram_cost(const akaza::Node &next_node, const akaza::Us
 void akaza::Node::set_prev(std::shared_ptr<Node> &prev) {
     D(std::cout << this->get_key() << ":" << this->start_pos
                 << " -> " << prev->get_key() << ":" << prev->get_start_pos() << std::endl);
-    assert(!(start_pos != 0 && prev->is_bos()));
-    assert(this->start_pos != prev->start_pos);
+    assert(!(start_pos_ != 0 && prev->is_bos()));
+    assert(this->start_pos_ != prev->start_pos_);
     this->_prev = prev;
 }
 
 bool akaza::Node::operator==(akaza::Node const &node) {
-    return this->word == node.word && this->yomi == node.yomi && this->start_pos == node.start_pos;
+    return this->word_ == node.word_ && this->yomi_ == node.yomi_ && this->start_pos_ == node.start_pos_;
 }
 
 bool akaza::Node::operator!=(akaza::Node const &node) {
-    return this->word != node.word || this->yomi != node.yomi || this->start_pos != node.start_pos;
+    return this->word_ != node.word_ || this->yomi_ != node.yomi_ || this->start_pos_ != node.start_pos_;
+}
+
+akaza::Node::Node(int start_pos, const std::string &yomi, const std::string &word) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
+    this->start_pos_ = start_pos;
+    this->yomi_ = cnv.from_bytes(yomi);
+    this->word_ = word;
+    if (word == "__EOS__") {
+        // return '__EOS__'  // わざと使わない。__EOS__ 考慮すると変換精度が落ちるので。。今は使わない。
+        // うまく使えることが確認できれば、__EOS__/__EOS__ にする。
+        this->key_ = "__EOS__";
+    } else {
+        this->key_ = word + "/" + yomi;
+    }
+    this->cost_ = 0;
+    this->word_id_ = -1;
 }

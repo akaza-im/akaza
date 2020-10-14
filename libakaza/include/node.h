@@ -11,47 +11,34 @@ namespace akaza {
 
     class Node {
     private:
-        int start_pos;
-        std::string yomi;
-        std::string word;
-        std::string _key;
+        int start_pos_;
+        std::wstring yomi_;
+        std::string word_;
+        std::string key_;
         std::shared_ptr<Node> _prev;
-        float _cost;
-        int32_t word_id;
+        float cost_;
+        int32_t word_id_;
         std::map<std::string, float> _bigram_cache;
     public:
-        Node(int start_pos, const std::string &yomi, const std::string &word) {
-            this->start_pos = start_pos;
-            this->yomi = yomi;
-            this->word = word;
-            if (word == "__EOS__") {
-                // return '__EOS__'  // わざと使わない。__EOS__ 考慮すると変換精度が落ちるので。。今は使わない。
-                // うまく使えることが確認できれば、__EOS__/__EOS__ にする。
-                this->_key = "__EOS__";
-            } else {
-                this->_key = word + "/" + yomi;
-            }
-            this->_cost = 0;
-            this->word_id = -1;
-        }
+        Node(int start_pos, const std::string &yomi, const std::string &word);
 
         std::string get_key() const {
-            return this->_key;
+            return this->key_;
         }
 
         bool is_bos() const {
-            return word == "__BOS__";
+            return word_ == "__BOS__";
         }
 
         bool is_eos() const {
-            return word == "__EOS__";
+            return word_ == "__EOS__";
         }
 
         std::string surface(const akaza::tinylisp::TinyLisp &tinyLisp) const {
-            if (word.size() > 0 && word[0] == '(') {
-                return tinyLisp.run(word);
+            if (word_.size() > 0 && word_[0] == '(') {
+                return tinyLisp.run(word_);
             } else {
-                return word;
+                return word_;
             }
         }
 
@@ -62,27 +49,27 @@ namespace akaza {
                               const SystemBigramLM &system_bigram_lm);
 
         int32_t get_word_id() const {
-            return word_id;
+            return word_id_;
         }
 
-        std::string get_yomi() const {
-            return yomi;
+        std::wstring get_yomi() const {
+            return yomi_;
         }
 
         std::string get_word() const {
-            return word;
+            return word_;
         }
 
         float get_cost() const {
-            return _cost;
+            return cost_;
         }
 
         void set_cost(float cost) {
-            _cost = cost;
+            cost_ = cost;
         }
 
         int get_start_pos() const {
-            return start_pos;
+            return start_pos_;
         }
 
         std::shared_ptr<Node> get_prev() const {
