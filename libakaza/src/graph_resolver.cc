@@ -135,10 +135,9 @@ akaza::GraphResolver::construct_normal_graph(const std::wstring &ws) {
             graph.append(index=j, node=node)
  */
 std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>>
-akaza::GraphResolver::force_selected_graph(const std::string &s, const std::vector<akaza::Slice> &slices) {
+akaza::GraphResolver::force_selected_graph(const std::wstring &ws, const std::vector<akaza::Slice> &slices) {
     std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>> retval;
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
-    std::wstring ws = cnv.from_bytes(s);
     for (const auto &slice : slices) {
         std::set<std::tuple<std::wstring, std::wstring>> kanjiset;
 
@@ -303,10 +302,12 @@ akaza::Graph
 akaza::GraphResolver::graph_construct(const std::string &s, std::optional<std::vector<Slice>> force_selected_clause) {
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
 
+    std::wstring ws = cnv.from_bytes(s);
+
     Graph graph = Graph();
     auto nodemap = force_selected_clause.has_value()
-                   ? force_selected_graph(s, force_selected_clause.value())
-                   : construct_normal_graph(cnv.from_bytes(s));
+                   ? force_selected_graph(ws, force_selected_clause.value())
+                   : construct_normal_graph(ws);
     graph.build(cnv.from_bytes(s).size(), nodemap);
     return graph;
 }

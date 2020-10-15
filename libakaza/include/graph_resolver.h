@@ -63,7 +63,7 @@ namespace akaza {
         construct_normal_graph(const std::wstring &ws);
 
         std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>>
-        force_selected_graph(const std::string &s, const std::vector<Slice> &force_selected_clauses);
+        force_selected_graph(const std::wstring &s, const std::vector<Slice> &force_selected_clauses);
 
     public:
         GraphResolver(const std::shared_ptr<UserLanguageModel> &user_language_model,
