@@ -44,11 +44,12 @@ jobs:
         make
         pip install -r requirements.txt
         sudo make install
-    - name: Test akaza-core
+    - name: Test pyakaza
       run: |
-        cd akaza-core
+        cd pyakaza
         pip install -r requirements.txt
-        pytest
+        make
+        pytest tests
         sudo python setup.py install
     - name: Test ibus-akaza
       run: |
