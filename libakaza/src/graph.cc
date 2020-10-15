@@ -6,9 +6,10 @@
 
 void akaza::Graph::dump() {
     std::cout << "# GRAPH --" << std::endl;
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
     for (const auto &node: _nodes) {
-        std::cout << node->get_start_pos() << "\t" << node->get_key() << "\t\t"
-                  << (node->get_prev() == nullptr ? "NULL" : node->get_prev()->get_key())
+        std::cout << node->get_start_pos() << "\t" << cnv.to_bytes(node->get_key()) << "\t\t"
+                  << (node->get_prev() == nullptr ? "NULL" : cnv.to_bytes(node->get_prev()->get_key()))
                   << "\t" << node->get_cost()
                   << std::endl;
     }
@@ -47,7 +48,7 @@ std::vector<std::shared_ptr<akaza::Node>> akaza::Graph::get_prev_items(const std
             continue;
         }
         if (target_node->is_eos()) {
-            if (node->get_key() == "です/です") {
+            if (node->get_key() == L"です/です") {
                 D(std::cout << "DDDDD: " << node->get_start_pos() << "\t"
                             << node->get_yomi().length() <<
                             "\t" <<
