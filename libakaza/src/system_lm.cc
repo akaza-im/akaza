@@ -9,8 +9,7 @@ void akaza::SystemUnigramLM::load(const char *path) {
 }
 
 std::tuple<int32_t, float> akaza::SystemUnigramLM::find_unigram(const std::wstring &word) const {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
-
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
 
     std::string query(cnv.to_bytes(word));
     query += "\xff"; // add marker

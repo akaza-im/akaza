@@ -24,23 +24,16 @@ namespace akaza {
         int unigram_C = 0;
         // 総単語出現数
         int unigram_V = 0;
-        std::map<std::string, int> unigram;
+        std::map<std::wstring, int> unigram;
         int bigram_C = 0;
         int bigram_V = 0;
-        std::map<std::string, int> bigram;
+        std::map<std::wstring, int> bigram;
 
         float alpha = 0.00001;
 
-        void read(const std::string &path, bool is_unigram, int &c, int &v, std::map<std::string, int> &map);
+        void read(const std::string &path, bool is_unigram, int &c, int &v, std::map<std::wstring, int> &map);
 
-        void save_file(const std::string &path, const std::map<std::string, int> &map) {
-            std::ofstream ofs(path + ".tmp", std::ofstream::out);
-            for (const auto&[words, count] : map) {
-                ofs << words << " " << count << std::endl;
-            }
-            ofs.close();
-            rename(path.c_str(), (path + ".tmp").c_str());
-        }
+        void save_file(const std::string &path, const std::map<std::wstring, int> &map);
 
     public:
         UserLanguageModel(const std::string &unigram_path, const std::string &bigram_path) {
@@ -72,15 +65,7 @@ namespace akaza {
             return unigram_kanas.count(yomi) > 0;
         }
 
-        std::optional<float> get_bigram_cost(const std::string &key1, const std::string &key2) const {
-            auto key = key1 + "\t" + key2;
-            if (bigram.count(key) > 0) {
-                auto count = bigram.at(key);
-                return std::log10((count + alpha) / (bigram_C + alpha * bigram_V));
-            } else {
-                return {};
-            }
-        }
+        std::optional<float> get_bigram_cost(const std::wstring &key1, const std::wstring &key2) const;
 
 /*
     def get_unigram_cost(self, key: str) -> Optional[float]:
