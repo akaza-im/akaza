@@ -17,10 +17,10 @@ namespace akaza {
         std::wstring yomi_;
         std::wstring word_;
         std::wstring key_;
-        std::shared_ptr<Node> _prev;
+        std::shared_ptr<Node> prev_;
         float cost_;
         int32_t word_id_;
-        std::map<std::wstring, float> _bigram_cache;
+        std::map<std::wstring, float> bigram_cache_;
     public:
         Node(int start_pos, const std::wstring &yomi, const std::wstring &word);
 
@@ -76,7 +76,7 @@ namespace akaza {
         }
 
         std::shared_ptr<Node> get_prev() const {
-            return _prev;
+            return prev_;
         }
 
         void set_prev(std::shared_ptr<Node> &prev);

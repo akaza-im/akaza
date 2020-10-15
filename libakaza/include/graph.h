@@ -11,14 +11,14 @@
 namespace akaza {
     class Graph {
     private:
-        int _size;
-        std::vector<std::shared_ptr<Node>> _nodes;
+        int size_;
+        std::vector<std::shared_ptr<Node>> nodes_;
     public:
         Graph() {
         }
 
         int size() {
-            return _size;
+            return size_;
         }
 
         /*
@@ -29,7 +29,7 @@ namespace akaza {
             yield self.d[i]
          */
         std::vector<std::shared_ptr<Node>> get_items() {
-            return _nodes;
+            return nodes_;
         }
 
         std::vector<std::shared_ptr<Node>> get_items_by_start_and_length(const std::shared_ptr<Node> &node);
@@ -45,7 +45,7 @@ namespace akaza {
         return self.d[max(self.d.keys())][0]
          */
         std::shared_ptr<akaza::Node> get_eos() {
-            for (const auto &node: _nodes) {
+            for (const auto &node: nodes_) {
                 if (node->is_eos()) {
                     return node;
                 }
@@ -58,7 +58,7 @@ namespace akaza {
         return self.d[0][0]
          */
         std::shared_ptr<Node> get_bos() {
-            for (const auto &node: _nodes) {
+            for (const auto &node: nodes_) {
                 if (node->is_bos()) {
                     return node;
                 }

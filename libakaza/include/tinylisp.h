@@ -23,28 +23,28 @@ namespace akaza {
 
         class Node {
         private:
-            NodeType _type;
+            NodeType type_;
 
         protected:
-            Node(NodeType type) { this->_type = type; }
+            Node(NodeType type) { this->type_ = type; }
 
         public:
             virtual ~Node() = default;
 
-            NodeType type() { return this->_type; }
+            NodeType type() { return this->type_; }
             // TODO Implement method like `as_ptr`
         };
 
         class ListNode : public Node {
         private:
-            std::vector<std::shared_ptr<Node>> _children;
+            std::vector<std::shared_ptr<Node>> children_;
 
         public:
             ListNode(std::vector<std::shared_ptr<Node>> children) : Node(NODE_LIST) {
-                this->_children = children;
+                this->children_ = children;
             }
 
-            std::vector<std::shared_ptr<Node>> *children() { return &_children; }
+            std::vector<std::shared_ptr<Node>> *children() { return &children_; }
         };
 
         class StringNode : public Node {
@@ -72,24 +72,24 @@ namespace akaza {
 
         class FunctionNode : public Node {
         private:
-            function_node_func *cb;
+            function_node_func *cb_;
 
         public:
-            FunctionNode(function_node_func *cb) : Node(NODE_FUNCTION) { this->cb = cb; }
+            FunctionNode(function_node_func *cb) : Node(NODE_FUNCTION) { this->cb_ = cb; }
 
             std::shared_ptr<Node> call(std::vector<std::shared_ptr<Node>> &exps) {
-                return cb(exps);
+                return cb_(exps);
             }
         };
 
         class PointerNode : public Node {
         private:
-            void *_ptr;
+            void *ptr_;
 
         public:
-            PointerNode(void *ptr) : Node(NODE_POINTER) { this->_ptr = ptr; }
+            PointerNode(void *ptr) : Node(NODE_POINTER) { this->ptr_ = ptr; }
 
-            void *ptr() { return _ptr; }
+            void *ptr() { return ptr_; }
         };
 
 

@@ -15,32 +15,32 @@ namespace akaza {
 
     class SystemUnigramLMBuilder {
     private:
-        marisa::Keyset keyset;
-        marisa::Trie trie;
+        marisa::Keyset keyset_;
+        marisa::Trie trie_;
     public:
         void add(const std::string &word, float score) {
             char buf[sizeof(float)];
             memcpy(buf, &score, sizeof(float));
             std::string key(word + "\xff" + std::string(buf, sizeof(float)));
-            keyset.push_back(key.c_str(), key.size());
+            keyset_.push_back(key.c_str(), key.size());
         }
 
         void save(const std::string &path) {
-            trie.build(keyset);
-            trie.save(path.c_str());
+            trie_.build(keyset_);
+            trie_.save(path.c_str());
         }
     };
 
     class SystemUnigramLM {
     private:
-        marisa::Trie trie;
+        marisa::Trie trie_;
     public:
         SystemUnigramLM() {}
 
         ~SystemUnigramLM() {}
 
         std::size_t size() {
-            return trie.size();
+            return trie_.size();
         }
 
         void load(const char *path);
@@ -58,8 +58,8 @@ namespace akaza {
 
     class SystemBigramLMBuilder {
     private:
-        marisa::Keyset keyset;
-        marisa::Trie trie;
+        marisa::Keyset keyset_;
+        marisa::Trie trie_;
     public:
         void add(int32_t word_id1, int32_t word_id2, float score) {
             // ここで処理する。
@@ -77,24 +77,24 @@ namespace akaza {
             std::memcpy(scorebuf, &score, sizeof(score));
             keybuf += std::string(scorebuf, scorebuf + 4);
 
-            keyset.push_back(keybuf.c_str(), keybuf.size());
+            keyset_.push_back(keybuf.c_str(), keybuf.size());
         }
 
         void save(const std::string &path) {
-            trie.build(keyset);
-            trie.save(path.c_str());
+            trie_.build(keyset_);
+            trie_.save(path.c_str());
         }
     };
 
     class SystemBigramLM {
     private:
-        marisa::Trie trie;
+        marisa::Trie trie_;
     public:
         SystemBigramLM() {
         }
 
         std::size_t size() {
-            return trie.size();
+            return trie_.size();
         }
 
         void load(const char *path);
@@ -112,7 +112,7 @@ namespace akaza {
             marisa::Agent agent;
             agent.set_query(query.c_str(), query.size());
 
-            while (trie.predictive_search(agent)) {
+            while (trie_.predictive_search(agent)) {
                 const char *p = agent.key().ptr() + query.size();
                 float score;
                 std::memcpy(&score, p, sizeof(float));

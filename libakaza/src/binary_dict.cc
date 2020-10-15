@@ -16,8 +16,8 @@ static std::vector<std::wstring> split(const std::wstring &s) {
 
 
 void akaza::BinaryDict::load(const std::string &dict_path) {
-    dict_trie.load(dict_path.c_str());
-    D(std::cout << "Loading BinaryDict: " << dict_path << ": " << dict_trie.num_keys()
+    dict_trie_.load(dict_path.c_str());
+    D(std::cout << "Loading BinaryDict: " << dict_path << ": " << dict_trie_.num_keys()
                 << " " << __FILE__ << ":" << __LINE__ << std::endl);
 }
 
@@ -30,7 +30,7 @@ std::vector<std::wstring> akaza::BinaryDict::find_kanjis(const std::wstring &wor
     marisa::Agent agent;
     agent.set_query(query.c_str(), query.size());
 
-    while (dict_trie.predictive_search(agent)) {
+    while (dict_trie_.predictive_search(agent)) {
         std::string kanjis = std::string(agent.key().ptr() + query.size(), agent.key().length() - query.size());
         return split(cnv.from_bytes(kanjis));
     }

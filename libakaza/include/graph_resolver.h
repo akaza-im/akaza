@@ -15,20 +15,20 @@
 namespace akaza {
     class Slice {
     private:
-        size_t _start;
-        size_t _len;
+        size_t start_;
+        size_t len_;
     public:
         Slice(size_t start, size_t len) {
-            _start = start;
-            _len = len;
+            start_ = start;
+            len_ = len;
         }
 
         [[nodiscard]] size_t start() const {
-            return _start;
+            return start_;
         }
 
         [[nodiscard]] size_t len() const {
-            return _len;
+            return len_;
         }
 
         std::string repr();
@@ -54,10 +54,10 @@ namespace akaza {
          */
     private:
         std::shared_ptr<UserLanguageModel> user_language_model_;
-        std::shared_ptr<SystemUnigramLM> _system_unigram_lm;
-        std::shared_ptr<SystemBigramLM> _system_bigram_lm;
-        std::vector<std::shared_ptr<BinaryDict>> _normal_dicts;
-        std::vector<std::shared_ptr<BinaryDict>> _single_term_dicts;
+        std::shared_ptr<SystemUnigramLM> system_unigram_lm_;
+        std::shared_ptr<SystemBigramLM> system_bigram_lm_;
+        std::vector<std::shared_ptr<BinaryDict>> normal_dicts_;
+        std::vector<std::shared_ptr<BinaryDict>> single_term_dicts_;
 
         std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>>
         construct_normal_graph(const std::wstring &ws);

@@ -3,8 +3,8 @@
 #include "debug_log.h"
 
 void akaza::SystemUnigramLM::load(const char *path) {
-    trie.load(path);
-    D(std::cout << "Loading SystemUnigramLM " << path << " size: " << trie.size()
+    trie_.load(path);
+    D(std::cout << "Loading SystemUnigramLM " << path << " size: " << trie_.size()
                 << " " << __FILE__ << ":" << __LINE__ << std::endl);
 }
 
@@ -17,7 +17,7 @@ std::tuple<int32_t, float> akaza::SystemUnigramLM::find_unigram(const std::wstri
     marisa::Agent agent;
     agent.set_query(query.c_str(), query.size());
 
-    while (trie.predictive_search(agent)) {
+    while (trie_.predictive_search(agent)) {
         // dump_string(std::string(agent.key().ptr(), agent.key().length()));
         // std::cout << "HIT! " << std::endl;
 
@@ -30,7 +30,7 @@ std::tuple<int32_t, float> akaza::SystemUnigramLM::find_unigram(const std::wstri
 }
 
 void akaza::SystemBigramLM::load(const char *path) {
-    trie.load(path);
-    D(std::cout << "Loading SystemBigramLM " << path << " size: " << trie.size()
+    trie_.load(path);
+    D(std::cout << "Loading SystemBigramLM " << path << " size: " << trie_.size()
                 << " " << __FILE__ << ":" << __LINE__ << std::endl);
 }

@@ -1,7 +1,3 @@
-//
-// Created by tokuhirom on 10/9/20.
-//
-
 #ifndef LIBAKAZA_DEBUG_LOG_H
 #define LIBAKAZA_DEBUG_LOG_H
 

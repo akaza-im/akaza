@@ -6,7 +6,7 @@
 
 void akaza::Graph::dump() {
     std::cout << "# GRAPH --" << std::endl;
-    for (const auto &node: _nodes) {
+    for (const auto &node: nodes_) {
         std::wcout << node->get_start_pos() << "\t" << node->get_key() << "\t\t"
                    << (node->get_prev() == nullptr ? L"NULL" : node->get_prev()->get_key())
                    << "\t" << node->get_cost()
@@ -19,18 +19,18 @@ void akaza::Graph::dump() {
 void
 akaza::Graph::build(int size,
                     const std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>> &nodemap) {
-    this->_size = size;
+    this->size_ = size;
 
-    this->_nodes.push_back(akaza::create_bos_node());
-    this->_nodes.push_back(akaza::create_eos_node(size));
+    this->nodes_.push_back(akaza::create_bos_node());
+    this->nodes_.push_back(akaza::create_eos_node(size));
     for (const auto&[n, nodes]: nodemap) {
         for (const auto &node: nodes) {
             // D(std::cout << "Graph::build-- " << node->get_key() << std::endl);
-            this->_nodes.push_back(node);
+            this->nodes_.push_back(node);
         }
     }
 
-    std::sort(this->_nodes.begin(), this->_nodes.end(),
+    std::sort(this->nodes_.begin(), this->nodes_.end(),
               [](const std::shared_ptr<Node> &a, const std::shared_ptr<Node> &b) {
                   return a->get_start_pos() < b->get_start_pos();
               });
@@ -42,7 +42,7 @@ std::vector<std::shared_ptr<akaza::Node>> akaza::Graph::get_prev_items(const std
     }
 
     std::vector<std::shared_ptr<akaza::Node>> nodes;
-    for (const auto &node: this->_nodes) {
+    for (const auto &node: this->nodes_) {
         if (node->is_bos()) {
             continue;
         }
@@ -74,7 +74,7 @@ std::vector<std::shared_ptr<akaza::Node>> akaza::Graph::get_prev_items(const std
 std::vector<std::shared_ptr<akaza::Node>>
 akaza::Graph::get_items_by_start_and_length(const std::shared_ptr<akaza::Node> &target_node) {
     std::vector<std::shared_ptr<akaza::Node>> nodes;
-    for (const auto &node: this->_nodes) {
+    for (const auto &node: this->nodes_) {
         if (node->get_start_pos() == target_node->get_start_pos() &&
             node->get_yomi().length() == target_node->get_yomi().length()) {
             nodes.push_back(node);

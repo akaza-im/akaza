@@ -13,23 +13,23 @@ namespace akaza {
     class UserLanguageModel {
 
     private:
-        std::string unigram_path;
-        std::string bigram_path;
+        std::string unigram_path_;
+        std::string bigram_path_;
 
-        bool need_save = false;
+        bool need_save_ = false;
 
-        std::set<std::wstring> unigram_kanas;
+        std::set<std::wstring> unigram_kanas_;
 
         // 単語数
-        int unigram_C = 0;
+        int unigram_C_ = 0;
         // 総単語出現数
-        int unigram_V = 0;
-        std::map<std::wstring, int> unigram;
-        int bigram_C = 0;
-        int bigram_V = 0;
-        std::map<std::wstring, int> bigram;
+        int unigram_V_ = 0;
+        std::map<std::wstring, int> unigram_;
+        int bigram_C_ = 0;
+        int bigram_V_ = 0;
+        std::map<std::wstring, int> bigram_;
 
-        float alpha = 0.00001;
+        float alpha_ = 0.00001;
 
         void read(const std::string &path, bool is_unigram, int &c, int &v, std::map<std::wstring, int> &map);
 
@@ -37,24 +37,24 @@ namespace akaza {
 
     public:
         UserLanguageModel(const std::string &unigram_path, const std::string &bigram_path) {
-            this->unigram_path = unigram_path;
-            this->bigram_path = bigram_path;
+            this->unigram_path_ = unigram_path;
+            this->bigram_path_ = bigram_path;
         }
 
         size_t size_unigram() {
-            return unigram.size();
+            return unigram_.size();
         }
 
         size_t size_bigram() {
-            return bigram.size();
+            return bigram_.size();
         }
 
         void load_unigram() {
-            read(unigram_path, true, unigram_C, unigram_V, unigram);
+            read(unigram_path_, true, unigram_C_, unigram_V_, unigram_);
         }
 
         void load_bigram() {
-            read(bigram_path, false, bigram_C, bigram_V, bigram);
+            read(bigram_path_, false, bigram_C_, bigram_V_, bigram_);
         }
 
         void add_entry(std::vector<Node> nodes);
@@ -62,7 +62,7 @@ namespace akaza {
         std::optional<float> get_unigram_cost(const std::wstring &key) const;
 
         bool has_unigram_cost_by_yomi(const std::wstring &yomi) {
-            return unigram_kanas.count(yomi) > 0;
+            return unigram_kanas_.count(yomi) > 0;
         }
 
         std::optional<float> get_bigram_cost(const std::wstring &key1, const std::wstring &key2) const;
@@ -106,14 +106,14 @@ namespace akaza {
         self.logger.info(f"SAVED {self.path}")
  */
         void save() {
-            need_save = false;
+            need_save_ = false;
 
-            save_file(unigram_path, unigram);
-            save_file(bigram_path, bigram);
+            save_file(unigram_path_, unigram_);
+            save_file(bigram_path_, bigram_);
         }
 
         bool should_save() {
-            return need_save;
+            return need_save_;
         }
 
     };
