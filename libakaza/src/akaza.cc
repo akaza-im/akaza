@@ -7,7 +7,7 @@ std::string akaza::Akaza::get_version() {
 }
 
 std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
-        const std::string &src,
+        const std::wstring &src,
         const std::optional<std::vector<akaza::Slice>> &forceSelectedClauses) {
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
 
@@ -19,10 +19,10 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
     assert(!forceSelectedClauses.has_value() || !forceSelectedClauses.value().empty());
 
     if (!src.empty() && isupper(src[0]) && !forceSelectedClauses.has_value()) {
-        return {{std::make_shared<akaza::Node>(0, cnv.from_bytes(src), cnv.from_bytes(src))}};
+        return {{std::make_shared<akaza::Node>(0, src, src)}};
     }
 
-    std::wstring whiragana = romkanConverter_->to_hiragana(src);
+    std::wstring whiragana = romkanConverter_->to_hiragana(cnv.to_bytes(src));
     std::string hiragana = cnv.to_bytes(whiragana);
     D(std::cout << "HIRAGANA=" << hiragana << std::endl);
 

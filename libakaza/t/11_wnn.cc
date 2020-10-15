@@ -4,7 +4,7 @@
 #include "test_akaza.h"
 #include <filesystem>
 
-std::wstring convert_test(const std::string &src, const std::wstring &expected) {
+std::wstring convert_test(const std::wstring &src, const std::wstring &expected) {
     auto akaza = build_akaza();
     std::vector<std::vector<std::shared_ptr<akaza::Node>>> result = akaza->convert(
             src,
@@ -21,7 +21,7 @@ std::wstring convert_test(const std::string &src, const std::wstring &expected) 
 }
 
 int main() {
-    convert_test("わたしのなまえはなかのです。", L"私の名前は中野です。");
-    // convert_test("わたしのなまえはなかのです", L"私の名前は中野です");
+    convert_test(L"わたしのなまえはなかのです。", L"私の名前は中野です。");
+    // convert_test(L"わたしのなまえはなかのです", L"私の名前は中野です");
     done_testing();
 }

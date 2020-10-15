@@ -22,7 +22,7 @@ namespace akaza {
         }
 
         std::vector<std::vector<std::shared_ptr<Node>>> convert(
-                const std::string &s,
+                const std::wstring &s,
                 const std::optional<std::vector<Slice>> &forceSelectedClauses);
 
         std::string get_version();
