@@ -209,8 +209,8 @@ void akaza::GraphResolver::fill_cost(akaza::Graph &graph) {
             continue;
         }
         D(std::wcout << "fill_cost: " << node->get_key() << std::endl);
-        auto node_cost = node->calc_node_cost(*user_language_model_, *system_unigram_lm_);
-        auto cost = INT32_MIN;
+        float node_cost = node->calc_node_cost(*user_language_model_, *system_unigram_lm_);
+        float cost = INT32_MIN;
         auto prev_nodes = graph.get_prev_items(node);
 
         if (!prev_nodes.empty()) {
@@ -218,11 +218,12 @@ void akaza::GraphResolver::fill_cost(akaza::Graph &graph) {
             for (const auto &prev_node: prev_nodes) {
 //                D(std::cout << "set prev: " << node->get_key() << " " << prev_node->get_key()
 //                            << " " << __FILE__ << ":" << __LINE__ << std::endl);
-                auto bigram_cost = prev_node->get_bigram_cost(
+                float bigram_cost = prev_node->get_bigram_cost(
                         *node,
                         *user_language_model_,
                         *system_bigram_lm_);
-                auto tmp_cost = prev_node->get_cost() + bigram_cost + node_cost;
+                float prev_cost = prev_node->get_cost();
+                float tmp_cost = prev_cost + bigram_cost + node_cost;
                 if (cost < tmp_cost) { // コストが最大になる経路をえらんでいる
                     cost = tmp_cost;
                     shortest_prev = prev_node;
