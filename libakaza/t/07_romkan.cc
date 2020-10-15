@@ -17,7 +17,7 @@ def test_remove_last_char(src, expected):
     assert romkan.remove_last_char(src) == expected
  */
 static void test_remove_last_char() {
-    std::map<std::string, std::string> additional = {
+    std::map<std::wstring, std::wstring> additional = {
     };
     auto romkan = akaza::RomkanConverter(additional);
 
@@ -45,7 +45,7 @@ def test_bar(src, expected):
     assert romkan.to_hiragana(src) == expected
  */
 static void test_to_hiragana() {
-    std::map<std::string, std::string> additional = {
+    std::map<std::wstring, std::wstring> additional = {
     };
     auto romkan = akaza::RomkanConverter(additional);
 
@@ -94,7 +94,7 @@ int main() {
     test_remove_last_char();
     test_to_hiragana();
 
-    std::map<std::string, std::string> additional = {
+    std::map<std::wstring, std::wstring> additional = {
     };
     auto romkan = akaza::RomkanConverter(additional);
 
