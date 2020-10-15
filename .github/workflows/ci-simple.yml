@@ -39,7 +39,7 @@ jobs:
       run: |
         cd libakaza
         cmake .
-        make
+        VERBOSE=1 make
         sudo make install
     - name: Test akaza-data
       run: |
