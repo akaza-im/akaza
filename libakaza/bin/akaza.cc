@@ -50,8 +50,9 @@ int main(int argc, char **argv) {
     akaza::Akaza akaza(graphResolver, romkanConverter);
     std::vector<std::vector<std::shared_ptr<akaza::Node>>> result = akaza.convert("watasinonamaehanakanodesu.",
                                                                                   std::nullopt);
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
     for (const auto &nodes: result) {
-        std::cout << nodes[0]->get_word();
+        std::cout << cnv.to_bytes(nodes[0]->get_word());
     }
     std::cout << std::endl;
 }
