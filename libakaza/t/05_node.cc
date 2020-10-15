@@ -14,7 +14,7 @@ def test_surface():
 static void test_surface() {
     auto lisp = akaza::tinylisp::TinyLisp();
     auto node = akaza::Node(0, L"たしざんてすと", LR"((. "a" "b"))");
-    ok(node.surface(lisp) == "ab");
+    ok(node.surface(lisp) == L"ab");
 }
 
 static void test_eq() {
