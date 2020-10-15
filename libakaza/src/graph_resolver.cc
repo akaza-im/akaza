@@ -32,11 +32,10 @@ akaza::GraphResolver::GraphResolver(const std::shared_ptr<UserLanguageModel> &us
     D(std::cout << std::endl);
 }
 
-static inline void insert_basic_candidates(std::set<std::tuple<std::string, std::string>> &kanjiset,
-                                           const std::string &yomi) {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
+static inline void insert_basic_candidates(std::set<std::tuple<std::wstring, std::wstring>> &kanjiset,
+                                           const std::wstring &yomi) {
     kanjiset.insert(std::make_tuple(yomi, yomi));
-    kanjiset.insert(std::make_tuple(yomi, cnv.to_bytes(akaza::hira2kata(cnv.from_bytes(yomi)))));
+    kanjiset.insert(std::make_tuple(yomi, akaza::hira2kata(yomi)));
     // TODO: 半角 alphabet 候補もいれたいかも？
     // TODO: 全角 alphabet 候補もいれたいかも？
 }
@@ -69,7 +68,7 @@ akaza::GraphResolver::construct_normal_graph(const std::string &s) {
     std::wstring ws = cnv.from_bytes(s);
 
     for (int i = 0; i < ws.size(); i++) {
-        std::set<std::tuple<std::string, std::string>> kanjiset;
+        std::set<std::tuple<std::wstring, std::wstring>> kanjiset;
         for (int j = 1; j <= ws.size() - i; j++) {
             std::wstring wyomi = ws.substr(i, j);
             std::string yomi = cnv.to_bytes(wyomi);
@@ -80,13 +79,13 @@ akaza::GraphResolver::construct_normal_graph(const std::string &s) {
             for (const auto &normal_dict: _normal_dicts) {
                 auto kanjis = normal_dict->find_kanjis(wyomi);
                 for (auto &kanji: kanjis) {
-                    kanjiset.insert(std::make_tuple(yomi, cnv.to_bytes(kanji)));
+                    kanjiset.insert(std::make_tuple(wyomi, kanji));
                     exist_kanjis = true;
                 }
             }
 
             if (exist_kanjis || user_language_model_->has_unigram_cost_by_yomi(yomi)) {
-                insert_basic_candidates(kanjiset, yomi);
+                insert_basic_candidates(kanjiset, wyomi);
             }
 
             // 選択範囲が、文全体であった場合は単文節辞書を参照する。
@@ -94,21 +93,21 @@ akaza::GraphResolver::construct_normal_graph(const std::string &s) {
                 for (const auto &single_term_dict: _single_term_dicts) {
                     std::vector<std::wstring> kanjis = single_term_dict->find_kanjis(wyomi);
                     for (auto &kanji: kanjis) {
-                        kanjiset.insert(std::make_tuple(yomi, cnv.to_bytes(kanji)));
+                        kanjiset.insert(std::make_tuple(wyomi, kanji));
                     }
                 }
 
                 // 候補がない場合は、Basic 候補をいれていく。
                 if (kanjiset.empty()) {
-                    insert_basic_candidates(kanjiset, yomi);
+                    insert_basic_candidates(kanjiset, wyomi);
                 }
             }
         }
 
         std::vector<std::shared_ptr<akaza::Node>> nodes;
         nodes.reserve(kanjiset.size());
-        for (auto &[yomi, kanji]: kanjiset) {
-            nodes.push_back(std::make_shared<akaza::Node>(i, yomi, kanji));
+        for (const auto &[yomi, kanji]: kanjiset) {
+            nodes.push_back(std::make_shared<akaza::Node>(i, cnv.to_bytes(yomi), cnv.to_bytes(kanji)));
         }
         src.emplace_back(i, nodes);
     }
@@ -144,7 +143,7 @@ akaza::GraphResolver::force_selected_graph(const std::string &s, const std::vect
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
     std::wstring ws = cnv.from_bytes(s);
     for (const auto &slice : slices) {
-        std::set<std::tuple<std::string, std::string>> kanjiset;
+        std::set<std::tuple<std::wstring, std::wstring>> kanjiset;
 
         std::wstring wyomi = ws.substr(slice.start(), slice.len());
         std::string yomi = cnv.to_bytes(wyomi);
@@ -153,25 +152,25 @@ akaza::GraphResolver::force_selected_graph(const std::string &s, const std::vect
         for (const auto &normal_dict: _normal_dicts) {
             auto kanjis = normal_dict->find_kanjis(wyomi);
             for (auto &kanji: kanjis) {
-                kanjiset.insert(std::make_tuple(yomi, cnv.to_bytes(kanji)));
+                kanjiset.insert(std::make_tuple(wyomi, kanji));
             }
         }
         if (wyomi.size() == slice.len()) { // 全部はいってる。
             for (const auto &single_term_dict: _single_term_dicts) {
                 auto kanjis = single_term_dict->find_kanjis(wyomi);
                 for (auto &kanji: kanjis) {
-                    kanjiset.insert(std::make_tuple(yomi, cnv.to_bytes(kanji)));
+                    kanjiset.insert(std::make_tuple(wyomi, kanji));
                 }
             }
 
         }
 
-        insert_basic_candidates(kanjiset, yomi);
+        insert_basic_candidates(kanjiset, wyomi);
 
         std::vector<std::shared_ptr<akaza::Node>> nodes;
         nodes.reserve(kanjiset.size());
         for (auto &[yomi, kanji]: kanjiset) {
-            nodes.push_back(std::make_shared<akaza::Node>(slice.start(), yomi, kanji));
+            nodes.push_back(std::make_shared<akaza::Node>(slice.start(), cnv.to_bytes(yomi), cnv.to_bytes(kanji)));
         }
         retval.emplace_back(slice.start(), nodes);
     }
