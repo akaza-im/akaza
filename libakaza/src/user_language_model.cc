@@ -133,10 +133,9 @@ akaza::UserLanguageModel::get_bigram_cost(const std::wstring &key1, const std::w
 }
 
 void akaza::UserLanguageModel::save_file(const std::string &path, const std::map<std::wstring, int> &map) {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove?
-    std::ofstream ofs(path + ".tmp", std::ofstream::out);
+    std::wofstream ofs(path + ".tmp", std::ofstream::out);
     for (const auto&[words, count] : map) {
-        ofs << cnv.to_bytes(words) << " " << count << std::endl;
+        ofs << words << " " << count << std::endl;
     }
     ofs.close();
     rename(path.c_str(), (path + ".tmp").c_str());
