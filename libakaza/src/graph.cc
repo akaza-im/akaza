@@ -74,7 +74,6 @@ std::vector<std::shared_ptr<akaza::Node>> akaza::Graph::get_prev_items(const std
 std::vector<std::shared_ptr<akaza::Node>>
 akaza::Graph::get_items_by_start_and_length(const std::shared_ptr<akaza::Node> &target_node) {
     std::vector<std::shared_ptr<akaza::Node>> nodes;
-    std::wstring_convert<std::codecvt_utf8_utf16<char32_t>, char32_t> utf32conv;
     for (const auto &node: this->_nodes) {
         if (node->get_start_pos() == target_node->get_start_pos() &&
             node->get_yomi().length() == target_node->get_yomi().length()) {
