@@ -66,13 +66,7 @@ namespace akaza {
 
         void add_entry(std::vector<Node> nodes);
 
-        std::optional<float> get_unigram_cost(const std::string &key) const {
-            if (unigram.count(key) > 0) {
-                auto count = unigram.at(key);
-                return std::log10((count + alpha) / unigram_C + alpha * unigram_V);
-            }
-            return {};
-        }
+        std::optional<float> get_unigram_cost(const std::wstring &key) const;
 
         bool has_unigram_cost_by_yomi(const std::wstring &yomi) {
             return unigram_kanas.count(yomi) > 0;
