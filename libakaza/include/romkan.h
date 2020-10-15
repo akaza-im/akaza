@@ -10,7 +10,7 @@ namespace akaza {
         std::wregex last_char_pattern_;
         std::map<std::wstring, std::wstring> map_;
     public:
-        RomkanConverter(const std::map<std::string, std::string> &additional);
+        RomkanConverter(const std::map<std::wstring, std::wstring> &additional);
         std::wstring remove_last_char(const std::wstring & s);
         std::wstring to_hiragana(const std::wstring & s);
     };
