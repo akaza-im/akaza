@@ -112,7 +112,7 @@ std::wstring akaza::RomkanConverter::remove_last_char(const std::wstring &s) {
 }
 
 //     s = re.sub("nn", "n'", s)
-static void replaceAll(std::string &str, const std::string &from, const std::string &to) {
+static void replaceAll(std::wstring &str, const std::wstring &from, const std::wstring &to) {
     if (from.empty())
         return;
     size_t start_pos = 0;
@@ -123,15 +123,15 @@ static void replaceAll(std::string &str, const std::string &from, const std::str
 }
 
 std::wstring akaza::RomkanConverter::to_hiragana(const std::string &ss) {
-    std::string s = ss;
-    std::transform(s.begin(), s.end(), s.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
-
-    replaceAll(s, "nn", "n'");
-
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
+
+    std::wstring ws = cnv.from_bytes(ss);
+    std::transform(ws.begin(), ws.end(), ws.begin(),
+                   [](auto& c) { return std::tolower(c); });
+
+    replaceAll(ws, L"nn", L"n'");
+
     std::wstring result;
-    std::wstring ws = cnv.from_bytes(s);
     std::wsmatch sm;
     while (std::regex_search(ws, sm, pattern_)) {
         std::wstring p = sm.str(1);
