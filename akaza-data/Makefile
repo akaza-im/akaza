@@ -29,10 +29,11 @@ work/jawiki.wfreq: work/text/BE/wiki_13 bin/030_text2wfreq.py
 work/jawiki.vocab: work/jawiki.wfreq bin/040_wfreq2vocab.py
 	python bin/040_wfreq2vocab.py
 
-work/jawiki.1gram.json: work/jawiki.vocab  bin/050_dumpngram.py
+# very slow
+work/ngram/BE/wiki_13.1gram.txt: work/jawiki.vocab  bin/050_dumpngram.py
 	python bin/050_dumpngram.py work/jawiki.vocab
 
-work/jawiki.merged-2gram.txt: work/jawiki.1gram.json work/jawiki.2gram.json work/jawiki.vocab bin/060_create-system_language_model.py
+work/jawiki.merged-2gram.txt: work/ngram/BE/wiki_13.1gram.txt work/jawiki.vocab bin/060_create-system_language_model.py
 	python bin/060_create-system_language_model.py
 
 work/jawiki.single_dict.txt: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza
