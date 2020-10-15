@@ -111,10 +111,15 @@ std::wstring akaza::RomkanConverter::remove_last_char(const std::wstring &s) {
     return std::regex_replace(s, _last_char_pattern, L"");
 }
 
-static std::string normalize_double_n(const std::string &s) {
-    //     s = re.sub("nn", "n'", s)
-    return std::regex_replace(s, std::regex("nn"), "n'");
-
+//     s = re.sub("nn", "n'", s)
+static void replaceAll(std::string &str, const std::string &from, const std::string &to) {
+    if (from.empty())
+        return;
+    size_t start_pos = 0;
+    while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+    }
 }
 
 std::wstring akaza::RomkanConverter::to_hiragana(const std::string &ss) {
@@ -122,7 +127,7 @@ std::wstring akaza::RomkanConverter::to_hiragana(const std::string &ss) {
     std::transform(s.begin(), s.end(), s.begin(),
                    [](unsigned char c) { return std::tolower(c); });
 
-    s = normalize_double_n(s);
+    replaceAll(s, "nn", "n'");
 
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
     std::wstring result;
