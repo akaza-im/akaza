@@ -122,10 +122,10 @@ static void replaceAll(std::wstring &str, const std::wstring &from, const std::w
     }
 }
 
-std::wstring akaza::RomkanConverter::to_hiragana(const std::string &ss) {
+std::wstring akaza::RomkanConverter::to_hiragana(const std::wstring &ss) {
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
 
-    std::wstring ws = cnv.from_bytes(ss);
+    std::wstring ws = ss;
     std::transform(ws.begin(), ws.end(), ws.begin(),
                    [](auto& c) { return std::tolower(c); });
 
@@ -137,7 +137,7 @@ std::wstring akaza::RomkanConverter::to_hiragana(const std::string &ss) {
         std::wstring p = sm.str(1);
         ws = ws.substr(p.size());
         D(std::cout << cnv.to_bytes(p) << std::endl);
-        std::string sp = cnv.to_bytes(p);
+        std::string sp = cnv.to_bytes(p); // TODO remove
         if (map_.count(sp) > 0) {
             result += cnv.from_bytes(map_[sp]);
         } else {

@@ -12,17 +12,17 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
 
     D(std::wcout << "Akaza::convert '"
-                << src << "' (HASH="
-                << std::hash<std::wstring>{}(src)
-                << ")"
-                << " " << __FILE__ << ":" << __LINE__ << std::endl);
+                 << src << "' (HASH="
+                 << std::hash<std::wstring>{}(src)
+                 << ")"
+                 << " " << __FILE__ << ":" << __LINE__ << std::endl);
     assert(!forceSelectedClauses.has_value() || !forceSelectedClauses.value().empty());
 
     if (!src.empty() && isupper(src[0]) && !forceSelectedClauses.has_value()) {
         return {{std::make_shared<akaza::Node>(0, src, src)}};
     }
 
-    std::wstring whiragana = romkanConverter_->to_hiragana(cnv.to_bytes(src));
+    std::wstring whiragana = romkanConverter_->to_hiragana(src);
     std::string hiragana = cnv.to_bytes(whiragana);
     D(std::cout << "HIRAGANA=" << hiragana << std::endl);
 
