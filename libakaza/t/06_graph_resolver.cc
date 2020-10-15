@@ -123,13 +123,12 @@ int main() {
 
     graph.dump();
 
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
     std::vector<std::vector<std::shared_ptr<akaza::Node>>> got = graphResolver.find_nbest(graph);
     std::wstring g;
     for (const auto &nodes: got) {
         g += nodes[0]->get_word();
         for (const auto &node: nodes) {
-            std::cout << cnv.to_bytes(node->get_key()) << " ";
+            std::wcout << node->get_key() << " ";
         }
         std::cout << std::endl;
     }

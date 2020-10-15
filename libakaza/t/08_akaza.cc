@@ -61,13 +61,12 @@ int main() {
     std::vector<std::vector<std::shared_ptr<akaza::Node>>> got = akaza.convert(L"watasinonamaehanakanodesu.",
                                                                                std::nullopt);
 
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
     std::wstring g;
     for (const auto &nodes: got) {
         g += nodes[0]->get_word();
         std::cout << "# ";
         for (const auto &node: nodes) {
-            std::cout << cnv.to_bytes(node->get_key()) << "\t";
+            std::wcout << node->get_key() << "\t";
         }
         std::cout << std::endl;
     }
