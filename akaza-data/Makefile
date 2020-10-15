@@ -2,13 +2,9 @@ PREFIX ?= /usr
 DATADIR ?= $(PREFIX)/share
 DESTDIR ?=
 
-CXX=clang++
-CXXOPTS=-W -Wno-unused-parameter -Wno-unused-variable -g -std=c++11
-# Note: `shell` is a gnu make extension.
-EXT_SUFFIX:=$(shell python3-config --extension-suffix)
 
-all: akaza_data/data/system_dict.trie akaza_data/data/lm_v2_2gram.trie akaza_data/data/lm_v2_2gram.trie binary akaza_data/data/system_dict.trie
-binary: akaza_data/systemlm_loader$(EXT_SUFFIX)
+all: akaza_data/data/system_dict.trie akaza_data/data/lm_v2_2gram.trie akaza_data/data/lm_v2_2gram.trie \
+	akaza_data/data/system_dict.trie akaza_data/data/single_term.trie
 
 work/jawiki-latest-pages-articles.xml.bz2:
 	mkdir -p work/
@@ -39,45 +35,19 @@ work/jawiki.1gram.json: work/jawiki.vocab  bin/050_dumpngram.py
 work/jawiki.merged-2gram.txt: work/jawiki.1gram.json work/jawiki.2gram.json work/jawiki.vocab bin/060_create-system_language_model.py
 	python bin/060_create-system_language_model.py
 
-work/jawiki.single_dict.txt: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki
+work/jawiki.single_dict.txt: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza
 	python bin/070_make-system-dict.py
 	python bin/080_system_dump.py
 
-bin/090_effective_lm: bin/090_effective_lm.cc
-	$(CXX) $(CXXOPTS) -l marisa bin/090_effective_lm.cc -o bin/090_effective_lm
+akaza_data/data/lm_v2_2gram.trie: work/jawiki.merged-2gram.txt
+	akaza-make-system-lm work/jawiki.merged-1gram.txt akaza_data/data/lm_v2_1gram.trie \
+    	work/jawiki.merged-2gram.txt akaza_data/data/lm_v2_2gram.trie
 
-bin/100_effective_dict: bin/100_effective_dict.cc
-	$(CXX) $(CXXOPTS) -l marisa bin/100_effective_dict.cc -o bin/100_effective_dict
+akaza_data/data/system_dict.trie: work/jawiki.single_dict.txt
+	akaza-make-binary-dict work/jawiki.system_dict.txt akaza_data/data/system_dict.trie
 
-akaza_data/data/lm_v2_2gram.trie: bin/090_effective_lm work/jawiki.merged-2gram.txt
-	./bin/090_effective_lm
-
-akaza_data/data/system_dict.trie: bin/100_effective_dict work/jawiki.single_dict.txt
-	./bin/100_effective_dict
-
-# -------------------------------------------------------------------------
-
-akaza_data/systemlm_loader$(EXT_SUFFIX): akaza_data/systemlm_loader.cc src/system_lm.h src/binary_dict.h src/nanoutf8.h src/tinylisp.h
-	$(CXX) -O3 $(CXXOPTS) -shared -lmarisa -fPIC `python3 -m pybind11 --includes` akaza_data/systemlm_loader.cc \
-		-o akaza_data/systemlm_loader$(EXT_SUFFIX)
-
-# -------------------------------------------------------------------------
-
-t/00_systemlm: t/00_systemlm.cc
-	$(CXX) $(CXXOPTS) -l marisa -o t/00_systemlm t/00_systemlm.cc
-
-t/01_binary_dict: t/01_binary_dict.cc src/binary_dict.h
-	$(CXX) $(CXXOPTS) -l marisa -o t/01_binary_dict t/01_binary_dict.cc
-
-t/02_skk_dict: t/02_skk_dict.cc src/skkdict.h
-	$(CXX) $(CXXOPTS) -l marisa -o t/02_skk_dict t/02_skk_dict.cc
-
-t/03_tinylisp: t/03_tinylisp.cc src/tinylisp.h
-	$(CXX) $(CXXOPTS) -l marisa -o t/03_tinylisp t/03_tinylisp.cc
-
-test: t/00_systemlm t/01_binary_dict t/02_skk_dict t/03_tinylisp
-	prove --exec '/bin/sh -c' ./t/00_systemlm ./t/01_binary_dict ./t/02_skk_dict t/03_tinylisp
-	pytest tests
+akaza_data/data/single_term.trie: work/jawiki.single_term.txt
+	akaza-make-binary-dict work/jawiki.single_term.txt akaza_data/data/single_term.trie
 
 # -------------------------------------------------------------------------
 
@@ -85,4 +55,4 @@ install:
 	install -m 0755 -d $(DESTDIR)$(DATADIR)/akaza-data
 	install -m 0644 akaza_data/data/*.trie $(DESTDIR)$(DATADIR)/akaza-data
 
-.PHONY: all test install
+.PHONY: all install

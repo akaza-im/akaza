@@ -1,4 +1,4 @@
-from akaza_data.systemlm_loader import BinaryDict
+from pyakaza.bind import BinaryDict
 from skkdictutils import parse_skkdict, merge_skkdict, ari2nasi
 
 
