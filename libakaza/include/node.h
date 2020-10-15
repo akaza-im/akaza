@@ -22,7 +22,7 @@ namespace akaza {
         int32_t word_id_;
         std::map<std::wstring, float> _bigram_cache;
     public:
-        Node(int start_pos, const std::string &yomi, const std::string &word);
+        Node(int start_pos, const std::wstring &yomi, const std::wstring &word);
 
         std::string get_key() const {
             return this->key_;

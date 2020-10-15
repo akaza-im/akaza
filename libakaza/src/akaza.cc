@@ -9,6 +9,8 @@ std::string akaza::Akaza::get_version() {
 std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
         const std::string &src,
         const std::optional<std::vector<akaza::Slice>> &forceSelectedClauses) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
+
     D(std::cout << "Akaza::convert '"
                 << src << "' (HASH="
                 << std::hash<std::string>{}(src)
@@ -17,7 +19,7 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
     assert(!forceSelectedClauses.has_value() || !forceSelectedClauses.value().empty());
 
     if (!src.empty() && isupper(src[0]) && !forceSelectedClauses.has_value()) {
-        return {{std::make_shared<akaza::Node>(0, src, src)}};
+        return {{std::make_shared<akaza::Node>(0, cnv.from_bytes(src), cnv.from_bytes(src))}};
     }
 
     std::string hiragana = romkanConverter_->to_hiragana(src);
@@ -26,7 +28,6 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
     // 子音だが、N は NN だと「ん」になるので処理しない。
     std::string consonant;
     {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
         const std::wstring whiragana = cnv.from_bytes(hiragana);
         std::wregex trailing_consonant(cnv.from_bytes(R"(^(.*?)([qwrtypsdfghjklzxcvbm]+)$)"));
         std::wsmatch sm;
@@ -37,7 +38,6 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
         }
     }
 
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
     Graph graph = graphResolver_->graph_construct(cnv.from_bytes(hiragana), forceSelectedClauses);
     graphResolver_->fill_cost(graph);
     D(graph.dump());
@@ -49,8 +49,8 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
         nodes.push_back({{
                                  std::make_shared<akaza::Node>(
                                          src.size(),
-                                         consonant,
-                                         consonant
+                                         cnv.from_bytes(consonant),
+                                         cnv.from_bytes(consonant)
                                  )
                          }});
         return nodes;

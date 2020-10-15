@@ -13,13 +13,13 @@ def test_surface():
 
 static void test_surface() {
     auto lisp = akaza::tinylisp::TinyLisp();
-    auto node = akaza::Node(0, "たしざんてすと", R"((. "a" "b"))");
+    auto node = akaza::Node(0, L"たしざんてすと", LR"((. "a" "b"))");
     ok(node.surface(lisp) == "ab");
 }
 
 static void test_eq() {
-    auto a = akaza::Node(0, "あ", "あ");
-    auto b = akaza::Node(0, "い", "い");
+    auto a = akaza::Node(0, L"あ", L"あ");
+    auto b = akaza::Node(0, L"い", L"い");
 
     ok(a == a);
     ok(b == b);

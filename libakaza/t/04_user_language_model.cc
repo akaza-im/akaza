@@ -14,9 +14,9 @@ void test_read() {
 
     akaza::UserLanguageModel d(unigram_path.get_name(), bigram_path.get_name());
 
-    d.add_entry({akaza::Node(0, "たんご", "単語")});
-    d.add_entry({akaza::Node(0, "たんご", "単語")});
-    d.add_entry({akaza::Node(0, "じゅくご", "熟語")});
+    d.add_entry({akaza::Node(0, L"たんご", L"単語")});
+    d.add_entry({akaza::Node(0, L"たんご", L"単語")});
+    d.add_entry({akaza::Node(0, L"じゅくご", L"熟語")});
 
     ok(d.get_unigram_cost("単語/たんご") > d.get_unigram_cost("熟語/じゅくご"));
 }
@@ -39,7 +39,7 @@ void test_read3() {
     mkstemp(bigram_path);
 
     akaza::UserLanguageModel d(unigram_path, bigram_path);
-    d.add_entry({akaza::Node(0, "ひょいー", "ヒョイー")});
+    d.add_entry({akaza::Node(0, L"ひょいー", L"ヒョイー")});
     ok(d.has_unigram_cost_by_yomi(L"ひょいー") == true);
 
     unlink(unigram_path);
@@ -84,17 +84,17 @@ void test_read2() {
     akaza::UserLanguageModel d(unigram_path, bigram_path);
 
     d.add_entry({
-                        akaza::Node(0, "わたし", "私"),
-                        akaza::Node(0, "だよ", "だよ")
+                        akaza::Node(0, L"わたし", L"私"),
+                        akaza::Node(0, L"だよ", L"だよ")
                 });
     d.add_entry({
-                        akaza::Node(0, "それは", "それは"),
-                        akaza::Node(0, "わたし", "私"),
-                        akaza::Node(0, "だよ", "だよ")
+                        akaza::Node(0, L"それは", L"それは"),
+                        akaza::Node(0, L"わたし", L"私"),
+                        akaza::Node(0, L"だよ", L"だよ")
                 });
     d.add_entry({
-                        akaza::Node(0, "わたし", "私"),
-                        akaza::Node(0, "です", "です")
+                        akaza::Node(0, L"わたし", L"私"),
+                        akaza::Node(0, L"です", L"です")
                 });
 
 
