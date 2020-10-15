@@ -65,14 +65,14 @@ std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>>
 akaza::GraphResolver::construct_normal_graph(const std::string &s) {
     std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>> src;
 
-    std::wstring_convert<std::codecvt_utf8_utf16<char32_t>, char32_t> utf32conv;
-    std::u32string s32 = utf32conv.from_bytes(s);
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
+    std::wstring ws = cnv.from_bytes(s);
 
-    for (int i = 0; i < s32.size(); i++) {
+    for (int i = 0; i < ws.size(); i++) {
         std::set<std::tuple<std::string, std::string>> kanjiset;
-        for (int j = 1; j <= s32.size() - i; j++) {
-            std::u32string yomi32 = s32.substr(i, j);
-            std::string yomi = utf32conv.to_bytes(yomi32);
+        for (int j = 1; j <= ws.size() - i; j++) {
+            std::wstring wyomi = ws.substr(i, j);
+            std::string yomi = cnv.to_bytes(wyomi);
 
             bool exist_kanjis = false;
 
@@ -90,7 +90,7 @@ akaza::GraphResolver::construct_normal_graph(const std::string &s) {
             }
 
             // 選択範囲が、文全体であった場合は単文節辞書を参照する。
-            if (i == 0 && s32.size() == j) {
+            if (i == 0 && ws.size() == j) {
                 for (const auto &single_term_dict: _single_term_dicts) {
                     std::vector<std::string> kanjis = single_term_dict->find_kanjis(yomi);
                     for (auto &kanji: kanjis) {
@@ -141,13 +141,13 @@ akaza::GraphResolver::construct_normal_graph(const std::string &s) {
 std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>>
 akaza::GraphResolver::force_selected_graph(const std::string &s, const std::vector<akaza::Slice> &slices) {
     std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>> retval;
-    std::wstring_convert<std::codecvt_utf8_utf16<char32_t>, char32_t> utf32conv;
-    std::u32string s32 = utf32conv.from_bytes(s);
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
+    std::wstring ws = cnv.from_bytes(s);
     for (const auto &slice : slices) {
         std::set<std::tuple<std::string, std::string>> kanjiset;
 
-        std::u32string yomi32 = s32.substr(slice.start(), slice.len());
-        std::string yomi = utf32conv.to_bytes(yomi32);
+        std::wstring wyomi = ws.substr(slice.start(), slice.len());
+        std::string yomi = cnv.to_bytes(wyomi);
 
         // 通常の辞書から検索してみる
         for (const auto &normal_dict: _normal_dicts) {
@@ -156,7 +156,7 @@ akaza::GraphResolver::force_selected_graph(const std::string &s, const std::vect
                 kanjiset.insert(std::make_tuple(yomi, kanji));
             }
         }
-        if (yomi32.size() == slice.len()) { // 全部はいってる。
+        if (wyomi.size() == slice.len()) { // 全部はいってる。
             for (const auto &single_term_dict: _single_term_dicts) {
                 auto kanjis = single_term_dict->find_kanjis(yomi);
                 for (auto &kanji: kanjis) {
@@ -306,13 +306,13 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::GraphResolver::fin
 
 akaza::Graph
 akaza::GraphResolver::graph_construct(const std::string &s, std::optional<std::vector<Slice>> force_selected_clause) {
-    std::wstring_convert<std::codecvt_utf8_utf16<char32_t>, char32_t> utf32conv;
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
 
     Graph graph = Graph();
     auto nodemap = force_selected_clause.has_value()
                    ? force_selected_graph(s, force_selected_clause.value())
                    : construct_normal_graph(s);
-    graph.build(utf32conv.from_bytes(s).size(), nodemap);
+    graph.build(cnv.from_bytes(s).size(), nodemap);
     return graph;
 }
 
