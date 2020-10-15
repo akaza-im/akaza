@@ -208,7 +208,7 @@ void akaza::GraphResolver::fill_cost(akaza::Graph &graph) {
         if (node->is_bos()) {
             continue;
         }
-        D(std::cout << "fill_cost: " << node->get_key() << std::endl);
+        D(std::wcout << "fill_cost: " << node->get_key() << std::endl);
         auto node_cost = node->calc_node_cost(*user_language_model_, *_system_unigram_lm);
         auto cost = INT32_MIN;
         auto prev_nodes = graph.get_prev_items(node);
@@ -229,12 +229,12 @@ void akaza::GraphResolver::fill_cost(akaza::Graph &graph) {
                 }
             }
             assert(shortest_prev);
-            D(std::cout << "[fill_cost] set prev: " << node->get_key() << " " << shortest_prev->get_key()
+            D(std::wcout << "[fill_cost] set prev: " << node->get_key() << " " << shortest_prev->get_key()
                         << " " << __FILE__ << ":" << __LINE__ << std::endl);
             node->set_prev(shortest_prev);
             node->set_cost(cost);
         } else {
-            D(std::cout << "\tno prev: " << node->get_key() << std::endl);
+            D(std::wcout << "\tno prev: " << node->get_key() << std::endl);
             node->set_cost(cost);
         }
     }

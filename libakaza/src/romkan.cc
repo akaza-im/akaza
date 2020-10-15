@@ -68,7 +68,7 @@ akaza::RomkanConverter::RomkanConverter(const std::map<std::string, std::string>
             pattern_str += L"|";
         }
         pattern_str += L".)";
-        D(std::cout << "PATTERN: " << pattern_str << std::endl);
+        D(std::wcout << "PATTERN: " << pattern_str << std::endl);
 
         _pattern.assign(pattern_str);
     }
