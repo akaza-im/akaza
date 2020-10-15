@@ -14,3 +14,4 @@ akaza-make-system-lm
 akaza-make-binary-dict
 vgcore.*
 core.*
+akaza-dump-systemlm-unigram
