@@ -100,7 +100,6 @@ akaza::GraphResolver::construct_normal_graph(const std::wstring &ws) {
             }
         }
 
-        std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
         std::vector<std::shared_ptr<akaza::Node>> nodes;
         nodes.reserve(kanjiset.size());
         for (const auto &[yomi, kanji]: kanjiset) {
@@ -137,7 +136,6 @@ akaza::GraphResolver::construct_normal_graph(const std::wstring &ws) {
 std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>>
 akaza::GraphResolver::force_selected_graph(const std::wstring &ws, const std::vector<akaza::Slice> &slices) {
     std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>> retval;
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
     for (const auto &slice : slices) {
         std::set<std::tuple<std::wstring, std::wstring>> kanjiset;
 
