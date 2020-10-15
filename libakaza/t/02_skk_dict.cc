@@ -3,9 +3,12 @@
 
 #include "../include/skkdict.h"
 #include <iostream>
+#include <filesystem>
 
 int main() {
-    auto got = akaza::parse_skkdict("t/data/SKK-JISYO.akaza");
+    std::filesystem::path path(__FILE__);
+    std::string spath = path.parent_path().concat("/data/SKK-JISYO.akaza").string();
+    auto got = akaza::parse_skkdict(spath);
 
     auto ari = std::get<0>(got);
     auto nasi = std::get<1>(got);
