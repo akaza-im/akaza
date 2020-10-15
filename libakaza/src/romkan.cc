@@ -41,16 +41,18 @@ static std::wstring quotemeta(const std::wstring &input) {
     return buffer;
 }
 
+// TODO move to wstring
 akaza::RomkanConverter::RomkanConverter(const std::map<std::string, std::string> &additional) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
     // romaji -> hiragana
     for (const auto &[rom, hira]: DEFAULT_ROMKAN_H) {
-        map_[rom] = hira;
+        map_[cnv.from_bytes(rom)] = cnv.from_bytes(hira);
     }
     for (const auto &[rom, hira]: additional) {
-        map_[rom] = hira;
+        map_[cnv.from_bytes(rom)] = cnv.from_bytes(hira);
     }
 
-    std::vector<std::string> keys;
+    std::vector<std::wstring> keys;
     keys.reserve(map_.size());
     for (const auto &[k, v]: map_) {
         keys.push_back(k);
@@ -59,12 +61,11 @@ akaza::RomkanConverter::RomkanConverter(const std::map<std::string, std::string>
         return a.length() > b.length();
     });
 
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
 
     {
         std::wstring pattern_str = L"^(";
         for (const auto &key: keys) {
-            pattern_str += quotemeta(cnv.from_bytes(key));
+            pattern_str += quotemeta(key);
             pattern_str += L"|";
         }
         pattern_str += L".)";
@@ -76,7 +77,7 @@ akaza::RomkanConverter::RomkanConverter(const std::map<std::string, std::string>
     {
         std::wstring last_char_pattern = L"(";
         for (const auto &key: keys) {
-            last_char_pattern += quotemeta(cnv.from_bytes(key));
+            last_char_pattern += quotemeta(key);
             last_char_pattern += L"|";
         }
         last_char_pattern += L".)$";
@@ -123,11 +124,9 @@ static void replaceAll(std::wstring &str, const std::wstring &from, const std::w
 }
 
 std::wstring akaza::RomkanConverter::to_hiragana(const std::wstring &ss) {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
-
     std::wstring ws = ss;
     std::transform(ws.begin(), ws.end(), ws.begin(),
-                   [](auto& c) { return std::tolower(c); });
+                   [](auto &c) { return std::tolower(c); });
 
     replaceAll(ws, L"nn", L"n'");
 
@@ -136,10 +135,9 @@ std::wstring akaza::RomkanConverter::to_hiragana(const std::wstring &ss) {
     while (std::regex_search(ws, sm, pattern_)) {
         std::wstring p = sm.str(1);
         ws = ws.substr(p.size());
-        D(std::cout << cnv.to_bytes(p) << std::endl);
-        std::string sp = cnv.to_bytes(p); // TODO remove
-        if (map_.count(sp) > 0) {
-            result += cnv.from_bytes(map_[sp]);
+        D(std::wcout << p << std::endl);
+        if (map_.count(p) > 0) {
+            result += map_[p];
         } else {
             result += p;
         }
