@@ -7,11 +7,11 @@ namespace akaza {
     class RomkanConverter {
     private:
         std::wregex _pattern;
-        std::regex _last_char_pattern;
+        std::wregex _last_char_pattern;
         std::map<std::string, std::string> _map;
     public:
         RomkanConverter(const std::map<std::string, std::string> &additional);
-        std::string remove_last_char(const std::string & s);
+        std::wstring remove_last_char(const std::wstring & s);
         std::string to_hiragana(const std::string & s);
     };
 }
