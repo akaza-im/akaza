@@ -82,7 +82,6 @@ static void test_to_hiragana() {
             {L"sorenawww", L"それなwww"},
     };
 
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
     for (const auto &[src, expected]: cases) {
         auto got = romkan.to_hiragana(src);
         note("HIRAGANA: %s -> %s", src.c_str(), got.c_str());
