@@ -8,7 +8,7 @@
 static void test_katakana_candidates() {
     auto graph_resolver = build_graph_resolver();
     auto graph = graph_resolver->graph_construct(
-            "ひょいー",
+            L"ひょいー",
             std::make_optional<std::vector<akaza::Slice>>({
                                                                   akaza::Slice(
                                                                           0,
@@ -28,7 +28,7 @@ static void test_katakana_candidates() {
 static void test_sushi() {
     auto graph_resolver = build_graph_resolver();
     auto graph = graph_resolver->graph_construct(
-            "すし",
+            L"すし",
             std::make_optional<std::vector<akaza::Slice>>({
                                                                   akaza::Slice(
                                                                           0,
@@ -100,7 +100,7 @@ int main() {
             normal_dicts,
             single_term_dicts
     );
-    akaza::Graph graph = graphResolver.graph_construct("わたしのなまえはなかのです。", std::nullopt);
+    akaza::Graph graph = graphResolver.graph_construct(L"わたしのなまえはなかのです。", std::nullopt);
 
     {
         int desu = 0;

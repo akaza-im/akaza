@@ -37,8 +37,8 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
         }
     }
 
-
-    Graph graph = graphResolver_->graph_construct(hiragana, forceSelectedClauses);
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
+    Graph graph = graphResolver_->graph_construct(cnv.from_bytes(hiragana), forceSelectedClauses);
     graphResolver_->fill_cost(graph);
     D(graph.dump());
     std::vector<std::vector<std::shared_ptr<akaza::Node>>> nodes = graphResolver_->find_nbest(graph);
