@@ -21,13 +21,13 @@ static void test_remove_last_char() {
     };
     auto romkan = akaza::RomkanConverter(additional);
 
-    std::vector<std::tuple<std::string, std::string>> cases = {
-            {"aka",    "a"},
-            {"sona",   "so"},
-            {"son",    "so"},
-            {"sonn",   "so"},
-            {"sonnna", "sonn"},
-            {"sozh",   "so"},
+    std::vector<std::tuple<std::wstring, std::wstring>> cases = {
+            {L"aka",    L"a"},
+            {L"sona",   L"so"},
+            {L"son",    L"so"},
+            {L"sonn",   L"so"},
+            {L"sonnna", L"sonn"},
+            {L"sozh",   L"so"},
     };
 
     for (const auto &[src, expected]: cases) {

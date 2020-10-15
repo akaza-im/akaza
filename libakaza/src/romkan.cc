@@ -74,12 +74,12 @@ akaza::RomkanConverter::RomkanConverter(const std::map<std::string, std::string>
     }
 
     {
-        std::string last_char_pattern = "(";
+        std::wstring last_char_pattern = L"(";
         for (const auto &key: keys) {
-            last_char_pattern += cnv.to_bytes(quotemeta(cnv.from_bytes(key)));
-            last_char_pattern += "|";
+            last_char_pattern += quotemeta(cnv.from_bytes(key));
+            last_char_pattern += L"|";
         }
-        last_char_pattern += ".)$";
+        last_char_pattern += L".)$";
 
         _last_char_pattern.assign(last_char_pattern);
     }
@@ -107,8 +107,8 @@ akaza::RomkanConverter::RomkanConverter(const std::map<std::string, std::string>
      */
 }
 
-std::string akaza::RomkanConverter::remove_last_char(const std::string &s) {
-    return std::regex_replace(s, _last_char_pattern, "");
+std::wstring akaza::RomkanConverter::remove_last_char(const std::wstring &s) {
+    return std::regex_replace(s, _last_char_pattern, L"");
 }
 
 static std::string normalize_double_n(const std::string &s) {
