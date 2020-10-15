@@ -40,7 +40,7 @@ void test_read3() {
 
     akaza::UserLanguageModel d(unigram_path, bigram_path);
     d.add_entry({akaza::Node(0, "ひょいー", "ヒョイー")});
-    ok(d.has_unigram_cost_by_yomi("ひょいー") == true);
+    ok(d.has_unigram_cost_by_yomi(L"ひょいー") == true);
 
     unlink(unigram_path);
     free(unigram_path);

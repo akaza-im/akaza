@@ -30,6 +30,7 @@ void akaza::UserLanguageModel::read(const std::string &path, bool is_unigram, in
     c = 0;
     v = 0;
 
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
     std::ifstream ifs(path, std::ifstream::in);
     std::string line;
     while (std::getline(ifs, line)) {
@@ -44,7 +45,7 @@ void akaza::UserLanguageModel::read(const std::string &path, bool is_unigram, in
         if (is_unigram) {
             auto kana = std::get<1>(split2(line, '/', splitted));
             if (splitted) {
-                unigram_kanas.insert(kana);
+                unigram_kanas.insert(cnv.from_bytes(kana));
             }
         }
         v += 1;
@@ -80,6 +81,8 @@ def add_entry(self, nodes: List[Node]):
     self.need_save = True
  */
 void akaza::UserLanguageModel::add_entry(std::vector<Node> nodes) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
+
     // unigram
     for (auto &node: nodes) {
         auto key = node.get_key();
@@ -89,7 +92,7 @@ void akaza::UserLanguageModel::add_entry(std::vector<Node> nodes) {
         unigram_V += 1;
         bool splitted;
         auto kana = std::get<1>(split2(key, '/', splitted));
-        unigram_kanas.insert(kana);
+        unigram_kanas.insert(cnv.from_bytes(kana));
         unigram[key] = unigram.count(key) > 0 ? unigram[key] + 1 : 1;
     }
 
