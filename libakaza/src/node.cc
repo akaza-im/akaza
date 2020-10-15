@@ -33,7 +33,7 @@ float akaza::Node::calc_node_cost(
     if (u.has_value()) {
         return *u;
     }
-    auto[word_id, score] = ulm.find_unigram(cnv.to_bytes(key));
+    auto[word_id, score] = ulm.find_unigram(key);
     this->word_id_ = word_id;
     if (word_id != akaza::UNKNOWN_WORD_ID) {
         this->cost_ = score;

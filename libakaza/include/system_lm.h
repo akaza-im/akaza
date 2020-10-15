@@ -48,24 +48,7 @@ namespace akaza {
         /**
          * @return {word_id}, {score}
          */
-        std::tuple<int32_t, float> find_unigram(const std::string &word) const {
-            std::string query(word);
-            query += "\xff"; // add marker
-
-            marisa::Agent agent;
-            agent.set_query(query.c_str(), query.size());
-
-            while (trie.predictive_search(agent)) {
-                // dump_string(std::string(agent.key().ptr(), agent.key().length()));
-                // std::cout << "HIT! " << std::endl;
-
-                const char *p = agent.key().ptr() + query.size();
-                float score = 0;
-                std::memcpy(&score, p, sizeof(float));
-                return std::tuple<int32_t, float>(int32_t(agent.key().id()), score);
-            }
-            return std::tuple<int32_t, float>(UNKNOWN_WORD_ID, 0);
-        }
+        std::tuple<int32_t, float> find_unigram(const std::wstring &word) const;
 
         inline float get_default_cost() const {
             return -20.0; // log10(1e-20)
