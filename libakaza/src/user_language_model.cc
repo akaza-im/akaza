@@ -2,15 +2,15 @@
 
 #include "split.h"
 
-inline int my_atoi(const std::string &s) {
-    std::stringstream ss(s);
+inline int my_atoi(const std::wstring &s) {
+    std::wstringstream ss(s);
     int n;
     ss >> n;
     return n;
 }
 
 void akaza::UserLanguageModel::read(const std::string &path, bool is_unigram, int &c, int &v,
-                                    std::map<std::string, int> &map) {
+                                    std::map<std::wstring, int> &map) {
 /*
         word_data = {}
         with open(path) as fp:
@@ -31,11 +31,12 @@ void akaza::UserLanguageModel::read(const std::string &path, bool is_unigram, in
     v = 0;
 
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
-    std::ifstream ifs(path, std::ifstream::in);
-    std::string line;
+    std::wifstream ifs(path, std::ifstream::in);
+    std::wstring line;
     while (std::getline(ifs, line)) {
         bool splitted;
-        std::tuple<std::string, std::string> m = split2(line, ' ', splitted);
+        wchar_t sp = L' ';
+        std::tuple<std::wstring, std::wstring> m = split2(line, sp, splitted);
         if (!splitted) {
             continue;
         }
@@ -43,9 +44,9 @@ void akaza::UserLanguageModel::read(const std::string &path, bool is_unigram, in
         int count = my_atoi(std::get<1>(m));
         map[key] = count;
         if (is_unigram) {
-            auto kana = std::get<1>(split2(line, '/', splitted));
+            auto kana = std::get<1>(split2(line, L'/', splitted));
             if (splitted) {
-                unigram_kanas.insert(cnv.from_bytes(kana));
+                unigram_kanas.insert(kana);
             }
         }
         v += 1;
@@ -85,14 +86,14 @@ void akaza::UserLanguageModel::add_entry(std::vector<Node> nodes) {
 
     // unigram
     for (auto &node: nodes) {
-        auto key = cnv.to_bytes(node.get_key());
+        auto key = node.get_key();
         if (unigram.count(key) == 0) {
             unigram_C += 1;
         }
         unigram_V += 1;
         bool splitted;
-        auto kana = std::get<1>(split2(key, '/', splitted));
-        unigram_kanas.insert(cnv.from_bytes(kana));
+        auto kana = std::get<1>(split2(key, L'/', splitted));
+        unigram_kanas.insert(kana);
         unigram[key] = unigram.count(key) > 0 ? unigram[key] + 1 : 1;
     }
 
@@ -101,7 +102,7 @@ void akaza::UserLanguageModel::add_entry(std::vector<Node> nodes) {
         auto &node1 = nodes[i - 1];
         auto &node2 = nodes[i];
 
-        auto key = cnv.to_bytes(node1.get_key() + L"\t" + node2.get_key());
+        auto key = node1.get_key() + L"\t" + node2.get_key();
         if (bigram.count(key) == 0) {
             bigram_C += 1;
         }
@@ -112,12 +113,31 @@ void akaza::UserLanguageModel::add_entry(std::vector<Node> nodes) {
     need_save = true;
 }
 
-std::optional<float> akaza::UserLanguageModel::get_unigram_cost(const std::wstring &wkey) const {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;// TODO
-    auto key = cnv.to_bytes(wkey);
+std::optional<float> akaza::UserLanguageModel::get_unigram_cost(const std::wstring &key) const {
     if (unigram.count(key) > 0) {
         auto count = unigram.at(key);
         return std::log10((count + alpha) / float(unigram_C) + alpha * float(unigram_V));
     }
     return {};
+}
+
+std::optional<float>
+akaza::UserLanguageModel::get_bigram_cost(const std::wstring &key1, const std::wstring &key2) const {
+    auto key = key1 + L"\t" + key2;
+    if (bigram.count(key) > 0) {
+        auto count = bigram.at(key);
+        return std::log10((count + alpha) / (float(bigram_C) + alpha * float(bigram_V)));
+    } else {
+        return {};
+    }
+}
+
+void akaza::UserLanguageModel::save_file(const std::string &path, const std::map<std::wstring, int> &map) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove?
+    std::ofstream ofs(path + ".tmp", std::ofstream::out);
+    for (const auto&[words, count] : map) {
+        ofs << cnv.to_bytes(words) << " " << count << std::endl;
+    }
+    ofs.close();
+    rename(path.c_str(), (path + ".tmp").c_str());
 }

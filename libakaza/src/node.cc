@@ -27,7 +27,6 @@ float akaza::Node::calc_node_cost(
         const akaza::UserLanguageModel &user_language_model,
         const akaza::SystemUnigramLM &ulm
 ) {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
     auto key = this->get_key();
     auto u = user_language_model.get_unigram_cost(key);
     if (u.has_value()) {
@@ -88,7 +87,7 @@ static float calc_bigram_cost(const akaza::Node &prev_node,
     auto prev_key = prev_node.get_key();
     auto next_key = next_node.get_key();
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
-    auto u = ulm.get_bigram_cost(cnv.to_bytes(prev_key), cnv.to_bytes(next_key));
+    auto u = ulm.get_bigram_cost(prev_key, next_key);
     if (u.has_value()) {
         return *u;
     }
