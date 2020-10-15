@@ -15,7 +15,7 @@ namespace akaza {
     private:
         int start_pos_;
         std::wstring yomi_;
-        std::string word_;
+        std::wstring word_;
         std::string key_;
         std::shared_ptr<Node> _prev;
         float cost_;
@@ -29,19 +29,20 @@ namespace akaza {
         }
 
         bool is_bos() const {
-            return word_ == "__BOS__";
+            return word_ == L"__BOS__";
         }
 
         bool is_eos() const {
-            return word_ == "__EOS__";
+            return word_ == L"__EOS__";
         }
 
+        // TODO: return wstring
         std::string surface(const akaza::tinylisp::TinyLisp &tinyLisp) const {
             std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
             if (word_.size() > 0 && word_[0] == '(') {
-                return cnv.to_bytes(tinyLisp.run(cnv.from_bytes(word_)));
+                return cnv.to_bytes(tinyLisp.run(word_));
             } else {
-                return word_;
+                return cnv.to_bytes(word_);
             }
         }
 
@@ -60,7 +61,8 @@ namespace akaza {
         }
 
         std::string get_word() const {
-            return word_;
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
+            return cnv.to_bytes(word_);
         }
 
         float get_cost() const {
