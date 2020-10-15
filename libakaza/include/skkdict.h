@@ -36,7 +36,6 @@ namespace akaza {
             }
             std::size_t pos = line.find(' ');
             std::string yomi = line.substr(0, pos);
-            std::cout << yomi << std::endl;
 
             std::stringstream ss(line.substr(pos + 1));
             std::vector<std::string> kanjis;
