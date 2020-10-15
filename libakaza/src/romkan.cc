@@ -8,30 +8,30 @@
 
 #include "romkan_default.h"
 
-static std::string quotemeta(const std::string &input) {
-    std::string buffer;
-    for (char c: input) {
+static std::wstring quotemeta(const std::wstring &input) {
+    std::wstring buffer;
+    for (const auto &c: input) {
         switch (c) {
-            case '-':
-            case '[':
-            case ']':
-            case '{':
-            case '}':
-            case '(':
-            case ')':
-            case '*':
-            case '+':
-            case '?':
-            case '.':
-            case ',':
-            case '\\':
-            case '^':
-            case '$':
-            case '|':
-            case '#':
-            case ' ':
-            case '\t':
-                buffer += '\\';
+            case L'-':
+            case L'[':
+            case L']':
+            case L'{':
+            case L'}':
+            case L'(':
+            case L')':
+            case L'*':
+            case L'+':
+            case L'?':
+            case L'.':
+            case L',':
+            case L'\\':
+            case L'^':
+            case L'$':
+            case L'|':
+            case L'#':
+            case L' ':
+            case L'\t':
+                buffer += L'\\';
                 buffer += c;
                 break;
             default:
@@ -59,16 +59,17 @@ akaza::RomkanConverter::RomkanConverter(const std::map<std::string, std::string>
         return a.length() > b.length();
     });
 
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
+
     {
         std::string pattern_str = "^(";
         for (const auto &key: keys) {
-            pattern_str += quotemeta(key);
+            pattern_str += cnv.to_bytes(quotemeta(cnv.from_bytes(key)));
             pattern_str += "|";
         }
         pattern_str += ".)";
         D(std::cout << "PATTERN: " << pattern_str << std::endl);
 
-        std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
         auto wpattern_str = cnv.from_bytes(pattern_str);
 
         _pattern.assign(wpattern_str);
@@ -77,7 +78,7 @@ akaza::RomkanConverter::RomkanConverter(const std::map<std::string, std::string>
     {
         std::string last_char_pattern = "(";
         for (const auto &key: keys) {
-            last_char_pattern += quotemeta(key);
+            last_char_pattern += cnv.to_bytes(quotemeta(cnv.from_bytes(key)));
             last_char_pattern += "|";
         }
         last_char_pattern += ".)$";
