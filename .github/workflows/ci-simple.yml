@@ -38,10 +38,6 @@ jobs:
     - name: Test akaza-data
       run: |
         cd akaza-data
-        pip install -r requirements.txt
-        make binary
-        make test
-        sudo python setup.py install
         sudo make install
     - name: Test akaza-core
       run: |
