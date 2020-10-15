@@ -36,7 +36,7 @@ work/ngram/BE/wiki_13.1gram.txt: work/jawiki.vocab  bin/050_dumpngram.py
 work/jawiki.merged-2gram.txt: work/ngram/BE/wiki_13.1gram.txt work/jawiki.vocab bin/060_create-system_language_model.py
 	python bin/060_create-system_language_model.py
 
-work/jawiki.single_dict.txt: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza
+work/jawiki.single_term.txt: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza
 	python bin/070_make-system-dict.py
 	python bin/080_system_dump.py
 
@@ -44,7 +44,7 @@ akaza_data/data/lm_v2_2gram.trie: work/jawiki.merged-2gram.txt
 	akaza-make-system-lm work/jawiki.merged-1gram.txt akaza_data/data/lm_v2_1gram.trie \
     	work/jawiki.merged-2gram.txt akaza_data/data/lm_v2_2gram.trie
 
-akaza_data/data/system_dict.trie: work/jawiki.single_dict.txt
+akaza_data/data/system_dict.trie: work/jawiki.single_term.txt
 	akaza-make-binary-dict work/jawiki.system_dict.txt akaza_data/data/system_dict.trie
 
 akaza_data/data/single_term.trie: work/jawiki.single_term.txt
