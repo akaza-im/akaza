@@ -61,11 +61,8 @@ static inline void insert_basic_candidates(std::set<std::tuple<std::wstring, std
                                 graph.append(index=j, node=node)
  */
 std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>>
-akaza::GraphResolver::construct_normal_graph(const std::string &s) {
+akaza::GraphResolver::construct_normal_graph(const std::wstring &ws) {
     std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>> src;
-
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
-    std::wstring ws = cnv.from_bytes(s);
 
     for (int i = 0; i < ws.size(); i++) {
         std::set<std::tuple<std::wstring, std::wstring>> kanjiset;
@@ -103,6 +100,7 @@ akaza::GraphResolver::construct_normal_graph(const std::string &s) {
             }
         }
 
+        std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
         std::vector<std::shared_ptr<akaza::Node>> nodes;
         nodes.reserve(kanjiset.size());
         for (const auto &[yomi, kanji]: kanjiset) {
@@ -308,7 +306,7 @@ akaza::GraphResolver::graph_construct(const std::string &s, std::optional<std::v
     Graph graph = Graph();
     auto nodemap = force_selected_clause.has_value()
                    ? force_selected_graph(s, force_selected_clause.value())
-                   : construct_normal_graph(s);
+                   : construct_normal_graph(cnv.from_bytes(s));
     graph.build(cnv.from_bytes(s).size(), nodemap);
     return graph;
 }
