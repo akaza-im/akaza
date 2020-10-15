@@ -78,9 +78,9 @@ akaza::GraphResolver::construct_normal_graph(const std::string &s) {
 
             // 通常の辞書から検索してみる
             for (const auto &normal_dict: _normal_dicts) {
-                auto kanjis = normal_dict->find_kanjis(yomi);
+                auto kanjis = normal_dict->find_kanjis(wyomi);
                 for (auto &kanji: kanjis) {
-                    kanjiset.insert(std::make_tuple(yomi, kanji));
+                    kanjiset.insert(std::make_tuple(yomi, cnv.to_bytes(kanji)));
                     exist_kanjis = true;
                 }
             }
@@ -92,9 +92,9 @@ akaza::GraphResolver::construct_normal_graph(const std::string &s) {
             // 選択範囲が、文全体であった場合は単文節辞書を参照する。
             if (i == 0 && ws.size() == j) {
                 for (const auto &single_term_dict: _single_term_dicts) {
-                    std::vector<std::string> kanjis = single_term_dict->find_kanjis(yomi);
+                    std::vector<std::wstring> kanjis = single_term_dict->find_kanjis(wyomi);
                     for (auto &kanji: kanjis) {
-                        kanjiset.insert(std::make_tuple(yomi, kanji));
+                        kanjiset.insert(std::make_tuple(yomi, cnv.to_bytes(kanji)));
                     }
                 }
 
@@ -151,16 +151,16 @@ akaza::GraphResolver::force_selected_graph(const std::string &s, const std::vect
 
         // 通常の辞書から検索してみる
         for (const auto &normal_dict: _normal_dicts) {
-            auto kanjis = normal_dict->find_kanjis(yomi);
+            auto kanjis = normal_dict->find_kanjis(wyomi);
             for (auto &kanji: kanjis) {
-                kanjiset.insert(std::make_tuple(yomi, kanji));
+                kanjiset.insert(std::make_tuple(yomi, cnv.to_bytes(kanji)));
             }
         }
         if (wyomi.size() == slice.len()) { // 全部はいってる。
             for (const auto &single_term_dict: _single_term_dicts) {
-                auto kanjis = single_term_dict->find_kanjis(yomi);
+                auto kanjis = single_term_dict->find_kanjis(wyomi);
                 for (auto &kanji: kanjis) {
-                    kanjiset.insert(std::make_tuple(yomi, kanji));
+                    kanjiset.insert(std::make_tuple(yomi, cnv.to_bytes(kanji)));
                 }
             }
 

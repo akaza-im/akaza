@@ -15,18 +15,6 @@ namespace akaza {
     private:
         marisa::Trie dict_trie;
 
-        std::vector<std::string> split(const std::string &s) {
-            std::vector<std::string> elems;
-            std::stringstream ss(s);
-            std::string item;
-            while (getline(ss, item, '/')) {
-                if (!item.empty()) {
-                    elems.push_back(item);
-                }
-            }
-            return elems;
-        }
-
     public:
         BinaryDict() {}
 
@@ -34,7 +22,7 @@ namespace akaza {
             return dict_trie.size();
         }
 
-        void load(const std::string& dict_path);
+        void load(const std::string &dict_path);
 
         void save(std::string dict_path) {
             dict_trie.save(dict_path.c_str());
@@ -56,19 +44,7 @@ namespace akaza {
             this->build_by_keyset(keyset);
         }
 
-        std::vector<std::string> find_kanjis(std::string word) {
-            std::string query(word);
-            query += "\xff"; // add marker
-
-            marisa::Agent agent;
-            agent.set_query(query.c_str(), query.size());
-
-            while (dict_trie.predictive_search(agent)) {
-                std::string kanjis = std::string(agent.key().ptr() + query.size(), agent.key().length() - query.size());
-                return split(kanjis);
-            }
-            return std::vector<std::string>();
-        }
+        std::vector<std::wstring> find_kanjis(const std::wstring &word);
 
     };
 } // namespace akaza
