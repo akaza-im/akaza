@@ -16,12 +16,19 @@ std::wstring convert_test(const std::wstring &wsrc, const std::wstring &expected
     }
     // note("RESULT: src=%s got=%s expected=%s", cnv.to_bytes(wsrc).c_str(), retval.c_str(), expected.c_str());
 
+    std::wcout << "# RESULT: src=" << wsrc
+               << " got=" << retval
+               << " expected=" << expected << std::endl;
+
     ok(expected == retval);
     assert(expected == retval);
     return retval;
 }
 
 int main() {
+    std::wostream::sync_with_stdio(false);
+    std::wcout.imbue(std::locale("en_US.utf8"));
+
     convert_test(L"tanosiijikan", L"楽しい時間");
     convert_test(L"たのしいじかん", L"楽しい時間");
     convert_test(L"zh", L"←");
@@ -43,10 +50,10 @@ int main() {
     convert_test(L"げすとだけ", L"ゲストだけ");
     convert_test(L"ぜんぶでてるやつ", L"全部でてるやつ");
     convert_test(L"えらべる", L"選べる");
-    convert_test(L"わたしだよ", L"私だよ");
+    convert_test(L"わたしだよ", L"わたしだよ");
     convert_test(L"にほんごじょうほう", L"日本語情報");
     // convert_test(L"そうみたいですね", L"そうみたいですね");
     // convert_test(L"きめつのやいば", L"鬼滅の刃");
-    // convert_test(L"れいわ", L"令和");
+    convert_test(L"れいわ", L"令和");
     done_testing();
 }
