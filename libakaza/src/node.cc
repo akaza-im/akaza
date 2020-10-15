@@ -107,7 +107,8 @@ static float calc_bigram_cost(const akaza::Node &prev_node,
 
 float akaza::Node::get_bigram_cost(const akaza::Node &next_node, const akaza::UserLanguageModel &ulm,
                                    const akaza::SystemBigramLM &system_bigram_lm) {
-    auto next_node_key = next_node.get_key();
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
+    auto next_node_key = cnv.from_bytes(next_node.get_key());
     if (_bigram_cache.count(next_node_key) > 0) {
         return _bigram_cache.at(next_node_key);
     } else {

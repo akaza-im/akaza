@@ -20,7 +20,7 @@ namespace akaza {
         std::shared_ptr<Node> _prev;
         float cost_;
         int32_t word_id_;
-        std::map<std::string, float> _bigram_cache;
+        std::map<std::wstring, float> _bigram_cache;
     public:
         Node(int start_pos, const std::string &yomi, const std::string &word);
 
