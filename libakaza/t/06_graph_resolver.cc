@@ -106,10 +106,10 @@ int main() {
         int desu = 0;
         int maru = 0;
         for (const auto &node: graph.get_items()) {
-            if (node->get_key() == "です/です") {
+            if (node->get_key() == L"です/です") {
                 desu++;
             }
-            if (node->get_key() == "。/。") {
+            if (node->get_key() == L"。/。") {
                 maru++;
             }
         }
@@ -123,12 +123,13 @@ int main() {
 
     graph.dump();
 
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
     std::vector<std::vector<std::shared_ptr<akaza::Node>>> got = graphResolver.find_nbest(graph);
     std::wstring g;
     for (const auto &nodes: got) {
         g += nodes[0]->get_word();
         for (const auto &node: nodes) {
-            std::cout << node->get_key() << " ";
+            std::cout << cnv.to_bytes(node->get_key()) << " ";
         }
         std::cout << std::endl;
     }

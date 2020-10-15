@@ -85,7 +85,7 @@ void akaza::UserLanguageModel::add_entry(std::vector<Node> nodes) {
 
     // unigram
     for (auto &node: nodes) {
-        auto key = node.get_key();
+        auto key = cnv.to_bytes(node.get_key());
         if (unigram.count(key) == 0) {
             unigram_C += 1;
         }
@@ -101,7 +101,7 @@ void akaza::UserLanguageModel::add_entry(std::vector<Node> nodes) {
         auto &node1 = nodes[i - 1];
         auto &node2 = nodes[i];
 
-        auto key = node1.get_key() + "\t" + node2.get_key();
+        auto key = cnv.to_bytes(node1.get_key() + L"\t" + node2.get_key());
         if (bigram.count(key) == 0) {
             bigram_C += 1;
         }

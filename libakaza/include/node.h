@@ -16,7 +16,7 @@ namespace akaza {
         int start_pos_;
         std::wstring yomi_;
         std::wstring word_;
-        std::string key_;
+        std::wstring key_;
         std::shared_ptr<Node> _prev;
         float cost_;
         int32_t word_id_;
@@ -24,7 +24,7 @@ namespace akaza {
     public:
         Node(int start_pos, const std::wstring &yomi, const std::wstring &word);
 
-        std::string get_key() const {
+        std::wstring get_key() const {
             return this->key_;
         }
 
