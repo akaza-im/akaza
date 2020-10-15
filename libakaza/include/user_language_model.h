@@ -18,7 +18,7 @@ namespace akaza {
 
         bool need_save = false;
 
-        std::set<std::string> unigram_kanas;
+        std::set<std::wstring> unigram_kanas;
 
         // 単語数
         int unigram_C = 0;
@@ -74,7 +74,7 @@ namespace akaza {
             return {};
         }
 
-        bool has_unigram_cost_by_yomi(const std::string &yomi) {
+        bool has_unigram_cost_by_yomi(const std::wstring &yomi) {
             return unigram_kanas.count(yomi) > 0;
         }
 

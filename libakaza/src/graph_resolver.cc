@@ -70,36 +70,35 @@ akaza::GraphResolver::construct_normal_graph(const std::string &s) {
     for (int i = 0; i < ws.size(); i++) {
         std::set<std::tuple<std::wstring, std::wstring>> kanjiset;
         for (int j = 1; j <= ws.size() - i; j++) {
-            std::wstring wyomi = ws.substr(i, j);
-            std::string yomi = cnv.to_bytes(wyomi);
+            std::wstring yomi = ws.substr(i, j);
 
             bool exist_kanjis = false;
 
             // 通常の辞書から検索してみる
             for (const auto &normal_dict: _normal_dicts) {
-                auto kanjis = normal_dict->find_kanjis(wyomi);
+                auto kanjis = normal_dict->find_kanjis(yomi);
                 for (auto &kanji: kanjis) {
-                    kanjiset.insert(std::make_tuple(wyomi, kanji));
+                    kanjiset.insert(std::make_tuple(yomi, kanji));
                     exist_kanjis = true;
                 }
             }
 
             if (exist_kanjis || user_language_model_->has_unigram_cost_by_yomi(yomi)) {
-                insert_basic_candidates(kanjiset, wyomi);
+                insert_basic_candidates(kanjiset, yomi);
             }
 
             // 選択範囲が、文全体であった場合は単文節辞書を参照する。
             if (i == 0 && ws.size() == j) {
                 for (const auto &single_term_dict: _single_term_dicts) {
-                    std::vector<std::wstring> kanjis = single_term_dict->find_kanjis(wyomi);
+                    std::vector<std::wstring> kanjis = single_term_dict->find_kanjis(yomi);
                     for (auto &kanji: kanjis) {
-                        kanjiset.insert(std::make_tuple(wyomi, kanji));
+                        kanjiset.insert(std::make_tuple(yomi, kanji));
                     }
                 }
 
                 // 候補がない場合は、Basic 候補をいれていく。
                 if (kanjiset.empty()) {
-                    insert_basic_candidates(kanjiset, wyomi);
+                    insert_basic_candidates(kanjiset, yomi);
                 }
             }
         }
@@ -146,7 +145,6 @@ akaza::GraphResolver::force_selected_graph(const std::string &s, const std::vect
         std::set<std::tuple<std::wstring, std::wstring>> kanjiset;
 
         std::wstring wyomi = ws.substr(slice.start(), slice.len());
-        std::string yomi = cnv.to_bytes(wyomi);
 
         // 通常の辞書から検索してみる
         for (const auto &normal_dict: _normal_dicts) {
@@ -169,7 +167,7 @@ akaza::GraphResolver::force_selected_graph(const std::string &s, const std::vect
 
         std::vector<std::shared_ptr<akaza::Node>> nodes;
         nodes.reserve(kanjiset.size());
-        for (auto &[yomi, kanji]: kanjiset) {
+        for (const auto &[yomi, kanji]: kanjiset) {
             nodes.push_back(std::make_shared<akaza::Node>(slice.start(), cnv.to_bytes(yomi), cnv.to_bytes(kanji)));
         }
         retval.emplace_back(slice.start(), nodes);
