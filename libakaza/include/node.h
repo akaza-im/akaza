@@ -4,6 +4,8 @@
 #include <map>
 #include <string>
 #include <assert.h>
+#include <codecvt>
+#include <locale>
 
 namespace akaza {
 
@@ -35,8 +37,9 @@ namespace akaza {
         }
 
         std::string surface(const akaza::tinylisp::TinyLisp &tinyLisp) const {
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
             if (word_.size() > 0 && word_[0] == '(') {
-                return tinyLisp.run(word_);
+                return cnv.to_bytes(tinyLisp.run(cnv.from_bytes(word_)));
             } else {
                 return word_;
             }

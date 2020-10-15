@@ -6,8 +6,8 @@ using namespace akaza::tinylisp;
 static std::shared_ptr<Node> builtin_string_concat(std::vector<std::shared_ptr<Node>> &expr) {
     auto a = expr[0];
     auto b = expr[1];
-    std::string a_str = dynamic_cast<StringNode *>(&*a)->str();
-    std::string b_str = dynamic_cast<StringNode *>(&*b)->str();
+    std::wstring a_str = dynamic_cast<StringNode *>(&*a)->str();
+    std::wstring b_str = dynamic_cast<StringNode *>(&*b)->str();
     return std::shared_ptr<Node>(new StringNode(a_str + b_str));
 }
 
@@ -19,14 +19,15 @@ static std::shared_ptr<Node> builtin_current_datetime(std::vector<std::shared_pt
 }
 
 static std::shared_ptr<Node> builtin_strftime(std::vector<std::shared_ptr<Node>> &expr) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
     auto dt = expr[0];
     auto fmt = expr[1];
-    std::string fmt_str = dynamic_cast<StringNode *>(&*fmt)->str();
+    std::wstring fmt_str = dynamic_cast<StringNode *>(&*fmt)->str();
     size_t len = fmt_str.size() * 4;
     char *buffer = new char[len];
-    size_t got_len = std::strftime(buffer, len, fmt_str.c_str(),
+    size_t got_len = std::strftime(buffer, len, cnv.to_bytes(fmt_str).c_str(),
                                    static_cast<const struct tm *>(dynamic_cast<PointerNode *>(&*dt)->ptr()));
-    auto retval = std::shared_ptr<Node>(new StringNode(std::string(buffer, got_len)));
+    auto retval = std::shared_ptr<Node>(new StringNode(cnv.from_bytes(std::string(buffer, got_len))));
     delete[] buffer;
     return retval;
 }
@@ -34,15 +35,16 @@ static std::shared_ptr<Node> builtin_strftime(std::vector<std::shared_ptr<Node>>
 
 std::shared_ptr<Node> TinyLisp::eval(std::shared_ptr<Node> x) const {
     if (x->type() == NODE_SYMBOL) {
-        std::string symbol = dynamic_cast<SymbolNode *>(&*x)->symbol();
-        if (symbol == "current-datetime") {
+        std::wstring symbol = dynamic_cast<SymbolNode *>(&*x)->symbol();
+        if (symbol == L"current-datetime") {
             return std::shared_ptr<Node>(new FunctionNode(builtin_current_datetime));
-        } else if (symbol == "strftime") {
+        } else if (symbol == L"strftime") {
             return std::shared_ptr<Node>(new FunctionNode(builtin_strftime));
-        } else if (symbol == ".") {
+        } else if (symbol == L".") {
             return std::shared_ptr<Node>(new FunctionNode(builtin_string_concat));
         } else {
-            throw std::runtime_error(std::string("Unknown function: ") + symbol);
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
+            throw std::runtime_error(cnv.to_bytes(std::wstring(L"Unknown function: ") + symbol));
         }
     } else if (x->type() == NODE_LIST) { // (proc exp*)
         std::vector<std::shared_ptr<Node>> exps;
@@ -50,15 +52,39 @@ std::shared_ptr<Node> TinyLisp::eval(std::shared_ptr<Node> x) const {
             exps.push_back(eval(exp));
         }
 
-        std::function<std::shared_ptr<Node>(std::vector<std::shared_ptr<Node>> &)>
-                glambda = [](std::vector<std::shared_ptr<Node>> &exp) {
-            return std::shared_ptr<Node>(new StringNode("HAHAH"));
-        };
-
         auto proc = exps[0];
         exps.erase(exps.begin());
         return dynamic_cast<FunctionNode *>(&*proc)->call(exps);
     } else {
         return x;
+    }
+}
+
+std::shared_ptr<Node> TinyLisp::_read_from(std::vector<std::wstring> &tokens, int depth) const {
+    if (tokens.empty()) {
+        throw std::runtime_error("Unexpected EOF while reading(LISP)");
+    }
+    std::wstring token = tokens[0];
+    tokens.erase(tokens.begin());
+    if (token == L"(") {
+        std::vector<std::shared_ptr<Node>> values;
+        while (tokens[0] != L")") {
+            values.push_back(_read_from(tokens, depth + 1));
+        }
+        tokens.erase(tokens.begin()); // pop off ")"
+        return std::shared_ptr<Node>(new ListNode(values));
+    } else if (token == L")") {
+        throw std::runtime_error("Unexpected ')'");
+    } else {
+        return _atom(token);
+    }
+}
+
+std::shared_ptr<Node> TinyLisp::_atom(const std::wstring &token) const {
+    if (!token.empty() && token[0] == '"') {
+        return std::shared_ptr<Node>(
+                new StringNode(token.substr(1, token.size() - 2)));
+    } else {
+        return std::shared_ptr<Node>(new SymbolNode(token));
     }
 }
