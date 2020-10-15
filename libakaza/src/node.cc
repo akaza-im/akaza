@@ -138,7 +138,7 @@ akaza::Node::Node(int start_pos, const std::wstring &yomi, const std::wstring &w
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
     this->start_pos_ = start_pos;
     this->yomi_ = yomi;
-    this->word_ = cnv.to_bytes(word);
+    this->word_ = word;
     if (word == L"__EOS__") {
         // return '__EOS__'  // わざと使わない。__EOS__ 考慮すると変換精度が落ちるので。。今は使わない。
         // うまく使えることが確認できれば、__EOS__/__EOS__ にする。
