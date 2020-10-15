@@ -14,7 +14,7 @@ int main() {
             dic.build(list);
         }
         {
-            auto kanjis = dic.find_kanjis("あいう");
+            auto kanjis = dic.find_kanjis(L"あいう");
             for (auto &kanji: kanjis) {
                 note("%s", kanji.c_str());
             }
