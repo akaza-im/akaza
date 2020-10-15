@@ -13,24 +13,24 @@
 namespace akaza {
     class BinaryDict {
     private:
-        marisa::Trie dict_trie;
+        marisa::Trie dict_trie_;
 
     public:
         BinaryDict() {}
 
         size_t size() {
-            return dict_trie.size();
+            return dict_trie_.size();
         }
 
         void load(const std::string &dict_path);
 
         void save(std::string dict_path) {
-            dict_trie.save(dict_path.c_str());
-            std::cout << "[Save] " << dict_path << ": " << dict_trie.num_keys() << std::endl;
+            dict_trie_.save(dict_path.c_str());
+            std::cout << "[Save] " << dict_path << ": " << dict_trie_.num_keys() << std::endl;
         }
 
         void build_by_keyset(marisa::Keyset &keyset) {
-            dict_trie.build(keyset);
+            dict_trie_.build(keyset);
         }
 
         // vector of "とくひろ" => "徳宏/徳大/徳寛/督弘"

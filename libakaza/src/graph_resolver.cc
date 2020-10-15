@@ -13,10 +13,10 @@ akaza::GraphResolver::GraphResolver(const std::shared_ptr<UserLanguageModel> &us
                                     const std::vector<std::shared_ptr<BinaryDict>> &normal_dicts,
                                     const std::vector<std::shared_ptr<BinaryDict>> &single_term_dicts) {
     user_language_model_ = user_language_model;
-    _system_unigram_lm = system_unigram_lm;
-    _system_bigram_lm = system_bigram_lm;
-    _normal_dicts = normal_dicts;
-    _single_term_dicts = single_term_dicts;
+    system_unigram_lm_ = system_unigram_lm;
+    system_bigram_lm_ = system_bigram_lm;
+    normal_dicts_ = normal_dicts;
+    single_term_dicts_ = single_term_dicts;
 
     D(std::cout << "GraphResolver: "
                 << " ULM.uni=" << user_language_model_->size_unigram()
@@ -72,7 +72,7 @@ akaza::GraphResolver::construct_normal_graph(const std::wstring &ws) {
             bool exist_kanjis = false;
 
             // 通常の辞書から検索してみる
-            for (const auto &normal_dict: _normal_dicts) {
+            for (const auto &normal_dict: normal_dicts_) {
                 auto kanjis = normal_dict->find_kanjis(yomi);
                 for (auto &kanji: kanjis) {
                     kanjiset.insert(std::make_tuple(yomi, kanji));
@@ -86,7 +86,7 @@ akaza::GraphResolver::construct_normal_graph(const std::wstring &ws) {
 
             // 選択範囲が、文全体であった場合は単文節辞書を参照する。
             if (i == 0 && ws.size() == j) {
-                for (const auto &single_term_dict: _single_term_dicts) {
+                for (const auto &single_term_dict: single_term_dicts_) {
                     std::vector<std::wstring> kanjis = single_term_dict->find_kanjis(yomi);
                     for (auto &kanji: kanjis) {
                         kanjiset.insert(std::make_tuple(yomi, kanji));
@@ -142,14 +142,14 @@ akaza::GraphResolver::force_selected_graph(const std::wstring &ws, const std::ve
         std::wstring wyomi = ws.substr(slice.start(), slice.len());
 
         // 通常の辞書から検索してみる
-        for (const auto &normal_dict: _normal_dicts) {
+        for (const auto &normal_dict: normal_dicts_) {
             auto kanjis = normal_dict->find_kanjis(wyomi);
             for (auto &kanji: kanjis) {
                 kanjiset.insert(std::make_tuple(wyomi, kanji));
             }
         }
         if (wyomi.size() == slice.len()) { // 全部はいってる。
-            for (const auto &single_term_dict: _single_term_dicts) {
+            for (const auto &single_term_dict: single_term_dicts_) {
                 auto kanjis = single_term_dict->find_kanjis(wyomi);
                 for (auto &kanji: kanjis) {
                     kanjiset.insert(std::make_tuple(wyomi, kanji));
@@ -209,7 +209,7 @@ void akaza::GraphResolver::fill_cost(akaza::Graph &graph) {
             continue;
         }
         D(std::wcout << "fill_cost: " << node->get_key() << std::endl);
-        auto node_cost = node->calc_node_cost(*user_language_model_, *_system_unigram_lm);
+        auto node_cost = node->calc_node_cost(*user_language_model_, *system_unigram_lm_);
         auto cost = INT32_MIN;
         auto prev_nodes = graph.get_prev_items(node);
 
@@ -221,7 +221,7 @@ void akaza::GraphResolver::fill_cost(akaza::Graph &graph) {
                 auto bigram_cost = prev_node->get_bigram_cost(
                         *node,
                         *user_language_model_,
-                        *_system_bigram_lm);
+                        *system_bigram_lm_);
                 auto tmp_cost = prev_node->get_cost() + bigram_cost + node_cost;
                 if (cost < tmp_cost) { // コストが最大になる経路をえらんでいる
                     cost = tmp_cost;
@@ -278,7 +278,7 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::GraphResolver::fin
 
         std::vector<std::shared_ptr<akaza::Node>> nodes = graph.get_items_by_start_and_length(node);
         auto userLanguageModel = this->user_language_model_;
-        auto systemBigramLm = this->_system_bigram_lm;
+        auto systemBigramLm = this->system_bigram_lm_;
         std::sort(nodes.begin(), nodes.end(), [last_node, userLanguageModel, systemBigramLm](auto &a, auto &b) {
             return a->get_cost() + a->get_bigram_cost(*last_node, *userLanguageModel,
                                                       *systemBigramLm)
@@ -309,6 +309,6 @@ akaza::GraphResolver::graph_construct(const std::wstring &ws, std::optional<std:
 
 std::string akaza::Slice::repr() {
     std::stringstream ss;
-    ss << "<akaza::Slice start=" << _start << " len=" << _len << ">";
+    ss << "<akaza::Slice start=" << start_ << " len=" << len_ << ">";
     return ss.str();
 }

@@ -108,11 +108,11 @@ static float calc_bigram_cost(const akaza::Node &prev_node,
 float akaza::Node::get_bigram_cost(const akaza::Node &next_node, const akaza::UserLanguageModel &ulm,
                                    const akaza::SystemBigramLM &system_bigram_lm) {
     auto next_node_key = next_node.get_key();
-    if (_bigram_cache.count(next_node_key) > 0) {
-        return _bigram_cache.at(next_node_key);
+    if (bigram_cache_.count(next_node_key) > 0) {
+        return bigram_cache_.at(next_node_key);
     } else {
         float cost = calc_bigram_cost(*this, next_node, ulm, system_bigram_lm);
-        _bigram_cache[next_node_key] = cost;
+        bigram_cache_[next_node_key] = cost;
         return cost;
     }
 }
@@ -122,7 +122,7 @@ void akaza::Node::set_prev(std::shared_ptr<Node> &prev) {
                 << " -> " << prev->get_key() << ":" << prev->get_start_pos() << std::endl);
     assert(!(start_pos_ != 0 && prev->is_bos()));
     assert(this->start_pos_ != prev->start_pos_);
-    this->_prev = prev;
+    this->prev_ = prev;
 }
 
 bool akaza::Node::operator==(akaza::Node const &node) {

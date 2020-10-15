@@ -6,9 +6,9 @@
 namespace akaza {
     class RomkanConverter {
     private:
-        std::wregex _pattern;
-        std::wregex _last_char_pattern;
-        std::map<std::string, std::string> _map;
+        std::wregex pattern_;
+        std::wregex last_char_pattern_;
+        std::map<std::string, std::string> map_;
     public:
         RomkanConverter(const std::map<std::string, std::string> &additional);
         std::wstring remove_last_char(const std::wstring & s);
