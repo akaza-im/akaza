@@ -111,3 +111,13 @@ void akaza::UserLanguageModel::add_entry(std::vector<Node> nodes) {
 
     need_save = true;
 }
+
+std::optional<float> akaza::UserLanguageModel::get_unigram_cost(const std::wstring &wkey) const {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;// TODO
+    auto key = cnv.to_bytes(wkey);
+    if (unigram.count(key) > 0) {
+        auto count = unigram.at(key);
+        return std::log10((count + alpha) / float(unigram_C) + alpha * float(unigram_V));
+    }
+    return {};
+}

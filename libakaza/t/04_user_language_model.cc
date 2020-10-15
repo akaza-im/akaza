@@ -18,7 +18,7 @@ void test_read() {
     d.add_entry({akaza::Node(0, L"たんご", L"単語")});
     d.add_entry({akaza::Node(0, L"じゅくご", L"熟語")});
 
-    ok(d.get_unigram_cost("単語/たんご") > d.get_unigram_cost("熟語/じゅくご"));
+    ok(d.get_unigram_cost(L"単語/たんご") > d.get_unigram_cost(L"熟語/じゅくご"));
 }
 
 /*

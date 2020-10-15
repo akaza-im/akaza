@@ -28,12 +28,12 @@ float akaza::Node::calc_node_cost(
         const akaza::SystemUnigramLM &ulm
 ) {
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
-    auto key = cnv.to_bytes(this->get_key());
+    auto key = this->get_key();
     auto u = user_language_model.get_unigram_cost(key);
     if (u.has_value()) {
         return *u;
     }
-    auto[word_id, score] = ulm.find_unigram(key);
+    auto[word_id, score] = ulm.find_unigram(cnv.to_bytes(key));
     this->word_id_ = word_id;
     if (word_id != akaza::UNKNOWN_WORD_ID) {
         this->cost_ = score;
