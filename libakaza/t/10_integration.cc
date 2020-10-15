@@ -10,14 +10,16 @@ std::string convert_test(const std::string &src, const std::string &expected) {
             src,
             std::nullopt);
 
-    std::string retval;
+    std::wstring retval;
     for (const auto &nodes: result) {
         retval += nodes[0]->get_word();
     }
     note("RESULT: src=%s got=%s expected=%s", src.c_str(), retval.c_str(), expected.c_str());
-    ok(expected == retval);
-    assert(expected == retval);
-    return retval;
+     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
+
+    ok(expected == cnv.to_bytes(retval));
+    assert(expected == cnv.to_bytes(retval));
+    return cnv.to_bytes(retval);
 }
 
 int main() {
