@@ -36,6 +36,10 @@ add_executable(akaza-make-binary-dict bin/akaza-make-binary-dict.cc)
 target_link_libraries(akaza-make-binary-dict marisa akaza)
 install(TARGETS akaza-make-binary-dict DESTINATION bin/)
 
+add_executable(akaza-dump-systemlm-unigram bin/akaza-dump-systemlm-unigram.cc)
+target_link_libraries(akaza-dump-systemlm-unigram marisa akaza)
+install(TARGETS akaza-dump-systemlm-unigram DESTINATION bin/)
+
 add_executable(binakaza bin/akaza.cc)
 target_link_libraries(binakaza marisa akaza)
 install(TARGETS binakaza DESTINATION bin/)
