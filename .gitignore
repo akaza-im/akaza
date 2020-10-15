@@ -7,3 +7,6 @@ __pycache__
 *.egg-info/
 dist/
 *.lprof
+*.so
+perf.data
+callgrind.*

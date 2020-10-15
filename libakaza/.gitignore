@@ -1,0 +1,16 @@
+.idea
+cmake_install.cmake
+CMakeCache.txt
+*.so
+libakaza.cbp
+CTestTestfile.cmake
+Makefile
+cmake-build-debug
+Testing
+CMakeFiles
+install_manifest.txt
+akaza.pc
+akaza-make-system-lm
+akaza-make-binary-dict
+vgcore.*
+core.*
