@@ -39,13 +39,9 @@ work/jawiki.single_dict.txt: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.
 	python bin/070_make-system-dict.py
 	python bin/080_system_dump.py
 
-bin/100_effective_dict: bin/100_effective_dict.cc
-	$(CXX) $(CXXOPTS) -l marisa bin/100_effective_dict.cc -o bin/100_effective_dict
-
 akaza_data/data/lm_v2_2gram.trie: work/jawiki.merged-2gram.txt
 	akaza-make-system-lm work/jawiki.merged-1gram.txt akaza_data/data/lm_v2_1gram.trie \
     	work/jawiki.merged-2gram.txt akaza_data/data/lm_v2_2gram.trie
-
 
 akaza_data/data/system_dict.trie: work/jawiki.single_dict.txt
 	akaza-make-binary-dict work/jawiki.system_dict.txt akaza_data/data/system_dict.trie
