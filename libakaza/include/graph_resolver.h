@@ -143,7 +143,7 @@ namespace akaza {
          force_selected_clause: ユーザーが自ら選択した文節を表示する。
 
          */
-        Graph graph_construct(const std::string &s, std::optional<std::vector<Slice>> force_selected_clause);
+        Graph graph_construct(const std::wstring &s, std::optional<std::vector<Slice>> force_selected_clause);
 
         void fill_cost(Graph &graph);
 
