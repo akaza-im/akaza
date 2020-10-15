@@ -62,17 +62,15 @@ akaza::RomkanConverter::RomkanConverter(const std::map<std::string, std::string>
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
 
     {
-        std::string pattern_str = "^(";
+        std::wstring pattern_str = L"^(";
         for (const auto &key: keys) {
-            pattern_str += cnv.to_bytes(quotemeta(cnv.from_bytes(key)));
-            pattern_str += "|";
+            pattern_str += quotemeta(cnv.from_bytes(key));
+            pattern_str += L"|";
         }
-        pattern_str += ".)";
+        pattern_str += L".)";
         D(std::cout << "PATTERN: " << pattern_str << std::endl);
 
-        auto wpattern_str = cnv.from_bytes(pattern_str);
-
-        _pattern.assign(wpattern_str);
+        _pattern.assign(pattern_str);
     }
 
     {
