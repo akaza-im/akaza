@@ -30,7 +30,6 @@ void akaza::UserLanguageModel::read(const std::string &path, bool is_unigram, in
     c = 0;
     v = 0;
 
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
     std::wifstream ifs(path, std::ifstream::in);
     std::wstring line;
     while (std::getline(ifs, line)) {
@@ -82,8 +81,6 @@ def add_entry(self, nodes: List[Node]):
     self.need_save = True
  */
 void akaza::UserLanguageModel::add_entry(std::vector<Node> nodes) {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
-
     // unigram
     for (auto &node: nodes) {
         auto key = node.get_key();
