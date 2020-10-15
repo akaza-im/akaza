@@ -16,6 +16,7 @@ add_library(akaza SHARED include/tinylisp.h src/tinylisp.cc src/binary_dict.cc i
         src/user_language_model.cc src/split.h include/node.h src/node.cc include/graph.h include/graph_resolver.h
         src/graph_resolver.cc src/graph.cc src/debug_log.h include/romkan.h src/romkan.cc src/romkan_default.h
         src/akaza.cc src/system_lm.cc src/kana.cc)
+target_link_libraries(akaza marisa)
 
 install(TARGETS akaza
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
