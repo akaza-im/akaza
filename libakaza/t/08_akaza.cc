@@ -20,7 +20,7 @@ int main() {
             new akaza::SystemUnigramLM()
     );
     system_unigram_lm->load(unigramPath.get_name().c_str());
-    std::cout << std::get<1>(system_unigram_lm->find_unigram("私/わたし")) << std::endl;
+    std::cout << std::get<1>(system_unigram_lm->find_unigram(L"私/わたし")) << std::endl;
 
     akaza::SystemBigramLMBuilder bibuilder;
     bibuilder.save(bigramPath.get_name());

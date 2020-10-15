@@ -66,9 +66,11 @@ void process_2gram(const akaza::SystemUnigramLM &unigram, const std::string &src
         ss >> word2;
         ss >> score;
 
+        std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
+
 //        std::cout << word1 << " --- " << word2 << " --- " << score << std::endl;
-        int word_id1 = std::get<0>(unigram.find_unigram(word1));
-        int word_id2 = std::get<0>(unigram.find_unigram(word2));
+        int word_id1 = std::get<0>(unigram.find_unigram(cnv.from_bytes(word1)));
+        int word_id2 = std::get<0>(unigram.find_unigram(cnv.from_bytes(word2)));
 
         builder.add(word_id1, word_id2, score);
     }
@@ -84,21 +86,21 @@ int main(int argc, char **argv) {
     // "work/jawiki.merged-1gram.txt" "akaza_data/data/lm_v2_1gram.trie"
     // "work/jawiki.merged-2gram.txt" "akaza_data/data/lm_v2_2gram.trie"
 
-    const char * unigram_src = argv[1];
-    const char * unigram_dst = argv[2];
-    const char * bigram_src = argv[3];
-    const char * bigram_dst = argv[4];
+    const char *unigram_src = argv[1];
+    const char *unigram_dst = argv[2];
+    const char *bigram_src = argv[3];
+    const char *bigram_dst = argv[4];
 
     std::map<std::string, uint32_t> word2id;
     // "work/jawiki.merged-1gram.txt" -> "akaza_data/data/lm_v2_1gram.trie"
-    std::cout << "Unigram: " <<  unigram_src << " -> " << unigram_dst << std::endl;
+    std::cout << "Unigram: " << unigram_src << " -> " << unigram_dst << std::endl;
 
     process_1gram(unigram_src, unigram_dst);
 
 
     // 2gram ファイルから読む
     // 2gram ファイルを書いていく。
-    std::cout << "Bigram: " <<  bigram_src << " -> " << bigram_dst << std::endl;
+    std::cout << "Bigram: " << bigram_src << " -> " << bigram_dst << std::endl;
     akaza::SystemUnigramLM unigram;
     unigram.load(unigram_dst);
     process_2gram(unigram, bigram_src, bigram_dst);

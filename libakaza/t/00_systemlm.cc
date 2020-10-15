@@ -19,11 +19,11 @@ int main() {
 
     akaza::SystemUnigramLM uni;
     uni.load(unigramfile.get_name().c_str());
-    int id_watashi = std::get<0>(uni.find_unigram("私/わたし"));
-    int id_ha = std::get<0>(uni.find_unigram("は/は"));
-    int id_ja = std::get<0>(uni.find_unigram("じゃ/じゃ"));
-    ok(std::abs(std::get<1>(uni.find_unigram("私/わたし")) - -0.3) < 0.000001);
-    ok(std::abs(std::get<1>(uni.find_unigram("は/は")) - -0.4) < 0.000001);
+    int id_watashi = std::get<0>(uni.find_unigram(L"私/わたし"));
+    int id_ha = std::get<0>(uni.find_unigram(L"は/は"));
+    int id_ja = std::get<0>(uni.find_unigram(L"じゃ/じゃ"));
+    ok(std::abs(std::get<1>(uni.find_unigram(L"私/わたし")) - -0.3) < 0.000001);
+    ok(std::abs(std::get<1>(uni.find_unigram(L"は/は")) - -0.4) < 0.000001);
 
     akaza::SystemBigramLMBuilder bibuilder;
     bibuilder.add(id_watashi, id_ha, -0.3);
