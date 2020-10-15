@@ -26,7 +26,7 @@ jobs:
         pip install flake8 pytest
         # deps for akaza-data building
         pip install wikiextractor kytea psutil wheel pybind11
-        sudo apt-get install ibus libgirepository1.0-dev libmarisa-dev
+        sudo apt-get install ibus libgirepository1.0-dev libmarisa-dev cmake
         git submodule init
         git submodule update
     #- name: Lint with flake8
@@ -38,6 +38,7 @@ jobs:
     - name: Test libakaza
       run: |
         cd libakaza
+        cmake .
         make
         sudo make install
     - name: Test akaza-data
