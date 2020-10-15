@@ -4,13 +4,13 @@
 #include "test_akaza.h"
 #include <filesystem>
 
-std::string convert_test(const std::string &src, const std::string &expected) {
+std::wstring convert_test(const std::string &src, const std::wstring &expected) {
     auto akaza = build_akaza();
     std::vector<std::vector<std::shared_ptr<akaza::Node>>> result = akaza->convert(
             src,
             std::nullopt);
 
-    std::string retval;
+    std::wstring retval;
     for (const auto &nodes: result) {
         retval += nodes[0]->get_word();
     }
@@ -21,7 +21,7 @@ std::string convert_test(const std::string &src, const std::string &expected) {
 }
 
 int main() {
-    convert_test("わたしのなまえはなかのです。", "私の名前は中野です。");
-    // convert_test("わたしのなまえはなかのです", "私の名前は中野です");
+    convert_test("わたしのなまえはなかのです。", L"私の名前は中野です。");
+    // convert_test("わたしのなまえはなかのです", L"私の名前は中野です");
     done_testing();
 }

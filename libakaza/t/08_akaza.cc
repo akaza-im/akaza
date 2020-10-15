@@ -61,7 +61,7 @@ int main() {
     std::vector<std::vector<std::shared_ptr<akaza::Node>>> got = akaza.convert("watasinonamaehanakanodesu.",
                                                                                std::nullopt);
 
-    std::string g;
+    std::wstring g;
     for (const auto &nodes: got) {
         g += nodes[0]->get_word();
         std::cout << "# ";
@@ -71,7 +71,7 @@ int main() {
         std::cout << std::endl;
     }
 
-    ok(g == "私の名前は中野です。");
+    ok(g == L"私の名前は中野です。");
     ok(got.size() == 7);
 
     done_testing();

@@ -16,12 +16,12 @@ static void test_katakana_candidates() {
                                                           }));
     graph_resolver->fill_cost(graph);
     auto got = graph_resolver->find_nbest(graph);
-    std::set<std::string> words;
+    std::set<std::wstring> words;
     for (const auto &node: got[0]) {
         words.insert(node->get_word());
     }
-    ok(words.count("ひょいー") == 1);
-    ok(words.count("ヒョイー") == 1);
+    ok(words.count(L"ひょいー") == 1);
+    ok(words.count(L"ヒョイー") == 1);
 }
 
 // 「すし」の変換結果。
@@ -36,13 +36,13 @@ static void test_sushi() {
                                                           }));
     graph_resolver->fill_cost(graph);
     auto got = graph_resolver->find_nbest(graph);
-    std::set<std::string> words;
+    std::set<std::wstring> words;
     for (const auto &node: got[0]) {
         words.insert(node->get_word());
-        std::cout << node->get_word() << std::endl;
+        // std::cout << node->get_word() << std::endl;
     }
-    ok(words.count("🍣") == 1);
-    ok(words.count("鮨") == 1);
+    ok(words.count(L"🍣") == 1);
+    ok(words.count(L"鮨") == 1);
 }
 
 int main() {
@@ -124,7 +124,7 @@ int main() {
     graph.dump();
 
     std::vector<std::vector<std::shared_ptr<akaza::Node>>> got = graphResolver.find_nbest(graph);
-    std::string g;
+    std::wstring g;
     for (const auto &nodes: got) {
         g += nodes[0]->get_word();
         for (const auto &node: nodes) {
@@ -133,7 +133,7 @@ int main() {
         std::cout << std::endl;
     }
     note("%s", g.c_str());
-    ok(g == "私の名前は中野です。");
+    ok(g == L"私の名前は中野です。");
     ok(!got.empty());
 
     test_katakana_candidates();
