@@ -6,12 +6,11 @@
 
 void akaza::Graph::dump() {
     std::cout << "# GRAPH --" << std::endl;
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
     for (const auto &node: _nodes) {
-        std::cout << node->get_start_pos() << "\t" << cnv.to_bytes(node->get_key()) << "\t\t"
-                  << (node->get_prev() == nullptr ? "NULL" : cnv.to_bytes(node->get_prev()->get_key()))
-                  << "\t" << node->get_cost()
-                  << std::endl;
+        std::wcout << node->get_start_pos() << "\t" << node->get_key() << "\t\t"
+                   << (node->get_prev() == nullptr ? L"NULL" : node->get_prev()->get_key())
+                   << "\t" << node->get_cost()
+                   << std::endl;
     }
     std::cout << "# /GRAPH --" << std::endl;
 }
