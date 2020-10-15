@@ -37,12 +37,11 @@ namespace akaza {
         }
 
         // TODO: return wstring
-        std::string surface(const akaza::tinylisp::TinyLisp &tinyLisp) const {
-            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
+        std::wstring surface(const akaza::tinylisp::TinyLisp &tinyLisp) const {
             if (word_.size() > 0 && word_[0] == '(') {
-                return cnv.to_bytes(tinyLisp.run(word_));
+                return tinyLisp.run(word_);
             } else {
-                return cnv.to_bytes(word_);
+                return word_;
             }
         }
 
