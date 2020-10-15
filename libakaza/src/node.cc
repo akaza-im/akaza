@@ -4,11 +4,11 @@
 #include "debug_log.h"
 
 std::shared_ptr<akaza::Node> akaza::create_bos_node() {
-    return std::make_shared<akaza::Node>(akaza::Node(-1, "__BOS__", "__BOS__"));
+    return std::make_shared<akaza::Node>(akaza::Node(-1, L"__BOS__", L"__BOS__"));
 }
 
 std::shared_ptr<akaza::Node> akaza::create_eos_node(int start_pos) {
-    return std::make_shared<akaza::Node>(akaza::Node(start_pos, "__EOS__", "__EOS__"));
+    return std::make_shared<akaza::Node>(akaza::Node(start_pos, L"__EOS__", L"__EOS__"));
 }
 
 /*
@@ -134,17 +134,17 @@ bool akaza::Node::operator!=(akaza::Node const &node) {
     return this->word_ != node.word_ || this->yomi_ != node.yomi_ || this->start_pos_ != node.start_pos_;
 }
 
-akaza::Node::Node(int start_pos, const std::string &yomi, const std::string &word) {
+akaza::Node::Node(int start_pos, const std::wstring &yomi, const std::wstring &word) {
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
     this->start_pos_ = start_pos;
-    this->yomi_ = cnv.from_bytes(yomi);
-    this->word_ = word;
-    if (word == "__EOS__") {
+    this->yomi_ = yomi;
+    this->word_ = cnv.to_bytes(word);
+    if (word == L"__EOS__") {
         // return '__EOS__'  // わざと使わない。__EOS__ 考慮すると変換精度が落ちるので。。今は使わない。
         // うまく使えることが確認できれば、__EOS__/__EOS__ にする。
         this->key_ = "__EOS__";
     } else {
-        this->key_ = word + "/" + yomi;
+        this->key_ = cnv.to_bytes(word + L"/" + yomi);
     }
     this->cost_ = 0;
     this->word_id_ = -1;

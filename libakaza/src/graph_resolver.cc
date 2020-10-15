@@ -104,7 +104,7 @@ akaza::GraphResolver::construct_normal_graph(const std::wstring &ws) {
         std::vector<std::shared_ptr<akaza::Node>> nodes;
         nodes.reserve(kanjiset.size());
         for (const auto &[yomi, kanji]: kanjiset) {
-            nodes.push_back(std::make_shared<akaza::Node>(i, cnv.to_bytes(yomi), cnv.to_bytes(kanji)));
+            nodes.push_back(std::make_shared<akaza::Node>(i, yomi, kanji));
         }
         src.emplace_back(i, nodes);
     }
@@ -165,7 +165,7 @@ akaza::GraphResolver::force_selected_graph(const std::wstring &ws, const std::ve
         std::vector<std::shared_ptr<akaza::Node>> nodes;
         nodes.reserve(kanjiset.size());
         for (const auto &[yomi, kanji]: kanjiset) {
-            nodes.push_back(std::make_shared<akaza::Node>(slice.start(), cnv.to_bytes(yomi), cnv.to_bytes(kanji)));
+            nodes.push_back(std::make_shared<akaza::Node>(slice.start(), yomi, kanji));
         }
         retval.emplace_back(slice.start(), nodes);
     }
