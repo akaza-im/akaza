@@ -22,7 +22,7 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
         return {{std::make_shared<akaza::Node>(0, cnv.from_bytes(src), cnv.from_bytes(src))}};
     }
 
-    std::string hiragana = romkanConverter_->to_hiragana(src);
+    std::string hiragana = cnv.to_bytes(romkanConverter_->to_hiragana(src));
     D(std::cout << "HIRAGANA=" << hiragana << std::endl);
 
     // 子音だが、N は NN だと「ん」になるので処理しない。

@@ -12,7 +12,7 @@ namespace akaza {
     public:
         RomkanConverter(const std::map<std::string, std::string> &additional);
         std::wstring remove_last_char(const std::wstring & s);
-        std::string to_hiragana(const std::string & s);
+        std::wstring to_hiragana(const std::string & s);
     };
 }
 

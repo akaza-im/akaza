@@ -49,41 +49,42 @@ static void test_to_hiragana() {
     };
     auto romkan = akaza::RomkanConverter(additional);
 
-    std::vector<std::tuple<std::string, std::string>> cases = {
-            {"a",      "あ"},
-            {"ba",     "ば"},
-            {"hi",     "ひ"},
-            {"wahaha", "わはは"},
-            {"thi",    "てぃ"},
-            {"better", "べってr"},
-            {"[",      "「"},
-            {"]",      "」"},
-            {"wo",     "を"},
-            {"du",     "づ"},
-            {"we",     "うぇ"},
-            {"di",     "ぢ"},
-            {"fu",     "ふ"},
-            {"ti",     "ち"},
-            {"wi",     "うぃ"},
-            {"we",     "うぇ"},
-            {"wo",     "を"},
-            {"z,",     "‥"},
-            {"z.",     "…"},
-            {"z/",     "・"},
-            {"z[",     "『"},
-            {"z]",     "』"},
-            {"du",     "づ"},
-            {"di",     "ぢ"},
-            {"fu",     "ふ"},
-            {"ti",     "ち"},
-            {"wi",     "うぃ"},
-            {"we",     "うぇ"},
-            {"wo",     "を"},
-            {"sorenawww",     "それなwww"},
+    std::vector<std::tuple<std::wstring, std::wstring>> cases = {
+            {L"a",      L"あ"},
+            {L"ba",     L"ば"},
+            {L"hi",     L"ひ"},
+            {L"wahaha", L"わはは"},
+            {L"thi",    L"てぃ"},
+            {L"better", L"べってr"},
+            {L"[",      L"「"},
+            {L"]",      L"」"},
+            {L"wo",     L"を"},
+            {L"du",     L"づ"},
+            {L"we",     L"うぇ"},
+            {L"di",     L"ぢ"},
+            {L"fu",     L"ふ"},
+            {L"ti",     L"ち"},
+            {L"wi",     L"うぃ"},
+            {L"we",     L"うぇ"},
+            {L"wo",     L"を"},
+            {L"z,",     L"‥"},
+            {L"z.",     L"…"},
+            {L"z/",     L"・"},
+            {L"z[",     L"『"},
+            {L"z]",     L"』"},
+            {L"du",     L"づ"},
+            {L"di",     L"ぢ"},
+            {L"fu",     L"ふ"},
+            {L"ti",     L"ち"},
+            {L"wi",     L"うぃ"},
+            {L"we",     L"うぇ"},
+            {L"wo",     L"を"},
+            {L"sorenawww",     L"それなwww"},
     };
 
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
     for (const auto &[src, expected]: cases) {
-        auto got = romkan.to_hiragana(src);
+        auto got = romkan.to_hiragana(cnv.to_bytes(src));
         note("HIRAGANA: %s -> %s", src.c_str(), got.c_str());
         ok(got == expected);
     }
@@ -99,7 +100,7 @@ int main() {
 
     auto got = romkan.to_hiragana("akasatana");
     note("%s", got.c_str());
-    ok(got == "あかさたな");
+    ok(got == L"あかさたな");
 
     done_testing();
 }

@@ -117,7 +117,7 @@ static std::string normalize_double_n(const std::string &s) {
 
 }
 
-std::string akaza::RomkanConverter::to_hiragana(const std::string &ss) {
+std::wstring akaza::RomkanConverter::to_hiragana(const std::string &ss) {
     std::string s = ss;
     std::transform(s.begin(), s.end(), s.begin(),
                    [](unsigned char c) { return std::tolower(c); });
@@ -125,7 +125,7 @@ std::string akaza::RomkanConverter::to_hiragana(const std::string &ss) {
     s = normalize_double_n(s);
 
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
-    std::string result;
+    std::wstring result;
     std::wstring ws = cnv.from_bytes(s);
     std::wsmatch sm;
     while (std::regex_search(ws, sm, _pattern)) {
@@ -134,9 +134,9 @@ std::string akaza::RomkanConverter::to_hiragana(const std::string &ss) {
         D(std::cout << cnv.to_bytes(p) << std::endl);
         std::string sp = cnv.to_bytes(p);
         if (_map.count(sp) > 0) {
-            result += _map[sp];
+            result += cnv.from_bytes(_map[sp]);
         } else {
-            result += sp;
+            result += p;
         }
     }
     return result;
