@@ -58,7 +58,7 @@ int main() {
 
     akaza::Akaza akaza = akaza::Akaza(graphResolver, romkan);
     std::vector<akaza::Slice> slices;
-    std::vector<std::vector<std::shared_ptr<akaza::Node>>> got = akaza.convert("watasinonamaehanakanodesu.",
+    std::vector<std::vector<std::shared_ptr<akaza::Node>>> got = akaza.convert(L"watasinonamaehanakanodesu.",
                                                                                std::nullopt);
 
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove

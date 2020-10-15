@@ -9,7 +9,7 @@ std::wstring convert_test(const std::wstring &wsrc, const std::wstring &expected
 
     auto akaza = build_akaza();
     std::vector<std::vector<std::shared_ptr<akaza::Node>>> result = akaza->convert(
-            cnv.to_bytes(wsrc),
+            wsrc,
             std::nullopt);
 
     std::wstring retval;
