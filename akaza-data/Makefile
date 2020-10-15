@@ -35,7 +35,7 @@ work/jawiki.1gram.json: work/jawiki.vocab  bin/050_dumpngram.py
 work/jawiki.merged-2gram.txt: work/jawiki.1gram.json work/jawiki.2gram.json work/jawiki.vocab bin/060_create-system_language_model.py
 	python bin/060_create-system_language_model.py
 
-work/jawiki.single_dict.txt: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki
+work/jawiki.single_dict.txt: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza
 	python bin/070_make-system-dict.py
 	python bin/080_system_dump.py
 
