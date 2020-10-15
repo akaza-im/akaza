@@ -11,9 +11,9 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
         const std::optional<std::vector<akaza::Slice>> &forceSelectedClauses) {
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
 
-    D(std::cout << "Akaza::convert '"
+    D(std::wcout << "Akaza::convert '"
                 << src << "' (HASH="
-                << std::hash<std::string>{}(src)
+                << std::hash<std::wstring>{}(src)
                 << ")"
                 << " " << __FILE__ << ":" << __LINE__ << std::endl);
     assert(!forceSelectedClauses.has_value() || !forceSelectedClauses.value().empty());
