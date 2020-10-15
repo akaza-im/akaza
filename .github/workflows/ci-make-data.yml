@@ -20,13 +20,6 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
-    - name: Install kytea
-      run: |
-        # Note: Cannot compile kytea 0.4.7 on latest ubuntu.
-        # We need to use git HEAD now.
-        sudo apt-get install autoconf
-        git clone https://github.com/neubig/kytea.git
-        cd kytea && autoreconf -i && ./configure --prefix=/usr && make && sudo make install
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
