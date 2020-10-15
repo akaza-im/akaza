@@ -43,10 +43,9 @@ static std::wstring quotemeta(const std::wstring &input) {
 
 // TODO move to wstring
 akaza::RomkanConverter::RomkanConverter(const std::map<std::wstring, std::wstring> &additional) {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
     // romaji -> hiragana
     for (const auto &[rom, hira]: DEFAULT_ROMKAN_H) {
-        map_[cnv.from_bytes(rom)] = cnv.from_bytes(hira);
+        map_[rom] = hira;
     }
     for (const auto &[rom, hira]: additional) {
         map_[rom] = hira;
