@@ -38,7 +38,7 @@ jobs:
     - name: Test libakaza
       run: |
         cd libakaza
-        cmake .
+        cmake . -DCMAKE_INSTALL_PREFIX=/usr
         VERBOSE=1 make
         sudo make install
     - name: Test akaza-data
