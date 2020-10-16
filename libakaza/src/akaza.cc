@@ -19,6 +19,8 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
     assert(!forceSelectedClauses.has_value() || !forceSelectedClauses.value().empty());
 
     if (!src.empty() && isupper(src[0]) && !forceSelectedClauses.has_value()) {
+        D(std::wcout << "Upper case"
+                     << " " << __FILE__ << ":" << __LINE__ << std::endl);
         return {{std::make_shared<akaza::Node>(0, src, src)}};
     }
 
