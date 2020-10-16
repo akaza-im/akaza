@@ -42,7 +42,7 @@ def test_wnn():
     romkanConverter = RomkanConverter({})
     akaza = Akaza(resolver, romkanConverter)
 
-    src = 'わたしのなまえはなかのです。'
+    src = u'わたしのなまえはなかのです。'
     expected = '私の名前は中野です。'
 
     print(akaza.get_version())

@@ -1,6 +1,8 @@
 #include "../include/akaza.h"
 
 #include "debug_log.h"
+#include "../include/system_lm.h"
+
 
 void akaza::SystemUnigramLM::load(const char *path) {
     trie_.load(path);
@@ -27,6 +29,20 @@ std::tuple<int32_t, float> akaza::SystemUnigramLM::find_unigram(const std::wstri
         return std::tuple<int32_t, float>(int32_t(agent.key().id()), score);
     }
     return std::tuple<int32_t, float>(UNKNOWN_WORD_ID, 0);
+}
+
+void akaza::SystemUnigramLM::dump() {
+    marisa::Agent agent;
+    agent.set_query("");
+    while (trie_.predictive_search(agent)) {
+        std::string str(agent.key().ptr(), agent.key().length());
+        size_t pos = str.find_first_of('\xff');
+        std::string key = str.substr(0, pos);
+        std::string scorestr = str.substr(pos + 1);
+        float score = 0;
+        std::memcpy(&score, scorestr.c_str(), sizeof(float));
+        std::cout << key << "\t" << score << std::endl;
+    }
 }
 
 void akaza::SystemBigramLM::load(const char *path) {

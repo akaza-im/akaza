@@ -16,6 +16,7 @@ add_library(akaza SHARED include/tinylisp.h src/tinylisp.cc src/binary_dict.cc i
         src/user_language_model.cc src/split.h include/node.h src/node.cc include/graph.h include/graph_resolver.h
         src/graph_resolver.cc src/graph.cc src/debug_log.h include/romkan.h src/romkan.cc src/romkan_default.h
         src/akaza.cc src/system_lm.cc src/kana.cc)
+target_link_libraries(akaza marisa)
 
 install(TARGETS akaza
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -35,6 +36,10 @@ install(TARGETS akaza-make-system-lm DESTINATION bin/)
 add_executable(akaza-make-binary-dict bin/akaza-make-binary-dict.cc)
 target_link_libraries(akaza-make-binary-dict marisa akaza)
 install(TARGETS akaza-make-binary-dict DESTINATION bin/)
+
+add_executable(akaza-dump-systemlm-unigram bin/akaza-dump-systemlm-unigram.cc)
+target_link_libraries(akaza-dump-systemlm-unigram marisa akaza)
+install(TARGETS akaza-dump-systemlm-unigram DESTINATION bin/)
 
 add_executable(binakaza bin/akaza.cc)
 target_link_libraries(binakaza marisa akaza)

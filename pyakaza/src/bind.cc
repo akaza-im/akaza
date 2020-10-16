@@ -16,7 +16,7 @@ PYBIND11_MODULE(bind, m) {
             .def("get_version", &akaza::Akaza::get_version);
 
     py::class_<akaza::RomkanConverter, std::shared_ptr<akaza::RomkanConverter>>(m, "RomkanConverter")
-            .def(py::init<const std::map<std::string, std::string> &>())
+            .def(py::init<const std::map<std::wstring, std::wstring> &>())
             .def("to_hiragana", &akaza::RomkanConverter::to_hiragana)
             .def("remove_last_char", &akaza::RomkanConverter::remove_last_char);
 
@@ -48,7 +48,7 @@ PYBIND11_MODULE(bind, m) {
             .def("get_items", &akaza::Graph::get_items);;
 
     py::class_<akaza::Node, std::shared_ptr<akaza::Node>>(m, "Node")
-            .def(py::init<size_t, const std::string &, const std::string &>())
+            .def(py::init<size_t, const std::wstring &, const std::wstring &>())
             .def("__eq__", &akaza::Node::operator==, py::is_operator())
             .def("get_key", &akaza::Node::get_key)
             .def("is_bos", &akaza::Node::is_bos)
@@ -65,7 +65,8 @@ PYBIND11_MODULE(bind, m) {
             .def("__repr__",
                  [](const akaza::Node &node) {
                      std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
-                     return "<akaza::Node yomi= '" + cnv.to_bytes(node.get_yomi()) + " word=" + node.get_word() + "'>";
+                     return "<akaza::Node yomi= '" + cnv.to_bytes(node.get_yomi()) + " word=" +
+                            cnv.to_bytes(node.get_word()) + "'>";
                  }
             );
 
