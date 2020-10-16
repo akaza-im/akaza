@@ -3,8 +3,8 @@ DATADIR ?= $(PREFIX)/share
 DESTDIR ?=
 
 
-all: akaza_data/data/system_dict.trie akaza_data/data/lm_v2_2gram.trie akaza_data/data/lm_v2_2gram.trie \
-	akaza_data/data/system_dict.trie akaza_data/data/single_term.trie
+all: data/system_dict.trie data/lm_v2_2gram.trie data/lm_v2_2gram.trie \
+	data/system_dict.trie data/single_term.trie
 
 work/jawiki-latest-pages-articles.xml.bz2:
 	mkdir -p work/
@@ -40,20 +40,20 @@ work/jawiki.single_term.txt: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.
 	python bin/070_make-system-dict.py
 	python bin/080_system_dump.py
 
-akaza_data/data/lm_v2_2gram.trie: work/jawiki.merged-2gram.txt
-	akaza-make-system-lm work/jawiki.merged-1gram.txt akaza_data/data/lm_v2_1gram.trie \
-    	work/jawiki.merged-2gram.txt akaza_data/data/lm_v2_2gram.trie
+data/lm_v2_2gram.trie: work/jawiki.merged-2gram.txt
+	akaza-make-system-lm work/jawiki.merged-1gram.txt data/lm_v2_1gram.trie \
+    	work/jawiki.merged-2gram.txt data/lm_v2_2gram.trie
 
-akaza_data/data/system_dict.trie: work/jawiki.single_term.txt
-	akaza-make-binary-dict work/jawiki.system_dict.txt akaza_data/data/system_dict.trie
+data/system_dict.trie: work/jawiki.single_term.txt
+	akaza-make-binary-dict work/jawiki.system_dict.txt data/system_dict.trie
 
-akaza_data/data/single_term.trie: work/jawiki.single_term.txt
-	akaza-make-binary-dict work/jawiki.single_term.txt akaza_data/data/single_term.trie
+data/single_term.trie: work/jawiki.single_term.txt
+	akaza-make-binary-dict work/jawiki.single_term.txt data/single_term.trie
 
 # -------------------------------------------------------------------------
 
-install:
+install: all
 	install -m 0755 -d $(DESTDIR)$(DATADIR)/akaza-data
-	install -m 0644 akaza_data/data/*.trie $(DESTDIR)$(DATADIR)/akaza-data
+	install -m 0644 data/*.trie $(DESTDIR)$(DATADIR)/akaza-data
 
 .PHONY: all install

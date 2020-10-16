@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-16 10:20+0900\n"
+"POT-Creation-Date: 2020-10-17 08:47+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -37,11 +37,11 @@ msgstr ""
 msgid "Full-width Alphanumeric (C-S-l)"
 msgstr ""
 
-#: ibus_akaza/ui.py:158 ibus_akaza/ui.py:295
+#: ibus_akaza/ui.py:161 ibus_akaza/ui.py:298
 #, python-format
 msgid "Input mode (%s)"
 msgstr ""
 
-#: ibus_akaza/ui.py:160
+#: ibus_akaza/ui.py:163
 msgid "Switch input mode"
 msgstr ""

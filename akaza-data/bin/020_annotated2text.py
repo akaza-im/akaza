@@ -5,7 +5,7 @@ import pathlib
 import sys
 import time
 
-from akaza_data_utils import get_sig
+from akaza_data_utils import get_sig, mkdir_p
 from akaza_data_utils.merge_terms import merge_terms, load_skk_dict
 
 
@@ -77,6 +77,7 @@ def main():
         time.sleep(1)
 
     sig = get_sig()
+    mkdir_p('work/dump')
     with open(f'work/dump/{sig}-merged-annotated2text.txt', 'w') as wfp:
         for row in sorted(merged):
             wfp.write(f"{row}\n")

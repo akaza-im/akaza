@@ -8,7 +8,7 @@
 static std::string akaza_path(const char *s) {
     std::filesystem::path p(__FILE__);
     std::string retval = p.parent_path().parent_path().parent_path()
-            .concat("/akaza-data/akaza_data/data/").concat(s).string();
+            .concat("/akaza-data/data/").concat(s).string();
     note("Loading '%s'", retval.c_str());
     return retval;
 }

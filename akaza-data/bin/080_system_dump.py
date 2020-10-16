@@ -5,7 +5,7 @@ from akaza_data_utils import get_sig, mkdir_p
 
 def dump_system_dict(sig):
     trie = marisa_trie.BytesTrie()
-    trie.load('akaza_data/data/system_dict.trie')
+    trie.load('data/system_dict.trie')
 
     mkdir_p('work/dump')
     with open(f"work/dump/{sig}-dict.txt", 'w') as wfp:
