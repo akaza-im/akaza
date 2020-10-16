@@ -46,6 +46,9 @@ static void test_sushi() {
 }
 
 int main() {
+    std::wostream::sync_with_stdio(false);
+    std::wcout.imbue(std::locale("en_US.utf8"));
+
     /*
      * const std::shared_ptr<UserLanguageModel> &user_language_model,
                       const std::shared_ptr<SystemUnigramLM> &system_unigram_lm,
