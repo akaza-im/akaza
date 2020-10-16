@@ -65,7 +65,8 @@ PYBIND11_MODULE(bind, m) {
             .def("__repr__",
                  [](const akaza::Node &node) {
                      std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
-                     return "<akaza::Node yomi= '" + cnv.to_bytes(node.get_yomi()) + " word=" + node.get_word() + "'>";
+                     return "<akaza::Node yomi= '" + cnv.to_bytes(node.get_yomi()) + " word=" +
+                            cnv.to_bytes(node.get_word()) + "'>";
                  }
             );
 
