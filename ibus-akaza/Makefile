@@ -13,6 +13,17 @@ po/ibus-akaza.pot: ibus_akaza/ui.py ibus_akaza/input_mode.py
 po/ja.mo: po/ja.po
 	msgfmt -o po/ja.mo po/ja.po
 
+ibus_akaza/config.py: ibus_akaza/config.py.in
+	sed -e "s:@SYSCONFDIR@:$(SYSCONFDIR):g" \
+	    -e "s:@MODELDIR@:$(DESTDIR)/$(DATADIR)/akaza-data/:g" \
+	    -e "s:@DICTIONARYDIR@:$(DESTDIR)/$(DATADIR)/ibus-akaza/dictionary:g" \
+		$< > $@
+
+akaza.xml: akaza.xml.in
+	sed -e "s:@PYTHON@:$(PYTHON):g;" \
+	    -e "s:@DATADIR@:$(DATADIR):g" $< > $@
+
+
 install: ibus_akaza/config.py akaza.xml po/ja.mo
 	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-akaza/ibus_akaza $(DESTDIR)$(SYSCONFDIR)/xdg/akaza $(DESTDIR)$(DATADIR)/ibus/component
 	install -m 0755 -d $(DESTDIR)$(DATADIR)/locale
@@ -29,15 +40,6 @@ install: ibus_akaza/config.py akaza.xml po/ja.mo
 	install -m 0644 akaza.xml $(DESTDIR)$(DATADIR)/ibus/component
 
 	install -m 0644 po/ja.mo $(DESTDIR)$(DATADIR)/locale/ja/LC_MESSAGES/ibus-akaza.mo
-s_akaza/config.py: ibus_akaza/config.py.in
-	sed -e "s:@SYSCONFDIR@:$(SYSCONFDIR):g" \
-	    -e "s:@MODELDIR@:$(DESTDIR)/$(DATADIR)/akaza-data/:g" \
-	    -e "s:@DICTIONARYDIR@:$(DESTDIR)/$(DATADIR)/ibus-akaza/dictionary:g" \
-		$< > $@
-
-akaza.xml: akaza.xml.in
-	sed -e "s:@PYTHON@:$(PYTHON):g;" \
-	    -e "s:@DATADIR@:$(DATADIR):g" $< > $@
 
 test:
 	python -m py_compile ibus.py
