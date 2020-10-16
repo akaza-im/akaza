@@ -69,6 +69,7 @@ def make_system_dict():
         ('skk-dev-dict/SKK-JISYO.jinmei', 'euc-jp'),
         ('skk-dev-dict/SKK-JISYO.station', 'euc-jp'),
         ('jawiki-kana-kanji-dict/SKK-JISYO.jawiki', 'utf-8'),
+        ('dict/SKK-JISYO.akaza', 'utf-8'),
     ]
     dicts = []
 

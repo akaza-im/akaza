@@ -6,6 +6,10 @@ std::string akaza::Akaza::get_version() {
     return "202010140940";
 }
 
+static inline bool my_isupper(wchar_t c) {
+    return 'A' <= c && c <= 'Z';
+}
+
 std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
         const std::wstring &src,
         const std::optional<std::vector<akaza::Slice>> &forceSelectedClauses) {
@@ -18,7 +22,9 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
                  << " " << __FILE__ << ":" << __LINE__ << std::endl);
     assert(!forceSelectedClauses.has_value() || !forceSelectedClauses.value().empty());
 
-    if (!src.empty() && isupper(src[0]) && !forceSelectedClauses.has_value()) {
+    if (!src.empty() && my_isupper(src[0]) && !forceSelectedClauses.has_value()) {
+        D(std::wcout << "Upper case" << src[0]
+                     << " " << __FILE__ << ":" << __LINE__ << std::endl);
         return {{std::make_shared<akaza::Node>(0, src, src)}};
     }
 

@@ -64,7 +64,10 @@ def build_akaza():
         [emoji_dict],
     )
 
-    romkan = RomkanConverter(user_settings.get('romaji'))
+    additional = user_settings.get('romaji')
+    if additional is None:
+        additional = {}
+    romkan = RomkanConverter(additional)
 
     lisp_evaluator = TinyLisp()
 

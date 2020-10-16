@@ -43,6 +43,8 @@ namespace akaza {
             return trie_.size();
         }
 
+        void dump();
+
         void load(const char *path);
 
         /**
