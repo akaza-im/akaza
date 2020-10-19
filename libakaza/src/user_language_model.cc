@@ -37,6 +37,7 @@ void akaza::UserLanguageModel::read(const std::string &path, bool is_unigram, in
         v += 1;
         c += count;
     }
+    std::cout << "# Loaded " << path << " c=" << c << " v=" << v << std::endl;
 }
 
 void akaza::UserLanguageModel::add_entry(std::vector<Node> nodes) {

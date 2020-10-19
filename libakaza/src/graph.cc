@@ -10,10 +10,13 @@
 void akaza::Graph::dump() {
     std::wcout << "# GRAPH --" << std::endl;
     for (const auto &node: nodes_) {
-        std::wcout << node->get_start_pos() << "\t" << node->get_key() << "\t\t"
+        std::wcout << node->get_start_pos() << "\t" << node->get_key() << "\t\tprev="
                    << (node->get_prev() == nullptr ? L"NULL" : node->get_prev()->get_key())
-                   << "\t" << node->get_cost()
-                   << std::endl;
+                   << "\tcost=" << node->get_total_cost() << "\tbigram={";
+        for (const auto &[k, v]: node->bigram_cache_) {
+            std::wcout << k << "->" << v << ", ";
+        }
+        std::wcout << "}" << std::endl;
     }
     std::wcout << "# /GRAPH --" << std::endl;
 }

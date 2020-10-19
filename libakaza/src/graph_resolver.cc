@@ -91,7 +91,7 @@ akaza::GraphResolver::construct_normal_graph(const std::wstring &ws) {
         std::vector<std::shared_ptr<akaza::Node>> nodes;
         nodes.reserve(kanjiset.size());
         for (const auto &[yomi, kanji]: kanjiset) {
-            nodes.push_back(std::make_shared<akaza::Node>(i, yomi, kanji));
+            nodes.push_back(akaza::create_node(system_unigram_lm_, i, yomi, kanji));
         }
         src.emplace_back(i, nodes);
     }
@@ -128,7 +128,10 @@ akaza::GraphResolver::force_selected_graph(const std::wstring &ws, const std::ve
         std::vector<std::shared_ptr<akaza::Node>> nodes;
         nodes.reserve(kanjiset.size());
         for (const auto &[yomi, kanji]: kanjiset) {
-            nodes.push_back(std::make_shared<akaza::Node>(slice.start(), yomi, kanji));
+            nodes.push_back(akaza::create_node(
+                    system_unigram_lm_,
+                    slice.start(), yomi, kanji
+            ));
         }
         retval.emplace_back(slice.start(), nodes);
     }
@@ -143,7 +146,7 @@ void akaza::GraphResolver::fill_cost(akaza::Graph &graph) {
         D(std::wcout << "fill_cost: " << node->get_key() << std::endl);
         float node_cost = node->calc_node_cost(*user_language_model_, *system_unigram_lm_);
         float cost = INT32_MIN;
-        const std::vector<std::shared_ptr<akaza::Node>> & prev_nodes = graph.get_prev_items(node);
+        const std::vector<std::shared_ptr<akaza::Node>> &prev_nodes = graph.get_prev_items(node);
 
         if (!prev_nodes.empty()) {
             std::shared_ptr<Node> shortest_prev;
@@ -154,7 +157,7 @@ void akaza::GraphResolver::fill_cost(akaza::Graph &graph) {
                         *node,
                         *user_language_model_,
                         *system_bigram_lm_);
-                float prev_cost = prev_node->get_cost();
+                float prev_cost = prev_node->get_total_cost();
                 float tmp_cost = prev_cost + bigram_cost + node_cost;
                 if (cost < tmp_cost) { // コストが最大になる経路をえらんでいる
                     cost = tmp_cost;
@@ -165,10 +168,10 @@ void akaza::GraphResolver::fill_cost(akaza::Graph &graph) {
             D(std::wcout << "[fill_cost] set prev: " << node->get_key() << " " << shortest_prev->get_key()
                          << " " << __FILE__ << ":" << __LINE__ << std::endl);
             node->set_prev(shortest_prev);
-            node->set_cost(cost);
+            node->set_total_cost(cost);
         } else {
             D(std::wcout << "\tno prev: " << node->get_key() << std::endl);
-            node->set_cost(cost);
+            node->set_total_cost(cost);
         }
     }
 }
@@ -188,8 +191,9 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::GraphResolver::fin
         const auto &userLanguageModel = this->user_language_model_;
         const auto &systemBigramLm = this->system_bigram_lm_;
         std::sort(nodes.begin(), nodes.end(), [last_node, userLanguageModel, systemBigramLm](auto &a, auto &b) {
-            return a->get_cost() + a->get_bigram_cost_from_cache(*last_node, *systemBigramLm)
-                   > b->get_cost() + b->get_bigram_cost_from_cache(*last_node, *systemBigramLm);
+            // TODO ここで bigram cost 考慮しなくてもいいカモ?
+            return a->get_total_cost() + a->get_bigram_cost_from_cache(*last_node, *systemBigramLm)
+                   > b->get_total_cost() + b->get_bigram_cost_from_cache(*last_node, *systemBigramLm);
         });
 
         result.push_back(nodes);
