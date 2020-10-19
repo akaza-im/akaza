@@ -14,6 +14,8 @@ namespace akaza {
         std::wstring remove_last_char(const std::wstring & s);
         std::wstring to_hiragana(const std::wstring & s);
     };
+
+    // TODO: implement build_romkan_converter(additional)
 }
 
 #endif //LIBAKAZA_ROMKAN_H

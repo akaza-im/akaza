@@ -5,7 +5,7 @@
 #include <filesystem>
 
 static std::wstring convert_test(std::unique_ptr<akaza::Akaza> &akaza,
-                          const std::wstring &wsrc, const std::wstring &expected) {
+                                 const std::wstring &wsrc, const std::wstring &expected) {
     std::vector<std::vector<std::shared_ptr<akaza::Node>>> result = akaza->convert(
             wsrc,
             std::nullopt);
@@ -29,9 +29,7 @@ int main() {
     std::wcout.imbue(std::locale("en_US.utf8"));
     std::unique_ptr<akaza::Akaza> akaza = build_akaza();
 
-    for (int i=0; i<10; i++) {
-        convert_test(akaza, L"けいやくないようをめいかくにするいぎ", L"契約内容を明確にする意義");
-    }
+    convert_test(akaza, L"けいやくないようをめいかくにするいぎ", L"契約内容を明確にする意義");
     convert_test(akaza, L"ろうどうしゃさいがいほしょうほけんほう", L"労働者災害補償保険法");
     convert_test(akaza, L"けいやくのしゅたいとは", L"契約の主体とは");
     convert_test(akaza, L"tanosiijikan", L"楽しい時間");
