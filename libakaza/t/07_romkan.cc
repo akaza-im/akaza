@@ -3,19 +3,6 @@
 #include "../picotest/picotest.c"
 #include "tmpfile.h"
 
-/*
-@pytest.mark.parametrize('src, expected', [
-    ('aka', 'a'),
-    ('sona', 'so'),
-    ('son', 'so'),
-    ('sonn', 'so'),
-    ('sonnna', 'sonn'),
-    ('sozh', 'so'),
-])
-def test_remove_last_char(src, expected):
-    romkan = RomkanConverter()
-    assert romkan.remove_last_char(src) == expected
- */
 static void test_remove_last_char() {
     std::map<std::wstring, std::wstring> additional = {
     };
@@ -37,13 +24,6 @@ static void test_remove_last_char() {
     }
 }
 
-/*
-@pytest.mark.parametrize('src, expected', [
-])
-def test_bar(src, expected):
-    romkan = RomkanConverter()
-    assert romkan.to_hiragana(src) == expected
- */
 static void test_to_hiragana() {
     std::map<std::wstring, std::wstring> additional = {
     };

@@ -14,7 +14,6 @@ static std::wstring convert_test(std::unique_ptr<akaza::Akaza> &akaza,
     for (const auto &nodes: result) {
         retval += nodes[0]->get_word();
     }
-    // note("RESULT: src=%s got=%s expected=%s", cnv.to_bytes(wsrc).c_str(), retval.c_str(), expected.c_str());
 
     std::wcout << "# RESULT: src=" << wsrc
                << " got=" << retval

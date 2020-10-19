@@ -2,15 +2,6 @@
 #include "../picotest/picotest.h"
 #include "../picotest/picotest.c"
 
-/*
-
-def test_surface():
-    e = TinyLisp()
-    node = Node(word='(. "a" "b")', yomi='たしざんてすと', start_pos=0)
-    assert node.surface(e) == "ab"
-
- */
-
 static void test_surface() {
     auto lisp = akaza::tinylisp::TinyLisp();
     auto node = akaza::Node(0, L"たしざんてすと", LR"((. "a" "b"))");
