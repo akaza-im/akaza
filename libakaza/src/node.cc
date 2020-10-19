@@ -1,5 +1,10 @@
-#include "../include/akaza.h"
+#include "../include/node.h"
+#include "../include/system_lm.h"
+#include "../include/user_language_model.h"
+#include "../include/tinylisp.h"
 #include <codecvt>
+#include <memory>
+#include <cassert>
 
 #include "debug_log.h"
 
@@ -27,11 +32,12 @@ float akaza::Node::calc_node_cost(
         const akaza::UserLanguageModel &user_language_model,
         const akaza::SystemUnigramLM &ulm
 ) {
-    auto key = this->get_key();
-    auto u = user_language_model.get_unigram_cost(key);
+    std::wstring key = this->key_;
+    std::optional<float> u = user_language_model.get_unigram_cost(key);
     if (u.has_value()) {
         return *u;
     }
+
     auto[word_id, score] = ulm.find_unigram(key);
     this->word_id_ = word_id;
     if (word_id != akaza::UNKNOWN_WORD_ID) {
@@ -119,7 +125,7 @@ float akaza::Node::get_bigram_cost(const akaza::Node &next_node, const akaza::Us
 
 void akaza::Node::set_prev(std::shared_ptr<Node> &prev) {
     D(std::wcout << this->get_key() << ":" << this->start_pos_
-                << " -> " << prev->get_key() << ":" << prev->get_start_pos() << std::endl);
+                 << " -> " << prev->get_key() << ":" << prev->get_start_pos() << std::endl);
     assert(!(start_pos_ != 0 && prev->is_bos()));
     assert(this->start_pos_ != prev->start_pos_);
     this->prev_ = prev;
@@ -146,4 +152,12 @@ akaza::Node::Node(int start_pos, const std::wstring &yomi, const std::wstring &w
     }
     this->cost_ = 0;
     this->word_id_ = -1;
+}
+
+std::wstring akaza::Node::surface(const akaza::tinylisp::TinyLisp &tinyLisp) const {
+    if (word_.size() > 0 && word_[0] == '(') {
+        return tinyLisp.run(word_);
+    } else {
+        return word_;
+    }
 }

@@ -3,13 +3,17 @@
 
 #include <map>
 #include <string>
-#include <assert.h>
-#include <codecvt>
-#include <locale>
+#include <memory>
 
 namespace akaza {
 
     class UserLanguageModel;
+    class SystemUnigramLM;
+    class SystemBigramLM;
+
+    namespace tinylisp {
+        class TinyLisp;
+    }
 
     class Node {
     private:
@@ -36,14 +40,7 @@ namespace akaza {
             return word_ == L"__EOS__";
         }
 
-        // TODO: return wstring
-        std::wstring surface(const akaza::tinylisp::TinyLisp &tinyLisp) const {
-            if (word_.size() > 0 && word_[0] == '(') {
-                return tinyLisp.run(word_);
-            } else {
-                return word_;
-            }
-        }
+        std::wstring surface(const akaza::tinylisp::TinyLisp &tinyLisp) const;
 
 
         float calc_node_cost(const akaza::UserLanguageModel &user_language_model, const akaza::SystemUnigramLM &ulm);

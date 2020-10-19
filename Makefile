@@ -13,6 +13,7 @@ test:
 	cd ibus-akaza && pytest
 
 install:
+	cd libakaza && cmake . && make && make install
 	cd akaza-data && make install
 	cd pyakaza && $(PYTHON) setup.py install
 	cd ibus-akaza && make install

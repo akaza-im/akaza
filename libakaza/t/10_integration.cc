@@ -55,5 +55,6 @@ int main() {
     // convert_test(L"そうみたいですね", L"そうみたいですね");
     // convert_test(L"きめつのやいば", L"鬼滅の刃");
     convert_test(L"れいわ", L"令和");
+    convert_test(L"ちいさい", L"小さい");
     done_testing();
 }

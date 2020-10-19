@@ -1,10 +1,7 @@
 #pragma once
 
-#include <cstring>
-#include <iostream>
 #include <string>
 #include <vector>
-#include <sstream>
 #include <tuple>
 
 #include <marisa.h>
@@ -24,10 +21,7 @@ namespace akaza {
 
         void load(const std::string &dict_path);
 
-        void save(std::string dict_path) {
-            dict_trie_.save(dict_path.c_str());
-            std::cout << "[Save] " << dict_path << ": " << dict_trie_.num_keys() << std::endl;
-        }
+        void save(std::string dict_path);
 
         void build_by_keyset(marisa::Keyset &keyset) {
             dict_trie_.build(keyset);

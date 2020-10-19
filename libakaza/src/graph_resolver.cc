@@ -1,11 +1,18 @@
+#include "../include/graph_resolver.h"
+#include "../include/binary_dict.h"
+#include "../include/user_language_model.h"
+#include "../include/node.h"
+#include "../include/graph.h"
+#include "debug_log.h"
+#include "kana.h"
+
 #include <memory>
 #include <codecvt>
 #include <locale>
 #include <sstream>
-
-#include "../include/akaza.h"
-#include "debug_log.h"
-#include "kana.h"
+#include <cassert>
+#include <algorithm>
+#include <set>
 
 akaza::GraphResolver::GraphResolver(const std::shared_ptr<UserLanguageModel> &user_language_model,
                                     const std::shared_ptr<SystemUnigramLM> &system_unigram_lm,
@@ -211,7 +218,7 @@ void akaza::GraphResolver::fill_cost(akaza::Graph &graph) {
         D(std::wcout << "fill_cost: " << node->get_key() << std::endl);
         float node_cost = node->calc_node_cost(*user_language_model_, *system_unigram_lm_);
         float cost = INT32_MIN;
-        auto prev_nodes = graph.get_prev_items(node);
+        std::vector<std::shared_ptr<akaza::Node>> prev_nodes = graph.get_prev_items(node);
 
         if (!prev_nodes.empty()) {
             std::shared_ptr<Node> shortest_prev;
@@ -231,7 +238,7 @@ void akaza::GraphResolver::fill_cost(akaza::Graph &graph) {
             }
             assert(shortest_prev);
             D(std::wcout << "[fill_cost] set prev: " << node->get_key() << " " << shortest_prev->get_key()
-                        << " " << __FILE__ << ":" << __LINE__ << std::endl);
+                         << " " << __FILE__ << ":" << __LINE__ << std::endl);
             node->set_prev(shortest_prev);
             node->set_cost(cost);
         } else {
