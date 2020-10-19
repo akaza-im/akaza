@@ -7,12 +7,11 @@
 #include "kana.h"
 
 #include <memory>
-#include <codecvt>
 #include <locale>
-#include <sstream>
 #include <cassert>
 #include <algorithm>
 #include <set>
+#include <sstream>
 
 akaza::GraphResolver::GraphResolver(const std::shared_ptr<UserLanguageModel> &user_language_model,
                                     const std::shared_ptr<SystemUnigramLM> &system_unigram_lm,
@@ -315,7 +314,7 @@ akaza::GraphResolver::graph_construct(const std::wstring &ws, std::optional<std:
     return graph;
 }
 
-std::string akaza::Slice::repr() {
+std::string akaza::Slice::repr() const {
     std::stringstream ss;
     ss << "<akaza::Slice start=" << start_ << " len=" << len_ << ">";
     return ss.str();

@@ -8,20 +8,23 @@
 
 namespace akaza {
     class UserLanguageModel;
+
     class SystemUnigramLM;
+
     class SystemBigramLM;
+
     class BinaryDict;
+
     class Node;
+
     class Graph;
 
     class Slice {
     private:
-        size_t start_;
-        size_t len_;
+        const size_t start_;
+        const size_t len_;
     public:
-        Slice(size_t start, size_t len) {
-            start_ = start;
-            len_ = len;
+        Slice(size_t start, size_t len) : start_(start), len_(len) {
         }
 
         [[nodiscard]] size_t start() const {
@@ -32,7 +35,7 @@ namespace akaza {
             return len_;
         }
 
-        std::string repr();
+        std::string repr() const;
 
     };
 

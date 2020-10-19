@@ -8,12 +8,28 @@
 
 #include "debug_log.h"
 
+akaza::Node::Node(int start_pos, const std::wstring &yomi, const std::wstring &word, bool is_bos, bool is_eos) :
+        start_pos_(start_pos),
+        yomi_(yomi),
+        word_(word),
+        is_bos_(is_bos), is_eos_(is_eos) {
+    if (word == L"__EOS__") {
+        // return '__EOS__'  // わざと使わない。__EOS__ 考慮すると変換精度が落ちるので。。今は使わない。
+        // うまく使えることが確認できれば、__EOS__/__EOS__ にする。
+        this->key_ = L"__EOS__";
+    } else {
+        this->key_ = word + L"/" + yomi;
+    }
+    this->cost_ = 0;
+    this->word_id_ = -1;
+}
+
 std::shared_ptr<akaza::Node> akaza::create_bos_node() {
-    return std::make_shared<akaza::Node>(akaza::Node(-1, L"__BOS__", L"__BOS__"));
+    return std::make_shared<akaza::Node>(akaza::Node(-1, L"__BOS__", L"__BOS__", true, false));
 }
 
 std::shared_ptr<akaza::Node> akaza::create_eos_node(int start_pos) {
-    return std::make_shared<akaza::Node>(akaza::Node(start_pos, L"__EOS__", L"__EOS__"));
+    return std::make_shared<akaza::Node>(akaza::Node(start_pos, L"__EOS__", L"__EOS__", false, true));
 }
 
 /*
@@ -138,21 +154,6 @@ bool akaza::Node::operator==(akaza::Node const &node) {
 
 bool akaza::Node::operator!=(akaza::Node const &node) {
     return this->word_ != node.word_ || this->yomi_ != node.yomi_ || this->start_pos_ != node.start_pos_;
-}
-
-akaza::Node::Node(int start_pos, const std::wstring &yomi, const std::wstring &word) {
-    this->start_pos_ = start_pos;
-    this->yomi_ = yomi;
-    this->word_ = word;
-    if (word == L"__EOS__") {
-        // return '__EOS__'  // わざと使わない。__EOS__ 考慮すると変換精度が落ちるので。。今は使わない。
-        // うまく使えることが確認できれば、__EOS__/__EOS__ にする。
-        this->key_ = L"__EOS__";
-    } else {
-        this->key_ = word + L"/" + yomi;
-    }
-    this->cost_ = 0;
-    this->word_id_ = -1;
 }
 
 std::wstring akaza::Node::surface(const akaza::tinylisp::TinyLisp &tinyLisp) const {
