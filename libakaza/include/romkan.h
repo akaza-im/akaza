@@ -2,13 +2,14 @@
 #define LIBAKAZA_ROMKAN_H
 
 #include <regex>
+#include <unordered_map>
 
 namespace akaza {
     class RomkanConverter {
     private:
         std::wregex pattern_;
         std::wregex last_char_pattern_;
-        std::map<std::wstring, std::wstring> map_;
+        std::unordered_map<std::wstring, std::wstring> map_;
     public:
         RomkanConverter(const std::map<std::wstring, std::wstring> &additional);
         std::wstring remove_last_char(const std::wstring & s);
