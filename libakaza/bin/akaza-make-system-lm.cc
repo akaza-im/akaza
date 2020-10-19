@@ -4,6 +4,9 @@
 #include <marisa.h>
 #include <locale>
 #include <codecvt>
+#include <sstream>
+#include <fstream>
+
 
 #include "../include/akaza.h"
 
@@ -54,14 +57,15 @@ void process_1gram(const std::string &srcpath, const std::string &dstpath) {
 }
 
 void process_2gram(const akaza::SystemUnigramLM &unigram, const std::string &srcpath, const std::string &dstpath) {
-    std::ifstream ifs(srcpath, std::ifstream::in);
+    std::wifstream ifs(srcpath, std::ifstream::in);
+    ifs.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
 
     akaza::SystemBigramLMBuilder builder;
-    std::string line;
+    std::wstring line;
     while (std::getline(ifs, line)) {
-        std::stringstream ss(line);
-        std::string word1;
-        std::string word2;
+        std::wstringstream ss(line);
+        std::wstring word1;
+        std::wstring word2;
         float score;
         ss >> word1;
         ss >> word2;
@@ -70,8 +74,8 @@ void process_2gram(const akaza::SystemUnigramLM &unigram, const std::string &src
         std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
 
 //        std::cout << word1 << " --- " << word2 << " --- " << score << std::endl;
-        int word_id1 = std::get<0>(unigram.find_unigram(cnv.from_bytes(word1)));
-        int word_id2 = std::get<0>(unigram.find_unigram(cnv.from_bytes(word2)));
+        int word_id1 = std::get<0>(unigram.find_unigram(word1));
+        int word_id2 = std::get<0>(unigram.find_unigram(word2));
 
         builder.add(word_id1, word_id2, score);
     }

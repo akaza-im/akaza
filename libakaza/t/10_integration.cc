@@ -29,6 +29,7 @@ int main() {
     std::wostream::sync_with_stdio(false);
     std::wcout.imbue(std::locale("en_US.utf8"));
 
+    convert_test(L"けいやくのしゅたいとは", L"契約の主体とは");
     convert_test(L"tanosiijikan", L"楽しい時間");
     convert_test(L"たのしいじかん", L"楽しい時間");
     convert_test(L"zh", L"←");
