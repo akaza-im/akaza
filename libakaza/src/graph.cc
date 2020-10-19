@@ -30,6 +30,7 @@ akaza::Graph::build(int size,
         for (const auto &node: nodes) {
             // D(std::cout << "Graph::build-- " << node->get_key() << std::endl);
             this->nodes_.push_back(node);
+            end_pos2nodes_[node->get_start_pos() + node->get_yomi().length()].push_back(node);
         }
     }
 
@@ -44,31 +45,12 @@ std::vector<std::shared_ptr<akaza::Node>> akaza::Graph::get_prev_items(const std
         return {this->get_bos()};
     }
 
-    std::vector<std::shared_ptr<akaza::Node>> nodes;
-    for (const auto &node: this->nodes_) {
-        if (node->is_bos()) {
-            continue;
-        }
-        if (target_node->is_eos()) {
-            if (node->get_key() == L"です/です") {
-                D(std::cout << "DDDDD: " << node->get_start_pos() << "\t"
-                            << node->get_yomi().length() <<
-                            "\t" <<
-                            target_node->get_start_pos() << std::endl);
-            }
-            if (node->get_start_pos() + node->get_yomi().length() ==
-                target_node->get_start_pos()) {
-                nodes.push_back(node);
-            }
-        } else {
-            if (node->get_start_pos() + node->get_yomi().length() ==
-                target_node->get_start_pos()) {
-                assert(!node->is_bos());
-                nodes.push_back(node);
-            }
-        }
+    auto search = end_pos2nodes_.find(target_node->get_start_pos());
+    if (search == end_pos2nodes_.cend()) {
+        return std::vector<std::shared_ptr<akaza::Node>>();
+    } else {
+        return search->second;
     }
-    return nodes;
 }
 
 /**

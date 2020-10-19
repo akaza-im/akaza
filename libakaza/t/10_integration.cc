@@ -29,6 +29,7 @@ int main() {
     std::wcout.imbue(std::locale("en_US.utf8"));
     std::unique_ptr<akaza::Akaza> akaza = build_akaza();
 
+    convert_test(akaza, L"けいやくないようをめいかくにするいぎ", L"契約内容を明確にする意義");
     convert_test(akaza, L"ろうどうしゃさいがいほしょうほけんほう", L"労働者災害補償保険法");
     convert_test(akaza, L"けいやくのしゅたいとは", L"契約の主体とは");
     convert_test(akaza, L"tanosiijikan", L"楽しい時間");
