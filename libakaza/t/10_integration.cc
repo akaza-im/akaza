@@ -4,8 +4,8 @@
 #include "test_akaza.h"
 #include <filesystem>
 
-std::wstring convert_test(const std::wstring &wsrc, const std::wstring &expected) {
-    auto akaza = build_akaza();
+static std::wstring convert_test(std::unique_ptr<akaza::Akaza> &akaza,
+                          const std::wstring &wsrc, const std::wstring &expected) {
     std::vector<std::vector<std::shared_ptr<akaza::Node>>> result = akaza->convert(
             wsrc,
             std::nullopt);
@@ -28,34 +28,35 @@ std::wstring convert_test(const std::wstring &wsrc, const std::wstring &expected
 int main() {
     std::wostream::sync_with_stdio(false);
     std::wcout.imbue(std::locale("en_US.utf8"));
+    std::unique_ptr<akaza::Akaza> akaza = build_akaza();
 
-    convert_test(L"けいやくのしゅたいとは", L"契約の主体とは");
-    convert_test(L"tanosiijikan", L"楽しい時間");
-    convert_test(L"たのしいじかん", L"楽しい時間");
-    convert_test(L"zh", L"←");
-    convert_test(L"それなwww", L"それなwww");
-    convert_test(L"watasinonamaehanakanodesu.", L"私の名前は中野です。");
-    convert_test(L"わたしのなまえはなかのです。", L"私の名前は中野です。");
-    convert_test(L"わーど", L"ワード");
-    convert_test(L"にほん", L"日本");
-    convert_test(L"にっぽん", L"日本");
-    convert_test(L"siinn", L"子音");
-    convert_test(L"IME", L"IME");
-    convert_test(L"ややこしい", L"ややこしい");
-    convert_test(L"むずかしくない", L"難しく無い");
-    convert_test(L"きぞん", L"既存");
-    convert_test(L"のぞましい", L"望ましい");
-    convert_test(L"こういう", L"こういう");
-    convert_test(L"はやくち", L"早口");
-    convert_test(L"しょうがっこう", L"小学校");
-    convert_test(L"げすとだけ", L"ゲストだけ");
-    convert_test(L"ぜんぶでてるやつ", L"全部でてるやつ");
-    convert_test(L"えらべる", L"選べる");
-    convert_test(L"わたしだよ", L"わたしだよ");
-    convert_test(L"にほんごじょうほう", L"日本語情報");
-    // convert_test(L"そうみたいですね", L"そうみたいですね");
-    // convert_test(L"きめつのやいば", L"鬼滅の刃");
-    convert_test(L"れいわ", L"令和");
-    convert_test(L"ちいさい", L"小さい");
+    convert_test(akaza, L"けいやくのしゅたいとは", L"契約の主体とは");
+    convert_test(akaza, L"tanosiijikan", L"楽しい時間");
+    convert_test(akaza, L"たのしいじかん", L"楽しい時間");
+    convert_test(akaza, L"zh", L"←");
+    convert_test(akaza, L"それなwww", L"それなwww");
+    convert_test(akaza, L"watasinonamaehanakanodesu.", L"私の名前は中野です。");
+    convert_test(akaza, L"わたしのなまえはなかのです。", L"私の名前は中野です。");
+    convert_test(akaza, L"わーど", L"ワード");
+    convert_test(akaza, L"にほん", L"日本");
+    convert_test(akaza, L"にっぽん", L"日本");
+    convert_test(akaza, L"siinn", L"子音");
+    convert_test(akaza, L"IME", L"IME");
+    convert_test(akaza, L"ややこしい", L"ややこしい");
+    convert_test(akaza, L"むずかしくない", L"難しく無い");
+    convert_test(akaza, L"きぞん", L"既存");
+    convert_test(akaza, L"のぞましい", L"望ましい");
+    convert_test(akaza, L"こういう", L"こういう");
+    convert_test(akaza, L"はやくち", L"早口");
+    convert_test(akaza, L"しょうがっこう", L"小学校");
+    convert_test(akaza, L"げすとだけ", L"ゲストだけ");
+    convert_test(akaza, L"ぜんぶでてるやつ", L"全部でてるやつ");
+    convert_test(akaza, L"えらべる", L"選べる");
+    convert_test(akaza, L"わたしだよ", L"わたしだよ");
+    convert_test(akaza, L"にほんごじょうほう", L"日本語情報");
+    // convert_test(akaza, L"そうみたいですね", L"そうみたいですね");
+    // convert_test(akaza, L"きめつのやいば", L"鬼滅の刃");
+    convert_test(akaza, L"れいわ", L"令和");
+    convert_test(akaza, L"ちいさい", L"小さい");
     done_testing();
 }

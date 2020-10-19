@@ -1,12 +1,9 @@
 #include <iostream>
 #include <fstream>
 #include <map>
-#include <marisa.h>
-#include <locale>
 #include <codecvt>
-#include <sstream>
-#include <fstream>
 
+#include <marisa.h>
 
 #include "../include/akaza.h"
 
