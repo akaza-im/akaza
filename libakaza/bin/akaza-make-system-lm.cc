@@ -1,9 +1,10 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <map>
-#include <cstring>
 #include <marisa.h>
+#include <locale>
+#include <codecvt>
+
 #include "../include/akaza.h"
 
 /**
