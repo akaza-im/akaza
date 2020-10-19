@@ -1,6 +1,7 @@
 #include "../include/graph_resolver.h"
 #include "../include/binary_dict.h"
 #include "../include/user_language_model.h"
+#include "../include/system_lm.h"
 #include "../include/node.h"
 #include "../include/graph.h"
 #include "debug_log.h"
@@ -12,6 +13,7 @@
 #include <algorithm>
 #include <set>
 #include <sstream>
+#include <iostream>
 
 akaza::GraphResolver::GraphResolver(const std::shared_ptr<UserLanguageModel> &user_language_model,
                                     const std::shared_ptr<SystemUnigramLM> &system_unigram_lm,
@@ -46,26 +48,6 @@ static inline void insert_basic_candidates(std::set<std::tuple<std::wstring, std
     // TODO: 全角 alphabet 候補もいれたいかも？
 }
 
-/**
-            for i in range(0, len(s)):
-                # print(f"LOOP {i}")
-                # for i in range(0, len(s)):
-                for j in range(i + 1, len(s) + 1):
-                    # substr は「読み」であろう。
-                    # word は「漢字」であろう。
-                    yomi = s[i:j]
-                    if yomi in ht:
-                        # print(f"YOMI YOMI: {yomi} {ht[yomi]}")
-                        for kanji in ht[yomi]:
-                            node = Node(i, kanji, yomi)
-                            graph.append(index=j, node=node)
-                    else:
-                        if self.user_language_model.has_unigram_cost_by_yomi(yomi):
-                            for word in [yomi, jaconv.hira2kata(yomi), jaconv.kana2alphabet(yomi),
-                                         jaconv.h2z(jaconv.kana2alphabet(yomi), ascii=True)]:
-                                node = Node(start_pos=i, word=word, yomi=yomi)
-                                graph.append(index=j, node=node)
- */
 std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>>
 akaza::GraphResolver::construct_normal_graph(const std::wstring &ws) {
     std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>> src;
@@ -116,29 +98,6 @@ akaza::GraphResolver::construct_normal_graph(const std::wstring &ws) {
     return src;
 }
 
-/*
- for force_slice in force_selected_clause:
-    # 強制的に範囲を指定されている場合。
-    # substr は「読み」であろう。
-    # word は「漢字」であろう。
-    yomi = s[force_slice]
-    i = force_slice.start
-    j = force_slice.stop
-    # print(f"XXXX={s} {force_slice} {yomi}")
-    if yomi in ht:
-        # print(f"YOMI YOMI: {yomi} {ht[yomi]}")
-        for kanji in ht[yomi]:
-            node = Node(i, kanji, yomi)
-            graph.append(index=j, node=node)
-    else:
-        # print(f"NO YOMI: {yomi}")
-        if len(yomi) == 0:
-            raise AssertionError(f"len(yomi) should not be 0. {s}, {force_slice}")
-        for word in [yomi, jaconv.hira2kata(yomi), jaconv.kana2alphabet(yomi),
-                     jaconv.h2z(jaconv.kana2alphabet(yomi), ascii=True)]:
-            node = Node(start_pos=i, word=word, yomi=yomi)
-            graph.append(index=j, node=node)
- */
 std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>>
 akaza::GraphResolver::force_selected_graph(const std::wstring &ws, const std::vector<akaza::Slice> &slices) {
     std::vector<std::tuple<int, std::vector<std::shared_ptr<akaza::Node>>>> retval;
@@ -176,39 +135,6 @@ akaza::GraphResolver::force_selected_graph(const std::wstring &ws, const std::ve
     return retval;
 }
 
-/*
-     def fill_cost(self, graph: Graph):
-        """
-        Graph の各ノードについて最短のノードをえる。
-        """
-        # BOS にスコアを設定。
-        graph.get_bos().set_cost(0)
-
-        for nodes in graph.get_items():
-            # print(f"fFFFF {nodes}")
-            for node in nodes:
-                # print(f"  PPPP {node}")
-                node_cost = node.calc_node_cost(self.user_language_model,
-                                                self.system_unigram_lm)
-                # print(f"  NC {node.word} {node_cost}")
-                cost = -sys.maxsize
-                shortest_prev = None
-                prev_nodes = graph.get_item(node.get_start_pos())
-                if prev_nodes[0].is_bos():
-                    node.set_prev(prev_nodes[0])
-                    node.set_cost(node_cost)
-                else:
-                    for prev_node in prev_nodes:
-                        bigram_cost = prev_node.get_bigram_cost(node, self.user_language_model,
-                                                                self.system_bigram_lm)
-                        tmp_cost = prev_node.cost + bigram_cost + node_cost
-                        if cost < tmp_cost:  # 。
-                            cost = tmp_cost
-                            shortest_prev = prev_node
-                    # print(f"    SSSHORTEST: {shortest_prev} in {prev_nodes}")
-                    node.prev = shortest_prev
-                    node.cost = cost
- */
 void akaza::GraphResolver::fill_cost(akaza::Graph &graph) {
     for (const auto &node: graph.get_items()) {
         if (node->is_bos()) {
@@ -247,31 +173,6 @@ void akaza::GraphResolver::fill_cost(akaza::Graph &graph) {
     }
 }
 
-/*
-    def find_nbest(self, graph: Graph):
-        # find EOS.
-        node = graph.get_eos()
-
-        result = []
-        last_node = None
-        while not node.is_bos():
-            if node == node.prev:
-                print(graph)
-                raise AssertionError(f"node==node.prev: {node}")
-
-            if not node.is_eos():
-                # 他の候補を追加する。
-                nodes = sorted(
-                    [n for n in graph.get_item(node.start_pos + len(node.yomi)) if node.yomi == n.yomi],
-                    key=lambda x: x.cost + x.get_bigram_cost(last_node,
-                                                             self.user_language_model,
-                                                             self.system_bigram_lm), reverse=True)
-                result.append(nodes)
-
-            last_node = node
-            node = node.prev
-        return list(reversed(result))
- */
 std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::GraphResolver::find_nbest(akaza::Graph &graph) {
     std::shared_ptr<akaza::Node> node = graph.get_eos()->get_prev();
     assert(node != nullptr);

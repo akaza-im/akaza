@@ -68,44 +68,6 @@ namespace akaza {
 
         std::optional<float> get_bigram_cost(const std::wstring &key1, const std::wstring &key2) const;
 
-/*
-    def get_unigram_cost(self, key: str) -> Optional[float]:
-        if key in self.unigram:
-            count = self.unigram[key]
-            return math.log10((count + ALPHA) / (self.unigram_C + ALPHA * self.unigram_V))
-        return None
-
-    def has_unigram_cost_by_yomi(self, yomi: str) -> bool:
-        return yomi in self.unigram_kanas
-
-    def get_bigram_cost(self, key1: str, key2: str) -> Optional[float]:
-        key = f"{key1}\t{key2}"
-        if key in self.bigram:
-            count = self.bigram[key]
-            return math.log10((count + ALPHA) / (self.bigram_C + ALPHA * self.bigram_V))
-        return None
- */
-
-/*
-    def save(self):
-        if not self.need_save:
-            self.logger.debug("Skip saving user_language_mdel.")
-            return
-
-        self.need_save = False
-        self.logger.info("Writing user_language_model")
-        with atomic_write(self.unigram_path(), overwrite=True) as f:
-            for words in sorted(self.unigram.keys()):
-                count = self.unigram[words]
-                f.write(f"{words} {count}\n")
-
-        with atomic_write(self.bigram_path(), overwrite=True) as f:
-            for words in sorted(self.bigram.keys()):
-                count = self.bigram[words]
-                f.write(f"{words} {count}\n")
-
-        self.logger.info(f"SAVED {self.path}")
- */
         void save() {
             need_save_ = false;
 
