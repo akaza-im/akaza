@@ -52,7 +52,7 @@ data/single_term.trie: work/jawiki.single_term.txt
 
 # -------------------------------------------------------------------------
 
-install: all
+install:
 	install -m 0755 -d $(DESTDIR)$(DATADIR)/akaza-data
 	install -m 0644 data/*.trie $(DESTDIR)$(DATADIR)/akaza-data
 

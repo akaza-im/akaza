@@ -6,10 +6,11 @@
 #include <map>
 #include <fstream>
 #include <cmath>
-
-#include "node.h"
+#include <vector>
 
 namespace akaza {
+    class Node;
+
     class UserLanguageModel {
 
     private:
@@ -33,7 +34,7 @@ namespace akaza {
 
         void read(const std::string &path, bool is_unigram, int &c, int &v, std::map<std::wstring, int> &map);
 
-        void save_file(const std::string &path, const std::map<std::wstring, int> &map);
+        static void save_file(const std::string &path, const std::map<std::wstring, int> &map);
 
     public:
         UserLanguageModel(const std::string &unigram_path, const std::string &bigram_path) {
