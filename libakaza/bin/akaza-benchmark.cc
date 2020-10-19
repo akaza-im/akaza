@@ -64,8 +64,7 @@ int main(int argc, char **argv) {
             single_term_dicts
     );
 
-    std::map<std::wstring, std::wstring> additional;
-    auto romkanConverter = std::make_shared<akaza::RomkanConverter>(additional);
+    auto romkanConverter = akaza::build_romkan_converter({});
 
     akaza::Akaza akaza(graphResolver, romkanConverter);
     run(akaza, true);
