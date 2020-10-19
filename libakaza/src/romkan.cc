@@ -40,7 +40,6 @@ static std::wstring quotemeta(const std::wstring &input) {
     return buffer;
 }
 
-// TODO move to wstring
 akaza::RomkanConverter::RomkanConverter(const std::map<std::wstring, std::wstring> &additional) {
     // romaji -> hiragana
     for (const auto &[rom, hira]: DEFAULT_ROMKAN_H) {

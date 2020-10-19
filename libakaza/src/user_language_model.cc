@@ -1,5 +1,5 @@
 #include "../include/akaza.h"
-
+#include <codecvt>
 #include "split.h"
 
 inline int my_atoi(const std::wstring &s) {
@@ -31,6 +31,7 @@ void akaza::UserLanguageModel::read(const std::string &path, bool is_unigram, in
     v = 0;
 
     std::wifstream ifs(path, std::ifstream::in);
+    ifs.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
     std::wstring line;
     while (std::getline(ifs, line)) {
         bool splitted;
