@@ -185,13 +185,11 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::GraphResolver::fin
         }
 
         std::vector<std::shared_ptr<akaza::Node>> nodes = graph.get_items_by_start_and_length(node);
-        auto userLanguageModel = this->user_language_model_;
-        auto systemBigramLm = this->system_bigram_lm_;
+        const auto &userLanguageModel = this->user_language_model_;
+        const auto &systemBigramLm = this->system_bigram_lm_;
         std::sort(nodes.begin(), nodes.end(), [last_node, userLanguageModel, systemBigramLm](auto &a, auto &b) {
-            return a->get_cost() + a->get_bigram_cost(*last_node, *userLanguageModel,
-                                                      *systemBigramLm)
-                   > b->get_cost() + b->get_bigram_cost(*last_node, *userLanguageModel,
-                                                        *systemBigramLm);
+            return a->get_cost() + a->get_bigram_cost_from_cache(*last_node, *systemBigramLm)
+                   > b->get_cost() + b->get_bigram_cost_from_cache(*last_node, *systemBigramLm);
         });
 
         result.push_back(nodes);

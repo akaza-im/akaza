@@ -89,13 +89,19 @@ static float calc_bigram_cost(const akaza::Node &prev_node,
 float akaza::Node::get_bigram_cost(const akaza::Node &next_node, const akaza::UserLanguageModel &ulm,
                                    const akaza::SystemBigramLM &system_bigram_lm) {
     auto next_node_key = next_node.get_key();
+    float cost = calc_bigram_cost(*this, next_node, ulm, system_bigram_lm);
+    bigram_cache_[next_node_key] = cost;
+    return cost;
+}
+
+float akaza::Node::get_bigram_cost_from_cache(const akaza::Node &next_node,
+                                              const akaza::SystemBigramLM &system_bigram_lm) const {
+    auto next_node_key = next_node.get_key();
     auto search = bigram_cache_.find(next_node_key);
     if (search != bigram_cache_.cend()) {
         return search->second;
     } else {
-        float cost = calc_bigram_cost(*this, next_node, ulm, system_bigram_lm);
-        bigram_cache_[next_node_key] = cost;
-        return cost;
+        return system_bigram_lm.get_default_score();
     }
 }
 

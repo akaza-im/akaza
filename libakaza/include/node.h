@@ -56,6 +56,9 @@ namespace akaza {
         float get_bigram_cost(const akaza::Node &next_node, const UserLanguageModel &ulm,
                               const SystemBigramLM &system_bigram_lm);
 
+        float get_bigram_cost_from_cache(const akaza::Node &next_node,
+                                         const akaza::SystemBigramLM &system_bigram_lm) const;
+
         int32_t get_word_id() const {
             return word_id_;
         }
