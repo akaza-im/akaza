@@ -104,10 +104,25 @@ void test_read2() {
     free(bigram_path);
 }
 
+void test_save() {
+    TmpFile unigram_path;
+    TmpFile bigram_path;
+
+    akaza::UserLanguageModel d(unigram_path.get_name(), bigram_path.get_name());
+
+    d.add_entry({akaza::Node(0, L"たんご", L"単語")});
+    d.add_entry({akaza::Node(0, L"たんご", L"単語")});
+    d.add_entry({akaza::Node(0, L"じゅくご", L"熟語")});
+    d.save();
+
+    ok(std::filesystem::file_size(unigram_path.get_name()) > 0);
+}
+
 int main() {
     test_read();
     test_read2();
     test_read3();
+    test_save();
 
     done_testing();
 }

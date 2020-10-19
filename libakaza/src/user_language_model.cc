@@ -131,13 +131,21 @@ akaza::UserLanguageModel::get_bigram_cost(const std::wstring &key1, const std::w
     }
 }
 
+#include <filesystem>
+
 void akaza::UserLanguageModel::save_file(const std::string &path, const std::map<std::wstring, int> &map) {
-    std::wofstream ofs(path + ".tmp", std::ofstream::out);
+    std::string tmppath(path + ".tmp");
+    std::wofstream ofs(tmppath, std::ofstream::out);
     ofs.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
 
     for (const auto&[words, count] : map) {
         ofs << words << " " << count << std::endl;
     }
     ofs.close();
-    rename(path.c_str(), (path + ".tmp").c_str());
+
+    int status = std::rename(tmppath.c_str(), path.c_str());
+    if (status != 0) {
+        std::string err = strerror(errno);
+        throw std::runtime_error(err + " : " + path + " (Cannot write user language model)");
+    }
 }
