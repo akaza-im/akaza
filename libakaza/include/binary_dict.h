@@ -21,7 +21,7 @@ namespace akaza {
 
         void load(const std::string &dict_path);
 
-        void save(std::string dict_path);
+        void save(const std::string& dict_path);
 
         void build_by_keyset(marisa::Keyset &keyset) {
             dict_trie_.build(keyset);

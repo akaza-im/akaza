@@ -83,7 +83,7 @@ std::shared_ptr<Node> TinyLisp::_read_from(std::vector<std::wstring> &tokens, in
     }
 }
 
-std::shared_ptr<Node> TinyLisp::_atom(const std::wstring &token) const {
+std::shared_ptr<Node> TinyLisp::_atom(const std::wstring &token) {
     if (!token.empty() && token[0] == '"') {
         return std::shared_ptr<Node>(
                 new StringNode(token.substr(1, token.size() - 2)));

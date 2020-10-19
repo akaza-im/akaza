@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LIBAKAZA_TINYLISP_H_
+#define LIBAKAZA_TINYLISP_H_
 
 #include <functional>
 #include <iostream>
@@ -129,7 +130,7 @@ namespace akaza {
             std::shared_ptr<Node> _read_from(std::vector<std::wstring> &tokens,
                                              int depth) const;
 
-            std::shared_ptr<Node> _atom(const std::wstring &token) const;
+            static std::shared_ptr<Node> _atom(const std::wstring &token) ;
 
         public:
             std::shared_ptr<Node> parse(const std::wstring &src) const {
@@ -151,3 +152,5 @@ namespace akaza {
 
     } // namespace tinylisp
 } // namespace akaza
+
+#endif // LIBAKAZA_TINYLISP_H_

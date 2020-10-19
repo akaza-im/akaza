@@ -11,22 +11,6 @@ inline int my_atoi(const std::wstring &s) {
 
 void akaza::UserLanguageModel::read(const std::string &path, bool is_unigram, int &c, int &v,
                                     std::map<std::wstring, int> &map) {
-/*
-        word_data = {}
-        with open(path) as fp:
-            for line in fp:
-                m = line.rstrip().split(" ")
-                if len(m) == 2:
-                    key, count = m
-                    count = int(count)
-                    word_data[key] = count
-                    if is_unigram:
-                        kanji, kana = key.split('/')
-                        self.unigram_kanas.add(kana)
-                    V += 1
-                    C += count
-        return V, C, word_data
- */
     c = 0;
     v = 0;
 
@@ -55,33 +39,6 @@ void akaza::UserLanguageModel::read(const std::string &path, bool is_unigram, in
     }
 }
 
-/*
-def add_entry(self, nodes: List[Node]):
-    # unigram
-    for node in nodes:
-        key = node.get_key()
-
-        self.logger.info(f"add user_language_model entry: key={key}")
-
-        if key not in self.unigram:
-            self.unigram_C += 1
-        self.unigram_V += 1
-        kanji, kana = key.split('/')
-        self.unigram_kanas.add(kana)
-        self.unigram[key] = self.unigram.get(key, 0) + 1
-
-    # bigram
-    for i in range(1, len(nodes)):
-        node1 = nodes[i - 1]
-        node2 = nodes[i]
-        key = node1.get_key() + "\t" + node2.get_key()
-        if key not in self.bigram:
-            self.bigram_C += 1
-        self.bigram_V += 1
-        self.bigram[key] = self.bigram.get(key, 0) + 1
-
-    self.need_save = True
- */
 void akaza::UserLanguageModel::add_entry(std::vector<Node> nodes) {
     // unigram
     for (const akaza::Node &node: nodes) {
@@ -130,8 +87,6 @@ akaza::UserLanguageModel::get_bigram_cost(const std::wstring &key1, const std::w
         return {};
     }
 }
-
-#include <filesystem>
 
 void akaza::UserLanguageModel::save_file(const std::string &path, const std::map<std::wstring, int> &map) {
     std::string tmppath(path + ".tmp");

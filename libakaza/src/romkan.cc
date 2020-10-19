@@ -4,7 +4,7 @@
 #include <cctype>
 #include <string>
 #include "debug_log.h"
-
+#include <iostream>
 #include "romkan_default.h"
 
 static std::wstring quotemeta(const std::wstring &input) {
@@ -82,27 +82,6 @@ akaza::RomkanConverter::RomkanConverter(const std::map<std::wstring, std::wstrin
         last_char_pattern_.assign(last_char_pattern);
     }
 
-    /*
-            self.pattern = re.compile(
-            '(' + "|".join(sorted([re.escape(x) for x in self.map.keys()], key=_len_cmp)) + ')'
-        )
-        print('(' + "|".join(sorted([re.escape(x) for x in self.map.keys()], key=_len_cmp)) + r'|.)$')
-        self.last_char_pattern = re.compile(
-            '(?:' + "|".join(sorted([re.escape(x) for x in self.map.keys()], key=_len_cmp)) + r'|.)$'
-        )
-    def to_hiragana(self, s: str) -> str:
-        """
-        Convert a Romaji (ローマ字) to a Hiragana (平仮名).
-        """
-
-        s = s.lower()
-        s = _normalize_double_n(s)
-        return self.pattern.sub(lambda x: self.map[x.group(1)], s)
-
-    def remove_last_char(self, s: str) -> str:
-        return self.last_char_pattern.sub('', s)
-
-     */
 }
 
 std::wstring akaza::RomkanConverter::remove_last_char(const std::wstring &s) {
