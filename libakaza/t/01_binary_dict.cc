@@ -4,7 +4,6 @@
 
 int main() {
     // vector of "とくひろ" => "徳宏/徳大/徳寛/督弘"
-    // void build(std::vector<std::tuple<std::string, std::string>> data) {
     {
         // saving
         akaza::BinaryDict dic;

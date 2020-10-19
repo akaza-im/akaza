@@ -49,13 +49,6 @@ int main() {
     std::wostream::sync_with_stdio(false);
     std::wcout.imbue(std::locale("en_US.utf8"));
 
-    /*
-     * const std::shared_ptr<UserLanguageModel> &user_language_model,
-                      const std::shared_ptr<SystemUnigramLM> &system_unigram_lm,
-                      const std::shared_ptr<SystemBigramLM> &system_bigram_lm,
-                      std::vector<std::shared_ptr<BinaryDict>> normal_dicts,
-                      std::vector<std::shared_ptr<BinaryDict>> single_term_dicts
-     */
     TmpFile unigramPath;
     TmpFile bigramPath;
 
@@ -135,7 +128,6 @@ int main() {
         }
         std::cout << std::endl;
     }
-    note("%s", g.c_str());
     ok(g == L"私の名前は中野です。");
     ok(!got.empty());
 
