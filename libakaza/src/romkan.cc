@@ -1,9 +1,8 @@
-#include "../include/akaza.h"
+#include "../include/romkan.h"
 #include <regex>
 #include <algorithm>
 #include <cctype>
 #include <string>
-#include <codecvt>
 #include "debug_log.h"
 
 #include "romkan_default.h"
@@ -113,8 +112,10 @@ std::wstring akaza::RomkanConverter::remove_last_char(const std::wstring &s) {
 
 //     s = re.sub("nn", "n'", s)
 static void replaceAll(std::wstring &str, const std::wstring &from, const std::wstring &to) {
-    if (from.empty())
+    if (from.empty()) {
         return;
+    }
+
     size_t start_pos = 0;
     while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
         str.replace(start_pos, from.length(), to);

@@ -1,18 +1,21 @@
-#include <locale>
-#include <codecvt>
-#include "../include/akaza.h"
 #include "../include/graph.h"
 #include "debug_log.h"
 
+#include <iostream>
+#include <codecvt>
+#include <algorithm>
+#include <cassert>
+#include <stdexcept>
+
 void akaza::Graph::dump() {
-    std::cout << "# GRAPH --" << std::endl;
+    std::wcout << "# GRAPH --" << std::endl;
     for (const auto &node: nodes_) {
         std::wcout << node->get_start_pos() << "\t" << node->get_key() << "\t\t"
                    << (node->get_prev() == nullptr ? L"NULL" : node->get_prev()->get_key())
                    << "\t" << node->get_cost()
                    << std::endl;
     }
-    std::cout << "# /GRAPH --" << std::endl;
+    std::wcout << "# /GRAPH --" << std::endl;
 }
 
 // nodmap は、start_pos にたいして処理されていく。
@@ -81,4 +84,22 @@ akaza::Graph::get_items_by_start_and_length(const std::shared_ptr<akaza::Node> &
         }
     }
     return nodes;
+}
+
+std::shared_ptr<akaza::Node> akaza::Graph::get_eos() {
+    for (const auto &node: nodes_) {
+        if (node->is_eos()) {
+            return node;
+        }
+    }
+    throw std::runtime_error("Missing EOS node in the graph");
+}
+
+std::shared_ptr<akaza::Node> akaza::Graph::get_bos() {
+    for (const auto &node: nodes_) {
+        if (node->is_bos()) {
+            return node;
+        }
+    }
+    throw std::runtime_error("Missing BOS node in the graph");
 }

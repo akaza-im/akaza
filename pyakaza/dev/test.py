@@ -9,10 +9,10 @@ import pytest
 from pyakaza.bind import Akaza, GraphResolver, BinaryDict, SystemUnigramLM, SystemBigramLM, Node, UserLanguageModel
 
 system_unigram_lm = SystemUnigramLM()
-system_unigram_lm.load("../akaza-data/akaza_data/data/lm_v2_1gram.trie")
+system_unigram_lm.load("../akaza-data/data/lm_v2_1gram.trie")
 
 system_bigram_lm = SystemBigramLM()
-system_bigram_lm.load("../akaza-data/akaza_data/data/lm_v2_2gram.trie")
+system_bigram_lm.load("../akaza-data/data/lm_v2_2gram.trie")
 
 tmpdir = TemporaryDirectory()
 user_language_model = UserLanguageModel(
@@ -21,10 +21,10 @@ user_language_model = UserLanguageModel(
 )
 
 system_dict = BinaryDict()
-system_dict.load("../akaza-data/akaza_data/data/system_dict.trie")
+system_dict.load("../akaza-data/data/system_dict.trie")
 
 single_term = BinaryDict()
-single_term.load("../akaza-data/akaza_data/data/single_term.trie")
+single_term.load("../akaza-data/data/single_term.trie")
 
 src = 'わたしのなまえはなかのです'
 expected = '私の名前は中野です'

@@ -6,7 +6,7 @@ import pytest
 sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../pyakaza/').absolute().resolve()))
 sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../').absolute().resolve()))
 
-os.environ['AKAZA_MODEL_DIR'] = '../akaza-data/akaza_data/data/'
+os.environ['AKAZA_MODEL_DIR'] = '../akaza-data/data/'
 
 from pyakaza.bind import Node
 from ibus_akaza.ui import AkazaIBusEngine

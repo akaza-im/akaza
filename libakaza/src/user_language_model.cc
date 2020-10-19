@@ -39,11 +39,11 @@ void akaza::UserLanguageModel::read(const std::string &path, bool is_unigram, in
         if (!splitted) {
             continue;
         }
-        auto key = std::get<0>(m);
+        std::wstring key = std::get<0>(m);
         int count = my_atoi(std::get<1>(m));
         map[key] = count;
         if (is_unigram) {
-            auto kana = std::get<1>(split2(line, L'/', splitted));
+            std::wstring kana = std::get<1>(split2(line, L'/', splitted));
             if (splitted) {
                 unigram_kanas_.insert(kana);
             }
@@ -82,24 +82,24 @@ def add_entry(self, nodes: List[Node]):
  */
 void akaza::UserLanguageModel::add_entry(std::vector<Node> nodes) {
     // unigram
-    for (auto &node: nodes) {
-        auto key = node.get_key();
+    for (const akaza::Node &node: nodes) {
+        std::wstring key = node.get_key();
         if (unigram_.count(key) == 0) {
             unigram_C_ += 1;
         }
         unigram_V_ += 1;
         bool splitted;
-        auto kana = std::get<1>(split2(key, L'/', splitted));
+        std::wstring kana = std::get<1>(split2(key, L'/', splitted));
         unigram_kanas_.insert(kana);
         unigram_[key] = unigram_.count(key) > 0 ? unigram_[key] + 1 : 1;
     }
 
     // bigram
     for (int i = 1; i < nodes.size(); i++) {
-        auto &node1 = nodes[i - 1];
-        auto &node2 = nodes[i];
+        const akaza::Node &node1 = nodes[i - 1];
+        const akaza::Node &node2 = nodes[i];
 
-        auto key = node1.get_key() + L"\t" + node2.get_key();
+        std::wstring key = node1.get_key() + L"\t" + node2.get_key();
         if (bigram_.count(key) == 0) {
             bigram_C_ += 1;
         }
@@ -112,8 +112,8 @@ void akaza::UserLanguageModel::add_entry(std::vector<Node> nodes) {
 
 std::optional<float> akaza::UserLanguageModel::get_unigram_cost(const std::wstring &key) const {
     if (unigram_.count(key) > 0) {
-        auto count = unigram_.at(key);
-        return std::log10((count + alpha_) / float(unigram_C_) + alpha_ * float(unigram_V_));
+        int count = unigram_.at(key);
+        return std::log10((float(count) + alpha_) / float(unigram_C_) + alpha_ * float(unigram_V_));
     }
     return {};
 }
@@ -122,8 +122,8 @@ std::optional<float>
 akaza::UserLanguageModel::get_bigram_cost(const std::wstring &key1, const std::wstring &key2) const {
     auto key = key1 + L"\t" + key2;
     if (bigram_.count(key) > 0) {
-        auto count = bigram_.at(key);
-        return std::log10((count + alpha_) / (float(bigram_C_) + alpha_ * float(bigram_V_)));
+        int count = bigram_.at(key);
+        return std::log10((float(count) + alpha_) / (float(bigram_C_) + alpha_ * float(bigram_V_)));
     } else {
         return {};
     }

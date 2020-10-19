@@ -16,12 +16,12 @@ static std::vector<std::string> split(const std::string &s) {
         return elems;
     }
     elems.push_back(s.substr(0, n));
-    elems.push_back(s.substr(n+1));
+    elems.push_back(s.substr(n + 1));
     return elems;
 }
 
-static void make_binary_dict(const std::string& ifname, const std::string& ofname) {
-    std::cout << "[100_effective_dict.cc] " << ifname << std::endl;
+static void make_binary_dict(const std::string &ifname, const std::string &ofname) {
+    std::cout << ifname << " " << __FILE__ << ":" << __LINE__ << std::endl;
 
     std::ifstream ifs(ifname, std::ifstream::in);
 
@@ -45,9 +45,9 @@ static void make_binary_dict(const std::string& ifname, const std::string& ofnam
     builder.save(ofname);
 }
 
-int main(int argc, char** argv) {
-    const char * txtfile = argv[1];
-    const char * triefile = argv[2];
+int main(int argc, char **argv) {
+    const char *txtfile = argv[1];
+    const char *triefile = argv[2];
     make_binary_dict(txtfile, triefile);
     return 0;
 }
