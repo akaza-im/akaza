@@ -4,9 +4,7 @@
 #include "tmpfile.h"
 
 static void test_remove_last_char() {
-    std::map<std::wstring, std::wstring> additional = {
-    };
-    auto romkan = akaza::RomkanConverter(additional);
+    auto romkan = akaza::build_romkan_converter({});
 
     std::vector<std::tuple<std::wstring, std::wstring>> cases = {
             {L"aka",    L"a"},
@@ -18,16 +16,14 @@ static void test_remove_last_char() {
     };
 
     for (const auto &[src, expected]: cases) {
-        auto got = romkan.remove_last_char(src);
+        auto got = romkan->remove_last_char(src);
         note("REMOVE_LAST_CHAR: %s -> %s", src.c_str(), got.c_str());
         ok(got == expected);
     }
 }
 
 static void test_to_hiragana() {
-    std::map<std::wstring, std::wstring> additional = {
-    };
-    auto romkan = akaza::RomkanConverter(additional);
+    auto romkan = akaza::build_romkan_converter({});
 
     std::vector<std::tuple<std::wstring, std::wstring>> cases = {
             {L"a",         L"あ"},
@@ -63,7 +59,7 @@ static void test_to_hiragana() {
     };
 
     for (const auto &[src, expected]: cases) {
-        auto got = romkan.to_hiragana(src);
+        auto got = romkan->to_hiragana(src);
         note("HIRAGANA: %s -> %s", src.c_str(), got.c_str());
         ok(got == expected);
     }
@@ -73,11 +69,9 @@ int main() {
     test_remove_last_char();
     test_to_hiragana();
 
-    std::map<std::wstring, std::wstring> additional = {
-    };
-    auto romkan = akaza::RomkanConverter(additional);
+    auto romkan = akaza::build_romkan_converter({});
 
-    auto got = romkan.to_hiragana(L"akasatana");
+    auto got = romkan->to_hiragana(L"akasatana");
     note("%s", got.c_str());
     ok(got == L"あかさたな");
 
