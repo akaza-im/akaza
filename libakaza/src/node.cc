@@ -90,20 +90,20 @@ static float calc_bigram_cost(const akaza::Node &prev_node,
                               const akaza::UserLanguageModel &ulm,
                               const akaza::SystemBigramLM &system_bigram_lm) {
     // self → node で処理する。
-    auto prev_key = prev_node.get_key();
-    auto next_key = next_node.get_key();
+    const auto &prev_key = prev_node.get_key();
+    const auto &next_key = next_node.get_key();
     auto u = ulm.get_bigram_cost(prev_key, next_key);
     if (u.has_value()) {
         return *u;
     }
 
-    auto id1 = prev_node.get_word_id();
-    auto id2 = next_node.get_word_id();
+    const auto &id1 = prev_node.get_word_id();
+    const auto &id2 = next_node.get_word_id();
     if (id1 == akaza::UNKNOWN_WORD_ID || id2 == akaza::UNKNOWN_WORD_ID) {
         return system_bigram_lm.get_default_score();
     }
 
-    auto score = system_bigram_lm.find_bigram(id1, id2);
+    const auto score = system_bigram_lm.find_bigram(id1, id2);
     if (score != 0.0) {
         return score;
     } else {
@@ -156,7 +156,7 @@ akaza::Node::Node(int start_pos, const std::wstring &yomi, const std::wstring &w
 }
 
 std::wstring akaza::Node::surface(const akaza::tinylisp::TinyLisp &tinyLisp) const {
-    if (word_.size() > 0 && word_[0] == '(') {
+    if (!word_.empty() && word_[0] == '(') {
         return tinyLisp.run(word_);
     } else {
         return word_;
