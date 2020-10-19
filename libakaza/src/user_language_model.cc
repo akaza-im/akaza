@@ -10,7 +10,7 @@ inline int my_atoi(const std::wstring &s) {
 }
 
 void akaza::UserLanguageModel::read(const std::string &path, bool is_unigram, int &c, int &v,
-                                    std::map<std::wstring, int> &map) {
+                                    std::unordered_map<std::wstring, int> &map) {
     c = 0;
     v = 0;
 
@@ -90,7 +90,7 @@ akaza::UserLanguageModel::get_bigram_cost(const std::wstring &key1, const std::w
     }
 }
 
-void akaza::UserLanguageModel::save_file(const std::string &path, const std::map<std::wstring, int> &map) {
+void akaza::UserLanguageModel::save_file(const std::string &path, const std::unordered_map<std::wstring, int> &map) {
     std::string tmppath(path + ".tmp");
     std::wofstream ofs(tmppath, std::ofstream::out);
     ofs.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
