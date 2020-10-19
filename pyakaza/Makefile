@@ -5,7 +5,7 @@ EXT_SUFFIX:=$(shell python3-config --extension-suffix)
 
 all: pyakaza/bind$(EXT_SUFFIX)
 
-pyakaza/bind$(EXT_SUFFIX): src/bind.cc
+pyakaza/bind$(EXT_SUFFIX): src/bind.cc ../libakaza/libakaza.so
 	$(CXX) -O3 $(CXXOPTS) -shared -lakaza -lmarisa -fPIC `python3 -m pybind11 \
 		--includes` src/bind.cc \
 		-o pyakaza/bind$(EXT_SUFFIX)

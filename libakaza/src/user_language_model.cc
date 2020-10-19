@@ -70,8 +70,9 @@ void akaza::UserLanguageModel::add_entry(std::vector<Node> nodes) {
 }
 
 std::optional<float> akaza::UserLanguageModel::get_unigram_cost(const std::wstring &key) const {
-    if (unigram_.count(key) > 0) {
-        int count = unigram_.at(key);
+    auto search = unigram_.find(key);
+    if (search != unigram_.cend()) {
+        int count = search->second;
         return std::log10((float(count) + alpha_) / float(unigram_C_) + alpha_ * float(unigram_V_));
     }
     return {};
@@ -80,8 +81,9 @@ std::optional<float> akaza::UserLanguageModel::get_unigram_cost(const std::wstri
 std::optional<float>
 akaza::UserLanguageModel::get_bigram_cost(const std::wstring &key1, const std::wstring &key2) const {
     auto key = key1 + L"\t" + key2;
-    if (bigram_.count(key) > 0) {
-        int count = bigram_.at(key);
+    auto search = bigram_.find(key);
+    if (search != bigram_.cend()) {
+        int count = search->second;
         return std::log10((float(count) + alpha_) / (float(bigram_C_) + alpha_ * float(bigram_V_)));
     } else {
         return {};
