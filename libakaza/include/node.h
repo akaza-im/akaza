@@ -37,7 +37,7 @@ namespace akaza {
         Node(int start_pos, const std::wstring &yomi, const std::wstring &word) :
                 Node(start_pos, yomi, word, false, false) {}
 
-        std::wstring get_key() const {
+        inline std::wstring get_key() const {
             return this->key_;
         }
 

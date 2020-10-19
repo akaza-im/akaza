@@ -4,7 +4,7 @@ project(libakaza)
 include(GNUInstallDirs)
 
 set(CMAKE_CXX_STANDARD 17)
-SET(CMAKE_C_FLAGS "-Wall -O2 -pg -g ${CC_WARNING_FLAGS} ${CMAKE_C_FLAGS}")
+SET(CMAKE_C_FLAGS "-Wall -O2 -g ${CC_WARNING_FLAGS} ${CMAKE_C_FLAGS}")
 
 # =============================================================================================
 #
@@ -43,6 +43,11 @@ add_executable(akaza-dump-systemlm-unigram bin/akaza-dump-systemlm-unigram.cc)
 target_link_libraries(akaza-dump-systemlm-unigram marisa akaza)
 install(TARGETS akaza-dump-systemlm-unigram DESTINATION bin/)
 set_target_properties(akaza-dump-systemlm-unigram PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/")
+
+add_executable(akaza-benchmark bin/akaza-benchmark.cc)
+target_link_libraries(akaza-benchmark marisa akaza)
+install(TARGETS akaza-benchmark DESTINATION bin/)
+set_target_properties(akaza-benchmark PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/")
 
 add_executable(binakaza bin/akaza.cc)
 target_link_libraries(binakaza marisa akaza)

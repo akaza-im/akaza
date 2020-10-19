@@ -143,7 +143,7 @@ void akaza::GraphResolver::fill_cost(akaza::Graph &graph) {
         D(std::wcout << "fill_cost: " << node->get_key() << std::endl);
         float node_cost = node->calc_node_cost(*user_language_model_, *system_unigram_lm_);
         float cost = INT32_MIN;
-        std::vector<std::shared_ptr<akaza::Node>> prev_nodes = graph.get_prev_items(node);
+        const std::vector<std::shared_ptr<akaza::Node>> & prev_nodes = graph.get_prev_items(node);
 
         if (!prev_nodes.empty()) {
             std::shared_ptr<Node> shortest_prev;

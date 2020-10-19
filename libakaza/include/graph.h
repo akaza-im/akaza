@@ -3,17 +3,19 @@
 
 #include <vector>
 #include <memory>
-#include "node.h"
+#include <unordered_map>
 
 
 namespace akaza {
+    class Node;
+
     class Graph {
     private:
         int size_;
         std::vector<std::shared_ptr<Node>> nodes_;
         // key: node->get_start_pos() + node->get_yomi().length()
         // value: node
-        std::map<int, std::vector<std::shared_ptr<Node>>> end_pos2nodes_;
+        std::unordered_map<int, std::vector<std::shared_ptr<Node>>> end_pos2nodes_;
     public:
         Graph() {
         }
@@ -30,7 +32,7 @@ namespace akaza {
 
         std::vector<std::shared_ptr<Node>> get_prev_items(const std::shared_ptr<Node> &node);
 
-        std::shared_ptr<akaza::Node> get_eos();
+        std::shared_ptr<Node> get_eos();
 
         std::shared_ptr<Node> get_bos();
 

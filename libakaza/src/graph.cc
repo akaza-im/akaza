@@ -1,11 +1,11 @@
 #include "../include/graph.h"
+#include "../include/node.h"
 #include "debug_log.h"
 
 #include <iostream>
-#include <codecvt>
 #include <algorithm>
-#include <cassert>
 #include <stdexcept>
+#include <cassert>
 
 void akaza::Graph::dump() {
     std::wcout << "# GRAPH --" << std::endl;
@@ -33,6 +33,7 @@ akaza::Graph::build(int size,
             end_pos2nodes_[node->get_start_pos() + node->get_yomi().length()].push_back(node);
         }
     }
+    end_pos2nodes_[0].push_back(this->get_bos());
 
     std::sort(this->nodes_.begin(), this->nodes_.end(),
               [](const std::shared_ptr<Node> &a, const std::shared_ptr<Node> &b) {
@@ -41,16 +42,7 @@ akaza::Graph::build(int size,
 }
 
 std::vector<std::shared_ptr<akaza::Node>> akaza::Graph::get_prev_items(const std::shared_ptr<Node> &target_node) {
-    if (target_node->get_start_pos() == 0) {
-        return {this->get_bos()};
-    }
-
-    auto search = end_pos2nodes_.find(target_node->get_start_pos());
-    if (search == end_pos2nodes_.cend()) {
-        return std::vector<std::shared_ptr<akaza::Node>>();
-    } else {
-        return search->second;
-    }
+    return end_pos2nodes_[target_node->get_start_pos()];
 }
 
 /**
