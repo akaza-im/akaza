@@ -71,8 +71,6 @@ void process_2gram(const akaza::SystemUnigramLM &unigram, const std::string &src
         ss >> word2;
         ss >> score;
 
-        std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv; // TODO remove
-
 //        std::cout << word1 << " --- " << word2 << " --- " << score << std::endl;
         int word_id1 = std::get<0>(unigram.find_unigram(word1));
         int word_id2 = std::get<0>(unigram.find_unigram(word2));
