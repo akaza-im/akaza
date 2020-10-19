@@ -7,6 +7,8 @@
 #include <fstream>
 #include <cmath>
 #include <vector>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace akaza {
     class Node;
@@ -19,22 +21,22 @@ namespace akaza {
 
         bool need_save_ = false;
 
-        std::set<std::wstring> unigram_kanas_;
+        std::unordered_set<std::wstring> unigram_kanas_;
 
         // 単語数
         int unigram_C_ = 0;
         // 総単語出現数
         int unigram_V_ = 0;
-        std::map<std::wstring, int> unigram_;
+        std::unordered_map<std::wstring, int> unigram_;
         int bigram_C_ = 0;
         int bigram_V_ = 0;
-        std::map<std::wstring, int> bigram_;
+        std::unordered_map<std::wstring, int> bigram_;
 
         float alpha_ = 0.00001;
 
-        void read(const std::string &path, bool is_unigram, int &c, int &v, std::map<std::wstring, int> &map);
+        void read(const std::string &path, bool is_unigram, int &c, int &v, std::unordered_map<std::wstring, int> &map);
 
-        static void save_file(const std::string &path, const std::map<std::wstring, int> &map);
+        static void save_file(const std::string &path, const std::unordered_map<std::wstring, int> &map);
 
     public:
         UserLanguageModel(const std::string &unigram_path, const std::string &bigram_path) {
