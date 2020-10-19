@@ -48,6 +48,10 @@ namespace akaza {
         inline float get_default_cost() const {
             return -20.0; // log10(1e-20)
         }
+
+        inline float get_default_cost_for_short() const {
+            return -19.0; // log10(1e-19)
+        }
     };
 
 

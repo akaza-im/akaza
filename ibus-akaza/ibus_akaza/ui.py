@@ -618,11 +618,11 @@ g
     def _update_candidates(self):
         if len(self.preedit_string) > 0:
             # 変換をかける
-            print(f"-------{self.preedit_string}-----{self.force_selected_clause}----PPP")
+            # print(f"-------{self.preedit_string}-----{self.force_selected_clause}----PPP")
             slices = None
             if self.force_selected_clause:
                 slices = [Slice(s.start, s.stop-s.start) for s in self.force_selected_clause]
-            print(f"-------{self.preedit_string}-----{self.force_selected_clause}---{slices}----PPP")
+            # print(f"-------{self.preedit_string}-----{self.force_selected_clause}---{slices}----PPP")
             self.clauses = self.akaza.convert(self.preedit_string, slices)
         else:
             self.clauses = []
