@@ -16,9 +16,11 @@ PYBIND11_MODULE(bind, m) {
             .def("get_version", &akaza::Akaza::get_version);
 
     py::class_<akaza::RomkanConverter, std::shared_ptr<akaza::RomkanConverter>>(m, "RomkanConverter")
-            .def(py::init<const std::map<std::wstring, std::wstring> &>())
+            .def(py::init<const std::unordered_map<std::wstring, std::wstring> &, const std::wregex &, const std::wregex&>())
             .def("to_hiragana", &akaza::RomkanConverter::to_hiragana)
             .def("remove_last_char", &akaza::RomkanConverter::remove_last_char);
+
+    m.def("build_romkan_converter", &akaza::build_romkan_converter, "Build romaji to kana converter");
 
     py::class_<akaza::SystemUnigramLM, std::shared_ptr<akaza::SystemUnigramLM>>(m, "SystemUnigramLM")
             .def(py::init())

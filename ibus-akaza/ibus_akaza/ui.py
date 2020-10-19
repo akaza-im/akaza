@@ -18,7 +18,7 @@ import gettext
 from jaconv import jaconv
 
 from pyakaza.bind import Akaza, GraphResolver, BinaryDict, SystemUnigramLM, SystemBigramLM, Node, UserLanguageModel, \
-    Slice, RomkanConverter, TinyLisp
+    Slice, RomkanConverter, TinyLisp, build_romkan_converter
 
 from ibus_akaza import config_loader
 from ibus_akaza.config import MODEL_DIR
@@ -67,7 +67,7 @@ def build_akaza():
     additional = user_settings.get('romaji')
     if additional is None:
         additional = {}
-    romkan = RomkanConverter(additional)
+    romkan = build_romkan_converter(additional)
 
     lisp_evaluator = TinyLisp()
 
