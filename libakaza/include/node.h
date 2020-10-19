@@ -8,7 +8,9 @@
 namespace akaza {
 
     class UserLanguageModel;
+
     class SystemUnigramLM;
+
     class SystemBigramLM;
 
     namespace tinylisp {
@@ -17,27 +19,33 @@ namespace akaza {
 
     class Node {
     private:
-        int start_pos_;
-        std::wstring yomi_;
-        std::wstring word_;
+        const int start_pos_;
+        const std::wstring yomi_;
+        const std::wstring word_;
         std::wstring key_;
+        const bool is_bos_;
+        const bool is_eos_;
+
         std::shared_ptr<Node> prev_;
         float cost_;
         int32_t word_id_;
         std::map<std::wstring, float> bigram_cache_;
     public:
-        Node(int start_pos, const std::wstring &yomi, const std::wstring &word);
+        Node(int start_pos, const std::wstring &yomi, const std::wstring &word, bool is_bos, bool is_eos);
+
+        Node(int start_pos, const std::wstring &yomi, const std::wstring &word) :
+                Node(start_pos, yomi, word, false, false) {}
 
         std::wstring get_key() const {
             return this->key_;
         }
 
         bool is_bos() const {
-            return word_ == L"__BOS__";
+            return is_bos_;
         }
 
         bool is_eos() const {
-            return word_ == L"__EOS__";
+            return is_eos_;
         }
 
         std::wstring surface(const akaza::tinylisp::TinyLisp &tinyLisp) const;
@@ -79,6 +87,7 @@ namespace akaza {
         void set_prev(std::shared_ptr<Node> &prev);
 
         bool operator==(const Node &node);
+
         bool operator!=(const Node &node);
     };
 
