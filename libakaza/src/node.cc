@@ -8,28 +8,27 @@
 
 #include "debug_log.h"
 
-akaza::Node::Node(int start_pos, const std::wstring &yomi, const std::wstring &word, bool is_bos, bool is_eos) :
-        start_pos_(start_pos),
-        yomi_(yomi),
-        word_(word),
-        is_bos_(is_bos), is_eos_(is_eos) {
-    if (word == L"__EOS__") {
-        // return '__EOS__'  // わざと使わない。__EOS__ 考慮すると変換精度が落ちるので。。今は使わない。
-        // うまく使えることが確認できれば、__EOS__/__EOS__ にする。
-        this->key_ = L"__EOS__";
-    } else {
-        this->key_ = word + L"/" + yomi;
-    }
-    this->cost_ = 0;
-    this->word_id_ = -1;
-}
 
 std::shared_ptr<akaza::Node> akaza::create_bos_node() {
-    return std::make_shared<akaza::Node>(akaza::Node(-1, L"__BOS__", L"__BOS__", true, false));
+    return std::make_shared<akaza::Node>(
+            akaza::Node(-1, L"__BOS__", L"__BOS__", L"__BOS__/__BOS__", true, false, akaza::UNKNOWN_WORD_ID, 0));
 }
 
 std::shared_ptr<akaza::Node> akaza::create_eos_node(int start_pos) {
-    return std::make_shared<akaza::Node>(akaza::Node(start_pos, L"__EOS__", L"__EOS__", false, true));
+    // key をわざと使わない。__EOS__ 考慮すると変換精度が落ちるので。。今は使わない。
+    // うまく使えることが確認できれば、__EOS__/__EOS__ にする。
+    return std::make_shared<akaza::Node>(akaza::Node(start_pos, L"__EOS__", L"__EOS__", L"__EOS__", false, true,
+                                                     akaza::UNKNOWN_WORD_ID, 0));
+}
+
+std::shared_ptr<akaza::Node>
+akaza::create_node(std::shared_ptr<akaza::SystemUnigramLM> &system_unigram_lm, int start_pos, const std::wstring &yomi,
+            const std::wstring &kanji) {
+    std::wstring key = kanji + L"/" + yomi;
+    auto[word_id, cost] = system_unigram_lm->find_unigram(key);
+    return std::make_shared<akaza::Node>(akaza::Node(start_pos, yomi, kanji, key,
+                                                     false, false, word_id, cost
+    ));
 }
 
 float akaza::Node::calc_node_cost(
@@ -42,20 +41,17 @@ float akaza::Node::calc_node_cost(
         return *u;
     }
 
-    auto[word_id, score] = ulm.find_unigram(key);
-    this->word_id_ = word_id;
-    if (word_id != akaza::UNKNOWN_WORD_ID) {
-        this->cost_ = score;
-        return score;
+    if (system_word_id_ != akaza::UNKNOWN_WORD_ID) {
+        this->total_cost_ = system_unigram_cost_;
+        return system_unigram_cost_;
     } else {
         // 労働者災害補償保険法 のように、システム辞書には wikipedia から採録されているが,
         // 言語モデルには採録されていない場合,漢字候補を先頭に持ってくる。
         if (this->word_.size() < this->yomi_.size()) {
-            this->cost_ = ulm.get_default_cost_for_short();
+            return ulm.get_default_cost_for_short();
         } else {
-            this->cost_ = ulm.get_default_cost();
+            return ulm.get_default_cost();
         }
-        return this->cost_;
     }
 }
 

@@ -25,7 +25,7 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
     if (!src.empty() && my_isupper(src[0]) && !forceSelectedClauses.has_value()) {
         D(std::wcout << "Upper case" << src[0]
                      << " " << __FILE__ << ":" << __LINE__ << std::endl);
-        return {{std::make_shared<akaza::Node>(0, src, src)}};
+        return {{akaza::create_node(graphResolver_->system_unigram_lm_, 0, src, src)}};
     }
 
     std::wstring whiragana = romkanConverter_->to_hiragana(src);
@@ -53,7 +53,8 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
     } else {
         D(std::cout << " Adding Consonant=" << consonant << std::endl);
         nodes.push_back({{
-                                 std::make_shared<akaza::Node>(
+                                 akaza::create_node(
+                                         graphResolver_->system_unigram_lm_,
                                          src.size(),
                                          cnv.from_bytes(consonant),
                                          cnv.from_bytes(consonant)

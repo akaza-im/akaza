@@ -69,6 +69,8 @@ namespace akaza {
         void fill_cost(Graph &graph);
 
         std::vector<std::vector<std::shared_ptr<akaza::Node>>> find_nbest(akaza::Graph &graph);
+
+        friend class Akaza;
     };
 }
 

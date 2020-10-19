@@ -4,6 +4,9 @@
 #include "tmpfile.h"
 
 int main() {
+    std::wostream::sync_with_stdio(false);
+    std::wcout.imbue(std::locale("en_US.utf8"));
+
     TmpFile unigramPath;
     TmpFile bigramPath;
 
