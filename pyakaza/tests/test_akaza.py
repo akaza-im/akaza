@@ -6,7 +6,7 @@ import pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
 from pyakaza.bind import Akaza, GraphResolver, BinaryDict, SystemUnigramLM, SystemBigramLM, Node, UserLanguageModel, \
-    Slice, RomkanConverter
+    Slice, build_romkan_converter
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -39,7 +39,7 @@ def test_wnn():
         [system_dict],
         [single_term],
     )
-    romkanConverter = RomkanConverter({})
+    romkanConverter = build_romkan_converter({})
     akaza = Akaza(resolver, romkanConverter)
 
     src = u'わたしのなまえはなかのです。'

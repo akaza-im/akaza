@@ -10,8 +10,8 @@ print(path)
 sys.path.insert(0, path)
 sys.path.insert(0, pathlib.Path(__file__).parent.parent.parent.joinpath('akaza-data').absolute())
 
-from pyakaza.bind import Akaza, GraphResolver, BinaryDict, SystemUnigramLM, SystemBigramLM, Node, UserLanguageModel, \
-    RomkanConverter
+from pyakaza.bind import Akaza, GraphResolver, BinaryDict, SystemUnigramLM, SystemBigramLM, UserLanguageModel, \
+    build_romkan_converter
 
 tmpdir = TemporaryDirectory()
 
@@ -39,7 +39,7 @@ resolver = GraphResolver(
     [system_dict],
     [single_term],
 )
-romkanConverter = RomkanConverter({})
+romkanConverter = build_romkan_converter({})
 akaza = Akaza(resolver, romkanConverter)
 
 # for i in range(10):

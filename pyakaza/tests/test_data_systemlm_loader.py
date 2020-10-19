@@ -1,6 +1,7 @@
 import sys
 import pathlib
 import pytest
+import os
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
