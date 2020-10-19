@@ -1,16 +1,16 @@
-import os
 import sys
+import pathlib
 import pytest
 
-sys.path.insert(0, '.')
+sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../../akaza-data/').absolute().resolve()))
 
-from akaza_data.systemlm_loader import SystemUnigramLM, SystemBigramLM
+from pyakaza.bind import BinaryDict, SystemUnigramLM, SystemBigramLM
 
 ulm = SystemUnigramLM()
-ulm.load('akaza_data/data/lm_v2_1gram.trie')
+ulm.load('../akaza-data/data/lm_v2_1gram.trie')
 
 blm = SystemBigramLM()
-blm.load('akaza_data/data/lm_v2_2gram.trie')
+blm.load('../akaza-data/data/lm_v2_2gram.trie')
 
 
 def test_foobar():
