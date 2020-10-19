@@ -32,6 +32,7 @@ void akaza::UserLanguageModel::read(const std::string &path, bool is_unigram, in
 
     std::wifstream ifs(path, std::ifstream::in);
     ifs.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+
     std::wstring line;
     while (std::getline(ifs, line)) {
         bool splitted;
@@ -132,6 +133,8 @@ akaza::UserLanguageModel::get_bigram_cost(const std::wstring &key1, const std::w
 
 void akaza::UserLanguageModel::save_file(const std::string &path, const std::map<std::wstring, int> &map) {
     std::wofstream ofs(path + ".tmp", std::ofstream::out);
+    ofs.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+
     for (const auto&[words, count] : map) {
         ofs << words << " " << count << std::endl;
     }
