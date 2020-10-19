@@ -1,6 +1,9 @@
-#include "../include/akaza.h"
-#include "nanoutf8.h"
+#include "../include/binary_dict.h"
 #include "debug_log.h"
+#include <codecvt>
+#include <locale>
+#include <iostream>
+#include <sstream>
 
 static std::vector<std::wstring> split(const std::wstring &s) {
     std::vector<std::wstring> elems;
@@ -35,4 +38,9 @@ std::vector<std::wstring> akaza::BinaryDict::find_kanjis(const std::wstring &wor
         return split(cnv.from_bytes(kanjis));
     }
     return std::vector<std::wstring>();
+}
+
+void akaza::BinaryDict::save(std::string dict_path) {
+    dict_trie_.save(dict_path.c_str());
+    std::cout << "[Save] " << dict_path << ": " << dict_trie_.num_keys() << std::endl;
 }

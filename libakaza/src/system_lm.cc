@@ -1,8 +1,7 @@
-#include "../include/akaza.h"
-
 #include "debug_log.h"
 #include "../include/system_lm.h"
-
+#include <locale>
+#include <codecvt>
 
 void akaza::SystemUnigramLM::load(const char *path) {
     trie_.load(path);

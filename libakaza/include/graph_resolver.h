@@ -1,18 +1,19 @@
 #ifndef LIBAKAZA_GRAPH_RESOLVER_H
 #define LIBAKAZA_GRAPH_RESOLVER_H
 
-#include <utility>
 #include <vector>
 #include <memory>
-#include <valarray>
 #include <tuple>
-
-#include "user_language_model.h"
-#include "system_lm.h"
-#include "binary_dict.h"
-#include "graph.h"
+#include <optional>
 
 namespace akaza {
+    class UserLanguageModel;
+    class SystemUnigramLM;
+    class SystemBigramLM;
+    class BinaryDict;
+    class Node;
+    class Graph;
+
     class Slice {
     private:
         size_t start_;
