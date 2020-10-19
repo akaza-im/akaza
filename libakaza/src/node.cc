@@ -48,8 +48,14 @@ float akaza::Node::calc_node_cost(
         this->cost_ = score;
         return score;
     } else {
-        this->cost_ = ulm.get_default_cost();
-        return ulm.get_default_cost();
+        // 労働者災害補償保険法 のように、システム辞書には wikipedia から採録されているが,
+        // 言語モデルには採録されていない場合,漢字候補を先頭に持ってくる。
+        if (this->word_.size() < this->yomi_.size()) {
+            this->cost_ = ulm.get_default_cost_for_short();
+        } else {
+            this->cost_ = ulm.get_default_cost();
+        }
+        return this->cost_;
     }
 }
 
