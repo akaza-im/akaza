@@ -71,6 +71,7 @@ PYBIND11_MODULE(bind, m) {
                             cnv.to_bytes(node.get_word()) + "'>";
                  }
             );
+    m.def("create_node", &akaza::create_node, "Create node object");
 
     py::class_<akaza::GraphResolver, std::shared_ptr<akaza::GraphResolver>>(m, "GraphResolver")
             .def(py::init<const std::shared_ptr<akaza::UserLanguageModel> &,
