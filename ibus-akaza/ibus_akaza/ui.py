@@ -18,7 +18,7 @@ import gettext
 from jaconv import jaconv
 
 from pyakaza.bind import Akaza, GraphResolver, BinaryDict, SystemUnigramLM, SystemBigramLM, Node, UserLanguageModel, \
-    Slice, RomkanConverter, TinyLisp, build_romkan_converter
+    Slice, create_node, TinyLisp, build_romkan_converter
 
 from ibus_akaza import config_loader
 from ibus_akaza.config import MODEL_DIR
@@ -71,13 +71,13 @@ def build_akaza():
 
     lisp_evaluator = TinyLisp()
 
-    return user_language_model, Akaza(resolver, romkan), romkan, lisp_evaluator, user_settings
+    return user_language_model, Akaza(resolver, romkan), romkan, lisp_evaluator, user_settings, system_unigram_lm
 
 
 try:
     t0 = time.time()
 
-    user_language_model, akaza, romkan, lisp_evaluator, user_settings = build_akaza()
+    user_language_model, akaza, romkan, lisp_evaluator, user_settings, system_unigram_lm = build_akaza()
 
     def save_periodically():
         while True:
@@ -409,7 +409,7 @@ g
         F6 などを押した時用。
         """
         # 候補を設定
-        self.clauses = [[Node(0, yomi, word)]]
+        self.clauses = [[create_node(system_unigram_lm, 0, yomi, word)]]
         self.current_clause = 0
         self.node_selected = {}
         self.force_selected_clause = None
@@ -700,7 +700,7 @@ g
         # 平仮名にする。
         yomi, word = self._make_preedit_word()
         self.clauses = [
-            [Node(0, yomi, word)]
+            [create_node(system_unigram_lm, 0, yomi, word)]
         ]
         self.current_clause = 0
 
