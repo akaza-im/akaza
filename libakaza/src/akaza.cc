@@ -22,7 +22,8 @@ std::vector<std::vector<std::shared_ptr<akaza::Node>>> akaza::Akaza::convert(
                  << " " << __FILE__ << ":" << __LINE__ << std::endl);
     assert(!forceSelectedClauses.has_value() || !forceSelectedClauses.value().empty());
 
-    if (!src.empty() && my_isupper(src[0]) && !forceSelectedClauses.has_value()) {
+    if (!src.empty() && my_isupper(src[0]) && !forceSelectedClauses.has_value()
+        || src.rfind(L"https://", 0) == 0 || src.rfind(L"http://", 0) == 0) {
         D(std::wcout << "Upper case" << src[0]
                      << " " << __FILE__ << ":" << __LINE__ << std::endl);
         return {{akaza::create_node(graphResolver_->system_unigram_lm_, 0, src, src)}};
