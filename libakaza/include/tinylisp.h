@@ -27,7 +27,7 @@ namespace akaza {
             const NodeType type_;
 
         protected:
-            Node(NodeType node_type): type_(node_type) { }
+            Node(NodeType node_type) : type_(node_type) {}
 
         public:
             virtual ~Node() = default;
@@ -52,7 +52,7 @@ namespace akaza {
             const std::wstring str_;
 
         public:
-            StringNode(const std::wstring &str) : Node(NODE_STRING), str_(str) { }
+            StringNode(const std::wstring &str) : Node(NODE_STRING), str_(str) {}
 
             std::wstring str() { return str_; }
         };
@@ -62,7 +62,7 @@ namespace akaza {
             const std::wstring symbol_;
 
         public:
-            SymbolNode(const std::wstring &symbol) : Node(NODE_SYMBOL), symbol_(symbol) { }
+            SymbolNode(const std::wstring &symbol) : Node(NODE_SYMBOL), symbol_(symbol) {}
 
             std::wstring symbol() { return symbol_; }
         };
@@ -127,14 +127,14 @@ namespace akaza {
             }
 
             std::shared_ptr<Node> _read_from(std::vector<std::wstring> &tokens,
-                                             int depth) const;
+                                             int depth, const std::wstring &src) const;
 
             static std::shared_ptr<Node> _atom(const std::wstring &token);
 
         public:
             std::shared_ptr<Node> parse(const std::wstring &src) const {
                 auto tokens = tokenize(src);
-                return _read_from(tokens, 0);
+                return _read_from(tokens, 0, src);
             }
 
             std::shared_ptr<Node> eval(std::shared_ptr<Node> x) const;
