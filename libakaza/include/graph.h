@@ -3,14 +3,19 @@
 
 #include <vector>
 #include <memory>
-#include "node.h"
+#include <unordered_map>
 
 
 namespace akaza {
+    class Node;
+
     class Graph {
     private:
         int size_;
         std::vector<std::shared_ptr<Node>> nodes_;
+        // key: node->get_start_pos() + node->get_yomi().length()
+        // value: node
+        std::unordered_map<int, std::vector<std::shared_ptr<Node>>> end_pos2nodes_;
     public:
         Graph() {
         }
@@ -19,35 +24,16 @@ namespace akaza {
             return size_;
         }
 
-        /*
-     def get_items(self):
-        for i in sorted(self.d.keys()):
-            if i == 0:  # skip bos
-                continue
-            yield self.d[i]
-         */
         std::vector<std::shared_ptr<Node>> get_items() {
             return nodes_;
         }
 
         std::vector<std::shared_ptr<Node>> get_items_by_start_and_length(const std::shared_ptr<Node> &node);
 
-        /*
-     def get_item(self, i: int) -> List[Node]:
-        return self.d[i]
-         */
         std::vector<std::shared_ptr<Node>> get_prev_items(const std::shared_ptr<Node> &node);
 
-        /*
-    def get_eos(self):
-        return self.d[max(self.d.keys())][0]
-         */
-        std::shared_ptr<akaza::Node> get_eos();
+        std::shared_ptr<Node> get_eos();
 
-        /*
-    def get_bos(self):
-        return self.d[0][0]
-         */
         std::shared_ptr<Node> get_bos();
 
         void dump();

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LIBAKAZA_TINYLISP_H_
+#define LIBAKAZA_TINYLISP_H_
 
 #include <functional>
 #include <iostream>
@@ -23,10 +24,10 @@ namespace akaza {
 
         class Node {
         private:
-            NodeType type_;
+            const NodeType type_;
 
         protected:
-            Node(NodeType type) { this->type_ = type; }
+            Node(NodeType node_type) : type_(node_type) {}
 
         public:
             virtual ~Node() = default;
@@ -37,32 +38,31 @@ namespace akaza {
 
         class ListNode : public Node {
         private:
-            std::vector<std::shared_ptr<Node>> children_;
+            const std::vector<std::shared_ptr<Node>> children_;
 
         public:
-            ListNode(std::vector<std::shared_ptr<Node>> children) : Node(NODE_LIST) {
-                this->children_ = children;
+            ListNode(std::vector<std::shared_ptr<Node>> children) : Node(NODE_LIST), children_(children) {
             }
 
-            std::vector<std::shared_ptr<Node>> *children() { return &children_; }
+            const std::vector<std::shared_ptr<Node>> *children() { return &children_; }
         };
 
         class StringNode : public Node {
         private:
-            std::wstring str_;
+            const std::wstring str_;
 
         public:
-            StringNode(const std::wstring &str) : Node(NODE_STRING) { this->str_ = str; }
+            StringNode(const std::wstring &str) : Node(NODE_STRING), str_(str) {}
 
             std::wstring str() { return str_; }
         };
 
         class SymbolNode : public Node {
         private:
-            std::wstring symbol_;
+            const std::wstring symbol_;
 
         public:
-            SymbolNode(const std::wstring &symbol) : Node(NODE_SYMBOL) { this->symbol_ = symbol; }
+            SymbolNode(const std::wstring &symbol) : Node(NODE_SYMBOL), symbol_(symbol) {}
 
             std::wstring symbol() { return symbol_; }
         };
@@ -75,7 +75,7 @@ namespace akaza {
             function_node_func *cb_;
 
         public:
-            FunctionNode(function_node_func *cb) : Node(NODE_FUNCTION) { this->cb_ = cb; }
+            FunctionNode(function_node_func *cb) : Node(NODE_FUNCTION), cb_(cb) {}
 
             std::shared_ptr<Node> call(std::vector<std::shared_ptr<Node>> &exps) {
                 return cb_(exps);
@@ -84,12 +84,12 @@ namespace akaza {
 
         class PointerNode : public Node {
         private:
-            void *ptr_;
+            const void *ptr_;
 
         public:
-            PointerNode(void *ptr) : Node(NODE_POINTER) { this->ptr_ = ptr; }
+            PointerNode(void *ptr) : Node(NODE_POINTER), ptr_(ptr) {}
 
-            void *ptr() { return ptr_; }
+            const void *ptr() { return ptr_; }
         };
 
 
@@ -127,14 +127,14 @@ namespace akaza {
             }
 
             std::shared_ptr<Node> _read_from(std::vector<std::wstring> &tokens,
-                                             int depth) const;
+                                             int depth, const std::wstring &src) const;
 
-            std::shared_ptr<Node> _atom(const std::wstring &token) const;
+            static std::shared_ptr<Node> _atom(const std::wstring &token);
 
         public:
             std::shared_ptr<Node> parse(const std::wstring &src) const {
                 auto tokens = tokenize(src);
-                return _read_from(tokens, 0);
+                return _read_from(tokens, 0, src);
             }
 
             std::shared_ptr<Node> eval(std::shared_ptr<Node> x) const;
@@ -151,3 +151,5 @@ namespace akaza {
 
     } // namespace tinylisp
 } // namespace akaza
+
+#endif // LIBAKAZA_TINYLISP_H_

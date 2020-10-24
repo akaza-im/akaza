@@ -41,8 +41,7 @@ static std::shared_ptr<akaza::GraphResolver> build_graph_resolver() {
 
 static std::unique_ptr<akaza::Akaza> build_akaza() {
     auto graph_resolver = build_graph_resolver();
-    std::map<std::wstring, std::wstring> additional;
-    auto romkanConverter = std::make_shared<akaza::RomkanConverter>(additional);
+    auto romkanConverter = akaza::build_romkan_converter({});
 
     return std::make_unique<akaza::Akaza>(graph_resolver, romkanConverter);
 }

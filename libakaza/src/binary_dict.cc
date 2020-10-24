@@ -40,7 +40,7 @@ std::vector<std::wstring> akaza::BinaryDict::find_kanjis(const std::wstring &wor
     return std::vector<std::wstring>();
 }
 
-void akaza::BinaryDict::save(std::string dict_path) {
+void akaza::BinaryDict::save(const std::string& dict_path) {
     dict_trie_.save(dict_path.c_str());
     std::cout << "[Save] " << dict_path << ": " << dict_trie_.num_keys() << std::endl;
 }

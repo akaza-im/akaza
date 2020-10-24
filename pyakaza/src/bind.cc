@@ -16,9 +16,11 @@ PYBIND11_MODULE(bind, m) {
             .def("get_version", &akaza::Akaza::get_version);
 
     py::class_<akaza::RomkanConverter, std::shared_ptr<akaza::RomkanConverter>>(m, "RomkanConverter")
-            .def(py::init<const std::map<std::wstring, std::wstring> &>())
+            .def(py::init<const std::unordered_map<std::wstring, std::wstring> &, const std::wregex &, const std::wregex &>())
             .def("to_hiragana", &akaza::RomkanConverter::to_hiragana)
             .def("remove_last_char", &akaza::RomkanConverter::remove_last_char);
+
+    m.def("build_romkan_converter", &akaza::build_romkan_converter, "Build romaji to kana converter");
 
     py::class_<akaza::SystemUnigramLM, std::shared_ptr<akaza::SystemUnigramLM>>(m, "SystemUnigramLM")
             .def(py::init())
@@ -48,7 +50,8 @@ PYBIND11_MODULE(bind, m) {
             .def("get_items", &akaza::Graph::get_items);;
 
     py::class_<akaza::Node, std::shared_ptr<akaza::Node>>(m, "Node")
-            .def(py::init<size_t, const std::wstring &, const std::wstring &>())
+            .def(py::init<int, const std::wstring &, const std::wstring &, const std::wstring &,
+                    bool, bool, int32_t, float>())
             .def("__eq__", &akaza::Node::operator==, py::is_operator())
             .def("get_key", &akaza::Node::get_key)
             .def("is_bos", &akaza::Node::is_bos)
@@ -56,7 +59,6 @@ PYBIND11_MODULE(bind, m) {
             .def("surface", &akaza::Node::surface)
             .def("get_yomi", &akaza::Node::get_yomi)
             .def("get_word", &akaza::Node::get_word)
-            .def("get_cost", &akaza::Node::get_cost)
             .def("get_start_pos", &akaza::Node::get_start_pos)
             .def("get_prev", &akaza::Node::get_prev)
             .def("calc_node_cost", &akaza::Node::calc_node_cost)
@@ -69,6 +71,7 @@ PYBIND11_MODULE(bind, m) {
                             cnv.to_bytes(node.get_word()) + "'>";
                  }
             );
+    m.def("create_node", &akaza::create_node, "Create node object");
 
     py::class_<akaza::GraphResolver, std::shared_ptr<akaza::GraphResolver>>(m, "GraphResolver")
             .def(py::init<const std::shared_ptr<akaza::UserLanguageModel> &,

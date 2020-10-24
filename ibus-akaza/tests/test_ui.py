@@ -8,10 +8,13 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent.joinpath('../').absolute().
 
 os.environ['AKAZA_MODEL_DIR'] = '../akaza-data/data/'
 
-from pyakaza.bind import Node
+from pyakaza.bind import Node, create_node, SystemUnigramLM
 from ibus_akaza.ui import AkazaIBusEngine
 from ibus_akaza.input_mode import INPUT_MODE_KATAKANA, INPUT_MODE_HIRAGANA
+from ibus_akaza.config import MODEL_DIR
 
+system_unigram_lm = SystemUnigramLM()
+system_unigram_lm.load(MODEL_DIR + "/lm_v2_1gram.trie")
 
 def test_extend_clause_right():
     ui = AkazaIBusEngine()
@@ -162,12 +165,12 @@ def test_update_preedit_text_before_henkan1():
     ui.update_preedit_text_before_henkan()
     print(ui.clauses)
     assert [
-               [Node(0, 'ひょい', 'ひょい')]
+               [create_node(system_unigram_lm, 0, 'ひょい', 'ひょい')]
            ] == [
-               [Node(0, 'ひょい', 'ひょい')]
+               [create_node(system_unigram_lm, 0, 'ひょい', 'ひょい')]
            ]
     assert ui.clauses == [
-        [Node(0, 'ひょい', 'ひょい')]
+        [create_node(system_unigram_lm, 0, 'ひょい', 'ひょい')]
     ]
 
 
@@ -177,7 +180,7 @@ def test_update_preedit_text_before_henkan2():
     ui.preedit_string = "hyoi-"
     ui.update_preedit_text_before_henkan()
     assert ui.clauses == [
-        [Node(0, 'ひょいー', 'ヒョイー')]
+        [create_node(system_unigram_lm, 0, 'ひょいー', 'ヒョイー')]
     ]
 
 if __name__ == '__main__':
