@@ -18,7 +18,7 @@ import gettext
 from jaconv import jaconv
 
 from pyakaza.bind import Akaza, GraphResolver, BinaryDict, SystemUnigramLM, SystemBigramLM, Node, UserLanguageModel, \
-    Slice, RomkanConverter, TinyLisp
+    Slice, create_node, TinyLisp, build_romkan_converter
 
 from ibus_akaza import config_loader
 from ibus_akaza.config import MODEL_DIR
@@ -67,17 +67,17 @@ def build_akaza():
     additional = user_settings.get('romaji')
     if additional is None:
         additional = {}
-    romkan = RomkanConverter(additional)
+    romkan = build_romkan_converter(additional)
 
     lisp_evaluator = TinyLisp()
 
-    return user_language_model, Akaza(resolver, romkan), romkan, lisp_evaluator, user_settings
+    return user_language_model, Akaza(resolver, romkan), romkan, lisp_evaluator, user_settings, system_unigram_lm
 
 
 try:
     t0 = time.time()
 
-    user_language_model, akaza, romkan, lisp_evaluator, user_settings = build_akaza()
+    user_language_model, akaza, romkan, lisp_evaluator, user_settings, system_unigram_lm = build_akaza()
 
     def save_periodically():
         while True:
@@ -409,7 +409,7 @@ g
         F6 などを押した時用。
         """
         # 候補を設定
-        self.clauses = [[Node(0, yomi, word)]]
+        self.clauses = [[create_node(system_unigram_lm, 0, yomi, word)]]
         self.current_clause = 0
         self.node_selected = {}
         self.force_selected_clause = None
@@ -618,11 +618,11 @@ g
     def _update_candidates(self):
         if len(self.preedit_string) > 0:
             # 変換をかける
-            print(f"-------{self.preedit_string}-----{self.force_selected_clause}----PPP")
+            # print(f"-------{self.preedit_string}-----{self.force_selected_clause}----PPP")
             slices = None
             if self.force_selected_clause:
                 slices = [Slice(s.start, s.stop-s.start) for s in self.force_selected_clause]
-            print(f"-------{self.preedit_string}-----{self.force_selected_clause}---{slices}----PPP")
+            # print(f"-------{self.preedit_string}-----{self.force_selected_clause}---{slices}----PPP")
             self.clauses = self.akaza.convert(self.preedit_string, slices)
         else:
             self.clauses = []
@@ -700,7 +700,7 @@ g
         # 平仮名にする。
         yomi, word = self._make_preedit_word()
         self.clauses = [
-            [Node(0, yomi, word)]
+            [create_node(system_unigram_lm, 0, yomi, word)]
         ]
         self.current_clause = 0
 

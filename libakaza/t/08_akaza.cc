@@ -4,6 +4,9 @@
 #include "tmpfile.h"
 
 int main() {
+    std::wostream::sync_with_stdio(false);
+    std::wcout.imbue(std::locale("en_US.utf8"));
+
     TmpFile unigramPath;
     TmpFile bigramPath;
 
@@ -53,8 +56,7 @@ int main() {
             single_term_dicts
     );
 
-    std::map<std::wstring, std::wstring> additional = {};
-    auto romkan = std::make_shared<akaza::RomkanConverter>(additional);
+    auto romkan = akaza::build_romkan_converter({});
 
     akaza::Akaza akaza = akaza::Akaza(graphResolver, romkan);
     std::vector<akaza::Slice> slices;

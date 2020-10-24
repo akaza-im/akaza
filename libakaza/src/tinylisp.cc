@@ -63,16 +63,18 @@ std::shared_ptr<Node> TinyLisp::eval(std::shared_ptr<Node> x) const {
     }
 }
 
-std::shared_ptr<Node> TinyLisp::_read_from(std::vector<std::wstring> &tokens, int depth) const {
+std::shared_ptr<Node>
+TinyLisp::_read_from(std::vector<std::wstring> &tokens, int depth, const std::wstring &src) const {
     if (tokens.empty()) {
-        throw std::runtime_error("Unexpected EOF while reading(LISP)");
+        std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cnv;
+        throw std::runtime_error(std::string("Unexpected EOF while reading(LISP): ") + cnv.to_bytes(src));
     }
     std::wstring token = tokens[0];
     tokens.erase(tokens.begin());
     if (token == L"(") {
         std::vector<std::shared_ptr<Node>> values;
         while (tokens[0] != L")") {
-            values.push_back(_read_from(tokens, depth + 1));
+            values.push_back(_read_from(tokens, depth + 1, src));
         }
         tokens.erase(tokens.begin()); // pop off ")"
         return std::shared_ptr<Node>(new ListNode(values));
@@ -83,7 +85,7 @@ std::shared_ptr<Node> TinyLisp::_read_from(std::vector<std::wstring> &tokens, in
     }
 }
 
-std::shared_ptr<Node> TinyLisp::_atom(const std::wstring &token) const {
+std::shared_ptr<Node> TinyLisp::_atom(const std::wstring &token) {
     if (!token.empty() && token[0] == '"') {
         return std::shared_ptr<Node>(
                 new StringNode(token.substr(1, token.size() - 2)));

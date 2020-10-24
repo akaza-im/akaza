@@ -1,12 +1,64 @@
 #include "../include/akaza.h"
 #include <memory>
 #include <unistd.h>
+#include <string>
 
 static void print_help(const char *name) {
     std::cout << "Usage: " << name << " words" << std::endl;
 }
 
+static std::string xdg_get_config_dir() {
+    char *x = getenv("XDG_CONFIG_HOME");
+    if (x) {
+        return x;
+    }
+    char *home = getenv("HOME");
+    if (home == nullptr) {
+        throw std::runtime_error("Cannot get home directory");
+    }
+    return std::string(home) + "/.config";
+}
+
+static void show_unigram_cost(const std::shared_ptr<akaza::SystemUnigramLM> &systemUnigramLm,
+                              const std::shared_ptr<akaza::UserLanguageModel> &userLanguageModel,
+                              const std::wstring &key) {
+    auto[word_id, cost] = systemUnigramLm->find_unigram(key);
+    std::wcout << key << "\tsystem_word_id=" << word_id << " system_cost=" << cost;
+    auto unicost = userLanguageModel->get_unigram_cost(key);
+    if (unicost.has_value()) {
+        std::wcout << " user_model=" << unicost.value();
+    } else {
+        std::wcout << " user_model=-";
+    }
+    std::wcout << std::endl;
+}
+
+static void show_bigram_cost(
+        const std::shared_ptr<akaza::SystemUnigramLM> &systemUnigramLm,
+        const std::shared_ptr<akaza::SystemBigramLM> &systemBigramLm,
+        const std::shared_ptr<akaza::UserLanguageModel> &userLanguageModel,
+        const std::wstring &key1,
+        const std::wstring &key2) {
+    auto[word_id1, cost1] = systemUnigramLm->find_unigram(key1);
+    auto[word_id2, cost2] = systemUnigramLm->find_unigram(key2);
+    std::wcout << key1 << "->" << key2 << "\t";
+    if (word_id1 != akaza::UNKNOWN_WORD_ID && word_id2 != akaza::UNKNOWN_WORD_ID) {
+        float cost = systemBigramLm->find_bigram(word_id1, word_id2);
+        std::wcout << " system_bigram=" << cost;
+    }
+    auto bicost = userLanguageModel->get_bigram_cost(key1, key2);
+    if (bicost.has_value()) {
+        std::wcout << " user_model=" << bicost.value();
+    } else {
+        std::wcout << " user_model=-";
+    }
+    std::wcout << std::endl;
+}
+
 int main(int argc, char **argv) {
+    std::wostream::sync_with_stdio(false);
+    std::wcout.imbue(std::locale("en_US.utf8"));
+
     const char *optstring = "v?";
     int c;
     bool verbose = false;
@@ -21,7 +73,13 @@ int main(int argc, char **argv) {
         }
     }
 
-    auto user_language_model = std::make_shared<akaza::UserLanguageModel>("/tmp/uni", "/tmp/bi");
+    std::string configdir = xdg_get_config_dir();
+    auto user_language_model = std::make_shared<akaza::UserLanguageModel>(
+            configdir + "/ibus-akaza/user_language_model/unigram.txt",
+            configdir + "/ibus-akaza/user_language_model/bigram.txt"
+    );
+    user_language_model->load_unigram();
+    user_language_model->load_bigram();
     auto system_unigram_lm = std::make_shared<akaza::SystemUnigramLM>();
     system_unigram_lm->load("/usr/share/akaza-data/lm_v2_1gram.trie");
     auto system_bigram_lm = std::make_shared<akaza::SystemBigramLM>();
@@ -44,14 +102,33 @@ int main(int argc, char **argv) {
             single_term_dicts
     );
 
-    std::map<std::wstring, std::wstring> additional;
-    auto romkanConverter = std::make_shared<akaza::RomkanConverter>(additional);
+    auto romkanConverter = akaza::build_romkan_converter({});
 
     akaza::Akaza akaza(graphResolver, romkanConverter);
-    std::vector<std::vector<std::shared_ptr<akaza::Node>>> result = akaza.convert(L"watasinonamaehanakanodesu.",
-                                                                                  std::nullopt);
-    for (const auto &nodes: result) {
-        std::wcout << nodes[0]->get_word();
+    if (verbose) {
+        std::cout << "# in verbose mode" << std::endl;
+        auto kana = romkanConverter->to_hiragana(L"sitemo,");
+        auto graph = graphResolver->graph_construct(kana, {});
+        graphResolver->fill_cost(graph);
+        graph.dump();
+        auto result = graphResolver->find_nbest(graph);
+        for (const auto &nodes: result) {
+            std::wcout << nodes[0]->get_word() << "/";
+        }
+        std::wcout << std::endl;
+
+        show_unigram_cost(system_unigram_lm, user_language_model, L"､/、");
+        show_unigram_cost(system_unigram_lm, user_language_model, L"、/、");
+        show_unigram_cost(system_unigram_lm, user_language_model, L"，/、");
+        show_bigram_cost(system_unigram_lm, system_bigram_lm, user_language_model, L"しても/しても", L"，/、");
+        show_bigram_cost(system_unigram_lm, system_bigram_lm, user_language_model, L"しても/しても", L"、/、");
+    } else {
+        std::vector<std::vector<std::shared_ptr<akaza::Node>>> result = akaza.convert(L"sitemo,",
+                                                                                      std::nullopt);
+        for (const auto &nodes: result) {
+            std::wcout << nodes[0]->get_word() << "/";
+        }
+        std::wcout << std::endl;
     }
-    std::cout << std::endl;
 }
+

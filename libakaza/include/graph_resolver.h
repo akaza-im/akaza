@@ -8,20 +8,23 @@
 
 namespace akaza {
     class UserLanguageModel;
+
     class SystemUnigramLM;
+
     class SystemBigramLM;
+
     class BinaryDict;
+
     class Node;
+
     class Graph;
 
     class Slice {
     private:
-        size_t start_;
-        size_t len_;
+        const size_t start_;
+        const size_t len_;
     public:
-        Slice(size_t start, size_t len) {
-            start_ = start;
-            len_ = len;
+        Slice(size_t start, size_t len) : start_(start), len_(len) {
         }
 
         [[nodiscard]] size_t start() const {
@@ -32,7 +35,7 @@ namespace akaza {
             return len_;
         }
 
-        std::string repr();
+        std::string repr() const;
 
     };
 
@@ -40,19 +43,6 @@ namespace akaza {
      * ビタビアルゴリズムで候補を求める。
      */
     class GraphResolver {
-        /*
- def __init__(self,
-                 user_language_model: UserLanguageModel,
-                 system_unigram_lm: SystemUnigramLM,
-                 system_bigram_lm: SystemBigramLM,
-                 normal_dicts: List[BinaryDict],
-                 single_term_dicts: List[BinaryDict]):
-        self.user_language_model = user_language_model
-        self.system_unigram_lm = system_unigram_lm
-        self.system_bigram_lm = system_bigram_lm
-        self.normal_dicts = normal_dicts
-        self.single_term_dicts = single_term_dicts
-         */
     private:
         std::shared_ptr<UserLanguageModel> user_language_model_;
         std::shared_ptr<SystemUnigramLM> system_unigram_lm_;
@@ -74,81 +64,13 @@ namespace akaza {
                       const std::vector<std::shared_ptr<BinaryDict>> &single_term_dicts
         );
 
-        /*
-    def lookup(self, s: str):
-        for i in range(0, len(s)):
-            yomi = s[i:]
-            # print(f"YOMI:::: {yomi}")
-            words = set().union(*[normal_dict.prefixes(yomi) for normal_dict in self.normal_dicts])
-            if len(words) > 0:
-                # print(f"YOMI:::: {yomi} {words}")
-                for word in words:
-                    kanjis = list(
-                        set().union(*[normal_dict.find_kanjis(word) for normal_dict in self.normal_dicts]))
-                    if word not in kanjis:
-                        kanjis.append(word)
-
-                    kata = jaconv.hira2kata(word)
-                    if kata not in kanjis:
-                        kanjis.append(kata)
-
-                    if word == yomi:
-                        for single_term_dict in self.single_term_dicts:
-                            for emoji in single_term_dict.find_kanjis(yomi):
-                                if emoji not in kanjis:
-                                    kanjis.append(emoji)
-
-                    yield word, kanjis
-
-                if yomi not in words and self.user_language_model.has_unigram_cost_by_yomi(yomi):
-                    # システム辞書に入ってないがユーザー言語モデルには入っているという場合は候補にいれる。
-                    kanjis = [yomi]
-
-                    kata = jaconv.hira2kata(yomi)
-                    if kata not in kanjis:
-                        kanjis.append(kata)
-                    for single_term_dict in self.single_term_dicts:
-                        for emoji in single_term_dict.find_kanjis(yomi):
-                            if emoji not in kanjis:
-                                kanjis.append(emoji)
-
-                    yield yomi, kanjis
-            else:
-                # print(f"YOMI~~~~:::: {yomi}")
-                kanjis = [yomi[0]]
-                hira = jaconv.hira2kata(yomi[0])
-                if hira not in kanjis:
-                    kanjis.append(hira)
-                for single_term_dict in self.single_term_dicts:
-                    for emoji in single_term_dict.find_kanjis(yomi):
-                        if emoji not in kanjis:
-                            kanjis.append(emoji)
-                yield yomi[0], kanjis
-
-         */
-        /**
-         * lookup - 変換候補を列挙する。
-         */
-
-        /*
-     # n文字目でおわる単語リストを作成する
-    def graph_construct(self, s, ht, force_selected_clause: List[slice] = None) -> Graph:
-        graph = Graph(size=len(s))
-
-        if force_selected_clause:
-        else:
-
-        return graph
-
-
-         force_selected_clause: ユーザーが自ら選択した文節を表示する。
-
-         */
         Graph graph_construct(const std::wstring &s, std::optional<std::vector<Slice>> force_selected_clause);
 
         void fill_cost(Graph &graph);
 
         std::vector<std::vector<std::shared_ptr<akaza::Node>>> find_nbest(akaza::Graph &graph);
+
+        friend class Akaza;
     };
 }
 

@@ -10,6 +10,7 @@ static inline std::tuple<std::wstring, std::wstring> split2(const std::wstring &
         splitted = false;
         return std::make_tuple(L"", L"");
     }
+    splitted = true;
     return std::make_tuple(str.substr(0, pos), str.substr(pos + 1));
 }
 

@@ -2,8 +2,6 @@
 #define LIBAKAZA_SYSTEM_LM_H_
 
 
-#include <cstring>
-#include <iostream>
 #include <string>
 #include <tuple>
 
@@ -18,12 +16,7 @@ namespace akaza {
         marisa::Keyset keyset_;
         marisa::Trie trie_;
     public:
-        void add(const std::string &word, float score) {
-            char buf[sizeof(float)];
-            memcpy(buf, &score, sizeof(float));
-            std::string key(word + "\xff" + std::string(buf, sizeof(float)));
-            keyset_.push_back(key.c_str(), key.size());
-        }
+        void add(const std::string &word, float score);
 
         void save(const std::string &path) {
             trie_.build(keyset_);
@@ -55,6 +48,10 @@ namespace akaza {
         inline float get_default_cost() const {
             return -20.0; // log10(1e-20)
         }
+
+        inline float get_default_cost_for_short() const {
+            return -19.0; // log10(1e-19)
+        }
     };
 
 
@@ -63,24 +60,7 @@ namespace akaza {
         marisa::Keyset keyset_;
         marisa::Trie trie_;
     public:
-        void add(int32_t word_id1, int32_t word_id2, float score) {
-            // ここで処理する。
-            std::string keybuf;
-            uint8_t idbuf[sizeof(int32_t)];
-            char scorebuf[sizeof(float)];
-
-            // packed ID     # 3 bytes(24bit). 最大語彙: 8,388,608
-            std::memcpy(idbuf, &word_id1, sizeof(word_id1));
-            keybuf += std::string(idbuf, idbuf + 3);
-            std::memcpy(idbuf, &word_id2, sizeof(word_id2));
-            keybuf += std::string(idbuf, idbuf + 3);
-
-            // packed float  # score: 4 bytes
-            std::memcpy(scorebuf, &score, sizeof(score));
-            keybuf += std::string(scorebuf, scorebuf + 4);
-
-            keyset_.push_back(keybuf.c_str(), keybuf.size());
-        }
+        void add(int32_t word_id1, int32_t word_id2, float score);
 
         void save(const std::string &path) {
             trie_.build(keyset_);
@@ -101,27 +81,7 @@ namespace akaza {
 
         void load(const char *path);
 
-        float find_bigram(int32_t word_id1, int32_t word_id2) const {
-            uint32_t uword_id1 = word_id1;
-            uint32_t uword_id2 = word_id2;
-            uint8_t idbuf[4];
-            std::string query;
-            std::memcpy(idbuf, &uword_id1, sizeof(word_id1));
-            query += std::string(idbuf, idbuf + 3);
-            std::memcpy(idbuf, &uword_id2, sizeof(word_id2));
-            query += std::string(idbuf, idbuf + 3);
-
-            marisa::Agent agent;
-            agent.set_query(query.c_str(), query.size());
-
-            while (trie_.predictive_search(agent)) {
-                const char *p = agent.key().ptr() + query.size();
-                float score;
-                std::memcpy(&score, p, sizeof(float));
-                return score;
-            }
-            return 0;
-        }
+        float find_bigram(int32_t word_id1, int32_t word_id2) const;
 
         float get_default_score() const {
             return -20.0; // log10(1e-20)

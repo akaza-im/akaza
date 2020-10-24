@@ -3,23 +3,8 @@
 #include "../picotest/picotest.c"
 #include "tmpfile.h"
 
-/*
-@pytest.mark.parametrize('src, expected', [
-    ('aka', 'a'),
-    ('sona', 'so'),
-    ('son', 'so'),
-    ('sonn', 'so'),
-    ('sonnna', 'sonn'),
-    ('sozh', 'so'),
-])
-def test_remove_last_char(src, expected):
-    romkan = RomkanConverter()
-    assert romkan.remove_last_char(src) == expected
- */
 static void test_remove_last_char() {
-    std::map<std::wstring, std::wstring> additional = {
-    };
-    auto romkan = akaza::RomkanConverter(additional);
+    auto romkan = akaza::build_romkan_converter({});
 
     std::vector<std::tuple<std::wstring, std::wstring>> cases = {
             {L"aka",    L"a"},
@@ -31,23 +16,14 @@ static void test_remove_last_char() {
     };
 
     for (const auto &[src, expected]: cases) {
-        auto got = romkan.remove_last_char(src);
+        auto got = romkan->remove_last_char(src);
         note("REMOVE_LAST_CHAR: %s -> %s", src.c_str(), got.c_str());
         ok(got == expected);
     }
 }
 
-/*
-@pytest.mark.parametrize('src, expected', [
-])
-def test_bar(src, expected):
-    romkan = RomkanConverter()
-    assert romkan.to_hiragana(src) == expected
- */
 static void test_to_hiragana() {
-    std::map<std::wstring, std::wstring> additional = {
-    };
-    auto romkan = akaza::RomkanConverter(additional);
+    auto romkan = akaza::build_romkan_converter({});
 
     std::vector<std::tuple<std::wstring, std::wstring>> cases = {
             {L"a",         L"あ"},
@@ -80,25 +56,28 @@ static void test_to_hiragana() {
             {L"we",        L"うぇ"},
             {L"wo",        L"を"},
             {L"sorenawww", L"それなwww"},
-    };
+            {L"komitthi",  L"こみってぃ"},
+            {L"ddha",      L"っでゃ"},
+            {L"zzye",       L"っじぇ"},};
 
     for (const auto &[src, expected]: cases) {
-        auto got = romkan.to_hiragana(src);
-        note("HIRAGANA: %s -> %s", src.c_str(), got.c_str());
+        auto got = romkan->to_hiragana(src);
+        std::wcout << "# HIRAGANA: " << src << " " << got << std::endl;
         ok(got == expected);
     }
 }
 
 int main() {
+    std::wostream::sync_with_stdio(false);
+    std::wcout.imbue(std::locale("en_US.utf8"));
+
     test_remove_last_char();
     test_to_hiragana();
 
-    std::map<std::wstring, std::wstring> additional = {
-    };
-    auto romkan = akaza::RomkanConverter(additional);
+    auto romkan = akaza::build_romkan_converter({});
 
-    auto got = romkan.to_hiragana(L"akasatana");
-    note("%s", got.c_str());
+    auto got = romkan->to_hiragana(L"akasatana");
+    std::wcout << "# " << got << std::endl;
     ok(got == L"あかさたな");
 
     done_testing();

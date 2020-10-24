@@ -4,7 +4,7 @@
 #include <cctype>
 #include <string>
 #include "debug_log.h"
-
+#include <iostream>
 #include "romkan_default.h"
 
 static std::wstring quotemeta(const std::wstring &input) {
@@ -40,19 +40,21 @@ static std::wstring quotemeta(const std::wstring &input) {
     return buffer;
 }
 
-// TODO move to wstring
-akaza::RomkanConverter::RomkanConverter(const std::map<std::wstring, std::wstring> &additional) {
+std::shared_ptr<akaza::RomkanConverter>
+akaza::build_romkan_converter(const std::map<std::wstring, std::wstring> &additional) {
+    std::unordered_map<std::wstring, std::wstring> map;
+
     // romaji -> hiragana
     for (const auto &[rom, hira]: DEFAULT_ROMKAN_H) {
-        map_[rom] = hira;
+        map[rom] = hira;
     }
     for (const auto &[rom, hira]: additional) {
-        map_[rom] = hira;
+        map[rom] = hira;
     }
 
     std::vector<std::wstring> keys;
-    keys.reserve(map_.size());
-    for (const auto &[k, v]: map_) {
+    keys.reserve(map.size());
+    for (const auto &[k, v]: map) {
         keys.push_back(k);
     }
     std::sort(keys.begin(), keys.end(), [](auto &a, auto &b) {
@@ -60,6 +62,8 @@ akaza::RomkanConverter::RomkanConverter(const std::map<std::wstring, std::wstrin
     });
 
 
+    std::wregex pattern;
+    std::wregex last_char_pattern;
     {
         std::wstring pattern_str = L"^(";
         for (const auto &key: keys) {
@@ -69,41 +73,21 @@ akaza::RomkanConverter::RomkanConverter(const std::map<std::wstring, std::wstrin
         pattern_str += L".)";
         D(std::wcout << "PATTERN: " << pattern_str << std::endl);
 
-        pattern_.assign(pattern_str);
+        pattern.assign(pattern_str);
     }
 
     {
-        std::wstring last_char_pattern = L"(";
+        std::wstring last_char_pattern_src = L"(";
         for (const auto &key: keys) {
-            last_char_pattern += quotemeta(key);
-            last_char_pattern += L"|";
+            last_char_pattern_src += quotemeta(key);
+            last_char_pattern_src += L"|";
         }
-        last_char_pattern += L".)$";
+        last_char_pattern_src += L".)$";
 
-        last_char_pattern_.assign(last_char_pattern);
+        last_char_pattern.assign(last_char_pattern_src);
     }
 
-    /*
-            self.pattern = re.compile(
-            '(' + "|".join(sorted([re.escape(x) for x in self.map.keys()], key=_len_cmp)) + ')'
-        )
-        print('(' + "|".join(sorted([re.escape(x) for x in self.map.keys()], key=_len_cmp)) + r'|.)$')
-        self.last_char_pattern = re.compile(
-            '(?:' + "|".join(sorted([re.escape(x) for x in self.map.keys()], key=_len_cmp)) + r'|.)$'
-        )
-    def to_hiragana(self, s: str) -> str:
-        """
-        Convert a Romaji (ローマ字) to a Hiragana (平仮名).
-        """
-
-        s = s.lower()
-        s = _normalize_double_n(s)
-        return self.pattern.sub(lambda x: self.map[x.group(1)], s)
-
-    def remove_last_char(self, s: str) -> str:
-        return self.last_char_pattern.sub('', s)
-
-     */
+    return std::make_shared<akaza::RomkanConverter>(map, pattern, last_char_pattern);
 }
 
 std::wstring akaza::RomkanConverter::remove_last_char(const std::wstring &s) {
@@ -136,8 +120,9 @@ std::wstring akaza::RomkanConverter::to_hiragana(const std::wstring &ss) {
         std::wstring p = sm.str(1);
         ws = ws.substr(p.size());
         D(std::wcout << p << std::endl);
-        if (map_.count(p) > 0) {
-            result += map_[p];
+        auto search = map_.find(p);
+        if (search != map_.cend()) {
+            result += search->second;
         } else {
             result += p;
         }
