@@ -56,23 +56,28 @@ static void test_to_hiragana() {
             {L"we",        L"うぇ"},
             {L"wo",        L"を"},
             {L"sorenawww", L"それなwww"},
-    };
+            {L"komitthi",  L"こみってぃ"},
+            {L"ddha",      L"っでゃ"},
+            {L"zzye",       L"っじぇ"},};
 
     for (const auto &[src, expected]: cases) {
         auto got = romkan->to_hiragana(src);
-        note("HIRAGANA: %s -> %s", src.c_str(), got.c_str());
+        std::wcout << "# HIRAGANA: " << src << " " << got << std::endl;
         ok(got == expected);
     }
 }
 
 int main() {
+    std::wostream::sync_with_stdio(false);
+    std::wcout.imbue(std::locale("en_US.utf8"));
+
     test_remove_last_char();
     test_to_hiragana();
 
     auto romkan = akaza::build_romkan_converter({});
 
     auto got = romkan->to_hiragana(L"akasatana");
-    note("%s", got.c_str());
+    std::wcout << "# " << got << std::endl;
     ok(got == L"あかさたな");
 
     done_testing();
