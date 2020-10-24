@@ -15,7 +15,7 @@ test:
 install:
 	cd libakaza && cmake . && make && make install
 	cd akaza-data && make install
-	cd pyakaza && $(PYTHON) setup.py install
+	cd pyakaza && make clean && $(PYTHON) setup.py install
 	cd ibus-akaza && make install
 
 .PHONY: all install uninstall test
