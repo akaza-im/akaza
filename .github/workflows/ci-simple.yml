@@ -26,6 +26,7 @@ jobs:
         pip install flake8 pytest
         # deps for akaza-data building
         pip install wikiextractor kytea psutil wheel pybind11
+        sudo apt-get update
         sudo apt-get install ibus libgirepository1.0-dev libmarisa-dev cmake clang
         git submodule init
         git submodule update
