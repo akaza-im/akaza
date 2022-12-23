@@ -15,7 +15,8 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      submodules: true
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
@@ -28,8 +29,6 @@ jobs:
         pip install wikiextractor kytea psutil wheel pybind11
         sudo apt-get update
         sudo apt-get install ibus libgirepository1.0-dev libmarisa-dev cmake clang
-        git submodule init
-        git submodule update
     #- name: Lint with flake8
     #  run: |
         # stop the build if there are Python syntax errors or undefined names
