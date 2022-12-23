@@ -2,11 +2,11 @@
 
 Yet another kana-kanji-converter on IBus, written in Python.
 
-統計的かな漢字変換です。ibus の変換システムは Python でかけるので、かいてみました。
+統計的かな漢字変換です。
 
 ## 特徴
 
- * Python で書いてあるので、拡張が容易です。
+ * UI wo Python で書いてあるので、拡張が容易です。
  * 統計的かな漢字変換モデルを採用しています
    * 言語モデルの生成元は日本語 Wikipedia のみをベースとしています。
      * kytea で分析した結果をベースに 2gram 言語モデルを構築しています。
@@ -48,10 +48,6 @@ XDG の設定ファイルディレクトリ以下、通常であれば `$HOME/.c
     user_dicts:    # ユーザー辞書の設定
       - path: /home/tokuhirom/dotfiles/skk/SKK-JISYO.tokuhirom
         encoding: utf-8
-
-## HACKING
-
- * wikipedia の全データをダウンロードして言語モデルと辞書のロードが行われるために、ディスク容量とメモリと CPU がある程度必要です。
 
 ## 設計方針
 
