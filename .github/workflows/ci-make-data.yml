@@ -4,6 +4,7 @@ name: Akaza data building test
 on:
   schedule:
     - cron: '20 20 */20 * *'
+  workflow_dispatch: {}
 
 jobs:
   build:
