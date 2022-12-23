@@ -1,5 +1,5 @@
 # TODO: make data and commit & push.
-name: Akaza data building test
+name: Generate dictionary
 
 on:
   schedule:
