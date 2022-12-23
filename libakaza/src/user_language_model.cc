@@ -1,5 +1,6 @@
 #include "../include/akaza.h"
 #include <codecvt>
+#include <cstring>
 #include "split.h"
 
 inline int my_atoi(const std::wstring &s) {
