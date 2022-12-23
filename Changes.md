@@ -2,6 +2,7 @@
 
  * Started development, again.
  * akaza can't start the process... why?
+ * /usr/local/lib に libakaza.so を入れているが、、あんまりお行儀が良くないかもね。
 
 # 2020-09-17(Thu)
 
