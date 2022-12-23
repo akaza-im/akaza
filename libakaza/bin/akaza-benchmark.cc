@@ -2,6 +2,7 @@
 #include <memory>
 #include <unistd.h>
 #include <sstream>
+#include <chrono>
 
 static void print_help(const char *name) {
     std::cout << "Usage: " << name << " words" << std::endl;
