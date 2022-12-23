@@ -37,5 +37,14 @@ jobs:
         cd akaza-data
         make
         pip install -r requirements.txt
-        make install
-
+        make
+    - name: Commit
+      run: |
+        git config --global user.email "tokuhriom@gmail.com"
+        git config --global user.name "tokuhirom by github actions"
+        git diff --quiet && git diff --staged --quiet || git commit -a -m 'Update dictionary'
+    - name: push
+      run: git push origin master
+    - name: Check result
+      run: |
+        make check
