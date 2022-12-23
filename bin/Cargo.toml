@@ -1,0 +1,2 @@
+[workspace]
+members = ["marisa-sys", "akaza-dump-systemlm-unigram"]
