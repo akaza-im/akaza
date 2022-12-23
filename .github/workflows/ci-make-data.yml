@@ -28,38 +28,14 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 pytest wikiextractor kytea tqdm wheel pybind11
+        pip install -r akaza-data/requirements.txt
+        pip install flake8 pytest
         sudo apt-get update
         sudo apt-get install ibus libgirepository1.0-dev libmarisa-dev cmake
-    #- name: Lint with flake8
-    #  run: |
-        # stop the build if there are Python syntax errors or undefined names
-        # flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        #flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test libakaza
-      run: |
-        cd libakaza
-        cmake . -DCMAKE_INSTALL_PREFIX=/usr
-        make
-        sudo make install
     - name: Test akaza-data
       run: |
         cd akaza-data
         make
         pip install -r requirements.txt
-        sudo make install
-    - name: Test pyakaza
-      run: |
-        cd pyakaza
-        pip install -r requirements.txt
-        make
-        pytest tests
-        sudo python setup.py install
-    - name: Test ibus-akaza
-      run: |
-        cd ibus-akaza
-        pip install -r requirements.txt
-        make ibus_akaza/config.py
-        pytest
-        sudo python setup.py install
+        make install
+
