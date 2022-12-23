@@ -1,3 +1,8 @@
+# 2022-12-23(Fri)
+
+ * Started development, again.
+ * akaza can't start the process... why?
+
 # 2020-09-17(Thu)
 
  * システム辞書に `/` が入っていない、いらないものを消す。
