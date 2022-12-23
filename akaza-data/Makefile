@@ -8,7 +8,7 @@ all: data/system_dict.trie data/lm_v2_2gram.trie data/lm_v2_2gram.trie \
 
 work/jawiki-latest-pages-articles.xml.bz2:
 	mkdir -p work/
-	wget --no-verbose --no-clobber -O work/jawiki-latest-pages-articles.xml.bz2 https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-pages-articles.xml.bz2
+	wget --no-clobber -O work/jawiki-latest-pages-articles.xml.bz2 https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-pages-articles.xml.bz2
 
 work/jawiki-latest-pages-articles.xml: work/jawiki-latest-pages-articles.xml.bz2
 	bunzip2 --keep work/jawiki-latest-pages-articles.xml.bz2
