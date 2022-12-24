@@ -30,9 +30,10 @@ impl SystemUnigramLM {
             // marisa_agent_key(agent) { return agent.key() } みたいなのを
             // 入れる必要がありそう。
             println!("START");
-            let key = root::marisa_agent_key(&mut agent);
-            let ptr = root::marisa_key_ptr(key);
-            println!("KEY={}", CStr::from_ptr(ptr).to_str().expect("key is invalid"));
+            let mut key = agent.key();
+            let mut ptr = key.as_ref().expect("A").ptr();
+            let str = CStr::from_ptr(ptr).to_bytes();
+            println!("KEY={:?}", str);
         }
     }
 }
