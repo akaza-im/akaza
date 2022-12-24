@@ -746,7 +746,7 @@ pub mod root {
         }
         extern "C" {
             #[link_name = "\u{1}_ZNK6marisa3Key3ptrEv"]
-            pub fn Key_ptr(this: *const root::marisa::Key) -> *const ::std::os::raw::c_char;
+            pub fn Key_ptr(this: *const root::marisa::Key) -> *const u8;
         }
         extern "C" {
             #[link_name = "\u{1}_ZNK6marisa3Key6lengthEv"]
@@ -794,7 +794,7 @@ pub mod root {
                 Key_set_weight(self, weight)
             }
             #[inline]
-            pub unsafe fn ptr(&self) -> *const ::std::os::raw::c_char {
+            pub unsafe fn ptr(&self) -> *const u8 {
                 Key_ptr(self)
             }
             #[inline]
@@ -1020,7 +1020,7 @@ pub mod root {
             #[link_name = "\u{1}_ZN6marisa6Keyset9push_backEPKc"]
             pub fn Keyset_push_back2(
                 this: *mut root::marisa::Keyset,
-                str_: *const ::std::os::raw::c_char,
+                str_: *const u8,
             );
         }
         extern "C" {
@@ -1078,8 +1078,9 @@ pub mod root {
                 Keyset_push_back1(self, key, end_marker)
             }
             #[inline]
-            pub unsafe fn push_back2(&mut self, str_: *const ::std::os::raw::c_char) {
-                Keyset_push_back2(self, str_)
+            // tokuhirom's handwritten method
+            pub unsafe fn push_back2(&mut self, str_: String) {
+                Keyset_push_back2(self, str_.as_ptr())
             }
             #[inline]
             pub unsafe fn push_back3(
@@ -1351,7 +1352,7 @@ pub mod root {
             #[link_name = "\u{1}_ZN6marisa5Agent9set_queryEPKc"]
             pub fn Agent_set_query(
                 this: *mut root::marisa::Agent,
-                str_: *const ::std::os::raw::c_char,
+                str_: *const u8,
             );
         }
         extern "C" {
@@ -1431,8 +1432,8 @@ pub mod root {
                 Agent_key(self)
             }
             #[inline]
-            pub unsafe fn set_query(&mut self, str_: *const ::std::os::raw::c_char) {
-                Agent_set_query(self, str_)
+            pub unsafe fn set_query(&mut self, str_: String) {
+                Agent_set_query(self, str_.as_ptr())
             }
             #[inline]
             pub unsafe fn set_query1(&mut self, ptr: *const ::std::os::raw::c_char, length: usize) {
@@ -1804,6 +1805,18 @@ pub mod root {
         #[link_name = "\u{1}_Z14marisa_key_ptrPKN6marisa3KeyE"]
         pub fn marisa_key_ptr(key: *const root::marisa::Key) -> *const ::std::os::raw::c_char;
     }
+    extern "C" {
+        #[link_name = "\u{1}_Z17marisa_key_lengthPKN6marisa3KeyE"]
+        pub fn marisa_key_length(key: *const root::marisa::Key) -> u32;
+    }
+    extern "C" {
+        #[link_name = "\u{1}_Z19marisa_query_lengthPKN6marisa5QueryE"]
+        pub fn marisa_query_length(query: *const root::marisa::Query) -> usize;
+    }
+    extern "C" {
+        #[link_name = "\u{1}_Z18marisa_agent_queryPKN6marisa5AgentE"]
+        pub fn marisa_agent_query(agent: *const root::marisa::Agent) -> *const root::marisa::Query;
+    }
     #[test]
     fn __bindgen_test_layout_scoped_array_open0_scoped_array_open1_char_close1_close0_instantiation(
     ) {
@@ -1946,5 +1959,57 @@ pub mod root {
                 stringify!(root::marisa::scoped_ptr<root::marisa::grimoire::trie::LoudsTrie>)
             )
         );
+    }
+    use ::std::slice;
+    use ::std::str;
+    use ::std::io;
+    use ::std::io::stderr;
+    #[test]
+     fn test() {
+        unsafe {
+            let mut keyset = root::marisa::Keyset::new();
+            keyset.push_back2("a".to_string());
+            keyset.push_back2("app".to_string());
+            keyset.push_back2("apple".to_string());
+
+            let mut trie = marisa::Trie::new();
+            trie.build(&mut keyset as *mut marisa::Keyset, 0);
+
+            let mut agent = marisa::Agent::new();
+            agent.set_query("apple".to_string());
+            let query = marisa_agent_query(&mut agent as *mut marisa::Agent);
+            let qlen = marisa_query_length(query);
+            assert_eq!(5, qlen);
+            let mut seen = 0;
+            while trie.common_prefix_search(&mut agent as *mut marisa::Agent) {
+                let key = agent.key().as_ref().expect("ref");
+                let length = marisa_key_length(key);
+                let ptr = key.ptr();
+                let key_string = slice::from_raw_parts(ptr, length as usize);
+                let p = str::from_utf8(key_string)
+                    .expect("HAHA");
+seen+=1;
+                assert_eq!(p, "pen");
+
+                // println!("{}", agent.key().ptr(), agent.key().length())
+            }
+            assert_eq!(seen, 3);
+        }
+        /*
+          keyset.push_back("a");
+  keyset.push_back("app");
+  keyset.push_back("apple");
+
+  marisa::Trie trie;
+  trie.build(keyset);
+
+  marisa::Agent agent;
+  agent.set_query("apple");
+  while (trie.common_prefix_search(agent)) {
+    std::cout.write(agent.key().ptr(), agent.key().length());
+    std::cout << ": " << agent.key().id() << std::endl;
+  }
+  return 0;
+         */
     }
 }
