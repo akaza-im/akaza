@@ -13,7 +13,7 @@
 
     {word} # in utf-8
     0xff   # marker
-    packed ID     # 3 bytes(24bit). 最大語彙: 8,388,608
+    packed ID     # 3 bytes(24bit). 最大語彙: 8,388,608(2**24/2)
     packed float  # score: 4 bytes
 
 # 2gram
