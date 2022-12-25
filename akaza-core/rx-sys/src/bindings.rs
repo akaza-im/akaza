@@ -13,36 +13,38 @@ pub struct RXBuilder {
     rx: *mut rx_builder,
 }
 impl RXBuilder {
-    unsafe fn new() -> RXBuilder {
+    pub unsafe fn new() -> RXBuilder {
         RXBuilder { rx: rx_builder_create() }
     }
 
-    unsafe fn add(&self, str: String) {
-        let p= CString::new(str).expect("Cannot convert to CString");
+    // key should be c-string.
+    // but it maybe, not a utf-8 string.
+    pub unsafe fn add(&self, key: Vec<u8>) {
+        let p= CString::from_vec_with_nul(key).expect("Cannot convert to CString");
         rx_builder_add(self.rx, p.as_ptr());
     }
 
-    unsafe fn get_size(&self) -> i32 {
+    pub unsafe fn get_size(&self) -> i32 {
         return rx_builder_get_size(self.rx);
     }
-    unsafe fn get_image(&self) -> *mut u8 {
+    pub unsafe fn get_image(&self) -> *mut u8 {
         return rx_builder_get_image(self.rx);
     }
 
-    unsafe fn set_bits(&self, bits: i32) {
+    pub unsafe fn set_bits(&self, bits: i32) {
         rx_builder_set_bits(self.rx, bits);
     }
 
-    unsafe fn build(&self) -> i32 {
+    pub unsafe fn build(&self) -> i32 {
         return rx_builder_build(self.rx);
     }
 
-    unsafe fn get_key_index(&self, str: String) -> i32 {
+    pub unsafe fn get_key_index(&self, str: String) -> i32 {
         let p= CString::new(str).expect("Cannot convert to CString");
         return rx_builder_get_key_index(self.rx, p.as_ptr());
     }
 
-    unsafe fn dump(&self) {
+    pub unsafe fn dump(&self) {
         rx_builder_dump(self.rx);
     }
 }
@@ -61,7 +63,7 @@ pub type SearchCallback = unsafe extern "C" fn(
     ::std::os::raw::c_int
 ) -> i32;
 
-struct Rx {
+pub struct Rx {
     rx: *mut rx,
 }
 impl Rx {

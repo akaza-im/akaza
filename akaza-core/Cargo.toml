@@ -1,2 +1,2 @@
 [workspace]
-members = ["rx-sys"]
+members = ["rx-sys", "libakaza", "bin/akaza-make-binary-dict"]
