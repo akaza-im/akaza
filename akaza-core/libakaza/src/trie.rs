@@ -32,8 +32,8 @@ impl TrieBuilder {
 fn test() {
     unsafe {
         let builder = TrieBuilder::new();
-        builder.add("foobar".as_bytes());
-        builder.save("/tmp/dump.trie".to_string()).unwrap();
+        builder.add("foobar\0".as_bytes().to_vec());
+        builder.save(&"/tmp/dump.trie".to_string()).unwrap();
 
     }
 }

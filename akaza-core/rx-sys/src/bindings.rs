@@ -246,10 +246,10 @@ fn test() {
     unsafe {
         let rx_builder = RXBuilder::new();
         rx_builder.set_bits(8);
-        rx_builder.add("apple".to_string());
-        rx_builder.add("ago".to_string());
-        rx_builder.add("abc".to_string());
-        rx_builder.add("quick".to_string());
+        rx_builder.add("apple\0".to_string().into_bytes());
+        rx_builder.add("ago\0".to_string().into_bytes());
+        rx_builder.add("abc\0".to_string().into_bytes());
+        rx_builder.add("quick\0".to_string().into_bytes());
         rx_builder.build();
 
         assert_eq!(rx_builder.get_size(), 39);
