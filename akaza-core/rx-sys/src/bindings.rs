@@ -1,7 +1,8 @@
 /* BGased on generated code by rust-bindgen 0.63.0 from rx/rx.h */
 
-use std::ffi::CStr;
+use std::ffi::{c_int, CStr};
 use std::ffi::CString;
+use std::os::raw::c_uchar;
 
 pub const RX_SEARCH_DEFAULT: u32 = 0;
 pub const RX_SEARCH_PREDICTIVE: u32 = 1;
@@ -125,6 +126,59 @@ impl Drop for Rx {
     }
 }
 
+struct RbxBuilder {
+    builder: *mut rbx_builder,
+}
+
+impl RbxBuilder {
+    pub unsafe fn new() -> RbxBuilder {
+        RbxBuilder { builder: rbx_builder_create() }
+    }
+    pub unsafe fn push(&self, bytes: &[u8]) {
+        rbx_builder_push(self.builder, bytes.as_ptr(), bytes.len() as c_int)
+    }
+
+    pub unsafe fn build(&self) {
+        rbx_builder_build(self.builder);
+    }
+
+    pub unsafe fn get_image(&self) -> *mut u8 {
+        return rbx_builder_get_image(self.builder);
+    }
+
+    pub unsafe fn get_size(&self) -> std::os::raw::c_int {
+        return rbx_builder_get_size(self.builder);
+    }
+}
+
+impl Drop for RbxBuilder {
+    fn drop(&mut self) {
+        unsafe { rbx_builder_release(self.builder) }
+    }
+}
+
+struct Rbx {
+    rbx: *mut rbx,
+}
+
+impl Rbx {
+    unsafe fn load(image: *const u8) -> Rbx {
+        return Rbx { rbx: rbx_open(image) };
+    }
+
+    unsafe fn get(&self, idx: i32) {
+        let got = rbx_get(self.rbx, idx, len);
+    }
+}
+
+impl Drop for Rbx {
+    fn drop(&mut self) {
+        unsafe {
+            rbx_close(rbx);
+        }
+    }
+}
+
 // TODO support RBX
 
 // TODO make following parts, private.
@@ -233,7 +287,7 @@ extern "C" {
 
     fn rbx_builder_push(
         builder: *mut rbx_builder,
-        bytes: *const ::std::os::raw::c_char,
+        bytes: *const u8,
         len: ::std::os::raw::c_int,
     );
 
