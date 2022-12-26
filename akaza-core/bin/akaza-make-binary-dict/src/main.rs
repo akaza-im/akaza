@@ -1,6 +1,7 @@
 use std::env;
 use std::fs::File;
-use std::io::{prelude::*, BufReader};
+use std::io::{BufReader, prelude::*};
+
 use libakaza::trie::TrieBuilder;
 
 unsafe fn make_binary_dict(txtfile: &String, triefile: &String) {
@@ -21,13 +22,13 @@ unsafe fn make_binary_dict(txtfile: &String, triefile: &String) {
         let key = [word.as_bytes(), b"\xff", kanjis.as_bytes(), b"\x00"].concat();
         trie_builder.add(key);
     }
-    trie_builder.save(triefile);
+    trie_builder.save(triefile).unwrap();
 }
 
 fn main() {
-    let args : Vec<String> = env::args().collect();
+    let args: Vec<String> = env::args().collect();
     let txtfile = &args[1];
-    let triefile =&args[2];
+    let triefile = &args[2];
     unsafe { make_binary_dict(txtfile, triefile); }
 }
 
