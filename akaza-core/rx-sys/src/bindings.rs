@@ -166,15 +166,15 @@ impl Rbx {
         return Rbx { rbx: rbx_open(image) };
     }
 
-    unsafe fn get(&self, idx: i32) {
-        let got = rbx_get(self.rbx, idx, len);
-    }
+    // unsafe fn get(&self, idx: i32) {
+    //     let got = rbx_get(self.rbx, idx, len);
+    // }
 }
 
 impl Drop for Rbx {
     fn drop(&mut self) {
         unsafe {
-            rbx_close(rbx);
+            rbx_close(self.rbx);
         }
     }
 }
