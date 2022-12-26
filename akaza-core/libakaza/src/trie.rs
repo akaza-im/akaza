@@ -3,83 +3,71 @@ use std::fs::File;
 use std::io::Error;
 use std::io::Write;
 
-use rx_sys::{Rx, RXBuilder};
+use marisa_sys::{Keyset, Marisa};
 
-// RX を使っているか、MARISA をつかっているか、などの実装詳細は
-// このファイルで隠蔽される。
+// Trie 木の実装詳細はこのファイルで隠蔽される。
 
 pub struct TrieBuilder {
-    rx_builder: RXBuilder,
+    keyset: Keyset,
 }
 
 impl TrieBuilder {
     pub unsafe fn new() -> TrieBuilder {
-        TrieBuilder { rx_builder: RXBuilder::new() }
+        TrieBuilder { keyset: Keyset::new() }
     }
 
     pub unsafe fn add(&self, key: Vec<u8>) {
-        self.rx_builder.add(key);
+        self.keyset.push_back(key.as_slice());
     }
 
     pub unsafe fn save(&self, ofname: &String) -> std::io::Result<()> {
-        self.rx_builder.build();
-        let image = self.rx_builder.get_image();
-        let size = self.rx_builder.get_size();
-        let image = std::slice::from_raw_parts(image, size as usize);
-
-        let mut ofile = File::create(ofname).unwrap();
-        return ofile.write_all(image);
+        let marisa = Marisa::new();
+        marisa.build(&self.keyset);
+        marisa.save(ofname);
+        return Ok(());
     }
 }
 
 // Load trie from file.
 // predictive search
 pub struct Trie {
-    rx: Rx,
+    marisa: Marisa,
 }
 
 impl Trie {
     pub unsafe fn load(filename: &String) -> Result<Trie, Error> {
-        let content = fs::read(filename);
-        return match content {
-            Ok(mut content) => {
-                let ptr = content.as_mut_ptr();
-                Ok(Trie { rx: Rx::open(ptr) })
-            }
-            Err(error) => {
-                Err(error)
-            }
-        };
+        let marisa = Marisa::new();
+        marisa.load(filename);
+        return Ok(Trie { marisa });
     }
 
     pub unsafe fn predictive_search(&self, keyword: Vec<u8>) -> Vec<SearchResult> {
         let mut p: Vec<SearchResult> = Vec::new();
-        self.rx.search(1, keyword, |keyword, len, id| {
-            p.push(SearchResult { keyword, len, id });
-            1
+        self.marisa.predictive_search(keyword.as_slice(), |key, id| {
+            p.push(SearchResult { keyword: key.to_vec(), id });
+            true
         });
         return p;
     }
 }
 
+#[derive(Debug)]
 pub struct SearchResult {
-    pub keyword: String,
-    pub len: i32,
-    pub id: i32,
+    pub keyword: Vec<u8>,
+    pub id: usize,
 }
 
 #[test]
 fn test() {
     unsafe {
         let builder = TrieBuilder::new();
-        builder.add("foobar\0".as_bytes().to_vec());
+        builder.add("foobar".as_bytes().to_vec());
         builder.save(&"/tmp/dump.trie".to_string()).unwrap();
 
         let trie = Trie::load(&"/tmp/dump.trie".to_string()).unwrap();
-        let result = trie.predictive_search("foobar\0".to_string().into_bytes());
+        let result = trie.predictive_search("foobar".to_string().into_bytes());
         assert_eq!(result.len(), 1);
-        assert_eq!(result[0].keyword, "foobar");
+        assert_eq!(String::from_utf8((result[0].keyword).clone()).unwrap(), "foobar");
         assert_eq!(result[0].id, 0);
-        assert_eq!(result[0].len, 6);
     }
 }
