@@ -164,8 +164,8 @@ fn test() {
 
         marisa.predictive_search("a".as_bytes(), |bytes, id| {
             i += 1;
-            let key = CStr::from_bytes_with_nul(&*[bytes, b"\0"].concat()).unwrap()
-                .to_str().unwrap().to_string();
+            let key = String::from_utf8(bytes.to_vec())
+                .unwrap();
             got.push((key, id));
             true
         });
