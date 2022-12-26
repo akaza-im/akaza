@@ -2,7 +2,6 @@
 // low level C wrappers
 // ---------------------------------------------------
 
-use std::ffi::CStr;
 use std::os::raw::c_void;
 
 use tempfile::NamedTempFile;
@@ -50,7 +49,7 @@ pub type PredictiveSearchCallback = dyn FnMut(
     &[u8],
     usize) -> bool;
 
-struct Marisa {
+pub struct Marisa {
     marisa: *mut marisa_obj,
 }
 
