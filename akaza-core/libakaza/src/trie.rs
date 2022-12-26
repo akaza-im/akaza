@@ -63,9 +63,9 @@ impl Trie {
 }
 
 pub struct SearchResult {
-    keyword: String,
-    len: i32,
-    id: i32,
+    pub keyword: String,
+    pub len: i32,
+    pub id: i32,
 }
 
 #[test]
