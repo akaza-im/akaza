@@ -6,6 +6,9 @@ use libakaza::trie::{Trie, TrieBuilder};
 
 /**
 
+// このあたりは C++ 時代の Spec。
+// rust 版ではいったん、簡単のために id を sizeof(usize) バイト書いている。
+
 # 1gram
 
     {word} # in utf-8
