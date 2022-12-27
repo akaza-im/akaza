@@ -2,7 +2,8 @@ use std::env;
 use std::fs::File;
 use std::io::{BufReader, prelude::*};
 
-use libakaza::lm::{SystemBigramLMBuilder, SystemUnigramLMBuilder, SystemUnigramLM};
+use libakaza::lm::system_bigram::SystemBigramLMBuilder;
+use libakaza::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
 
 // e.g.g 倉庫会社/そうこがいしゃ -6.973789593503506
 unsafe fn process_unigram(srcpath: &String, dstpath: &String) {
