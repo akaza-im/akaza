@@ -10,7 +10,9 @@ pub struct TrieBuilder {
 
 impl TrieBuilder {
     pub unsafe fn new() -> TrieBuilder {
-        TrieBuilder { keyset: Keyset::new() }
+        TrieBuilder {
+            keyset: Keyset::new(),
+        }
     }
 
     pub unsafe fn add(&self, key: Vec<u8>) {
@@ -40,10 +42,14 @@ impl Trie {
 
     pub unsafe fn predictive_search(&self, keyword: Vec<u8>) -> Vec<SearchResult> {
         let mut p: Vec<SearchResult> = Vec::new();
-        self.marisa.predictive_search(keyword.as_slice(), |key, id| {
-            p.push(SearchResult { keyword: key.to_vec(), id });
-            true
-        });
+        self.marisa
+            .predictive_search(keyword.as_slice(), |key, id| {
+                p.push(SearchResult {
+                    keyword: key.to_vec(),
+                    id,
+                });
+                true
+            });
         return p;
     }
 
@@ -68,7 +74,10 @@ fn test() {
         let trie = Trie::load(&"/tmp/dump.trie".to_string()).unwrap();
         let result = trie.predictive_search("foobar".to_string().into_bytes());
         assert_eq!(result.len(), 1);
-        assert_eq!(String::from_utf8((result[0].keyword).clone()).unwrap(), "foobar");
+        assert_eq!(
+            String::from_utf8((result[0].keyword).clone()).unwrap(),
+            "foobar"
+        );
         assert_eq!(result[0].id, 0);
     }
 }

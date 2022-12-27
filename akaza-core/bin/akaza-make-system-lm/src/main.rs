@@ -1,6 +1,6 @@
 use std::env;
 use std::fs::File;
-use std::io::{BufReader, prelude::*};
+use std::io::{prelude::*, BufReader};
 
 use libakaza::lm::system_bigram::SystemBigramLMBuilder;
 use libakaza::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
@@ -28,10 +28,8 @@ unsafe fn process_unigram(srcpath: &String, dstpath: &String) {
     }
 
     println!("Writing {}", dstpath);
-    builder.save(dstpath)
-        .unwrap();
+    builder.save(dstpath).unwrap();
 }
-
 
 unsafe fn process_2gram(unigram: &SystemUnigramLM, srcpath: &String, dstpath: &String) {
     let file = File::open(srcpath).unwrap();
@@ -64,7 +62,10 @@ unsafe fn process_2gram(unigram: &SystemUnigramLM, srcpath: &String, dstpath: &S
         let word_id1 = unigram.find_unigram(&word1.to_string());
         let word_id2 = unigram.find_unigram(&word2.to_string());
         if word_id1.is_none() || word_id2.is_none() {
-            println!("Unknown word(not in unigram dict): word1='{}' word2='{}'", word1, word2);
+            println!(
+                "Unknown word(not in unigram dict): word1='{}' word2='{}'",
+                word1, word2
+            );
             continue;
         }
 
@@ -73,7 +74,6 @@ unsafe fn process_2gram(unigram: &SystemUnigramLM, srcpath: &String, dstpath: &S
 
     builder.save(dstpath).unwrap();
 }
-
 
 fn main() {
     // 1gram ファイルから読む。
@@ -93,16 +93,21 @@ fn main() {
     // "work/jawiki.merged-1gram.txt" -> "akaza_data/data/lm_v2_1gram.trie"
     println!("Unigram {} to {}", unigram_src, unigram_dst);
 
-    unsafe { process_unigram(unigram_src, unigram_dst); }
-
+    unsafe {
+        process_unigram(unigram_src, unigram_dst);
+    }
 
     // 2gram ファイルから読む
     // 2gram ファイルを書いていく。
     println!("Bigram {} to {}", bigram_src, bigram_dst);
 
     let unigram_lm = unsafe { SystemUnigramLM::load(unigram_dst).unwrap() };
-    unsafe { println!("Unigram system lm: {}", unigram_lm.num_keys()); }
-    unsafe { process_2gram(&unigram_lm, bigram_src, bigram_dst); }
+    unsafe {
+        println!("Unigram system lm: {}", unigram_lm.num_keys());
+    }
+    unsafe {
+        process_2gram(&unigram_lm, bigram_src, bigram_dst);
+    }
 
     println!("DONE");
 }
