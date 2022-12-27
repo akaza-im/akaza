@@ -21,7 +21,7 @@ use libakaza::trie::{Trie, TrieBuilder};
 
  */
 
-// TODO: move to libakaza?
+// TODO: move to libakazac
 struct SystemUnigramLMBuilder {
     builder: TrieBuilder,
 }
@@ -33,7 +33,7 @@ impl SystemUnigramLMBuilder {
 
     pub unsafe fn add(&self, word: &String, score: f32) {
         let key = [
-            word.as_bytes(), b"\xff", score.to_le_bytes().as_slice(), b"\x00"
+            word.as_bytes(), b"\xff", score.to_le_bytes().as_slice()
         ].concat();
         self.builder.add(key);
     }
@@ -48,15 +48,20 @@ struct SystemUnigramLM {
 }
 
 impl SystemUnigramLM {
+    pub unsafe fn num_keys(&self) -> usize {
+        return self.trie.num_keys();
+    }
+
     unsafe fn load(fname: &String) -> Result<SystemUnigramLM, Error> {
+        println!("Reading {}", fname);
         return match Trie::load(fname) {
             Ok(trie) => Ok(SystemUnigramLM { trie }),
             Err(err) => Err(err)
         };
     }
 
-    unsafe fn find_unigram(&self, word: &String) -> Option<i32> {
-        let query = [word.as_bytes(), b"\xff\x00"].concat();
+    unsafe fn find_unigram(&self, word: &String) -> Option<usize> {
+        let query = [word.as_bytes(), b"\xff"].concat();
         let got = self.trie.predictive_search(query);
         return if got.is_empty() {
             None
@@ -75,8 +80,11 @@ impl SystemBigramLMBuilder {
         SystemBigramLMBuilder { builder: TrieBuilder::new() }
     }
 
-    unsafe fn add(&self, word_id1: i32, word_id2: i32, score: f32) {
-        let key = [word_id1.to_le_bytes(), word_id2.to_le_bytes(), score.to_le_bytes()].concat();
+    unsafe fn add(&self, word_id1: usize, word_id2: usize, score: f32) {
+        let mut key: Vec<u8> = Vec::new();
+        key.extend(word_id1.to_le_bytes());
+        key.extend(word_id2.to_le_bytes());
+        key.extend(score.to_le_bytes());
         self.builder.add(key);
     }
 
@@ -107,9 +115,11 @@ unsafe fn process_unigram(srcpath: &String, dstpath: &String) {
         }
     }
 
+    println!("Writing {}", dstpath);
     builder.save(dstpath)
         .unwrap();
 }
+
 
 unsafe fn process_2gram(unigram: &SystemUnigramLM, srcpath: &String, dstpath: &String) {
     let file = File::open(srcpath).unwrap();
@@ -117,18 +127,36 @@ unsafe fn process_2gram(unigram: &SystemUnigramLM, srcpath: &String, dstpath: &S
     let builder = SystemBigramLMBuilder::new();
 
     for line in BufReader::new(file).lines() {
+        fn parse_2gram_line(line: &String) -> (String, String, f32) {
+            let tokens: Vec<&str> = line.split(" ").collect();
+            if tokens.len() != 2 {
+                println!("Invalid tokens: {:?}", tokens);
+                panic!()
+            }
+            let words: &str = tokens[0];
+            let score = tokens[1];
+
+            let words: Vec<&str> = words.split("\t").collect();
+
+            let word1 = words[0];
+            let word2 = words[1];
+            let score = score.parse().unwrap();
+            return (word1.to_string(), word2.to_string(), score);
+        }
+
         let line = line.unwrap();
-        let tokens: Vec<&str> = line.split(" ").collect();
-        let word1 = tokens[0];
-        let word2 = tokens[1];
-        let score = tokens[2].parse().unwrap();
+        let (word1, word2, score) = parse_2gram_line(&line);
 
-        println!("word1='{}' word2='{}' score='{}'", word1, word2, score);
+        // println!("word1='{}' word2='{}' score='{}'", word1, word2, score);
 
-        let word_id1 = unigram.find_unigram(&word1.to_string()).unwrap();
-        let word_id2 = unigram.find_unigram(&word2.to_string()).unwrap();
+        let word_id1 = unigram.find_unigram(&word1.to_string());
+        let word_id2 = unigram.find_unigram(&word2.to_string());
+        if word_id1.is_none() || word_id2.is_none() {
+            println!("Unknown word(not in unigram dict): word1='{}' word2='{}'", word1, word2);
+            continue;
+        }
 
-        builder.add(word_id1, word_id2, score);
+        builder.add(word_id1.unwrap(), word_id2.unwrap(), score);
     }
 
     builder.save(dstpath).unwrap();
@@ -161,6 +189,7 @@ fn main() {
     println!("Bigram {} to {}", bigram_src, bigram_dst);
 
     let unigram_lm = unsafe { SystemUnigramLM::load(unigram_dst).unwrap() };
+    unsafe { println!("Unigram system lm: {}", unigram_lm.num_keys()); }
     unsafe { process_2gram(&unigram_lm, bigram_src, bigram_dst); }
 
     println!("DONE");
