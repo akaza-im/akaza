@@ -1,7 +1,4 @@
-use std::fs;
-use std::fs::File;
 use std::io::Error;
-use std::io::Write;
 
 use marisa_sys::{Keyset, Marisa};
 
@@ -23,7 +20,7 @@ impl TrieBuilder {
     pub unsafe fn save(&self, ofname: &String) -> std::io::Result<()> {
         let marisa = Marisa::new();
         marisa.build(&self.keyset);
-        marisa.save(ofname);
+        marisa.save(ofname).unwrap();
         return Ok(());
     }
 }
@@ -37,7 +34,7 @@ pub struct Trie {
 impl Trie {
     pub unsafe fn load(filename: &String) -> Result<Trie, Error> {
         let marisa = Marisa::new();
-        marisa.load(filename);
+        marisa.load(filename).unwrap();
         return Ok(Trie { marisa });
     }
 
@@ -48,6 +45,10 @@ impl Trie {
             true
         });
         return p;
+    }
+
+    pub unsafe fn num_keys(&self) -> usize {
+        return self.marisa.num_keys();
     }
 }
 
