@@ -6,7 +6,9 @@ pub struct SystemBigramLMBuilder {
 
 impl SystemBigramLMBuilder {
     pub unsafe fn new() -> SystemBigramLMBuilder {
-        SystemBigramLMBuilder { builder: TrieBuilder::new() }
+        SystemBigramLMBuilder {
+            builder: TrieBuilder::new(),
+        }
     }
 
     pub unsafe fn add(&self, word_id1: usize, word_id2: usize, score: f32) {

@@ -9,13 +9,13 @@ pub struct SystemUnigramLMBuilder {
 
 impl SystemUnigramLMBuilder {
     pub unsafe fn new() -> SystemUnigramLMBuilder {
-        SystemUnigramLMBuilder { builder: TrieBuilder::new() }
+        SystemUnigramLMBuilder {
+            builder: TrieBuilder::new(),
+        }
     }
 
     pub unsafe fn add(&self, word: &String, score: f32) {
-        let key = [
-            word.as_bytes(), b"\xff", score.to_le_bytes().as_slice()
-        ].concat();
+        let key = [word.as_bytes(), b"\xff", score.to_le_bytes().as_slice()].concat();
         self.builder.add(key);
     }
 
@@ -37,7 +37,7 @@ impl SystemUnigramLM {
         println!("Reading {}", fname);
         return match Trie::load(fname) {
             Ok(trie) => Ok(SystemUnigramLM { trie }),
-            Err(err) => Err(err)
+            Err(err) => Err(err),
         };
     }
 
