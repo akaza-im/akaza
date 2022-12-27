@@ -34,6 +34,8 @@ graph TD
 ひらがなと漢字の変換表として、システム辞書を用意している。
 主に SKK の辞書と、wikipedia から生成された SKK 用の辞書である jawiki-kana-kanji-dict をベースにしている。
 
+ここで生成される辞書形式は、BinaryDict と呼ばれている。
+
 ```mermaid
 graph TD
     SKK-JISYO.L --> system-dict

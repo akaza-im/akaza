@@ -2,12 +2,12 @@ use std::env;
 use std::fs::File;
 use std::io::{BufReader, prelude::*};
 
-use libakaza::trie::TrieBuilder;
+use libakaza::binary_dict::BinaryDict;
 
 unsafe fn make_binary_dict(txtfile: &String, triefile: &String) {
     println!("Generating {} from {}", triefile, txtfile);
 
-    let trie_builder = TrieBuilder::new();
+    let binary_dict = BinaryDict::new();
 
     let file = File::open(txtfile).expect("Open {txtfile} correctly.");
     for line in BufReader::new(file).lines() {
@@ -16,13 +16,12 @@ unsafe fn make_binary_dict(txtfile: &String, triefile: &String) {
         if v.len() != 2 {
             break;
         }
-        let word = v[0];
+        let yomi = v[0];
         let kanjis = v[1];
-        println!("word={} kanjis={}", word, kanjis);
-        let key = [word.as_bytes(), b"\xff", kanjis.as_bytes(), b"\x00"].concat();
-        trie_builder.add(key);
+        println!("word={} kanjis={}", yomi, kanjis);
+        binary_dict.add(&yomi.to_string(), &kanjis.to_string());
     }
-    trie_builder.save(triefile).unwrap();
+    binary_dict.save(triefile).unwrap();
 }
 
 fn main() {
