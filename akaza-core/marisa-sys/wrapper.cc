@@ -1,4 +1,12 @@
 #include "wrapper.hpp"
+#include <cstring>
+#include <cstdlib>
+
+static inline marisa_exception* marisa_exception_new(const marisa::Exception& e) {
+    marisa_exception * exc = new marisa_exception();
+    exc->error_message = strdup(e.error_message());
+    return exc;
+}
 
 marisa_obj * marisa_new() {
     marisa_obj* self = new marisa_obj();
@@ -15,12 +23,29 @@ void marisa_build(marisa_obj* self, marisa_keyset* keyset) {
     self->trie->build(*(keyset->keyset));
 }
 
-void marisa_load(marisa_obj* self, const char* filename) {
-    self->trie->load(filename);
+marisa_exception* marisa_load(marisa_obj* self, const char* filename) {
+    try {
+        self->trie->load(filename);
+        return NULL;
+    } catch (const marisa::Exception &e) {
+        return marisa_exception_new(e);
+    }
 }
 
-void marisa_save(marisa_obj* self, const char* filename) {
-    self->trie->save(filename);
+void marisa_exception_release(marisa_exception* exc) {
+    if (exc != NULL) {
+        free(exc->error_message);
+        delete exc;
+    }
+}
+
+marisa_exception* marisa_save(marisa_obj* self, const char* filename) {
+    try {
+        self->trie->save(filename);
+        return NULL;
+    } catch (const marisa::Exception &e) {
+        return marisa_exception_new(e);
+    }
 }
 
 size_t marisa_num_keys(marisa_obj* self) {
