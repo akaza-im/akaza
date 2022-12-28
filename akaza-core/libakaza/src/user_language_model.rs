@@ -1,8 +1,7 @@
-use std::collections::HashSet;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-
 
 #[derive(PartialEq)]
 enum GramType {
@@ -10,7 +9,9 @@ enum GramType {
     UniGram,
 }
 
-struct UserLanguageModel {
+// unigram 用と bigram 用のロジックでコピペが増えがちで危ない。
+// 完全に分離したほうが良い。
+pub struct UserLanguageModel {
     unigram_path: String,
     bigram_path: String,
 
@@ -29,12 +30,13 @@ struct UserLanguageModel {
     unigram_v: u32,
     unigram: HashMap<String, u32>,
 
-    bigram_c:u32,
-    bigram_v:u32,
+    bigram_c: u32,
+    bigram_v: u32,
     bigram: HashMap<String, u32>,
 
     alpha: f32, // = 0.00001;
 }
+
 impl UserLanguageModel {
     fn new(unigram_path: &String, bigram_path: &String) -> UserLanguageModel {
         UserLanguageModel {
@@ -52,19 +54,23 @@ impl UserLanguageModel {
         }
     }
 
-    fn read(&mut self, path: &String, gram_type: GramType) -> Result<(u32, u32, HashMap<String, u32>), &str>{
+    fn read(
+        &mut self,
+        path: &String,
+        gram_type: GramType,
+    ) -> Result<(u32, u32, HashMap<String, u32>), String> {
         let mut c = 0;
         let mut v = 0;
         let mut map = HashMap::new();
 
         // TODO : 厳密なエラー処理
         let Ok(file) = File::open(path) else {
-            return Err("Cannot open user language model file");
+            return Err("Cannot open user language model file".to_string());
         };
 
         for line in BufReader::new(file).lines() {
             let Ok(line) = line else {
-                return Err("Cannot read user language model file");
+                return Err("Cannot read user language model file".to_string());
             };
             let tokens: Vec<&str> = line.trim().splitn(2, " ").collect();
             if tokens.len() != 2 {
@@ -72,8 +78,8 @@ impl UserLanguageModel {
             }
 
             let key = tokens[0];
-            let Ok(count) =  tokens[1].to_string().parse::<u32>() else {
-                return Err(&("Invalid line in user language model: ".to_string() + tokens[1]))
+            let Ok(count) = tokens[1].to_string().parse::<u32>() else {
+                return Err("Invalid line in user language model: ".to_string() + tokens[1]);
             };
 
             map.insert(key.to_string(), count);
@@ -99,98 +105,109 @@ impl UserLanguageModel {
         return Ok((c, v, map));
     }
 
-    fn load_unigram(&mut self) -> Result<(), &str> {
-        let result = self.read(&self.unigram_path, GramType::UniGram);
+    fn load_unigram(&mut self) -> Result<(), String> {
+        let result = self.read(&self.unigram_path.clone(), GramType::UniGram);
         let Ok((c, v, map)) = result else {
             return Err(result.err().unwrap());
-        } ;
+        };
         self.unigram_c = c;
         self.unigram_v = v;
         self.unigram = map;
         return Ok(());
     }
 
-    fn load_bigram(&mut self) -> Result<(), &str> {
-        let result = self.read(&self.bigram_path, GramType::BiGram);
+    fn load_bigram(&mut self) -> Result<(), String> {
+        let result = self.read(&self.bigram_path.clone(), GramType::BiGram);
         let Ok((c, v, map)) = result else {
             return Err(result.err().unwrap());
-        } ;
+        };
         self.bigram_c = c;
         self.bigram_v = v;
         self.bigram = map;
         return Ok(());
     }
 
-    fn add_entry(&self, nodes: &Vec<Node>) {
+    fn add_entry(&mut self, nodes: &Vec<crate::node::Node>) {
         // unigram
         for node in nodes {
-            let key = node.key;
-            if (!self.unigram.contains_key(key)) {
+            let key = &node.key;
+            if !self.unigram.contains_key(key) {
                 // increment unique count
                 self.unigram_c += 1;
             }
             self.unigram_v += 1;
-            let tokens = key.split(2, "/").collect();
+            let tokens: Vec<&str> = key.splitn(2, "/").collect();
             let kana = tokens[1];
             // std::wstring kana = std::get<1>(split2(key, L'/', splitted));
-            self.unigram_kanas.insert(kana);
-            self.unigram.insert(key, self.unigram.unwrap_or(key, 0) + 1);
+            self.unigram_kanas.insert(kana.to_string());
+            self.unigram.insert(
+                key.to_string(),
+                self.unigram.get(key.as_str()).unwrap_or(&0_u32) + 1,
+            );
         }
 
         // bigram
-        for (int i = 1; i < nodes.size(); i++) {
-            const akaza::Node &node1 = nodes[i - 1];
-            const akaza::Node &node2 = nodes[i];
+        for i in 1..nodes.len() {
+            let Some(node1) = nodes.get(i - 1) else {
+                continue;
+            };
+            let Some(node2) = nodes.get(i) else {
+                continue;
+            };
 
-            std::wstring key = node1.get_key() + L"\t" + node2.get_key();
-            if (bigram_.count(key) == 0) {
-                bigram_C_ += 1;
+            let mut k1 = &node1.key.to_string().clone();
+            let key = k1.to_string() + &"\t".to_string() + &node2.key;
+            if self.bigram.contains_key(&key) {
+                self.bigram_c += 1;
             }
-            bigram_V_ += 1;
-            bigram_[key] = unigram_.count(key) > 0 ? unigram_[key] + 1 : 1;
+            self.bigram_v += 1;
+            self.bigram
+                .insert(key.clone(), self.bigram.get(&key).unwrap_or(&0) + 1);
         }
 
         self.need_save = true;
     }
 
+    pub(crate) fn get_unigram_cost(&self, key: &String) -> Option<f32> {
+        let Some(count) = self.unigram.get(key) else {
+            return None;
+        };
+        return Some(f32::log10(
+            ((*count as f32) + self.alpha)
+                / ((self.unigram_c as f32) + self.alpha + (self.unigram_v as f32)),
+        ));
+    }
+
+    fn get_bigram_cost(&self, key1: &String, key2: &String) -> Option<f32> {
+        let key = key1.clone() + "\t" + key2;
+        let Some(count) = self.bigram.get(key.as_str()) else {
+            return None;
+        };
+        return Some(f32::log10(
+            ((*count as f32) + self.alpha)
+                / ((self.bigram_c as f32) + self.alpha + (self.bigram_v as f32)),
+        ));
+    }
+
+    // TODO save_file
+
     /*
-std::optional<float> akaza::UserLanguageModel::get_unigram_cost(const std::wstring &key) const {
-    auto search = unigram_.find(key);
-    if (search != unigram_.cend()) {
-        int count = search->second;
-        return std::log10((float(count) + alpha_) / float(unigram_C_) + alpha_ * float(unigram_V_));
+
+    void akaza::UserLanguageModel::save_file(const std::string &path, const std::unordered_map<std::wstring, int> &map) {
+        std::string tmppath(path + ".tmp");
+        std::wofstream ofs(tmppath, std::ofstream::out);
+        ofs.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+
+        for (const auto&[words, count] : map) {
+            ofs << words << " " << count << std::endl;
+        }
+        ofs.close();
+
+        int status = std::rename(tmppath.c_str(), path.c_str());
+        if (status != 0) {
+            std::string err = strerror(errno);
+            throw std::runtime_error(err + " : " + path + " (Cannot write user language model)");
+        }
     }
-    return {};
+    */
 }
-
-std::optional<float>
-akaza::UserLanguageModel::get_bigram_cost(const std::wstring &key1, const std::wstring &key2) const {
-    auto key = key1 + L"\t" + key2;
-    auto search = bigram_.find(key);
-    if (search != bigram_.cend()) {
-        int count = search->second;
-        return std::log10((float(count) + alpha_) / (float(bigram_C_) + alpha_ * float(bigram_V_)));
-    } else {
-        return {};
-    }
-}
-
-void akaza::UserLanguageModel::save_file(const std::string &path, const std::unordered_map<std::wstring, int> &map) {
-    std::string tmppath(path + ".tmp");
-    std::wofstream ofs(tmppath, std::ofstream::out);
-    ofs.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
-
-    for (const auto&[words, count] : map) {
-        ofs << words << " " << count << std::endl;
-    }
-    ofs.close();
-
-    int status = std::rename(tmppath.c_str(), path.c_str());
-    if (status != 0) {
-        std::string err = strerror(errno);
-        throw std::runtime_error(err + " : " + path + " (Cannot write user language model)");
-    }
-}
-*/
-}
-

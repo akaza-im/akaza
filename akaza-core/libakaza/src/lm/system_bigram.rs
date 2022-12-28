@@ -11,7 +11,7 @@ impl SystemBigramLMBuilder {
         }
     }
 
-    pub unsafe fn add(&self, word_id1: usize, word_id2: usize, score: f32) {
+    pub unsafe fn add(&self, word_id1: i32, word_id2: i32, score: f32) {
         let mut key: Vec<u8> = Vec::new();
         key.extend(word_id1.to_le_bytes());
         key.extend(word_id2.to_le_bytes());

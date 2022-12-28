@@ -9,7 +9,7 @@ use libakaza::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
 unsafe fn process_unigram(srcpath: &String, dstpath: &String) {
     let file = File::open(srcpath).expect("Open {txtfile} correctly.");
 
-    let builder = SystemUnigramLMBuilder::new();
+    let mut builder = SystemUnigramLMBuilder::new();
     let mut i: u64 = 0;
     for line in BufReader::new(file).lines() {
         let line = line.unwrap();
@@ -59,17 +59,10 @@ unsafe fn process_2gram(unigram: &SystemUnigramLM, srcpath: &String, dstpath: &S
 
         // println!("word1='{}' word2='{}' score='{}'", word1, word2, score);
 
-        let word_id1 = unigram.find_unigram(&word1.to_string());
-        let word_id2 = unigram.find_unigram(&word2.to_string());
-        if word_id1.is_none() || word_id2.is_none() {
-            println!(
-                "Unknown word(not in unigram dict): word1='{}' word2='{}'",
-                word1, word2
-            );
-            continue;
-        }
+        let (word_id1, _) = unigram.find_unigram(&word1.to_string()).unwrap();
+        let (word_id2, _) = unigram.find_unigram(&word2.to_string()).unwrap();
 
-        builder.add(word_id1.unwrap(), word_id2.unwrap(), score);
+        builder.add(word_id1, word_id2, score);
     }
 
     builder.save(dstpath).unwrap();
