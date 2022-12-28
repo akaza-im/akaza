@@ -26,6 +26,7 @@ void akaza::UserLanguageModel::read(const std::string &path, bool is_unigram, in
         if (!splitted) {
             continue;
         }
+
         std::wstring key = std::get<0>(m);
         int count = my_atoi(std::get<1>(m));
         map[key] = count;
