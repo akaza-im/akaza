@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 marisa-sys = { path = "../marisa-sys" }
 chrono = "0.4.23"
+regex = "1"
