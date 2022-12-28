@@ -49,3 +49,10 @@ graph TD
     SKK-JISYO.zipcode --> single-term-dict
     single-term-dict -- akaza-make-binary-dict--> single_term.trie
 ```
+
+## ユーザー言語モデル
+
+akaza はユーザーごとに学習が可能なように設計されている。
+シンプルに実装するために、ユーザー言語モデルはプレインテキスト形式で保存される。
+プレインテキスト形式なので、ユーザーは自分の好きなようにファイルを変更することが可能である。
+
