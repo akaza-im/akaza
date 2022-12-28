@@ -9,3 +9,4 @@ edition = "2021"
 marisa-sys = { path = "../marisa-sys" }
 chrono = "0.4.23"
 regex = "1"
+sled = "0.34.7"
