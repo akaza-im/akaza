@@ -155,7 +155,7 @@ impl UserLanguageModel {
                 continue;
             };
 
-            let mut k1 = &node1.key.to_string().clone();
+            let k1 = &node1.key.to_string().clone();
             let key = k1.to_string() + &"\t".to_string() + &node2.key;
             if self.bigram.contains_key(&key) {
                 self.bigram_c += 1;

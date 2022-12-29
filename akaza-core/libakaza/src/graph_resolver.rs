@@ -1,9 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::binary_dict::BinaryDict;
-    use crate::lm::system_unigram_lm::SystemUnigramLM;
+    use crate::binary_dict::KanaKanjiDict;
     use daachorse::DoubleArrayAhoCorasick;
+    use std::collections::HashSet;
 
     #[test]
     fn test() {
@@ -11,8 +10,21 @@ mod tests {
 
         // let mut it = pma.find_overlapping_iter("abcd");
 
-        let patterns = vec!["わたし", "の", "なまえ", "なかの", "です", "なか"];
+        let dict = KanaKanjiDict::load(
+            &"/home/tokuhirom/dev/akaza/akaza-data/data/system_dict.trie".to_string(),
+        )
+        .expect("KanaKanjiDict can open");
+        let yomis = dict.all_yomis();
+        println!("Make unique");
+        let yomis: HashSet<String> = yomis.into_iter().collect();
+        let yomicnt = yomis.len();
+        assert_eq!(yomicnt, 3);
+
+        // let patterns = vec!["わたし", "の", "なまえ", "なかの", "です", "なか"];
+        let patterns = yomis;
+        println!("Build it. {}", yomicnt);
         let pma = DoubleArrayAhoCorasick::<usize>::new(patterns);
+        println!("Build it.");
         let pma = pma.unwrap();
         let target = "わたしのなまえはなかのなのです。";
         let p = pma.find_overlapping_iter(target);
