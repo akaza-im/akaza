@@ -67,39 +67,45 @@ pub struct Marisa {
 }
 
 impl Marisa {
-    pub unsafe fn new() -> Marisa {
-        let marisa = marisa_new();
+    pub fn new() -> Marisa {
+        let marisa = unsafe { marisa_new() };
         Marisa { marisa }
     }
 
-    pub unsafe fn load(&self, filename: &String) -> Result<(), String> {
-        let exc = marisa_load(self.marisa, filename.as_ptr());
-        return if exc.is_null() {
-            Ok(())
-        } else {
-            Err(CString::from_raw((*exc).error_message)
-                .into_string()
-                .unwrap())
-        };
+    pub fn load(&self, filename: &String) -> Result<(), String> {
+        unsafe {
+            let exc = marisa_load(self.marisa, filename.as_ptr());
+            return if exc.is_null() {
+                Ok(())
+            } else {
+                Err(CString::from_raw((*exc).error_message)
+                    .into_string()
+                    .unwrap())
+            };
+        }
     }
 
-    pub unsafe fn build(&self, keyset: &Keyset) {
-        marisa_build(self.marisa, keyset.keyset);
+    pub fn build(&self, keyset: &Keyset) {
+        unsafe {
+            marisa_build(self.marisa, keyset.keyset);
+        }
     }
 
-    pub unsafe fn save(&self, filename: &String) -> Result<(), String> {
-        let exc = marisa_save(self.marisa, filename.as_ptr());
-        return if exc.is_null() {
-            Ok(())
-        } else {
-            Err(CString::from_raw((*exc).error_message)
-                .into_string()
-                .unwrap())
-        };
+    pub fn save(&self, filename: &String) -> Result<(), String> {
+        unsafe {
+            let exc = marisa_save(self.marisa, filename.as_ptr());
+            return if exc.is_null() {
+                Ok(())
+            } else {
+                Err(CString::from_raw((*exc).error_message)
+                    .into_string()
+                    .unwrap())
+            };
+        }
     }
 
-    pub unsafe fn num_keys(&self) -> usize {
-        marisa_num_keys(self.marisa)
+    pub fn num_keys(&self) -> usize {
+        unsafe { marisa_num_keys(self.marisa) }
     }
 
     unsafe extern "C" fn trampoline<F>(
@@ -123,34 +129,38 @@ impl Marisa {
         Marisa::trampoline::<F>
     }
 
-    pub unsafe fn predictive_search<F>(&self, query: &[u8], callback: F)
+    pub fn predictive_search<F>(&self, query: &[u8], callback: F)
     where
         F: FnMut(&[u8], usize) -> bool,
     {
         let mut closure = callback;
         let cb = Marisa::get_trampoline(&closure);
-        marisa_predictive_search(
-            self.marisa,
-            query.as_ptr(),
-            query.len(),
-            &mut closure as *mut _ as *mut c_void,
-            cb,
-        );
+        unsafe {
+            marisa_predictive_search(
+                self.marisa,
+                query.as_ptr(),
+                query.len(),
+                &mut closure as *mut _ as *mut c_void,
+                cb,
+            );
+        }
     }
 
-    pub unsafe fn common_prefix_search<F>(&self, query: &[u8], callback: F)
+    pub fn common_prefix_search<F>(&self, query: &[u8], callback: F)
     where
         F: FnMut(&[u8], usize) -> bool,
     {
         let mut closure = callback;
         let cb = Marisa::get_trampoline(&closure);
-        marisa_common_prefix_search(
-            self.marisa,
-            query.as_ptr(),
-            query.len(),
-            &mut closure as *mut _ as *mut c_void,
-            cb,
-        );
+        unsafe {
+            marisa_common_prefix_search(
+                self.marisa,
+                query.as_ptr(),
+                query.len(),
+                &mut closure as *mut _ as *mut c_void,
+                cb,
+            );
+        }
     }
 }
 
@@ -159,13 +169,17 @@ pub struct Keyset {
 }
 
 impl Keyset {
-    pub unsafe fn new() -> Keyset {
-        Keyset {
-            keyset: marisa_keyset_new(),
+    pub fn new() -> Keyset {
+        unsafe {
+            Keyset {
+                keyset: marisa_keyset_new(),
+            }
         }
     }
-    pub unsafe fn push_back(&self, key: &[u8]) {
-        marisa_keyset_push_back(self.keyset, key.as_ptr(), key.len());
+    pub fn push_back(&self, key: &[u8]) {
+        unsafe {
+            marisa_keyset_push_back(self.keyset, key.as_ptr(), key.len());
+        }
     }
 }
 
@@ -189,7 +203,7 @@ mod tests {
         let tmpfile = tmpfile.path().to_str().unwrap().to_string();
         // let tmpfile = "/tmp/test.trie".to_string();
 
-        unsafe {
+        {
             let keyset = Keyset::new();
             keyset.push_back("apple".as_bytes());
             keyset.push_back("age".as_bytes());
@@ -202,7 +216,7 @@ mod tests {
         }
 
         // read it
-        unsafe {
+        {
             let marisa = Marisa::new();
             marisa.load(&tmpfile).unwrap();
             assert_eq!(marisa.num_keys(), 3);
@@ -226,7 +240,7 @@ mod tests {
 
     #[test]
     fn test_exc() {
-        unsafe {
+        {
             let marisa = Marisa::new();
             let result = marisa.load(&"UNKNOWN_PATH".to_string());
             if let Err(err) = result {
