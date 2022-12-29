@@ -27,10 +27,13 @@ mod tests {
             }
             marisa.build(&keyset);
 
-            marisa.predictive_search(&"わた".as_bytes(), |f, id| {
-                println!("! {}", String::from_utf8(f.to_vec()).unwrap());
-                true
-            });
+            marisa.common_prefix_search(
+                &"わたしのなまえはなかのです".as_bytes(),
+                |f, id| {
+                    println!("! {}", String::from_utf8(f.to_vec()).unwrap());
+                    true
+                },
+            );
         }
 
         // let patterns = vec!["わたし", "の", "なまえ", "なかの", "です", "なか"];

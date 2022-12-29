@@ -24,6 +24,7 @@ extern "C" {
     marisa_exception* marisa_load(marisa_obj* self, const char* filename);
     marisa_exception* marisa_save(marisa_obj* self, const char* filename);
     void marisa_predictive_search(marisa_obj *self, const char* query, size_t query_len, void* user_data, marisa_callback cb);
+    void marisa_common_prefix_search(marisa_obj *self, const char* query, size_t query_len, void* user_data, marisa_callback cb);
     size_t marisa_num_keys(marisa_obj* self);
 
     marisa_keyset* marisa_keyset_new();

@@ -25,7 +25,7 @@ struct marisa_exception {
 }
 
 pub type marisa_callback =
-unsafe extern "C" fn(user_data: *mut c_void, key: *const u8, len: usize, id: usize) -> bool;
+    unsafe extern "C" fn(user_data: *mut c_void, key: *const u8, len: usize, id: usize) -> bool;
 
 extern "C" {
     fn marisa_new() -> *mut marisa_obj;
@@ -34,6 +34,13 @@ extern "C" {
     fn marisa_load(self_: *mut marisa_obj, filename: *const u8) -> *mut marisa_exception;
     fn marisa_save(self_: *mut marisa_obj, filename: *const u8) -> *mut marisa_exception;
     fn marisa_predictive_search(
+        self_: *mut marisa_obj,
+        query: *const u8,
+        query_len: usize,
+        user_data: *mut c_void,
+        cb: marisa_callback,
+    );
+    fn marisa_common_prefix_search(
         self_: *mut marisa_obj,
         query: *const u8,
         query_len: usize,
@@ -53,9 +60,7 @@ extern "C" {
 // high level API
 // ---------------------------------------------------
 
-pub type PredictiveSearchCallback = dyn FnMut(
-    &[u8],
-    usize) -> bool;
+pub type PredictiveSearchCallback = dyn FnMut(&[u8], usize) -> bool;
 
 pub struct Marisa {
     marisa: *mut marisa_obj,
@@ -72,7 +77,9 @@ impl Marisa {
         return if exc.is_null() {
             Ok(())
         } else {
-            Err(CString::from_raw((*exc).error_message).into_string().unwrap())
+            Err(CString::from_raw((*exc).error_message)
+                .into_string()
+                .unwrap())
         };
     }
 
@@ -85,7 +92,9 @@ impl Marisa {
         return if exc.is_null() {
             Ok(())
         } else {
-            Err(CString::from_raw((*exc).error_message).into_string().unwrap())
+            Err(CString::from_raw((*exc).error_message)
+                .into_string()
+                .unwrap())
         };
     }
 
@@ -99,27 +108,43 @@ impl Marisa {
         len: usize,
         id: usize,
     ) -> bool
-        where
-            F: FnMut(
-                &[u8],
-                usize) -> bool,
+    where
+        F: FnMut(&[u8], usize) -> bool,
     {
         let cookie = &mut *(cookie as *mut F);
         let cs = std::slice::from_raw_parts(s, len as usize);
         cookie(cs, id)
     }
 
-
     fn get_trampoline<F>(_closure: &F) -> marisa_callback
-        where F: FnMut(&[u8], usize) -> bool {
+    where
+        F: FnMut(&[u8], usize) -> bool,
+    {
         Marisa::trampoline::<F>
     }
 
     pub unsafe fn predictive_search<F>(&self, query: &[u8], callback: F)
-        where F: FnMut(&[u8], usize) -> bool {
+    where
+        F: FnMut(&[u8], usize) -> bool,
+    {
         let mut closure = callback;
         let cb = Marisa::get_trampoline(&closure);
         marisa_predictive_search(
+            self.marisa,
+            query.as_ptr(),
+            query.len(),
+            &mut closure as *mut _ as *mut c_void,
+            cb,
+        );
+    }
+
+    pub unsafe fn common_prefix_search<F>(&self, query: &[u8], callback: F)
+    where
+        F: FnMut(&[u8], usize) -> bool,
+    {
+        let mut closure = callback;
+        let cb = Marisa::get_trampoline(&closure);
+        marisa_common_prefix_search(
             self.marisa,
             query.as_ptr(),
             query.len(),
@@ -135,7 +160,9 @@ pub struct Keyset {
 
 impl Keyset {
     pub unsafe fn new() -> Keyset {
-        Keyset { keyset: marisa_keyset_new() }
+        Keyset {
+            keyset: marisa_keyset_new(),
+        }
     }
     pub unsafe fn push_back(&self, key: &[u8]) {
         marisa_keyset_push_back(self.keyset, key.as_ptr(), key.len());
@@ -149,7 +176,6 @@ impl Drop for Keyset {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -187,8 +213,7 @@ mod tests {
 
             marisa.predictive_search("a".as_bytes(), |bytes, id| {
                 i += 1;
-                let key = String::from_utf8(bytes.to_vec())
-                    .unwrap();
+                let key = String::from_utf8(bytes.to_vec()).unwrap();
                 got.push((key, id));
                 true
             });
