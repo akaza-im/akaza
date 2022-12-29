@@ -1,8 +1,9 @@
-use log::trace;
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 
-use marisa_sys::{Keyset, Marisa};
+use log::trace;
+
+use crate::kana_trie::KanaTrie;
 
 #[derive(PartialEq)]
 struct WordNode {
@@ -10,6 +11,7 @@ struct WordNode {
     kanji: String,
     cost: f32,
 }
+
 impl Hash for WordNode {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.start_pos.hash(state);
@@ -44,60 +46,13 @@ impl WordNode {
     }
 }
 
-struct KanaTrieBuilder {
-    keyset: Keyset,
-}
-
-impl KanaTrieBuilder {
-    fn new() -> KanaTrieBuilder {
-        KanaTrieBuilder {
-            keyset: Keyset::new(),
-        }
-    }
-
-    fn add(&mut self, yomi: &String) {
-        self.keyset.push_back(yomi.as_bytes());
-    }
-
-    fn build(&self) -> KanaTrie {
-        let marisa = Marisa::new();
-        marisa.build(&self.keyset);
-        KanaTrie { marisa }
-    }
-}
-
-struct KanaTrie {
-    marisa: Marisa,
-}
-
-impl KanaTrie {
-    pub(crate) fn common_prefix_search(&self, query: &String) -> Vec<String> {
-        let mut result: Vec<String> = Vec::new();
-        self.marisa.common_prefix_search(query, |word, _| {
-            result.push(String::from_utf8(word.to_vec()).unwrap());
-            true
-        });
-        return result;
-    }
-
-    fn save(&self, file_name: &String) -> Result<(), String> {
-        self.marisa.save(file_name)
-    }
-
-    fn load(file_name: &String) -> KanaTrie {
-        let marisa = Marisa::new();
-        marisa.load(file_name).unwrap();
-        KanaTrie { marisa }
-    }
-}
-
 struct Segmenter {
-    kana_trie: KanaTrie,
+    tries: Vec<KanaTrie>,
 }
 
 impl Segmenter {
-    pub(crate) fn new(kana_trie: KanaTrie) -> Segmenter {
-        Segmenter { kana_trie }
+    pub(crate) fn new(tries: Vec<KanaTrie>) -> Segmenter {
+        Segmenter { tries }
     }
 
     /**
@@ -126,7 +81,13 @@ impl Segmenter {
                 continue;
             }
 
-            let candidates = self.kana_trie.common_prefix_search(&yomi.to_string());
+            let mut candidates: HashSet<String> = HashSet::new();
+            for trie in &self.tries {
+                let got = trie.common_prefix_search(&yomi.to_string());
+                for g in got {
+                    candidates.insert(g);
+                }
+            }
             if candidates.len() > 0 {
                 for candidate in &candidates {
                     let ends_at = start_pos + candidate.len();
@@ -270,6 +231,7 @@ impl GraphResolver {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::kana_trie::KanaTrieBuilder;
 
     #[test]
     fn test() {
@@ -279,7 +241,7 @@ mod tests {
         builder.add(&"し".to_string());
         let kana_trie = builder.build();
 
-        let graph_builder = Segmenter::new(kana_trie);
+        let graph_builder = Segmenter::new(vec![kana_trie]);
         let graph = graph_builder.build(&"わたし".to_string());
         assert_eq!(
             graph,
@@ -300,7 +262,7 @@ mod tests {
         builder.add(&"c".to_string());
         let kana_trie = builder.build();
 
-        let graph_builder = Segmenter::new(kana_trie);
+        let graph_builder = Segmenter::new(vec![kana_trie]);
         let graph = graph_builder.build(&"abc".to_string());
         assert_eq!(
             graph,
