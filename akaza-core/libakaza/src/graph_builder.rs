@@ -1,7 +1,8 @@
-use marisa_sys::{Keyset, Marisa};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
+
+use marisa_sys::{Keyset, Marisa};
 
 /**
  * 有向グラフ。文のうしろから前に向かってリンクされる。
@@ -88,7 +89,8 @@ impl GraphBuilder {
         queue.push(0);
         let mut seen: HashSet<usize> = HashSet::new();
 
-        let mut words_start_at: HashMap<usize, Vec<String>> = HashMap::new();
+        // 終了位置ごとの候補単語リスト
+        let mut words_ends_at: HashMap<usize, Vec<String>> = HashMap::new();
 
         while queue.len() > 0 {
             let start_pos = queue.pop().unwrap();
@@ -105,27 +107,30 @@ impl GraphBuilder {
 
             let candidates = self.kana_trie.common_prefix_search(&yomi.to_string());
             if candidates.len() > 0 {
-                let mut results: Vec<String> = Vec::new();
-
                 for candidate in &candidates {
-                    results.push(candidate.clone());
+                    let ends_at = start_pos + candidate.len();
+
+                    let vec = words_ends_at.entry(ends_at).or_insert(Vec::new());
+                    vec.push(candidate.clone());
 
                     queue.push(start_pos + candidate.len());
                 }
-                words_start_at.insert(start_pos, results);
             } else {
                 // 辞書に1文字も候補がない場合は先頭文字を取り出してグラフに入れる
                 // ここは改善の余地がありそう。
 
                 let (i, _) = yomi.char_indices().nth(1).unwrap();
                 let first = &yomi[0..i];
+                let ends_at = start_pos + first.len();
 
-                words_start_at.insert(start_pos, vec![first.to_string()]);
+                let vec = words_ends_at.entry(ends_at).or_insert(Vec::new());
+                vec.push(first.to_string());
+
                 queue.push(start_pos + first.len())
             }
         }
 
-        return words_start_at;
+        return words_ends_at;
     }
 }
 
@@ -146,8 +151,8 @@ mod tests {
         assert_eq!(
             graph,
             HashMap::from([
-                (0, vec!["わた".to_string(), "わたし".to_string()]),
-                (6, vec!["し".to_string()])
+                (6, vec!["わた".to_string()]),
+                (9, vec!["わたし".to_string(), "し".to_string()]),
             ])
         )
     }
