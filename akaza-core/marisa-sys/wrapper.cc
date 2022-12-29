@@ -63,6 +63,17 @@ void marisa_predictive_search(marisa_obj *self, const char* query, size_t query_
     }
 }
 
+void marisa_common_prefix_search(marisa_obj *self, const char* query, size_t query_len, void* user_data, marisa_callback cb) {
+    marisa::Agent agent;
+    agent.set_query(query, query_len);
+
+    while (self->trie->common_prefix_search(agent)) {
+        if (!cb(user_data, agent.key().ptr(), agent.key().length(), agent.key().id())) {
+            break;
+        }
+    }
+}
+
 // -----------------------------------------
 // keyset
 // -----------------------------------------
