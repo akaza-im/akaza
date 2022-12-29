@@ -56,9 +56,7 @@ impl KanaTrie {
         });
         return result;
     }
-}
 
-impl KanaTrie {
     fn save(&self, file_name: &String) -> Result<(), String> {
         self.marisa.save(file_name)
     }
