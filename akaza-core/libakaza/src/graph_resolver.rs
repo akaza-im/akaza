@@ -19,7 +19,7 @@ mod tests {
         println!("Make unique");
         let yomis: HashSet<String> = yomis.into_iter().collect();
 
-        unsafe {
+        {
             let mut marisa = Marisa::new();
             let keyset = Keyset::new();
             for yomi in yomis {
