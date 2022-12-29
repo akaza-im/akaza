@@ -13,7 +13,7 @@ struct WordNode {
     start_pos: usize,
     kanji: String,
     cost: f32,
-    prev: Option<Rc<RefCell<WordNode>>,
+    prev: Option<Rc<RefCell<WordNode>>>,
 }
 
 impl WordNode {
