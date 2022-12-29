@@ -1,5 +1,6 @@
 use marisa_sys::{Keyset, Marisa};
 use std::cell::RefCell;
+use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 /**
@@ -82,59 +83,49 @@ impl GraphBuilder {
      */
     // シフトを押して → を押したときのような処理の場合、
     // このメソッドに入ってくる前に別に処理する前提。
-    fn build(&self, yomi: &String) -> Vec<GraphNode> {
-        assert_ne!(yomi.len(), 0);
+    fn build(&self, yomi: &String) -> HashMap<usize, Vec<String>> {
+        let mut queue: Vec<usize> = Vec::new(); // 検索対象となる開始位置
+        queue.push(0);
+        let mut seen: HashSet<usize> = HashSet::new();
 
-        // TODO BOS ノード使う?
-        self._build(yomi, None)
-    }
+        let mut words_start_at: HashMap<usize, Vec<String>> = HashMap::new();
 
-    fn _build(&self, yomi: &String, prev: Option<Rc<RefCell<GraphNode>>>) -> Vec<GraphNode> {
-        if yomi.len() == 0 {
-            return vec![];
+        while queue.len() > 0 {
+            let start_pos = queue.pop().unwrap();
+            if seen.contains(&start_pos) {
+                continue;
+            } else {
+                seen.insert(start_pos);
+            }
+
+            let yomi = &yomi[start_pos..];
+            if yomi.is_empty() {
+                continue;
+            }
+
+            let candidates = self.kana_trie.common_prefix_search(&yomi.to_string());
+            if candidates.len() > 0 {
+                let mut results: Vec<String> = Vec::new();
+
+                for candidate in &candidates {
+                    results.push(candidate.clone());
+
+                    queue.push(start_pos + candidate.len());
+                }
+                words_start_at.insert(start_pos, results);
+            } else {
+                // 辞書に1文字も候補がない場合は先頭文字を取り出してグラフに入れる
+                // ここは改善の余地がありそう。
+
+                let (i, _) = yomi.char_indices().nth(1).unwrap();
+                let first = &yomi[0..i];
+
+                words_start_at.insert(start_pos, vec![first.to_string()]);
+                queue.push(start_pos + first.len())
+            }
         }
 
-        let candidates = self.kana_trie.common_prefix_search(yomi);
-        return if candidates.len() == 0 {
-            // 辞書に1文字も候補がない場合は先頭文字を取り出してグラフに入れる
-            let (i, _) = yomi.char_indices().nth(1).unwrap();
-            let first = &yomi[0..i];
-
-            let current = GraphNode::new(&first.to_string(), prev);
-
-            if yomi.len() == 1 {
-                // 継続文字はない。current が終端ノード。
-                vec![current]
-            } else {
-                // 続きの文字があるのでそれを処理してもらう
-                let (i, _) = yomi.char_indices().nth(1).unwrap();
-                let remains = &yomi[..i];
-
-                self._build(&remains.to_string(), Some(Rc::new(RefCell::new(current))))
-            }
-        } else {
-            // 辞書の候補をそれぞれケアする
-            let mut result: Vec<GraphNode> = Vec::new();
-
-            for candidate in &candidates {
-                let current = GraphNode::new(&candidate.to_string(), prev.clone());
-
-                if yomi.len() == candidate.len() {
-                    // 継続文字はない。current が終端ノード。
-                    result.push(current);
-                } else {
-                    // 続きの文字があるのでそれを処理してもらう
-                    let (i, _) = yomi.char_indices().nth(candidate.chars().count()).unwrap();
-                    let remains = &yomi[i..];
-                    let got =
-                        self._build(&remains.to_string(), Some(Rc::new(RefCell::new(current))));
-                    for x in got {
-                        result.push(x);
-                    }
-                }
-            }
-            result
-        };
+        return words_start_at;
     }
 }
 
@@ -154,16 +145,10 @@ mod tests {
         let graph = graph_builder.build(&"わたし".to_string());
         assert_eq!(
             graph,
-            vec![
-                GraphNode::new(
-                    &"し".to_string(),
-                    Some(Rc::new(RefCell::new(GraphNode::new(
-                        &"わた".to_string(),
-                        None
-                    ))))
-                ),
-                GraphNode::new(&"わたし".to_string(), None)
-            ]
-        );
+            HashMap::from([
+                (0, vec!["わた".to_string(), "わたし".to_string()]),
+                (6, vec!["し".to_string()])
+            ])
+        )
     }
 }
