@@ -1,24 +1,51 @@
+use std::borrow::{Borrow, BorrowMut};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use marisa_sys::{Keyset, Marisa};
 
-/**
- * 有向グラフ。文のうしろから前に向かってリンクされる。
- */
-#[derive(PartialEq, Debug)]
-struct GraphNode {
-    yomi: String,
-    // 一個前のノード
-    prev: Option<Rc<RefCell<GraphNode>>>,
+// const BOS: WordNode = WordNode::create_bos();
+// const EOS: WordNode = WordNode::create_eos();
+
+#[derive(PartialEq)]
+struct WordNode {
+    start_pos: usize,
+    kanji: String,
+    cost: f32,
+    prev: Option<Rc<RefCell<WordNode>>,
 }
 
-impl GraphNode {
-    fn new(yomi: &String, prev: Option<Rc<RefCell<GraphNode>>>) -> GraphNode {
-        GraphNode {
-            yomi: yomi.clone(),
-            prev,
+impl WordNode {
+    fn create_bos() -> WordNode {
+        WordNode {
+            start_pos: 0,
+            kanji: "__BOS__".to_string(),
+            cost: 0_f32,
+            prev: None,
+        }
+    }
+    fn create_eos() -> WordNode {
+        WordNode {
+            start_pos: 0,
+            kanji: "__EOS__".to_string(),
+            cost: 0_f32,
+            prev: None,
+        }
+    }
+    fn new(start_pos: usize, kanji: &String) -> WordNode {
+        WordNode {
+            start_pos,
+            kanji: kanji.clone(),
+            cost: 0_f32,
+            prev: None,
+        }
+    }
+
+    pub fn set_prev(&mut self, prev: Option<Rc<RefCell<WordNode>>>) {
+        match prev {
+            Some(thing) => self.prev = Some(Rc::clone(&thing)),
+            None => self.prev = None,
         }
     }
 }
@@ -70,13 +97,13 @@ impl KanaTrie {
     }
 }
 
-struct GraphBuilder {
+struct Segmenter {
     kana_trie: KanaTrie,
 }
 
-impl GraphBuilder {
-    pub(crate) fn new(kana_trie: KanaTrie) -> GraphBuilder {
-        GraphBuilder { kana_trie }
+impl Segmenter {
+    pub(crate) fn new(kana_trie: KanaTrie) -> Segmenter {
+        Segmenter { kana_trie }
     }
 
     /**
@@ -134,6 +161,100 @@ impl GraphBuilder {
     }
 }
 
+// 次に必要なのは、分割された文字列から、グラフを構築する仕組みである。
+struct GraphResolver {
+    graph: HashMap<usize, Vec<Rc<RefCell<WordNode>>>>,
+}
+
+impl GraphResolver {
+    fn new(yomi: &String, words_ends_at: HashMap<usize, Vec<String>>) -> GraphResolver {
+        let graph = Self::construct_graph(yomi, words_ends_at);
+        GraphResolver { graph }
+    }
+
+    fn construct_graph(
+        yomi: &String,
+        words_ends_at: HashMap<usize, Vec<String>>,
+    ) -> HashMap<usize, Vec<Rc<RefCell<WordNode>>>> {
+        let mut graph: HashMap<usize, Vec<Rc<RefCell<WordNode>>>> = HashMap::new();
+        graph.insert(0, vec![Rc::new(RefCell::new(WordNode::create_bos()))]);
+        graph.insert(
+            yomi.len() + 1,
+            vec![Rc::new(RefCell::new(WordNode::create_eos()))],
+        );
+
+        for (end_pos, yomis) in words_ends_at {
+            for yomi in yomis {
+                // ↓ここで start_pos 渡す意味ある?
+                let node = WordNode::new(end_pos - yomi.len(), &yomi);
+                // ほんとうは、そもそもここで、漢字に変換した結果を詰め込まないといけない。
+
+                let vec = graph.entry(end_pos).or_insert(Vec::new());
+                vec.push(Rc::new(RefCell::new(node)));
+            }
+        }
+        return graph;
+    }
+
+    /// i文字目で終わるノードを探す
+    fn node_list(&self, i: usize) -> Option<Vec<Rc<RefCell<WordNode>>>> {
+        match self.graph.get(&i) {
+            Some(p) => Some(p.clone()),
+            None => None,
+        }
+    }
+
+    fn get_node_cost(&self, node: &Rc<RefCell<WordNode>>) -> f32 {
+        // 簡単のために、一旦スコアを文字列長とする。
+        // 経験上、長い文字列のほうがあたり、というルールでもそこそこ変換できる。
+        // TODO あとでちゃんと unigram のコストを使うよに変える。
+        // ここ明らかに書き方おかしいと思う。
+        unsafe {
+            return (*(node.as_ptr())).kanji.len() as f32;
+        }
+    }
+
+    fn get_prev_nodes(&self, node: &Rc<RefCell<WordNode>>) -> Option<&Vec<Rc<RefCell<WordNode>>>> {
+        // ここの処理を簡単にするために BOS が入っている、のだとおもう。
+        self.graph.get(&(node.as_ref().borrow().start_pos - 1))
+    }
+
+    fn get_edge_cost(&self, prev: &Rc<RefCell<WordNode>>, node: &Rc<RefCell<WordNode>>) -> f32 {
+        // TODO: あとで実装する
+        return 0.0;
+    }
+
+    fn viterbi(&self, yomi: &String) {
+        for i in 0..yomi.len() {
+            let Some(nodes) = self.node_list(i) else {
+                continue;
+            };
+            for mut node in nodes {
+                let node_cost = self.get_node_cost(&node);
+                let mut cost = f32::MAX;
+                let mut shortest_prev = None;
+                let prev_nodes = self.get_prev_nodes(&node).unwrap();
+                unsafe {
+                    for prev in prev_nodes.clone() {
+                        let edge_cost = self.get_edge_cost(&prev, &node);
+                        let tmp_cost = (*prev.as_ptr()).cost + edge_cost + node_cost;
+                        if tmp_cost < cost {
+                            cost = tmp_cost;
+                            shortest_prev = Some(prev);
+                        }
+                    }
+                }
+                node.get_mut().set_prev(shortest_prev);
+
+                let b = node.borrow_mut();
+                // let mut p = node.borrow_mut();
+                // p.get_mut().set_prev(shortest_prev);
+                // p.get_mut().cost = cost;
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -146,7 +267,7 @@ mod tests {
         builder.add(&"し".to_string());
         let kana_trie = builder.build();
 
-        let graph_builder = GraphBuilder::new(kana_trie);
+        let graph_builder = Segmenter::new(kana_trie);
         let graph = graph_builder.build(&"わたし".to_string());
         assert_eq!(
             graph,
