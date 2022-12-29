@@ -28,7 +28,7 @@ mod tests {
             marisa.build(&keyset);
 
             marisa.common_prefix_search(
-                &"わたしのなまえはなかのです".as_bytes(),
+                &"わたしのなまえはなかのです".to_string(),
                 |f, id| {
                     println!("! {}", String::from_utf8(f.to_vec()).unwrap());
                     true
