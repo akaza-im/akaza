@@ -1,4 +1,5 @@
 pub mod binary_dict;
+mod graph_resolver;
 pub mod kana;
 pub mod lm;
 mod node;
