@@ -4,22 +4,12 @@ use std::hash::{Hash, Hasher};
 
 use marisa_sys::{Keyset, Marisa};
 
-// const BOS: WordNode = WordNode::create_bos();
-// const EOS: WordNode = WordNode::create_eos();
-
 #[derive(PartialEq)]
 struct WordNode {
     start_pos: i32,
     kanji: String,
     cost: f32,
 }
-/*
-impl PartialEq<Self> for WordNode {
-    fn eq(&self, other: &Self) -> bool {
-        self.start_pos == other.start_pos && self.kanji == other.kanji && self.cost == other.cost
-    }
-}
-*/
 impl Hash for WordNode {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.start_pos.hash(state);
@@ -232,7 +222,7 @@ impl GraphResolver {
             let Some(nodes) = self.node_list(i as i32) else {
                 continue;
             };
-            for mut node in nodes {
+            for node in nodes {
                 let node_cost = self.get_node_cost(node);
                 let mut cost = f32::MAX;
                 let mut shortest_prev = None;
