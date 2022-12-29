@@ -1,8 +1,10 @@
-use log::info;
 use marisa_sys::{Keyset, Marisa};
 use std::cell::RefCell;
 use std::rc::Rc;
 
+/**
+ * 有向グラフ。文のうしろから前に向かってリンクされる。
+ */
 #[derive(PartialEq, Debug)]
 struct GraphNode {
     yomi: String,
@@ -100,7 +102,6 @@ impl GraphBuilder {
             let (i, _) = yomi.char_indices().nth(1).unwrap();
             let first = &yomi[0..i];
 
-            // TODO 1文字だけの場合をケアする
             let current = GraphNode::new(&first.to_string(), prev);
 
             if yomi.len() == 1 {
