@@ -17,14 +17,12 @@ pub(crate) fn read_user_stats_file(path: &String) -> Result<Vec<(String, u32)>, 
         let Ok(line) = line else {
             return Err("Cannot read user language model file".to_string());
         };
-        let tokens: Vec<&str> = line.trim().splitn(2, " ").collect();
-        if tokens.len() != 2 {
+        let Some((key, count)) = line.trim().split_once(" ") else {
             continue;
-        }
+        };
 
-        let key = tokens[0];
-        let Ok(count) = tokens[1].to_string().parse::<u32>() else {
-            return Err("Invalid line in user language model: ".to_string() + tokens[1]);
+        let Ok(count) = count.to_string().parse::<u32>() else {
+            return Err("Invalid line in user language model: ".to_string() + count);
         };
 
         result.push((key.to_string(), count));
