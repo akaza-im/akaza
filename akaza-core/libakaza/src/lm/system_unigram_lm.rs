@@ -1,3 +1,4 @@
+use log::info;
 use marisa_sys::{Keyset, Marisa};
 
 /**
@@ -64,7 +65,7 @@ impl SystemUnigramLM {
     }
 
     pub fn load(fname: &String) -> Result<SystemUnigramLM, String> {
-        println!("Reading {}", fname);
+        info!("Reading {}", fname);
         let mut marisa = Marisa::default();
         marisa.load(fname)?;
         Ok(SystemUnigramLM { marisa })

@@ -1,4 +1,5 @@
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::btree_map::BTreeMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::rc::Rc;
@@ -126,6 +127,8 @@ impl Segmenter {
             } else {
                 // 辞書に1文字も候補がない場合は先頭文字を取り出してグラフに入れる
                 // ここは改善の余地がありそう。
+
+                trace!("There's no candidates. '{}'", yomi);
 
                 let (i, _) = yomi.char_indices().nth(1).unwrap();
                 let first = &yomi[0..i];

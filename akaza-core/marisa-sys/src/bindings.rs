@@ -65,12 +65,14 @@ pub type PredictiveSearchCallback = dyn FnMut(&[u8], usize) -> bool;
 pub struct Marisa {
     marisa: *mut marisa_obj,
 }
+
 impl Default for Marisa {
     fn default() -> Marisa {
         let marisa = unsafe { marisa_new() };
         Marisa { marisa }
     }
 }
+
 impl Marisa {
     pub fn load(&mut self, filename: &str) -> Result<(), String> {
         unsafe {
@@ -80,7 +82,9 @@ impl Marisa {
             } else {
                 Err(CString::from_raw((*exc).error_message)
                     .into_string()
-                    .unwrap())
+                    .unwrap()
+                    + " : "
+                    + filename)
             }
         }
     }

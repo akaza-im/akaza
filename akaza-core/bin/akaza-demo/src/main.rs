@@ -1,7 +1,7 @@
 use libakaza::graph_builder::{GraphBuilder, GraphResolver, Segmenter};
 use libakaza::kana_kanji_dict::KanaKanjiDictBuilder;
-use libakaza::kana_trie::KanaTrieBuilder;
-use libakaza::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
+use libakaza::kana_trie::KanaTrie;
+use libakaza::lm::system_unigram_lm::SystemUnigramLM;
 use libakaza::user_side_data::user_data::UserData;
 use std::env;
 use std::fs::File;
@@ -13,17 +13,13 @@ fn main() {
     let _ = env_logger::builder().try_init();
 
     let args: Vec<String> = env::args().collect();
-    let datadir = &args[1];
-    let system_unigram_lm =
-        SystemUnigramLM::load(&(datadir.to_owned() + "/lm_v2_1gram.trie")).unwrap();
+    let datadir = args[1].to_owned();
+    let system_unigram_path = &((&datadir).to_string() + "/lm_v2_1gram.trie");
+    let system_unigram_lm = SystemUnigramLM::load(system_unigram_path).unwrap();
 
-    let mut builder = KanaTrieBuilder::new();
-    builder.add(&"わたし".to_string());
-    builder.add(&"わた".to_string());
-    builder.add(&"し".to_string());
-    let kana_trie = builder.build();
+    let system_dict = KanaTrie::load(&(datadir.to_string() + "/system_dict.trie")).unwrap();
 
-    let graph_builder = Segmenter::new(vec![kana_trie]);
+    let graph_builder = Segmenter::new(vec![system_dict]);
     let graph = graph_builder.build(&"わたし".to_string());
 
     let mut dict_builder = KanaKanjiDictBuilder::default();
@@ -33,7 +29,6 @@ fn main() {
 
     // TODO このへん、ちょっとコピペしまくらないといけなくて渋い。
     let dict = dict_builder.build();
-    let system_unigram_lm_builder = SystemUnigramLMBuilder::default();
     let mut user_data = UserData::load(
         &NamedTempFile::new()
             .unwrap()

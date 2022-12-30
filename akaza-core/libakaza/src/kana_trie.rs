@@ -35,12 +35,10 @@ impl KanaTrie {
         self.marisa.save(file_name)
     }
 
-    pub(crate) fn load(file_name: &str) -> Result<KanaTrie, String> {
+    pub fn load(file_name: &str) -> Result<KanaTrie, String> {
         let mut marisa = Marisa::default();
-        match marisa.load(file_name) {
-            Ok(_) => Ok(KanaTrie { marisa }),
-            Err(err) => Err(err),
-        }
+        marisa.load(file_name)?;
+        Ok(KanaTrie { marisa })
     }
 
     pub(crate) fn common_prefix_search(&self, query: &String) -> Vec<String> {
