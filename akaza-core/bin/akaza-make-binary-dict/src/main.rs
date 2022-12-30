@@ -7,7 +7,7 @@ use libakaza::kana_kanji_dict::KanaKanjiDictBuilder;
 unsafe fn make_binary_dict(txtfile: &String, triefile: &String) {
     println!("Generating {} from {}", triefile, txtfile);
 
-    let binary_dict = KanaKanjiDictBuilder::new();
+    let mut binary_dict = KanaKanjiDictBuilder::new();
 
     let file = File::open(txtfile).expect("Open {txtfile} correctly.");
     for line in BufReader::new(file).lines() {

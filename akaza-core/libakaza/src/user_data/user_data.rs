@@ -11,7 +11,7 @@ use marisa_sys::Marisa;
 /**
  * ユーザー固有データ
  */
-struct UserData {
+pub(crate) struct UserData {
     /// 読み仮名のトライ。入力変換時に共通接頭辞検索するために使用。
     kana_trie: KanaTrie,
     unigram_user_stats: UniGramUserStats,
@@ -21,10 +21,14 @@ struct UserData {
     bigram_path: String,
     kana_trie_path: String,
 
-    pub need_save: bool,
+    pub(crate) need_save: bool,
 }
 impl UserData {
-    fn load(unigram_path: &String, bigram_path: &String, kana_trie_path: &String) -> UserData {
+    pub(crate) fn load(
+        unigram_path: &String,
+        bigram_path: &String,
+        kana_trie_path: &String,
+    ) -> UserData {
         // ユーザーデータが読み込めないことは fatal エラーではない。
         // 初回起動時にはデータがないので。
         // データがなければ初期所状態から始める
@@ -86,9 +90,9 @@ impl UserData {
     }
 
     /// 入力確定した漢字のリストをユーザー統計データとして記録する。
-    fn record_entries(&mut self, kanjis: Vec<String>, _kanas: Vec<String>) {
-        self.unigram_user_stats.record_entries(&kanjis);
-        self.bigram_user_stats.record_entries(&kanjis);
+    pub fn record_entries(&mut self, kanji_kanas: Vec<String>) {
+        self.unigram_user_stats.record_entries(&kanji_kanas);
+        self.bigram_user_stats.record_entries(&kanji_kanas);
 
         // for kana in kanas {
         // TODO: record kanas to trie.
@@ -99,5 +103,10 @@ impl UserData {
         write_user_stats_file(&self.unigram_path, &self.unigram_user_stats.word_count)?;
         write_user_stats_file(&self.bigram_path, &self.bigram_user_stats.word_count)?;
         Ok(())
+    }
+
+    pub fn get_unigram_cost(&self, kanji: &str, yomi: &str) -> Option<f32> {
+        self.unigram_user_stats
+            .get_cost(format!("{}/{}", kanji, yomi))
     }
 }

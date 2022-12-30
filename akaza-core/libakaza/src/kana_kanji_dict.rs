@@ -19,7 +19,7 @@ impl KanaKanjiDictBuilder {
         }
     }
 
-    pub fn add(&self, yomi: &String, kanjis: &String) {
+    pub fn add(&mut self, yomi: &str, kanjis: &str) {
         let key = [yomi.as_bytes(), b"\t", kanjis.as_bytes()].concat();
         self.trie_builder.add(key);
     }
@@ -79,7 +79,7 @@ mod tests {
     fn test_all_yomis() {
         let tmpfile = "/tmp/kanakanji.tri".to_string();
         {
-            let builder = KanaKanjiDictBuilder::new();
+            let mut builder = KanaKanjiDictBuilder::new();
             builder.add(&"わたし".to_string(), &"私/渡し".to_string());
             builder.add(&"なまえ".to_string(), &"名前".to_string());
             builder.save(&tmpfile).unwrap();
@@ -95,7 +95,7 @@ mod tests {
 
     #[test]
     fn test_find() {
-        let builder = KanaKanjiDictBuilder::new();
+        let mut builder = KanaKanjiDictBuilder::new();
         builder.add(&"わたし".to_string(), &"私/渡し".to_string());
         builder.add(&"なまえ".to_string(), &"名前".to_string());
         let dict = builder.build();

@@ -15,19 +15,19 @@ impl TrieBuilder {
         }
     }
 
-    pub fn add(&self, key: Vec<u8>) {
+    pub fn add(&mut self, key: Vec<u8>) {
         self.keyset.push_back(key.as_slice());
     }
 
     pub fn save(&self, ofname: &String) -> std::io::Result<()> {
-        let marisa = Marisa::new();
+        let mut marisa = Marisa::new();
         marisa.build(&self.keyset);
         marisa.save(ofname).unwrap();
         return Ok(());
     }
 
     pub fn build(&self) -> Trie {
-        let marisa = Marisa::new();
+        let mut marisa = Marisa::new();
         marisa.build(&self.keyset);
         Trie { marisa }
     }
@@ -41,7 +41,7 @@ pub struct Trie {
 
 impl Trie {
     pub fn load(filename: &String) -> Result<Trie, Error> {
-        let marisa = Marisa::new();
+        let mut marisa = Marisa::new();
         marisa.load(filename).unwrap();
         return Ok(Trie { marisa });
     }
@@ -73,7 +73,7 @@ pub struct SearchResult {
 #[test]
 fn test() {
     {
-        let builder = TrieBuilder::new();
+        let mut builder = TrieBuilder::new();
         builder.add("foobar".as_bytes().to_vec());
         builder.save(&"/tmp/dump.trie".to_string()).unwrap();
 

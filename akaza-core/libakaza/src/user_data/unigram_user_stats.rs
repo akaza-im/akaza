@@ -7,7 +7,7 @@ pub(crate) struct UniGramUserStats {
     unique_words: u32, // C
     /// 総単語出現数
     total_words: u32, // V
-    /// その単語の出現頻度。「漢字」がキー。
+    /// その単語の出現頻度。「漢字/かな」がキー。
     pub(crate) word_count: HashMap<String, u32>,
 }
 
@@ -26,24 +26,25 @@ impl UniGramUserStats {
 
     /**
      * ノードコストを計算する。
-     * システム言語モデルのコストよりも安くなるように調整してある。
+     * システム言語モデルと似ているがちょっと違う式を使ってる模様。
      */
-    pub(crate) fn get_cost(&self, key: &String) -> Option<f32> {
-        let Some(count) = self.word_count.get(key) else {
+    pub(crate) fn get_cost(&self, key: String) -> Option<f32> {
+        let Some(count) = self.word_count.get(key.as_str()) else {
             return None;
         };
-        return Some(f32::log10(
+        let cost = Some(f32::log10(
             ((*count as f32) + ALPHA)
-                / ((self.unique_words as f32) + ALPHA + (self.total_words as f32)),
+                / ((self.unique_words as f32) + ALPHA * (self.total_words as f32)),
         ));
+        cost
     }
 
-    pub(crate) fn record_entries(&mut self, kanjis: &Vec<String>) {
-        for kanji in kanjis {
-            if let Some(i) = self.word_count.get(kanji) {
-                self.word_count.insert(kanji.clone(), i + 1);
+    pub(crate) fn record_entries(&mut self, kanji_kanas: &Vec<String>) {
+        for kanji_kana in kanji_kanas {
+            if let Some(i) = self.word_count.get(kanji_kana) {
+                self.word_count.insert(kanji_kana.clone(), i + 1);
             } else {
-                self.word_count.insert(kanji.clone(), 1);
+                self.word_count.insert(kanji_kana.clone(), 1);
                 self.unique_words += 1;
             }
             self.total_words += 1;
