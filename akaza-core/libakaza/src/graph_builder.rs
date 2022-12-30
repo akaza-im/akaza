@@ -192,7 +192,7 @@ impl GraphResolver {
         self.graph.get(&(node.start_pos))
     }
 
-    fn get_edge_cost(&self, prev: &WordNode, node: &WordNode) -> f32 {
+    fn get_edge_cost(&self, _prev: &WordNode, _node: &WordNode) -> f32 {
         // TODO: あとで実装する
         return 0.0;
     }
