@@ -2,7 +2,7 @@ use log::warn;
 use std::collections::HashMap;
 use std::io;
 
-use crate::kana_trie::{KanaTrie, KanaTrieBuilder};
+use crate::kana_trie::KanaTrie;
 use crate::user_data::bigram_user_stats::BiGramUserStats;
 use crate::user_data::unigram_user_stats::UniGramUserStats;
 use crate::user_data::user_stats_utils::{read_user_stats_file, write_user_stats_file};
@@ -44,7 +44,6 @@ impl UserData {
                     unigram_path, err
                 );
 
-                let unigram_user_stats = UniGramUserStats::new(0, 0, HashMap::new());
                 UniGramUserStats::new(0, 0, HashMap::new())
             }
         };
@@ -87,7 +86,7 @@ impl UserData {
     }
 
     /// 入力確定した漢字のリストをユーザー統計データとして記録する。
-    fn record_entries(&mut self, kanjis: Vec<String>, kanas: Vec<String>) {
+    fn record_entries(&mut self, kanjis: Vec<String>, _kanas: Vec<String>) {
         self.unigram_user_stats.record_entries(&kanjis);
         self.bigram_user_stats.record_entries(&kanjis);
 

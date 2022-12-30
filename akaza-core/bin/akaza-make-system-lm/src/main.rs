@@ -6,7 +6,7 @@ use libakaza::lm::system_bigram::SystemBigramLMBuilder;
 use libakaza::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
 
 // e.g.g 倉庫会社/そうこがいしゃ -6.973789593503506
-unsafe fn process_unigram(srcpath: &String, dstpath: &String) {
+fn process_unigram(srcpath: &String, dstpath: &String) {
     let file = File::open(srcpath).expect("Open {txtfile} correctly.");
 
     let mut builder = SystemUnigramLMBuilder::new();
@@ -31,7 +31,7 @@ unsafe fn process_unigram(srcpath: &String, dstpath: &String) {
     builder.save(dstpath).unwrap();
 }
 
-unsafe fn process_2gram(unigram: &SystemUnigramLM, srcpath: &String, dstpath: &String) {
+fn process_2gram(unigram: &SystemUnigramLM, srcpath: &String, dstpath: &String) {
     let file = File::open(srcpath).unwrap();
 
     let builder = SystemBigramLMBuilder::new();
@@ -86,21 +86,15 @@ fn main() {
     // "work/jawiki.merged-1gram.txt" -> "akaza_data/data/lm_v2_1gram.trie"
     println!("Unigram {} to {}", unigram_src, unigram_dst);
 
-    unsafe {
-        process_unigram(unigram_src, unigram_dst);
-    }
+    process_unigram(unigram_src, unigram_dst);
 
     // 2gram ファイルから読む
     // 2gram ファイルを書いていく。
     println!("Bigram {} to {}", bigram_src, bigram_dst);
 
-    let unigram_lm = unsafe { SystemUnigramLM::load(unigram_dst).unwrap() };
-    unsafe {
-        println!("Unigram system lm: {}", unigram_lm.num_keys());
-    }
-    unsafe {
-        process_2gram(&unigram_lm, bigram_src, bigram_dst);
-    }
+    let unigram_lm = SystemUnigramLM::load(unigram_dst).unwrap();
+    println!("Unigram system lm: {}", unigram_lm.num_keys());
+    process_2gram(&unigram_lm, bigram_src, bigram_dst);
 
     println!("DONE");
 }

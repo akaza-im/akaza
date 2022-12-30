@@ -2,7 +2,7 @@ use std::env;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
-use libakaza::binary_dict::KanaKanjiDictBuilder;
+use libakaza::kana_kanji_dict::KanaKanjiDictBuilder;
 
 unsafe fn make_binary_dict(txtfile: &String, triefile: &String) {
     println!("Generating {} from {}", triefile, txtfile);
