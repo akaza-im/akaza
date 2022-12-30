@@ -1,14 +1,19 @@
 use std::collections::{HashMap, HashSet};
+use std::fmt::{Display, Formatter, Pointer};
 use std::hash::{Hash, Hasher};
 
 use log::trace;
 
+use crate::kana_kanji_dict::KanaKanjiDict;
 use crate::kana_trie::KanaTrie;
 
 #[derive(PartialEq)]
 struct WordNode {
     start_pos: i32,
+    /// 漢字
     kanji: String,
+    /// 読み仮名
+    yomi: String,
     cost: f32,
 }
 
@@ -27,6 +32,7 @@ impl WordNode {
         WordNode {
             start_pos: 0,
             kanji: "__BOS__".to_string(),
+            yomi: "__BOS__".to_string(),
             cost: 0_f32,
         }
     }
@@ -34,15 +40,23 @@ impl WordNode {
         WordNode {
             start_pos: yomi.len() as i32,
             kanji: "__EOS__".to_string(),
+            yomi: "__EOS__".to_string(),
             cost: 0_f32,
         }
     }
-    fn new(start_pos: i32, kanji: &String) -> WordNode {
+    fn new(start_pos: i32, kanji: &str, yomi: &str) -> WordNode {
         WordNode {
             start_pos,
-            kanji: kanji.clone(),
+            kanji: kanji.to_string(),
+            yomi: yomi.to_string(),
             cost: 0_f32,
         }
+    }
+}
+
+impl Display for WordNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}/{}", self.kanji, self.yomi)
     }
 }
 
@@ -119,17 +133,39 @@ impl Segmenter {
 // 次に必要なのは、分割された文字列から、グラフを構築する仕組みである。
 struct GraphResolver {
     graph: HashMap<i32, Vec<WordNode>>,
+    system_kana_kanji_dict: KanaKanjiDict,
 }
 
 impl GraphResolver {
-    fn new(yomi: &String, words_ends_at: HashMap<usize, Vec<String>>) -> GraphResolver {
-        let graph = Self::construct_graph(yomi, words_ends_at);
-        GraphResolver { graph }
+    fn new(
+        yomi: &String,
+        words_ends_at: HashMap<usize, Vec<String>>,
+        system_kana_kanji_dict: KanaKanjiDict,
+    ) -> GraphResolver {
+        let graph = Self::construct_graph(yomi, words_ends_at, &system_kana_kanji_dict);
+        Self::_dump_graph(&graph);
+        GraphResolver {
+            graph,
+            system_kana_kanji_dict,
+        }
+    }
+
+    fn _dump_graph(graph: &HashMap<i32, Vec<WordNode>>) {
+        for nodes in graph.values() {
+            for node in nodes {
+                // unicode で日本語文字が3バイトで2文字幅であるという話
+                for _ in 0..(node.start_pos / 3 * 2) {
+                    print!(" ");
+                }
+                println!("{}", node.kanji);
+            }
+        }
     }
 
     fn construct_graph(
         yomi: &String,
         words_ends_at: HashMap<usize, Vec<String>>,
+        system_kana_kanji_dict: &KanaKanjiDict,
     ) -> HashMap<i32, Vec<WordNode>> {
         // このグラフのインデクスは単語の終了位置。
         let mut graph: HashMap<i32, Vec<WordNode>> = HashMap::new();
@@ -138,12 +174,19 @@ impl GraphResolver {
 
         for (end_pos, yomis) in words_ends_at {
             for yomi in yomis {
-                // ↓ここで start_pos 渡す意味ある?
-                let node = WordNode::new((end_pos - yomi.len()) as i32, &yomi);
-                // ほんとうは、そもそもここで、漢字に変換した結果を詰め込まないといけない。
-
                 let vec = graph.entry(end_pos as i32).or_insert(Vec::new());
+
+                // ひらがなそのものもエントリーとして登録しておく。
+                let node = WordNode::new((end_pos - yomi.len()) as i32, &yomi, &yomi);
                 vec.push(node);
+
+                // 漢字に変換した結果もあれば insert する。
+                if let Some(kanjis) = system_kana_kanji_dict.find(&yomi) {
+                    for kanji in kanjis {
+                        let node = WordNode::new((end_pos - yomi.len()) as i32, &kanji, &yomi);
+                        vec.push(node);
+                    }
+                }
             }
         }
         return graph;
@@ -158,7 +201,14 @@ impl GraphResolver {
         // 簡単のために、一旦スコアを文字列長とする。
         // 経験上、長い文字列のほうがあたり、というルールでもそこそこ変換できる。
         // TODO あとでちゃんと unigram のコストを使うよに変える。
-        return node.kanji.len() as f32;
+
+        return if node.kanji.len() < node.yomi.len() {
+            // log10(1e-20)
+            -20.0
+        } else {
+            // log10(1e-19)
+            -19.0
+        };
 
         /*
                 if let Some(user_cost) = user_language_model.get_unigram_cost(&self.key) {
@@ -206,6 +256,7 @@ impl GraphResolver {
             };
             for node in nodes {
                 let node_cost = self.get_node_cost(node);
+                println!("kanji={}, Cost={}", node, node_cost);
                 let mut cost = f32::MAX;
                 let mut shortest_prev = None;
                 let prev_nodes = self.get_prev_nodes(&node).expect(
@@ -218,8 +269,15 @@ impl GraphResolver {
                 for prev in prev_nodes.clone() {
                     let edge_cost = self.get_edge_cost(&prev, &node);
                     let tmp_cost = prev.cost + edge_cost + node_cost;
+                    println!("Replace??? tmp_cost={} < cost={}: {}", tmp_cost, cost, prev);
                     if tmp_cost < cost {
+                        if shortest_prev.is_none() {
+                            println!("Replace None by {}", prev);
+                        } else {
+                            println!("Replace {} by {}", shortest_prev.unwrap(), prev);
+                        }
                         cost = tmp_cost;
+                        node.cost = tmp_cost;
                         shortest_prev = Some(prev);
                     }
                 }
@@ -251,8 +309,10 @@ impl GraphResolver {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::kana_kanji_dict::KanaKanjiDictBuilder;
     use crate::kana_trie::KanaTrieBuilder;
+
+    use super::*;
 
     #[test]
     fn test() {
@@ -295,8 +355,38 @@ mod tests {
 
         // -1  0  1  2
         // BOS a  b  c
-        let resolver = GraphResolver::new(&"abc".to_string(), graph);
+        let dict_builder = KanaKanjiDictBuilder::new();
+        let dict = dict_builder.build();
+        let resolver = GraphResolver::new(&"abc".to_string(), graph, dict);
         let result = resolver.viterbi(&"abc".to_string());
         assert_eq!(result, "abc");
+    }
+
+    #[test]
+    fn test_kana_kanji() {
+        env_logger::builder().is_test(true).try_init().unwrap();
+
+        let mut builder = KanaTrieBuilder::new();
+        builder.add(&"わたし".to_string());
+        builder.add(&"わた".to_string());
+        builder.add(&"し".to_string());
+        let kana_trie = builder.build();
+
+        let graph_builder = Segmenter::new(vec![kana_trie]);
+        let graph = graph_builder.build(&"わたし".to_string());
+        assert_eq!(
+            graph,
+            HashMap::from([
+                (6, vec!["わた".to_string()]),
+                (9, vec!["わたし".to_string(), "し".to_string()]),
+            ])
+        );
+
+        let mut dict_builder = KanaKanjiDictBuilder::new();
+        dict_builder.add("わたし", "私/渡し");
+        let dict = dict_builder.build();
+        let resolver = GraphResolver::new(&"わたし".to_string(), graph, dict);
+        let result = resolver.viterbi(&"わたし".to_string());
+        assert_eq!(result, "私");
     }
 }

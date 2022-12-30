@@ -18,7 +18,7 @@ impl SystemUnigramLMBuilder {
     }
 
     pub fn save(&self, fname: &String) -> Result<(), String> {
-        let keyset = Keyset::new();
+        let mut keyset = Keyset::new();
         for (kanji, score) in &self.data {
             // 区切り文字をいれなくても、末尾の4バイトを取り出せば十分な気がしないでもない。。
             // 先頭一致にして、+4バイトになるものを探せばいいはず。
@@ -32,7 +32,7 @@ impl SystemUnigramLMBuilder {
             keyset.push_back(key.as_slice());
         }
 
-        let marisa = Marisa::new();
+        let mut marisa = Marisa::new();
         marisa.build(&keyset);
         marisa.save(fname)?;
         Ok(())
@@ -59,7 +59,7 @@ impl SystemUnigramLM {
 
     pub fn load(fname: &String) -> Result<SystemUnigramLM, String> {
         println!("Reading {}", fname);
-        let marisa = Marisa::new();
+        let mut marisa = Marisa::new();
         marisa.load(fname)?;
         Ok(SystemUnigramLM { marisa })
     }

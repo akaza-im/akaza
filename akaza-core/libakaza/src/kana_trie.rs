@@ -16,7 +16,7 @@ impl KanaTrieBuilder {
     }
 
     pub(crate) fn build(&self) -> KanaTrie {
-        let marisa = Marisa::new();
+        let mut marisa = Marisa::new();
         marisa.build(&self.keyset);
         KanaTrie::new(marisa)
     }
@@ -36,7 +36,7 @@ impl KanaTrie {
     }
 
     pub(crate) fn load(file_name: &String) -> Result<KanaTrie, String> {
-        let marisa = Marisa::new();
+        let mut marisa = Marisa::new();
         match marisa.load(file_name) {
             Ok(_) => Ok(KanaTrie { marisa }),
             Err(err) => Err(err),

@@ -19,8 +19,8 @@ mod tests {
         let yomis: HashSet<String> = yomis.unwrap().into_iter().collect();
 
         {
-            let marisa = Marisa::new();
-            let keyset = Keyset::new();
+            let mut marisa = Marisa::new();
+            let mut keyset = Keyset::new();
             for yomi in yomis {
                 keyset.push_back(yomi.as_bytes());
             }
