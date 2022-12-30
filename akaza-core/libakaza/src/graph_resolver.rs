@@ -20,7 +20,7 @@ mod tests {
         let yomis: HashSet<String> = yomis.into_iter().collect();
 
         {
-            let mut marisa = Marisa::new();
+            let marisa = Marisa::new();
             let keyset = Keyset::new();
             for yomi in yomis {
                 keyset.push_back(yomi.as_bytes());
@@ -29,7 +29,7 @@ mod tests {
 
             marisa.common_prefix_search(
                 &"わたしのなまえはなかのです".to_string(),
-                |f, id| {
+                |f, _id| {
                     println!("! {}", String::from_utf8(f.to_vec()).unwrap());
                     true
                 },
