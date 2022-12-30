@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use crate::binary_dict::KanaKanjiDict;
     // use daachorse::DoubleArrayAhoCorasick;
+    use crate::kana_kanji_dict::KanaKanjiDict;
     use marisa_sys::{Keyset, Marisa};
     use std::collections::HashSet;
 

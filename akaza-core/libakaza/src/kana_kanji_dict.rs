@@ -1,14 +1,7 @@
 use crate::trie::{Trie, TrieBuilder};
 
 /**
- * バイナリ辞書。
- *
- * バイナリ辞書はシステム辞書に利用されている。
  * 「よみ」から「漢字」への変換辞書である。
- *
- * なぜバイナリ辞書と呼ばれているかは、歴史的経緯と言わざるを得ない。
- * TODO: これはいずれ KanaKanjiDict とでも改名すべきであろう。
- * rust 化が済んだあとに。。
  */
 
 pub struct KanaKanjiDictBuilder {
@@ -16,17 +9,17 @@ pub struct KanaKanjiDictBuilder {
 }
 
 impl KanaKanjiDictBuilder {
-    pub unsafe fn new() -> KanaKanjiDictBuilder {
+    pub fn new() -> KanaKanjiDictBuilder {
         KanaKanjiDictBuilder {
             trie_builder: TrieBuilder::new(),
         }
     }
-    pub unsafe fn add(&self, yomi: &String, kanjis: &String) {
+    pub fn add(&self, yomi: &String, kanjis: &String) {
         let key = [yomi.as_bytes(), b"\t", kanjis.as_bytes()].concat();
         self.trie_builder.add(key);
     }
 
-    pub unsafe fn save(&self, filename: &String) -> std::io::Result<()> {
+    pub fn save(&self, filename: &String) -> std::io::Result<()> {
         return self.trie_builder.save(filename);
     }
 }
@@ -34,13 +27,12 @@ impl KanaKanjiDictBuilder {
 pub struct KanaKanjiDict {
     trie: Trie,
 }
+
 impl KanaKanjiDict {
     pub fn load(file_name: &String) -> Result<KanaKanjiDict, String> {
-        unsafe {
-            match Trie::load(file_name) {
-                Ok(trie) => Ok(KanaKanjiDict { trie }),
-                Err(err) => Err(err.to_string()),
-            }
+        match Trie::load(file_name) {
+            Ok(trie) => Ok(KanaKanjiDict { trie }),
+            Err(err) => Err(err.to_string()),
         }
     }
     /*
@@ -62,17 +54,15 @@ impl KanaKanjiDict {
     */
 
     pub fn all_yomis(&self) -> Vec<String> {
-        unsafe {
-            let mut result: Vec<String> = Vec::new();
-            let got = self.trie.predictive_search(b"".to_vec());
-            for item in got {
-                let item: String = String::from_utf8(item.keyword).unwrap();
-                let p: Vec<&str> = item.splitn(2, "\t").collect();
-                let yomi: &str = p[0];
-                result.push(yomi.to_string())
-            }
-            return result;
+        let mut result: Vec<String> = Vec::new();
+        let got = self.trie.predictive_search(b"".to_vec());
+        for item in got {
+            let item: String = String::from_utf8(item.keyword).unwrap();
+            let p: Vec<&str> = item.splitn(2, "\t").collect();
+            let yomi: &str = p[0];
+            result.push(yomi.to_string())
         }
+        return result;
     }
 }
 

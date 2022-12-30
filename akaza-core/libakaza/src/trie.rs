@@ -9,17 +9,17 @@ pub struct TrieBuilder {
 }
 
 impl TrieBuilder {
-    pub unsafe fn new() -> TrieBuilder {
+    pub fn new() -> TrieBuilder {
         TrieBuilder {
             keyset: Keyset::new(),
         }
     }
 
-    pub unsafe fn add(&self, key: Vec<u8>) {
+    pub fn add(&self, key: Vec<u8>) {
         self.keyset.push_back(key.as_slice());
     }
 
-    pub unsafe fn save(&self, ofname: &String) -> std::io::Result<()> {
+    pub fn save(&self, ofname: &String) -> std::io::Result<()> {
         let marisa = Marisa::new();
         marisa.build(&self.keyset);
         marisa.save(ofname).unwrap();
@@ -34,13 +34,13 @@ pub struct Trie {
 }
 
 impl Trie {
-    pub unsafe fn load(filename: &String) -> Result<Trie, Error> {
+    pub fn load(filename: &String) -> Result<Trie, Error> {
         let marisa = Marisa::new();
         marisa.load(filename).unwrap();
         return Ok(Trie { marisa });
     }
 
-    pub unsafe fn predictive_search(&self, keyword: Vec<u8>) -> Vec<SearchResult> {
+    pub fn predictive_search(&self, keyword: Vec<u8>) -> Vec<SearchResult> {
         let mut p: Vec<SearchResult> = Vec::new();
         self.marisa
             .predictive_search(keyword.as_slice(), |key, id| {
@@ -53,7 +53,7 @@ impl Trie {
         return p;
     }
 
-    pub unsafe fn num_keys(&self) -> usize {
+    pub fn num_keys(&self) -> usize {
         return self.marisa.num_keys();
     }
 }
