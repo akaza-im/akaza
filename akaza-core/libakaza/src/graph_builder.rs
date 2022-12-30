@@ -209,14 +209,20 @@ impl LatticeGraph {
             }
         }
     }
-}
 
-// 次に必要なのは、分割された文字列から、グラフを構築する仕組みである。
-struct GraphResolver {}
-
-impl GraphResolver {
-    fn new() -> GraphResolver {
-        GraphResolver {}
+    // for debugging purpose
+    // graphviz の dot 形式で出力する。
+    #[allow(unused)]
+    fn dump_dot(&self) {
+        println!("digraph Lattice {{");
+        // start 及び end は、byte 数単位
+        for (end_pos, nodes) in self.graph.iter() {
+            for node in nodes {
+                println!("    {} -> \"{}/{}\"", node.start_pos, node.kanji, node.yomi);
+                println!("    \"{}/{}\" -> {}", node.kanji, node.yomi, end_pos);
+            }
+        }
+        println!("}}");
     }
 
     fn get_node_cost(&self, node: &WordNode) -> f32 {
@@ -258,19 +264,29 @@ impl GraphResolver {
         // TODO: あとで実装する
         return 0.0;
     }
+}
+
+// 次に必要なのは、分割された文字列から、グラフを構築する仕組みである。
+struct GraphResolver {}
+
+impl GraphResolver {
+    fn new() -> GraphResolver {
+        GraphResolver {}
+    }
 
     fn viterbi(&self, yomi: &String, lattice: LatticeGraph) -> String {
         let mut prevmap: HashMap<&WordNode, &WordNode> = HashMap::new();
         let mut costmap: HashMap<&WordNode, f32> = HashMap::new();
 
         lattice.dump();
+        lattice.dump_dot();
 
         for i in 1..yomi.len() + 2 {
             let Some(nodes) = lattice.node_list(i as i32) else {
                 continue;
             };
             for node in nodes {
-                let node_cost = self.get_node_cost(node);
+                let node_cost = lattice.get_node_cost(node);
                 println!("kanji={}, Cost={}", node, node_cost);
                 let mut cost = f32::MAX;
                 let mut shortest_prev = None;
@@ -282,9 +298,13 @@ impl GraphResolver {
                     .as_str(),
                 );
                 for prev in prev_nodes.clone() {
-                    let edge_cost = self.get_edge_cost(&prev, &node);
-                    let tmp_cost = costmap.get(prev).unwrap_or(&100_f32) + edge_cost + node_cost;
-                    println!("Replace??? tmp_cost={} < cost={}: {}", tmp_cost, cost, prev);
+                    let edge_cost = lattice.get_edge_cost(&prev, &node);
+                    let prev_cost = costmap.get(prev).unwrap_or(&0_f32); // unwrap が必要なのは、 __BOS__ 用。
+                    let tmp_cost = prev_cost + edge_cost + node_cost;
+                    println!(
+                        "Replace??? prev_cost={} tmp_cost={} < cost={}: {}",
+                        prev_cost, tmp_cost, cost, prev
+                    );
                     if tmp_cost < cost {
                         if shortest_prev.is_none() {
                             println!("Replace None by {}", prev);
