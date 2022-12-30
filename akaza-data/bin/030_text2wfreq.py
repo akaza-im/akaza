@@ -61,6 +61,12 @@ def main():
             if key != '__EOS__/__EOS__':
                 if len(key.split('/')) != 2:
                     continue
+                if len(key.split('/')[0]) == 0:
+                    # `/"` のような謎のエントリを除外
+                    continue
+                if key.split('/')[0] == '\u3000':
+                    # `　/くうはく` のような謎のエントリを除外
+                    continue
                 if '/' not in key:
                     continue
                 if key.endswith('/UNK'):
