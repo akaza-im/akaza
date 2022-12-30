@@ -25,6 +25,12 @@ impl TrieBuilder {
         marisa.save(ofname).unwrap();
         return Ok(());
     }
+
+    pub fn build(&self) -> Trie {
+        let marisa = Marisa::new();
+        marisa.build(&self.keyset);
+        Trie { marisa }
+    }
 }
 
 // Load trie from file.
