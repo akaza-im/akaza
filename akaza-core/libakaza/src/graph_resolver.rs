@@ -1,6 +1,5 @@
 #[cfg(test)]
 mod tests {
-    // use daachorse::DoubleArrayAhoCorasick;
     use crate::kana_kanji_dict::KanaKanjiDict;
     use marisa_sys::{Keyset, Marisa};
     use std::collections::HashSet;
@@ -17,7 +16,7 @@ mod tests {
         .expect("KanaKanjiDict can open");
         let yomis = dict.all_yomis();
         println!("Make unique");
-        let yomis: HashSet<String> = yomis.into_iter().collect();
+        let yomis: HashSet<String> = yomis.unwrap().into_iter().collect();
 
         {
             let marisa = Marisa::new();
