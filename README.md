@@ -4,6 +4,11 @@ Yet another kana-kanji-converter on IBus, written in Python.
 
 統計的かな漢字変換です。
 
+## モチベーション
+
+いじりやすくてある程度UIが使いやすいかな漢字変換があったら面白いなと思ったので作ってみています。
+「いじりやすくて」というのはつまり、Hack-able であるという意味です。
+
 ## 特徴
 
  * UI wo Python で書いてあるので、拡張が容易です。

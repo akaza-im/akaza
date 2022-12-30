@@ -1,11 +1,14 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
+use std::rc::Rc;
 
 use log::trace;
 
 use crate::kana_kanji_dict::KanaKanjiDict;
 use crate::kana_trie::KanaTrie;
+use crate::lm::system_unigram_lm::SystemUnigramLM;
+use crate::user_data::user_data::UserData;
 
 #[derive(PartialEq)]
 struct WordNode {
@@ -132,11 +135,20 @@ impl Segmenter {
 
 struct GraphBuilder {
     system_kana_kanji_dict: KanaKanjiDict,
+    user_data: Rc<UserData>,
+    system_unigram_lm: Rc<SystemUnigramLM>,
 }
+
 impl GraphBuilder {
-    fn new(system_kana_kanji_dict: KanaKanjiDict) -> GraphBuilder {
+    fn new(
+        system_kana_kanji_dict: KanaKanjiDict,
+        user_data: Rc<UserData>,
+        system_unigram_lm: Rc<SystemUnigramLM>,
+    ) -> GraphBuilder {
         GraphBuilder {
             system_kana_kanji_dict,
+            user_data,
+            system_unigram_lm,
         }
     }
 
@@ -166,14 +178,21 @@ impl GraphBuilder {
                 }
             }
         }
-        LatticeGraph { graph }
+        LatticeGraph {
+            graph,
+            user_data: self.user_data.clone(),
+            system_unigram_lm: self.system_unigram_lm.clone(),
+        }
     }
 }
 
 // 考えられる単語の列全てを含むようなグラフ構造
 struct LatticeGraph {
     graph: BTreeMap<i32, Vec<WordNode>>,
+    user_data: Rc<UserData>,
+    system_unigram_lm: Rc<SystemUnigramLM>,
 }
+
 impl LatticeGraph {
     /// i文字目で終わるノードを探す
     fn node_list(&self, i: i32) -> Option<&Vec<WordNode>> {
@@ -248,6 +267,11 @@ impl LatticeGraph {
         // 経験上、長い文字列のほうがあたり、というルールでもそこそこ変換できる。
         // TODO あとでちゃんと unigram のコストを使うよに変える。
 
+        if let Some(user_cost) = self.user_data.get_unigram_cost(&*node.kanji, &*node.yomi) {
+            // use user's score. if it's exists.
+            return user_cost;
+        }
+
         return if node.kanji.len() < node.yomi.len() {
             // log10(1e-20)
             -20.0
@@ -306,7 +330,7 @@ impl GraphResolver {
             for node in nodes {
                 let node_cost = lattice.get_node_cost(node);
                 println!("kanji={}, Cost={}", node, node_cost);
-                let mut cost = f32::MAX;
+                let mut cost = f32::MIN;
                 let mut shortest_prev = None;
                 let prev_nodes = lattice.get_prev_nodes(&node).expect(
                     format!(
@@ -323,7 +347,9 @@ impl GraphResolver {
                         "Replace??? prev_cost={} tmp_cost={} < cost={}: {}",
                         prev_cost, tmp_cost, cost, prev
                     );
-                    if tmp_cost < cost {
+                    // コストが最大な経路を選ぶようにする。
+                    // そういうふうにコストを付与しているので。
+                    if cost < tmp_cost {
                         if shortest_prev.is_none() {
                             println!("Replace None by {}", prev);
                         } else {
@@ -361,10 +387,14 @@ impl GraphResolver {
 
 #[cfg(test)]
 mod tests {
-    use crate::kana_kanji_dict::KanaKanjiDictBuilder;
-    use crate::kana_trie::KanaTrieBuilder;
     use std::fs::File;
     use std::io::Write;
+
+    use tempfile::NamedTempFile;
+
+    use crate::kana_kanji_dict::KanaKanjiDictBuilder;
+    use crate::kana_trie::KanaTrieBuilder;
+    use crate::lm::system_unigram_lm::SystemUnigramLMBuilder;
 
     use super::*;
 
@@ -389,7 +419,7 @@ mod tests {
 
     #[test]
     fn test_resolver() {
-        env_logger::builder().is_test(true).try_init().unwrap();
+        let _ = env_logger::builder().is_test(true).try_init();
 
         let mut builder = KanaTrieBuilder::new();
         builder.add(&"abc".to_string());
@@ -411,7 +441,29 @@ mod tests {
         // BOS a  b  c
         let dict_builder = KanaKanjiDictBuilder::new();
         let dict = dict_builder.build();
-        let graph_builder = GraphBuilder::new(dict);
+        let system_unigram_lm_builder = SystemUnigramLMBuilder::new();
+        let system_unigram_lm = system_unigram_lm_builder.build();
+        let user_data = UserData::load(
+            &NamedTempFile::new()
+                .unwrap()
+                .path()
+                .to_str()
+                .unwrap()
+                .to_string(),
+            &NamedTempFile::new()
+                .unwrap()
+                .path()
+                .to_str()
+                .unwrap()
+                .to_string(),
+            &NamedTempFile::new()
+                .unwrap()
+                .path()
+                .to_str()
+                .unwrap()
+                .to_string(),
+        );
+        let graph_builder = GraphBuilder::new(dict, Rc::new(user_data), Rc::new(system_unigram_lm));
         let lattice = graph_builder.construct(&"abc".to_string(), graph);
         let resolver = GraphResolver::new();
         let result = resolver.viterbi(&"abc".to_string(), lattice);
@@ -443,8 +495,33 @@ mod tests {
 
         let yomi = "わたし".to_string();
 
+        // TODO このへん、ちょっとコピペしまくらないといけなくて渋い。
         let dict = dict_builder.build();
-        let graph_builder = GraphBuilder::new(dict);
+        let system_unigram_lm_builder = SystemUnigramLMBuilder::new();
+        let system_unigram_lm = system_unigram_lm_builder.build();
+        let mut user_data = UserData::load(
+            &NamedTempFile::new()
+                .unwrap()
+                .path()
+                .to_str()
+                .unwrap()
+                .to_string(),
+            &NamedTempFile::new()
+                .unwrap()
+                .path()
+                .to_str()
+                .unwrap()
+                .to_string(),
+            &NamedTempFile::new()
+                .unwrap()
+                .path()
+                .to_str()
+                .unwrap()
+                .to_string(),
+        );
+        // 私/わたし のスコアをガッと上げる。
+        user_data.record_entries(vec!["私/わたし".to_string()]);
+        let graph_builder = GraphBuilder::new(dict, Rc::new(user_data), Rc::new(system_unigram_lm));
         let lattice = graph_builder.construct(&yomi, graph);
         // dot -Tpng -o /tmp/lattice.png /tmp/lattice.dot && open /tmp/lattice.png
         File::create("/tmp/lattice.dot")

@@ -32,7 +32,7 @@ fn process_unigram(srcpath: &String, dstpath: &String) {
 fn process_2gram(unigram: &SystemUnigramLM, srcpath: &String, dstpath: &String) {
     let file = File::open(srcpath).unwrap();
 
-    let builder = SystemBigramLMBuilder::new();
+    let mut builder = SystemBigramLMBuilder::new();
 
     for line in BufReader::new(file).lines() {
         fn parse_2gram_line(line: &String) -> (String, String, f32) {
