@@ -65,14 +65,14 @@ pub type PredictiveSearchCallback = dyn FnMut(&[u8], usize) -> bool;
 pub struct Marisa {
     marisa: *mut marisa_obj,
 }
-
-impl Marisa {
-    pub fn new() -> Marisa {
+impl Default for Marisa {
+    fn default() -> Marisa {
         let marisa = unsafe { marisa_new() };
         Marisa { marisa }
     }
-
-    pub fn load(&mut self, filename: &String) -> Result<(), String> {
+}
+impl Marisa {
+    pub fn load(&mut self, filename: &str) -> Result<(), String> {
         unsafe {
             let exc = marisa_load(self.marisa, filename.as_ptr());
             if exc.is_null() {
@@ -91,7 +91,7 @@ impl Marisa {
         }
     }
 
-    pub fn save(&self, filename: &String) -> Result<(), String> {
+    pub fn save(&self, filename: &str) -> Result<(), String> {
         unsafe {
             let exc = marisa_save(self.marisa, filename.as_ptr());
             if exc.is_null() {
@@ -168,14 +168,17 @@ pub struct Keyset {
     keyset: *mut marisa_keyset,
 }
 
-impl Keyset {
-    pub fn new() -> Keyset {
+impl Default for Keyset {
+    fn default() -> Self {
         unsafe {
             Keyset {
                 keyset: marisa_keyset_new(),
             }
         }
     }
+}
+
+impl Keyset {
     pub fn push_back(&mut self, key: &[u8]) {
         unsafe {
             marisa_keyset_push_back(self.keyset, key.as_ptr(), key.len());
@@ -204,11 +207,11 @@ mod tests {
         // let tmpfile = "/tmp/test.trie".to_string();
 
         {
-            let mut keyset = Keyset::new();
+            let mut keyset = Keyset::default();
             keyset.push_back("apple".as_bytes());
             keyset.push_back("age".as_bytes());
             keyset.push_back("hola".as_bytes());
-            let mut marisa = Marisa::new();
+            let mut marisa = Marisa::default();
             marisa.build(&keyset);
             marisa.save(&tmpfile).unwrap();
 
@@ -217,7 +220,7 @@ mod tests {
 
         // read it
         {
-            let mut marisa = Marisa::new();
+            let mut marisa = Marisa::default();
             marisa.load(&tmpfile).unwrap();
             assert_eq!(marisa.num_keys(), 3);
 
@@ -241,7 +244,7 @@ mod tests {
     #[test]
     fn test_exc() {
         {
-            let mut marisa = Marisa::new();
+            let mut marisa = Marisa::default();
             let result = marisa.load(&"UNKNOWN_PATH".to_string());
             if let Err(err) = result {
                 assert!(err.contains("MARISA_IO_"));

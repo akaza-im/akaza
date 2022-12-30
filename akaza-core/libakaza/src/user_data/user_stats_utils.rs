@@ -32,10 +32,10 @@ pub(crate) fn read_user_stats_file(path: &String) -> Result<Vec<(String, u32)>, 
 }
 
 pub(crate) fn write_user_stats_file(
-    path: &String,
+    path: &str,
     word_count: &HashMap<String, u32>,
 ) -> Result<(), io::Error> {
-    let mut tmpfile = File::create(path.clone() + ".tmp")?;
+    let mut tmpfile = File::create(path.to_string() + ".tmp")?;
 
     for (key, cnt) in word_count {
         tmpfile.write_all(key.as_bytes())?;
@@ -43,7 +43,7 @@ pub(crate) fn write_user_stats_file(
         tmpfile.write_all(cnt.to_string().as_bytes())?;
         tmpfile.write_all("\n".as_bytes())?;
     }
-    fs::rename(path.clone() + ".tmp", path.clone())?;
+    fs::rename(path.to_owned() + ".tmp", path)?;
 
     Ok(())
 }

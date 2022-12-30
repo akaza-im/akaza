@@ -12,11 +12,11 @@ type FunctionCallback = fn(args: VecDeque<TinyLispNode>) -> Result<TinyLispNode,
 
 #[derive(Clone, PartialEq, Debug)]
 enum TinyLispNode {
-    ListNode(Vec<TinyLispNode>),
-    StringNode(String),
-    SymbolNode(String),
-    FunctionNode(FunctionCallback),
-    LocalDateTimeNode(DateTime<Local>),
+    List(Vec<TinyLispNode>),
+    String(String),
+    Symbol(String),
+    Function(FunctionCallback),
+    LocalDateTime(DateTime<Local>),
 }
 
 fn dump_node(node: &TinyLispNode, depth: i32) {
@@ -25,22 +25,22 @@ fn dump_node(node: &TinyLispNode, depth: i32) {
     }
 
     match node {
-        TinyLispNode::ListNode(list) => {
+        TinyLispNode::List(list) => {
             println!("ListNode:");
             for item in list {
                 dump_node(item, depth + 1);
             }
         }
-        TinyLispNode::StringNode(s) => {
+        TinyLispNode::String(s) => {
             println!("StringNode({})", s);
         }
-        TinyLispNode::SymbolNode(s) => {
+        TinyLispNode::Symbol(s) => {
             println!("SymbolNode({})", s);
         }
-        TinyLispNode::FunctionNode(_) => {
+        TinyLispNode::Function(_) => {
             println!("FunctionNode()");
         }
-        TinyLispNode::LocalDateTimeNode(_) => {
+        TinyLispNode::LocalDateTime(_) => {
             println!("LocalDateTime()");
         }
     }
@@ -50,37 +50,37 @@ fn builtin_string_concat(args: VecDeque<TinyLispNode>) -> Result<TinyLispNode, S
     let a = &args[0];
     let b = &args[1];
 
-    let TinyLispNode::StringNode(a_str) = a else {
+    let TinyLispNode::String(a_str) = a else {
         return Err("argument for '.' operator should be string.".to_string());
     };
-    let TinyLispNode::StringNode(b_str) = b else {
+    let TinyLispNode::String(b_str) = b else {
         return Err("argument for '.' operator should be string.".to_string());
     };
 
-    Ok(TinyLispNode::StringNode(a_str.clone() + b_str))
+    Ok(TinyLispNode::String(a_str.clone() + b_str))
 }
 
 fn builtin_current_datetime(_args: VecDeque<TinyLispNode>) -> Result<TinyLispNode, String> {
-    Ok(TinyLispNode::LocalDateTimeNode(Local::now()))
+    Ok(TinyLispNode::LocalDateTime(Local::now()))
 }
 
 fn builtin_strftime(args: VecDeque<TinyLispNode>) -> Result<TinyLispNode, String> {
     let dt = &args[0];
     let fmt = &args[1];
-    let TinyLispNode::LocalDateTimeNode(dt) = dt else {
+    let TinyLispNode::LocalDateTime(dt) = dt else {
         return Err("1st argument of strftime should be LocalDateTime".to_string());
     };
-    let TinyLispNode::StringNode(fmt) = fmt else {
+    let TinyLispNode::String(fmt) = fmt else {
         return Err("2nd argument of strftime should be string".to_string());
     };
     let got = dt.format(fmt).to_string();
-    Ok(TinyLispNode::StringNode(got))
+    Ok(TinyLispNode::String(got))
 }
 
 struct TinyLisp {}
 
 impl TinyLisp {
-    pub fn run(sexp: &String) -> Result<String, String> {
+    pub fn run(sexp: &str) -> Result<String, String> {
         let parsed = Self::parse(sexp);
         let parsed = match parsed {
             Ok(node) => node,
@@ -90,7 +90,7 @@ impl TinyLisp {
         return match result {
             Ok(node) => {
                 let node = node.borrow();
-                if let TinyLispNode::StringNode(ret) = node {
+                if let TinyLispNode::String(ret) = node {
                     Ok(ret.clone())
                 } else {
                     Err("Result of LISP must be String".to_string())
@@ -100,26 +100,26 @@ impl TinyLisp {
         };
     }
 
-    fn parse(sexp: &String) -> Result<TinyLispNode, String> {
+    fn parse(sexp: &str) -> Result<TinyLispNode, String> {
         let mut tokens = Self::tokenize(sexp);
-        
+
         Self::_read_from(&mut tokens, 0)
     }
 
     fn eval(node: &TinyLispNode) -> Result<TinyLispNode, String> {
         match node {
-            TinyLispNode::SymbolNode(symbol) => {
+            TinyLispNode::Symbol(symbol) => {
                 if symbol == "." {
-                    Ok(TinyLispNode::FunctionNode(builtin_string_concat))
+                    Ok(TinyLispNode::Function(builtin_string_concat))
                 } else if symbol == "current-datetime" {
-                    Ok(TinyLispNode::FunctionNode(builtin_current_datetime))
+                    Ok(TinyLispNode::Function(builtin_current_datetime))
                 } else if symbol == "strftime" {
-                    Ok(TinyLispNode::FunctionNode(builtin_strftime))
+                    Ok(TinyLispNode::Function(builtin_strftime))
                 } else {
                     Err("Unknown function: ".to_string() + symbol)
                 }
             }
-            TinyLispNode::ListNode(list) => {
+            TinyLispNode::List(list) => {
                 let mut exps: VecDeque<TinyLispNode> = VecDeque::new();
                 for exp in list {
                     let result = Self::eval(exp);
@@ -135,7 +135,7 @@ impl TinyLisp {
                 let Some(proc) = exps.pop_front() else {
                     return Err("Empty list.".to_string())
                 };
-                if let TinyLispNode::FunctionNode(proc) = proc {
+                if let TinyLispNode::Function(proc) = proc {
                     proc(exps)
                 } else {
                     Err("Expected function... But it's not.".to_string())
@@ -145,7 +145,7 @@ impl TinyLisp {
         }
     }
 
-    fn tokenize(buf: &String) -> VecDeque<String> {
+    fn tokenize(buf: &str) -> VecDeque<String> {
         // TODO This method should care the string literal that contains space character.
         let buf = buf.replace('(', " ( ");
         let buf = buf.replace(')', " ) ");
@@ -157,7 +157,7 @@ impl TinyLisp {
             .collect();
     }
 
-    fn _read_from(tokens: &mut VecDeque<String>, depth: i32) -> Result<TinyLispNode, String> {
+    fn _read_from(tokens: &mut VecDeque<String>, _depth: i32) -> Result<TinyLispNode, String> {
         if tokens.is_empty() {
             return Err("Unexpected EOF while reading(LISP)".to_string());
         }
@@ -168,14 +168,14 @@ impl TinyLisp {
         if token == "(" {
             let mut values: Vec<TinyLispNode> = Vec::new();
             while tokens[0] != ")" {
-                let result = Self::_read_from(tokens, depth + 1);
+                let result = Self::_read_from(tokens, _depth + 1);
                 match result {
                     Ok(node) => values.push(node),
                     Err(err) => return Err(err),
                 }
             }
             tokens.pop_front();
-            Ok(TinyLispNode::ListNode(values))
+            Ok(TinyLispNode::List(values))
         } else if token == ")" {
             Err("Unexpected token: ')'".to_string())
         } else {
@@ -185,17 +185,16 @@ impl TinyLisp {
 
     fn _atom(token: &String) -> TinyLispNode {
         return if !token.is_empty() && token.starts_with('\"') {
-            TinyLispNode::StringNode(
+            TinyLispNode::String(
                 token
                     .strip_prefix('\"')
                     .unwrap()
                     .strip_suffix('\"')
                     .unwrap()
-                    .to_string()
-                    ,
+                    .to_string(),
             )
         } else {
-            TinyLispNode::SymbolNode(token.clone())
+            TinyLispNode::Symbol(token.clone())
         };
     }
 }
@@ -209,13 +208,13 @@ mod tests {
         // symbol node
         {
             let node = TinyLisp::_atom(&"hogehoge".to_string());
-            assert_eq!(node, TinyLispNode::SymbolNode("hogehoge".to_string()));
+            assert_eq!(node, TinyLispNode::Symbol("hogehoge".to_string()));
         }
 
         // string node
         {
             let node = TinyLisp::_atom(&"\"hogehoge\"".to_string());
-            assert_eq!(node, TinyLispNode::StringNode("hogehoge".to_string()));
+            assert_eq!(node, TinyLispNode::String("hogehoge".to_string()));
         }
     }
 

@@ -4,30 +4,25 @@ use marisa_sys::{Keyset, Marisa};
 
 // Trie 木の実装詳細はこのファイルで隠蔽される。
 
+#[derive(Default)]
 pub struct TrieBuilder {
     keyset: Keyset,
 }
 
 impl TrieBuilder {
-    pub fn new() -> TrieBuilder {
-        TrieBuilder {
-            keyset: Keyset::new(),
-        }
-    }
-
     pub fn add(&mut self, key: Vec<u8>) {
         self.keyset.push_back(key.as_slice());
     }
 
-    pub fn save(&self, ofname: &String) -> std::io::Result<()> {
-        let mut marisa = Marisa::new();
+    pub fn save(&self, ofname: &str) -> std::io::Result<()> {
+        let mut marisa = Marisa::default();
         marisa.build(&self.keyset);
         marisa.save(ofname).unwrap();
         Ok(())
     }
 
     pub fn build(&self) -> Trie {
-        let mut marisa = Marisa::new();
+        let mut marisa = Marisa::default();
         marisa.build(&self.keyset);
         Trie { marisa }
     }
@@ -40,8 +35,8 @@ pub struct Trie {
 }
 
 impl Trie {
-    pub fn load(filename: &String) -> Result<Trie, Error> {
-        let mut marisa = Marisa::new();
+    pub fn load(filename: &str) -> Result<Trie, Error> {
+        let mut marisa = Marisa::default();
         marisa.load(filename).unwrap();
         Ok(Trie { marisa })
     }
@@ -73,7 +68,7 @@ pub struct SearchResult {
 #[test]
 fn test() {
     {
-        let mut builder = TrieBuilder::new();
+        let mut builder = TrieBuilder::default();
         builder.add("foobar".as_bytes().to_vec());
         builder.save(&"/tmp/dump.trie".to_string()).unwrap();
 

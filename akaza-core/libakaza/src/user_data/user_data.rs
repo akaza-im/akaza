@@ -74,7 +74,7 @@ impl UserData {
             Ok(trie) => trie,
             Err(err) => {
                 warn!("Cannot load kana trie: {} {}", kana_trie_path, err);
-                KanaTrie::new(Marisa::new())
+                KanaTrie::new(Marisa::default())
             }
         };
 

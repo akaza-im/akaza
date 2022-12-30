@@ -3,6 +3,15 @@ use std::collections::HashMap;
 pub struct KanaConverter {
     hira2kata_map: HashMap<char, char>,
 }
+
+impl Default for KanaConverter {
+    fn default() -> Self {
+        KanaConverter {
+            hira2kata_map: Self::generate_map(),
+        }
+    }
+}
+
 impl KanaConverter {
     fn generate_map() -> HashMap<char, char> {
         HashMap::from([
@@ -102,13 +111,8 @@ impl KanaConverter {
             ('、', '、'),
         ])
     }
-    pub fn new() -> KanaConverter {
-        KanaConverter {
-            hira2kata_map: Self::generate_map(),
-        }
-    }
 
-    pub fn hira2kata(&self, src: &String) -> String {
+    pub fn hira2kata(&self, src: &str) -> String {
         let mut buf: String = String::new();
         for c in src.chars() {
             buf.push(match self.hira2kata_map.get(&c) {
@@ -126,7 +130,7 @@ mod tests {
 
     #[test]
     fn test_hira2kata() {
-        let converter = KanaConverter::new();
+        let converter = KanaConverter::default();
         assert_eq!(
             converter.hira2kata(&"いうお".to_string()),
             "イウオ".to_string()

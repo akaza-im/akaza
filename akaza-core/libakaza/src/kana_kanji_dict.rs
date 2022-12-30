@@ -8,23 +8,18 @@ use crate::trie::{Trie, TrieBuilder};
  * 別のデータ構造もそのうち検討したほうが良いかもしれない。
  */
 
+#[derive(Default)]
 pub struct KanaKanjiDictBuilder {
     trie_builder: TrieBuilder,
 }
 
 impl KanaKanjiDictBuilder {
-    pub fn new() -> KanaKanjiDictBuilder {
-        KanaKanjiDictBuilder {
-            trie_builder: TrieBuilder::new(),
-        }
-    }
-
     pub fn add(&mut self, yomi: &str, kanjis: &str) {
         let key = [yomi.as_bytes(), b"\t", kanjis.as_bytes()].concat();
         self.trie_builder.add(key);
     }
 
-    pub fn save(&self, filename: &String) -> std::io::Result<()> {
+    pub fn save(&self, filename: &str) -> std::io::Result<()> {
         self.trie_builder.save(filename)
     }
 
@@ -40,7 +35,7 @@ pub struct KanaKanjiDict {
 }
 
 impl KanaKanjiDict {
-    pub fn load(file_name: &String) -> Result<KanaKanjiDict, String> {
+    pub fn load(file_name: &str) -> Result<KanaKanjiDict, String> {
         match Trie::load(file_name) {
             Ok(trie) => Ok(KanaKanjiDict { trie }),
             Err(err) => Err(err.to_string()),
@@ -51,7 +46,7 @@ impl KanaKanjiDict {
         let got = self
             .trie
             .predictive_search([yomi.as_bytes(), b"\t"].concat().to_vec());
-        for result in got {
+        if let Some(result) = got.into_iter().next() {
             let s: String = String::from_utf8(result.keyword).unwrap();
             let (_, kanjis) = s.split_once('\t')?;
             return Some(kanjis.split('/').map(|f| f.to_string()).collect());
@@ -79,7 +74,7 @@ mod tests {
     fn test_all_yomis() {
         let tmpfile = "/tmp/kanakanji.tri".to_string();
         {
-            let mut builder = KanaKanjiDictBuilder::new();
+            let mut builder = KanaKanjiDictBuilder::default();
             builder.add("わたし", "私/渡し");
             builder.add("なまえ", "名前");
             builder.save(&tmpfile).unwrap();
@@ -89,19 +84,19 @@ mod tests {
             let dict = KanaKanjiDict::load(&tmpfile).unwrap();
             let mut yomis = dict.all_yomis().unwrap();
             yomis.sort();
-            assert_eq!(yomis, vec!["なまえ".to_string(), "わたし".to_string(),]);
+            assert_eq!(yomis, vec!["なまえ".to_string(), "わたし".to_string()]);
         }
     }
 
     #[test]
     fn test_find() {
-        let mut builder = KanaKanjiDictBuilder::new();
+        let mut builder = KanaKanjiDictBuilder::default();
         builder.add("わたし", "私/渡し");
         builder.add("なまえ", "名前");
         let dict = builder.build();
 
         let mut kanjis = dict.find(&"わたし".to_string()).unwrap();
         kanjis.sort();
-        assert_eq!(kanjis, vec!["渡し".to_string(), "私".to_string(),]);
+        assert_eq!(kanjis, vec!["渡し".to_string(), "私".to_string()]);
     }
 }

@@ -7,7 +7,7 @@ pub(crate) struct KanaTrieBuilder {
 impl KanaTrieBuilder {
     pub(crate) fn new() -> KanaTrieBuilder {
         KanaTrieBuilder {
-            keyset: Keyset::new(),
+            keyset: Keyset::default(),
         }
     }
 
@@ -16,7 +16,7 @@ impl KanaTrieBuilder {
     }
 
     pub(crate) fn build(&self) -> KanaTrie {
-        let mut marisa = Marisa::new();
+        let mut marisa = Marisa::default();
         marisa.build(&self.keyset);
         KanaTrie::new(marisa)
     }
@@ -31,12 +31,12 @@ impl KanaTrie {
         KanaTrie { marisa }
     }
 
-    pub(crate) fn save(&self, file_name: &String) -> Result<(), String> {
+    pub(crate) fn save(&self, file_name: &str) -> Result<(), String> {
         self.marisa.save(file_name)
     }
 
-    pub(crate) fn load(file_name: &String) -> Result<KanaTrie, String> {
-        let mut marisa = Marisa::new();
+    pub(crate) fn load(file_name: &str) -> Result<KanaTrie, String> {
+        let mut marisa = Marisa::default();
         match marisa.load(file_name) {
             Ok(_) => Ok(KanaTrie { marisa }),
             Err(err) => Err(err),

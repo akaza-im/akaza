@@ -310,7 +310,7 @@ impl RomKanConverter {
     fn new() -> RomKanConverter {
         let romkan_map = default_romkan_map().clone();
         let mut romas = Vec::from_iter(romkan_map.keys());
-        romas.sort_by(|a, b| b.len().cmp(&a.len()));
+        romas.sort_by_key(|a| std::cmp::Reverse(a.len()));
         let mut pattern = String::from("(");
         for x in romas {
             pattern += &regex::escape(x);
@@ -325,7 +325,7 @@ impl RomKanConverter {
         }
     }
 
-    fn to_hiragana(&self, src: &String) -> String {
+    fn to_hiragana(&self, src: &str) -> String {
         let src = src.to_ascii_lowercase();
         let src = src.replace("nn", "n");
         let retval = self.romkan_pattern.replace_all(&src, |caps: &Captures| {

@@ -4,21 +4,18 @@ use marisa_sys::{Keyset, Marisa};
  * unigram 言語モデル。
  * 「漢字」に対して、発生確率スコアを保持している。
  */
+#[derive(Default)]
 pub struct SystemUnigramLMBuilder {
     data: Vec<(String, f32)>,
 }
 
 impl SystemUnigramLMBuilder {
-    pub fn new() -> SystemUnigramLMBuilder {
-        SystemUnigramLMBuilder { data: Vec::new() }
-    }
-
-    pub fn add(&mut self, word: &String, score: f32) {
-        self.data.push((word.clone(), score));
+    pub fn add(&mut self, word: &str, score: f32) {
+        self.data.push((word.to_string(), score));
     }
 
     pub fn keyset(&self) -> Keyset {
-        let mut keyset = Keyset::new();
+        let mut keyset = Keyset::default();
         for (kanji, score) in &self.data {
             // 区切り文字をいれなくても、末尾の4バイトを取り出せば十分な気がしないでもない。。
             // 先頭一致にして、+4バイトになるものを探せばいいはず。
@@ -34,15 +31,15 @@ impl SystemUnigramLMBuilder {
         keyset
     }
 
-    pub fn save(&self, fname: &String) -> Result<(), String> {
-        let mut marisa = Marisa::new();
+    pub fn save(&self, fname: &str) -> Result<(), String> {
+        let mut marisa = Marisa::default();
         marisa.build(&self.keyset());
         marisa.save(fname)?;
         Ok(())
     }
 
     pub fn build(&self) -> SystemUnigramLM {
-        let mut marisa = Marisa::new();
+        let mut marisa = Marisa::default();
         marisa.build(&self.keyset());
         SystemUnigramLM { marisa }
     }
@@ -68,7 +65,7 @@ impl SystemUnigramLM {
 
     pub fn load(fname: &String) -> Result<SystemUnigramLM, String> {
         println!("Reading {}", fname);
-        let mut marisa = Marisa::new();
+        let mut marisa = Marisa::default();
         marisa.load(fname)?;
         Ok(SystemUnigramLM { marisa })
     }
@@ -107,7 +104,7 @@ mod tests {
         let named_tmpfile = NamedTempFile::new().unwrap();
         let tmpfile = named_tmpfile.path().to_str().unwrap().to_string();
 
-        let mut builder = SystemUnigramLMBuilder::new();
+        let mut builder = SystemUnigramLMBuilder::default();
         builder.add(&"hello".to_string(), 0.4);
         builder.add(&"world".to_string(), 0.2);
         builder.save(&tmpfile).unwrap();

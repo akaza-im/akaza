@@ -10,7 +10,6 @@ use crate::kana_trie::KanaTrie;
 use crate::lm::system_unigram_lm::SystemUnigramLM;
 use crate::user_data::user_data::UserData;
 
-#[derive(PartialEq)]
 struct WordNode {
     start_pos: i32,
     /// 漢字
@@ -24,7 +23,17 @@ impl Hash for WordNode {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.start_pos.hash(state);
         self.kanji.hash(state);
+        self.yomi.hash(state);
         u32::from_le_bytes(self.cost.to_le_bytes()).hash(state);
+    }
+}
+
+impl PartialEq<Self> for WordNode {
+    fn eq(&self, other: &Self) -> bool {
+        self.start_pos == other.start_pos
+            && self.kanji == other.kanji
+            && self.yomi == other.yomi
+            && self.cost == other.cost
     }
 }
 
@@ -77,7 +86,7 @@ impl Segmenter {
      */
     // シフトを押して → を押したときのような処理の場合、
     // このメソッドに入ってくる前に別に処理する前提。
-    fn build(&self, yomi: &String) -> HashMap<usize, Vec<String>> {
+    fn build(&self, yomi: &str) -> HashMap<usize, Vec<String>> {
         let mut queue: Vec<usize> = Vec::new(); // 検索対象となる開始位置
         queue.push(0);
         let mut seen: HashSet<usize> = HashSet::new();
@@ -338,7 +347,7 @@ impl GraphResolver {
                         node.kanji, node.start_pos
                     )
                 });
-                for prev in prev_nodes.clone() {
+                for prev in prev_nodes {
                     let edge_cost = lattice.get_edge_cost(prev, node);
                     let prev_cost = costmap.get(prev).unwrap_or(&0_f32); // unwrap が必要なのは、 __BOS__ 用。
                     let tmp_cost = prev_cost + edge_cost + node_cost;
@@ -438,9 +447,9 @@ mod tests {
 
         // -1  0  1  2
         // BOS a  b  c
-        let dict_builder = KanaKanjiDictBuilder::new();
+        let dict_builder = KanaKanjiDictBuilder::default();
         let dict = dict_builder.build();
-        let system_unigram_lm_builder = SystemUnigramLMBuilder::new();
+        let system_unigram_lm_builder = SystemUnigramLMBuilder::default();
         let system_unigram_lm = system_unigram_lm_builder.build();
         let user_data = UserData::load(
             &NamedTempFile::new()
@@ -489,14 +498,14 @@ mod tests {
             ])
         );
 
-        let mut dict_builder = KanaKanjiDictBuilder::new();
+        let mut dict_builder = KanaKanjiDictBuilder::default();
         dict_builder.add("わたし", "私/渡し");
 
         let yomi = "わたし".to_string();
 
         // TODO このへん、ちょっとコピペしまくらないといけなくて渋い。
         let dict = dict_builder.build();
-        let system_unigram_lm_builder = SystemUnigramLMBuilder::new();
+        let system_unigram_lm_builder = SystemUnigramLMBuilder::default();
         let system_unigram_lm = system_unigram_lm_builder.build();
         let mut user_data = UserData::load(
             &NamedTempFile::new()

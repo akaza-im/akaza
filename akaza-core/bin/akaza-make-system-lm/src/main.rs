@@ -9,14 +9,14 @@ use libakaza::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
 fn process_unigram(srcpath: &String, dstpath: &String) {
     let file = File::open(srcpath).expect("Open {txtfile} correctly.");
 
-    let mut builder = SystemUnigramLMBuilder::new();
+    let mut builder = SystemUnigramLMBuilder::default();
     let mut i: u64 = 0;
     for line in BufReader::new(file).lines() {
         let line = line.unwrap();
         let (word, score) = line.trim().split_once(' ').unwrap();
         let score: f32 = score.parse().unwrap();
 
-        builder.add(&word.to_string(), score);
+        builder.add(word, score);
 
         i += 1;
         if i >= 8388608 {
@@ -29,13 +29,13 @@ fn process_unigram(srcpath: &String, dstpath: &String) {
     builder.save(dstpath).unwrap();
 }
 
-fn process_2gram(unigram: &SystemUnigramLM, srcpath: &String, dstpath: &String) {
+fn process_2gram(unigram: &SystemUnigramLM, srcpath: &str, dstpath: &str) {
     let file = File::open(srcpath).unwrap();
 
-    let mut builder = SystemBigramLMBuilder::new();
+    let mut builder = SystemBigramLMBuilder::default();
 
     for line in BufReader::new(file).lines() {
-        fn parse_2gram_line(line: &String) -> (String, String, f32) {
+        fn parse_2gram_line(line: &str) -> (String, String, f32) {
             let tokens: Vec<&str> = line.split(' ').collect();
             if tokens.len() != 2 {
                 println!("Invalid tokens: {:?}", tokens);
