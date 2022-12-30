@@ -213,16 +213,34 @@ impl LatticeGraph {
     // for debugging purpose
     // graphviz の dot 形式で出力する。
     #[allow(unused)]
-    fn dump_dot(&self) {
-        println!("digraph Lattice {{");
+    fn dump_dot(&self) -> String {
+        let mut buf = String::new();
+        buf += "digraph Lattice {\n";
         // start 及び end は、byte 数単位
         for (end_pos, nodes) in self.graph.iter() {
             for node in nodes {
-                println!("    {} -> \"{}/{}\"", node.start_pos, node.kanji, node.yomi);
-                println!("    \"{}/{}\" -> {}", node.kanji, node.yomi, end_pos);
+                buf += &*format!(
+                    r#"    "{}/{}" [xlabel="{}"]{}"#,
+                    node.kanji,
+                    node.yomi,
+                    self.get_node_cost(node),
+                    "\n"
+                );
+                for prev_node in self.get_prev_nodes(node).unwrap() {
+                    buf += &*format!(
+                        r#"    "{}/{}" -> "{}/{}" [label="{}"]{}"#,
+                        prev_node.kanji,
+                        prev_node.yomi,
+                        node.kanji,
+                        node.yomi,
+                        self.get_edge_cost(prev_node, node),
+                        "\n"
+                    );
+                }
             }
         }
-        println!("}}");
+        buf += &*format!("}}\n");
+        buf
     }
 
     fn get_node_cost(&self, node: &WordNode) -> f32 {
@@ -345,6 +363,8 @@ impl GraphResolver {
 mod tests {
     use crate::kana_kanji_dict::KanaKanjiDictBuilder;
     use crate::kana_trie::KanaTrieBuilder;
+    use std::fs::File;
+    use std::io::Write;
 
     use super::*;
 
@@ -426,6 +446,11 @@ mod tests {
         let dict = dict_builder.build();
         let graph_builder = GraphBuilder::new(dict);
         let lattice = graph_builder.construct(&yomi, graph);
+        // dot -Tpng -o /tmp/lattice.png /tmp/lattice.dot && open /tmp/lattice.png
+        File::create("/tmp/lattice.dot")
+            .unwrap()
+            .write_all(lattice.dump_dot().as_bytes())
+            .unwrap();
         let resolver = GraphResolver::new();
         let result = resolver.viterbi(&yomi, lattice);
         assert_eq!(result, "私");
