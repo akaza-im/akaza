@@ -10,3 +10,4 @@ dist/
 *.so
 perf.data
 callgrind.*
+target/

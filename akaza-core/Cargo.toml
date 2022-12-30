@@ -1,0 +1,2 @@
+[workspace]
+members = ["libakaza", "bin/akaza-make-binary-dict", "bin/akaza-make-system-lm", "marisa-sys"]
