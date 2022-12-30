@@ -159,6 +159,27 @@ impl GraphResolver {
         // 経験上、長い文字列のほうがあたり、というルールでもそこそこ変換できる。
         // TODO あとでちゃんと unigram のコストを使うよに変える。
         return node.kanji.len() as f32;
+
+        /*
+                if let Some(user_cost) = user_language_model.get_unigram_cost(&self.key) {
+                    // use user's score, if it's exists.
+                    return user_cost;
+                }
+
+                if self.system_word_id != UNKNOWN_WORD_ID {
+                    self.total_cost = Some(self.system_unigram_cost);
+                    return self.system_unigram_cost;
+                } else {
+                    // 労働者災害補償保険法 のように、システム辞書には採録されているが,
+                    // 言語モデルには採録されていない場合,漢字候補を先頭に持ってくる。
+                    return if self.word.len() < self.yomi.len() {
+                        // 読みのほうが短いので、漢字。
+                        ulm.get_default_cost_for_short()
+                    } else {
+                        ulm.get_default_cost()
+                    };
+                }
+        */
     }
 
     // -1  0  1 2
