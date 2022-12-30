@@ -38,10 +38,10 @@ pub(crate) fn write_user_stats_file(
     let mut tmpfile = File::create(path.clone() + ".tmp")?;
 
     for (key, cnt) in word_count {
-        tmpfile.write(key.as_bytes())?;
-        tmpfile.write(" ".as_bytes())?;
-        tmpfile.write(cnt.to_string().as_bytes())?;
-        tmpfile.write("\n".as_bytes())?;
+        tmpfile.write_all(key.as_bytes())?;
+        tmpfile.write_all(" ".as_bytes())?;
+        tmpfile.write_all(cnt.to_string().as_bytes())?;
+        tmpfile.write_all("\n".as_bytes())?;
     }
     fs::rename(path.clone() + ".tmp", path.clone())?;
 
