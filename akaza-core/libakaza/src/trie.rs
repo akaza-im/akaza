@@ -66,7 +66,7 @@ pub struct SearchResult {
 
 #[test]
 fn test() {
-    unsafe {
+    {
         let builder = TrieBuilder::new();
         builder.add("foobar".as_bytes().to_vec());
         builder.save(&"/tmp/dump.trie".to_string()).unwrap();
