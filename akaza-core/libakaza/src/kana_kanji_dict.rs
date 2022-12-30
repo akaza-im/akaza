@@ -73,7 +73,7 @@ mod tests {
     #[test]
     fn test() {
         let tmpfile = "/tmp/kanakanji.tri".to_string();
-        unsafe {
+        {
             let builder = KanaKanjiDictBuilder::new();
             builder.add(&"わたし".to_string(), &"私/渡し".to_string());
             builder.add(&"なまえ".to_string(), &"名前".to_string());
