@@ -1,5 +1,9 @@
 use crate::trie::TrieBuilder;
 
+/**
+ * bigram 言語モデル。
+ * unigram の生成のときに得られた単語IDを利用することで、圧縮している。
+ */
 pub struct SystemBigramLMBuilder {
     builder: TrieBuilder,
 }
