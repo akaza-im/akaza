@@ -1,5 +1,9 @@
 use crate::UNKNOWN_WORD_ID;
 
+/**
+ * unigram 言語モデル。
+ * 「漢字」に対して、発生確率スコアを保持している。
+ */
 pub struct SystemUnigramLMBuilder {
     data: Vec<(String, f32)>,
 }
