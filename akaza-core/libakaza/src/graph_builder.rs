@@ -1,5 +1,5 @@
-use std::collections::{HashMap, HashSet};
-use std::fmt::{Display, Formatter, Pointer};
+use std::collections::{BTreeMap, HashMap, HashSet};
+use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
 
 use log::trace;
@@ -36,9 +36,9 @@ impl WordNode {
             cost: 0_f32,
         }
     }
-    fn create_eos(yomi: &String) -> WordNode {
+    fn create_eos(start_pos: i32) -> WordNode {
         WordNode {
-            start_pos: yomi.len() as i32,
+            start_pos,
             kanji: "__EOS__".to_string(),
             yomi: "__EOS__".to_string(),
             cost: 0_f32,
@@ -130,47 +130,24 @@ impl Segmenter {
     }
 }
 
-// 次に必要なのは、分割された文字列から、グラフを構築する仕組みである。
-struct GraphResolver {
-    graph: HashMap<i32, Vec<WordNode>>,
+struct GraphBuilder {
     system_kana_kanji_dict: KanaKanjiDict,
 }
-
-impl GraphResolver {
-    fn new(
-        yomi: &String,
-        words_ends_at: HashMap<usize, Vec<String>>,
-        system_kana_kanji_dict: KanaKanjiDict,
-    ) -> GraphResolver {
-        let graph = Self::construct_graph(yomi, words_ends_at, &system_kana_kanji_dict);
-        Self::_dump_graph(&graph);
-        GraphResolver {
-            graph,
+impl GraphBuilder {
+    fn new(system_kana_kanji_dict: KanaKanjiDict) -> GraphBuilder {
+        GraphBuilder {
             system_kana_kanji_dict,
         }
     }
 
-    fn _dump_graph(graph: &HashMap<i32, Vec<WordNode>>) {
-        for nodes in graph.values() {
-            for node in nodes {
-                // unicode で日本語文字が3バイトで2文字幅であるという話
-                for _ in 0..(node.start_pos / 3 * 2) {
-                    print!(" ");
-                }
-                println!("{}", node.kanji);
-            }
-        }
-    }
-
-    fn construct_graph(
-        yomi: &String,
-        words_ends_at: HashMap<usize, Vec<String>>,
-        system_kana_kanji_dict: &KanaKanjiDict,
-    ) -> HashMap<i32, Vec<WordNode>> {
+    fn construct(&self, yomi: &String, words_ends_at: HashMap<usize, Vec<String>>) -> LatticeGraph {
         // このグラフのインデクスは単語の終了位置。
-        let mut graph: HashMap<i32, Vec<WordNode>> = HashMap::new();
+        let mut graph: BTreeMap<i32, Vec<WordNode>> = BTreeMap::new();
         graph.insert(0, vec![WordNode::create_bos()]);
-        graph.insert((yomi.len() + 1) as i32, vec![WordNode::create_eos(yomi)]);
+        graph.insert(
+            (yomi.len() + 1) as i32,
+            vec![WordNode::create_eos(yomi.len() as i32)],
+        );
 
         for (end_pos, yomis) in words_ends_at {
             for yomi in yomis {
@@ -181,7 +158,7 @@ impl GraphResolver {
                 vec.push(node);
 
                 // 漢字に変換した結果もあれば insert する。
-                if let Some(kanjis) = system_kana_kanji_dict.find(&yomi) {
+                if let Some(kanjis) = self.system_kana_kanji_dict.find(&yomi) {
                     for kanji in kanjis {
                         let node = WordNode::new((end_pos - yomi.len()) as i32, &kanji, &yomi);
                         vec.push(node);
@@ -189,12 +166,57 @@ impl GraphResolver {
                 }
             }
         }
-        return graph;
+        LatticeGraph { graph }
     }
+}
 
+// 考えられる単語の列全てを含むようなグラフ構造
+struct LatticeGraph {
+    graph: BTreeMap<i32, Vec<WordNode>>,
+}
+impl LatticeGraph {
     /// i文字目で終わるノードを探す
     fn node_list(&self, i: i32) -> Option<&Vec<WordNode>> {
         self.graph.get(&i)
+    }
+
+    // -1  0  1 2
+    // BOS わ た し
+    //     [  ][ ]
+    //     [     ]
+    fn get_prev_nodes(&self, node: &WordNode) -> Option<&Vec<WordNode>> {
+        // ここの処理を簡単にするために BOS が入っている、のだとおもう。
+        trace!("get_prev_nodes: {}", node.start_pos - 1);
+        self.graph.get(&(node.start_pos))
+    }
+
+    fn get(&self, n: i32) -> Option<&Vec<WordNode>> {
+        return self.graph.get(&n);
+    }
+
+    // for debugging purpose
+    #[allow(unused)]
+    fn dump(&self) {
+        // start 及び end は、byte 数単位
+        for (end_pos, nodes) in self.graph.iter() {
+            for node in nodes {
+                print!("start={} end={}:", node.start_pos, end_pos);
+                // 典型的には unicode で日本語文字が3バイトで2文字幅
+                for _ in 0..(node.start_pos / 3 * 2) {
+                    print!(" ");
+                }
+                println!("{}", node.kanji);
+            }
+        }
+    }
+}
+
+// 次に必要なのは、分割された文字列から、グラフを構築する仕組みである。
+struct GraphResolver {}
+
+impl GraphResolver {
+    fn new() -> GraphResolver {
+        GraphResolver {}
     }
 
     fn get_node_cost(&self, node: &WordNode) -> f32 {
@@ -232,26 +254,19 @@ impl GraphResolver {
         */
     }
 
-    // -1  0  1 2
-    // BOS わ た し
-    //     [  ][ ]
-    //     [     ]
-    fn get_prev_nodes(&self, node: &WordNode) -> Option<&Vec<WordNode>> {
-        // ここの処理を簡単にするために BOS が入っている、のだとおもう。
-        trace!("get_prev_nodes: {}", node.start_pos - 1);
-        self.graph.get(&(node.start_pos))
-    }
-
     fn get_edge_cost(&self, _prev: &WordNode, _node: &WordNode) -> f32 {
         // TODO: あとで実装する
         return 0.0;
     }
 
-    fn viterbi(&self, yomi: &String) -> String {
+    fn viterbi(&self, yomi: &String, lattice: LatticeGraph) -> String {
         let mut prevmap: HashMap<&WordNode, &WordNode> = HashMap::new();
+        let mut costmap: HashMap<&WordNode, f32> = HashMap::new();
+
+        lattice.dump();
 
         for i in 1..yomi.len() + 2 {
-            let Some(nodes) = self.node_list(i as i32) else {
+            let Some(nodes) = lattice.node_list(i as i32) else {
                 continue;
             };
             for node in nodes {
@@ -259,7 +274,7 @@ impl GraphResolver {
                 println!("kanji={}, Cost={}", node, node_cost);
                 let mut cost = f32::MAX;
                 let mut shortest_prev = None;
-                let prev_nodes = self.get_prev_nodes(&node).expect(
+                let prev_nodes = lattice.get_prev_nodes(&node).expect(
                     format!(
                         "Cannot get prev nodes for '{}' start={}",
                         node.kanji, node.start_pos
@@ -268,7 +283,7 @@ impl GraphResolver {
                 );
                 for prev in prev_nodes.clone() {
                     let edge_cost = self.get_edge_cost(&prev, &node);
-                    let tmp_cost = prev.cost + edge_cost + node_cost;
+                    let tmp_cost = costmap.get(prev).unwrap_or(&100_f32) + edge_cost + node_cost;
                     println!("Replace??? tmp_cost={} < cost={}: {}", tmp_cost, cost, prev);
                     if tmp_cost < cost {
                         if shortest_prev.is_none() {
@@ -277,21 +292,20 @@ impl GraphResolver {
                             println!("Replace {} by {}", shortest_prev.unwrap(), prev);
                         }
                         cost = tmp_cost;
-                        node.cost = tmp_cost;
                         shortest_prev = Some(prev);
                     }
                 }
                 prevmap.insert(node, shortest_prev.unwrap());
+                costmap.insert(node, cost);
             }
         }
 
-        let eos = self
-            .graph
-            .get(&((yomi.len() + 1) as i32))
+        let eos = lattice
+            .get((yomi.len() + 1) as i32)
             .unwrap()
             .get(0)
             .unwrap();
-        let bos = self.graph.get(&0).unwrap().get(0).unwrap();
+        let bos = lattice.get(0).unwrap().get(0).unwrap();
         let mut node = eos;
         let mut result: Vec<String> = Vec::new();
         while node != bos {
@@ -357,8 +371,10 @@ mod tests {
         // BOS a  b  c
         let dict_builder = KanaKanjiDictBuilder::new();
         let dict = dict_builder.build();
-        let resolver = GraphResolver::new(&"abc".to_string(), graph, dict);
-        let result = resolver.viterbi(&"abc".to_string());
+        let graph_builder = GraphBuilder::new(dict);
+        let lattice = graph_builder.construct(&"abc".to_string(), graph);
+        let resolver = GraphResolver::new();
+        let result = resolver.viterbi(&"abc".to_string(), lattice);
         assert_eq!(result, "abc");
     }
 
@@ -384,9 +400,14 @@ mod tests {
 
         let mut dict_builder = KanaKanjiDictBuilder::new();
         dict_builder.add("わたし", "私/渡し");
+
+        let yomi = "わたし".to_string();
+
         let dict = dict_builder.build();
-        let resolver = GraphResolver::new(&"わたし".to_string(), graph, dict);
-        let result = resolver.viterbi(&"わたし".to_string());
+        let graph_builder = GraphBuilder::new(dict);
+        let lattice = graph_builder.construct(&yomi, graph);
+        let resolver = GraphResolver::new();
+        let result = resolver.viterbi(&yomi, lattice);
         assert_eq!(result, "私");
     }
 }
