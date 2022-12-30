@@ -32,11 +32,11 @@ impl UniGramUserStats {
         let Some(count) = self.word_count.get(key.as_str()) else {
             return None;
         };
-        let cost = Some(f32::log10(
+        
+        Some(f32::log10(
             ((*count as f32) + ALPHA)
                 / ((self.unique_words as f32) + ALPHA * (self.total_words as f32)),
-        ));
-        cost
+        ))
     }
 
     pub(crate) fn record_entries(&mut self, kanji_kanas: &Vec<String>) {

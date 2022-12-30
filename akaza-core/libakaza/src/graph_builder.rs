@@ -85,7 +85,7 @@ impl Segmenter {
         // 終了位置ごとの候補単語リスト
         let mut words_ends_at: HashMap<usize, Vec<String>> = HashMap::new();
 
-        while queue.len() > 0 {
+        while !queue.is_empty() {
             let start_pos = queue.pop().unwrap();
             if seen.contains(&start_pos) {
                 continue;
@@ -105,11 +105,11 @@ impl Segmenter {
                     candidates.insert(g);
                 }
             }
-            if candidates.len() > 0 {
+            if !candidates.is_empty() {
                 for candidate in &candidates {
                     let ends_at = start_pos + candidate.len();
 
-                    let vec = words_ends_at.entry(ends_at).or_insert(Vec::new());
+                    let vec = words_ends_at.entry(ends_at).or_default();
                     vec.push(candidate.clone());
 
                     queue.push(start_pos + candidate.len());
@@ -122,14 +122,14 @@ impl Segmenter {
                 let first = &yomi[0..i];
                 let ends_at = start_pos + first.len();
 
-                let vec = words_ends_at.entry(ends_at).or_insert(Vec::new());
+                let vec = words_ends_at.entry(ends_at).or_default();
                 vec.push(first.to_string());
 
                 queue.push(start_pos + first.len())
             }
         }
 
-        return words_ends_at;
+        words_ends_at
     }
 }
 
@@ -163,7 +163,7 @@ impl GraphBuilder {
 
         for (end_pos, yomis) in words_ends_at {
             for yomi in yomis {
-                let vec = graph.entry(end_pos as i32).or_insert(Vec::new());
+                let vec = graph.entry(end_pos as i32).or_default();
 
                 // ひらがなそのものもエントリーとして登録しておく。
                 let node = WordNode::new((end_pos - yomi.len()) as i32, &yomi, &yomi);
@@ -258,7 +258,7 @@ impl LatticeGraph {
                 }
             }
         }
-        buf += &*format!("}}\n");
+        buf += &*"}\n".to_string();
         buf
     }
 
@@ -267,18 +267,18 @@ impl LatticeGraph {
         // 経験上、長い文字列のほうがあたり、というルールでもそこそこ変換できる。
         // TODO あとでちゃんと unigram のコストを使うよに変える。
 
-        if let Some(user_cost) = self.user_data.get_unigram_cost(&*node.kanji, &*node.yomi) {
+        if let Some(user_cost) = self.user_data.get_unigram_cost(&node.kanji, &node.yomi) {
             // use user's score. if it's exists.
             return user_cost;
         }
 
-        return if node.kanji.len() < node.yomi.len() {
+        if node.kanji.len() < node.yomi.len() {
             // log10(1e-20)
             -20.0
         } else {
             // log10(1e-19)
             -19.0
-        };
+        }
 
         /*
                 if let Some(user_cost) = user_language_model.get_unigram_cost(&self.key) {
@@ -304,7 +304,7 @@ impl LatticeGraph {
 
     fn get_edge_cost(&self, _prev: &WordNode, _node: &WordNode) -> f32 {
         // TODO: あとで実装する
-        return 0.0;
+        0.0
     }
 }
 
@@ -332,15 +332,14 @@ impl GraphResolver {
                 println!("kanji={}, Cost={}", node, node_cost);
                 let mut cost = f32::MIN;
                 let mut shortest_prev = None;
-                let prev_nodes = lattice.get_prev_nodes(&node).expect(
-                    format!(
+                let prev_nodes = lattice.get_prev_nodes(node).unwrap_or_else(|| {
+                    panic!(
                         "Cannot get prev nodes for '{}' start={}",
                         node.kanji, node.start_pos
                     )
-                    .as_str(),
-                );
+                });
                 for prev in prev_nodes.clone() {
-                    let edge_cost = lattice.get_edge_cost(&prev, &node);
+                    let edge_cost = lattice.get_edge_cost(prev, node);
                     let prev_cost = costmap.get(prev).unwrap_or(&0_f32); // unwrap が必要なのは、 __BOS__ 用。
                     let tmp_cost = prev_cost + edge_cost + node_cost;
                     println!(
@@ -378,10 +377,10 @@ impl GraphResolver {
             }
             node = prevmap
                 .get(node)
-                .expect(format!("Cannot get previous node: {}", node.kanji).as_str());
+                .unwrap_or_else(|| panic!("Cannot get previous node: {}", node.kanji));
         }
         result.reverse();
-        return result.join("");
+        result.join("")
     }
 }
 
@@ -472,7 +471,7 @@ mod tests {
 
     #[test]
     fn test_kana_kanji() {
-        env_logger::builder().is_test(true).try_init().unwrap();
+        let _ = env_logger::builder().is_test(true).try_init();
 
         let mut builder = KanaTrieBuilder::new();
         builder.add(&"わたし".to_string());

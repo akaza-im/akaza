@@ -23,7 +23,7 @@ impl TrieBuilder {
         let mut marisa = Marisa::new();
         marisa.build(&self.keyset);
         marisa.save(ofname).unwrap();
-        return Ok(());
+        Ok(())
     }
 
     pub fn build(&self) -> Trie {
@@ -43,7 +43,7 @@ impl Trie {
     pub fn load(filename: &String) -> Result<Trie, Error> {
         let mut marisa = Marisa::new();
         marisa.load(filename).unwrap();
-        return Ok(Trie { marisa });
+        Ok(Trie { marisa })
     }
 
     pub fn predictive_search(&self, keyword: Vec<u8>) -> Vec<SearchResult> {
@@ -56,11 +56,11 @@ impl Trie {
                 });
                 true
             });
-        return p;
+        p
     }
 
     pub fn num_keys(&self) -> usize {
-        return self.marisa.num_keys();
+        self.marisa.num_keys()
     }
 }
 

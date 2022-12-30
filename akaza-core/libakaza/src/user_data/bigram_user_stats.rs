@@ -35,10 +35,10 @@ impl BiGramUserStats {
         let Some(count) = self.word_count.get(key.as_str()) else {
             return None;
         };
-        return Some(f32::log10(
+        Some(f32::log10(
             ((*count as f32) + ALPHA)
                 / ((self.unique_words as f32) + ALPHA + (self.total_words as f32)),
-        ));
+        ))
     }
 
     pub(crate) fn record_entries(&mut self, kanjis: &Vec<String>) {
@@ -55,7 +55,7 @@ impl BiGramUserStats {
                 continue;
             };
 
-            let key = kanji1.clone() + &"\t".to_string() + &kanji2;
+            let key = kanji1.clone() + "\t" + kanji2;
             if let Some(cnt) = self.word_count.get(&key) {
                 self.word_count.insert(key, cnt + 1);
             } else {

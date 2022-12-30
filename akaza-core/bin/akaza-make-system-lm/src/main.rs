@@ -13,7 +13,7 @@ fn process_unigram(srcpath: &String, dstpath: &String) {
     let mut i: u64 = 0;
     for line in BufReader::new(file).lines() {
         let line = line.unwrap();
-        let (word, score) = line.trim().split_once(" ").unwrap();
+        let (word, score) = line.trim().split_once(' ').unwrap();
         let score: f32 = score.parse().unwrap();
 
         builder.add(&word.to_string(), score);
@@ -36,7 +36,7 @@ fn process_2gram(unigram: &SystemUnigramLM, srcpath: &String, dstpath: &String) 
 
     for line in BufReader::new(file).lines() {
         fn parse_2gram_line(line: &String) -> (String, String, f32) {
-            let tokens: Vec<&str> = line.split(" ").collect();
+            let tokens: Vec<&str> = line.split(' ').collect();
             if tokens.len() != 2 {
                 println!("Invalid tokens: {:?}", tokens);
                 panic!()
@@ -44,9 +44,9 @@ fn process_2gram(unigram: &SystemUnigramLM, srcpath: &String, dstpath: &String) 
             let words: &str = tokens[0];
             let score = tokens[1];
 
-            let (word1, word2) = words.split_once("\t").unwrap();
+            let (word1, word2) = words.split_once('\t').unwrap();
             let score = score.parse().unwrap();
-            return (word1.to_string(), word2.to_string(), score);
+            (word1.to_string(), word2.to_string(), score)
         }
 
         let line = line.unwrap();

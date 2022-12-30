@@ -17,7 +17,7 @@ pub(crate) fn read_user_stats_file(path: &String) -> Result<Vec<(String, u32)>, 
         let Ok(line) = line else {
             return Err("Cannot read user language model file".to_string());
         };
-        let Some((key, count)) = line.trim().split_once(" ") else {
+        let Some((key, count)) = line.trim().split_once(' ') else {
             continue;
         };
 
@@ -28,7 +28,7 @@ pub(crate) fn read_user_stats_file(path: &String) -> Result<Vec<(String, u32)>, 
         result.push((key.to_string(), count));
     }
 
-    return Ok(result);
+    Ok(result)
 }
 
 pub(crate) fn write_user_stats_file(

@@ -24,6 +24,6 @@ impl SystemBigramLMBuilder {
     }
 
     pub fn save(&self, ofname: &String) -> std::io::Result<()> {
-        return self.builder.save(ofname);
+        self.builder.save(ofname)
     }
 }

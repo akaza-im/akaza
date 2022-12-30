@@ -49,6 +49,6 @@ impl KanaTrie {
             result.push(String::from_utf8(word.to_vec()).unwrap());
             true
         });
-        return result;
+        result
     }
 }

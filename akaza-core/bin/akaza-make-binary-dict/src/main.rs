@@ -12,14 +12,14 @@ unsafe fn make_binary_dict(txtfile: &String, triefile: &String) {
     let file = File::open(txtfile).expect("Open {txtfile} correctly.");
     for line in BufReader::new(file).lines() {
         let line = line.unwrap();
-        let v: Vec<&str> = line.trim().split(" ").collect();
+        let v: Vec<&str> = line.trim().split(' ').collect();
         if v.len() != 2 {
             continue;
         }
         let yomi = v[0];
         let kanjis = v[1];
         println!("word={} kanjis={}", yomi, kanjis);
-        binary_dict.add(&yomi.to_string(), &kanjis.to_string());
+        binary_dict.add(yomi, kanjis);
     }
     binary_dict.save(triefile).unwrap();
 }

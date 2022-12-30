@@ -5,7 +5,7 @@ pub struct KanaConverter {
 }
 impl KanaConverter {
     fn generate_map() -> HashMap<char, char> {
-        return HashMap::from([
+        HashMap::from([
             ('ぁ', 'ァ'),
             ('あ', 'ア'),
             ('ぃ', 'ィ'),
@@ -100,7 +100,7 @@ impl KanaConverter {
             ('」', '」'),
             ('。', '。'),
             ('、', '、'),
-        ]);
+        ])
     }
     pub fn new() -> KanaConverter {
         KanaConverter {
@@ -116,7 +116,7 @@ impl KanaConverter {
                 None => c,
             })
         }
-        return buf;
+        buf
     }
 }
 

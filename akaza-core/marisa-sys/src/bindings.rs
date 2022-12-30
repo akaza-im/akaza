@@ -75,13 +75,13 @@ impl Marisa {
     pub fn load(&mut self, filename: &String) -> Result<(), String> {
         unsafe {
             let exc = marisa_load(self.marisa, filename.as_ptr());
-            return if exc.is_null() {
+            if exc.is_null() {
                 Ok(())
             } else {
                 Err(CString::from_raw((*exc).error_message)
                     .into_string()
                     .unwrap())
-            };
+            }
         }
     }
 
@@ -94,13 +94,13 @@ impl Marisa {
     pub fn save(&self, filename: &String) -> Result<(), String> {
         unsafe {
             let exc = marisa_save(self.marisa, filename.as_ptr());
-            return if exc.is_null() {
+            if exc.is_null() {
                 Ok(())
             } else {
                 Err(CString::from_raw((*exc).error_message)
                     .into_string()
                     .unwrap())
-            };
+            }
         }
     }
 
@@ -118,7 +118,7 @@ impl Marisa {
         F: FnMut(&[u8], usize) -> bool,
     {
         let cookie = &mut *(cookie as *mut F);
-        let cs = std::slice::from_raw_parts(s, len as usize);
+        let cs = std::slice::from_raw_parts(s, len);
         cookie(cs, id)
     }
 

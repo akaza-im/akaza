@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use regex::{Captures, Regex};
 
 fn default_romkan_map() -> HashMap<&'static str, &'static str> {
-    return HashMap::from([
+    HashMap::from([
         ("xa", "ぁ"),
         ("a", "あ"),
         ("xi", "ぃ"),
@@ -298,7 +298,7 @@ fn default_romkan_map() -> HashMap<&'static str, &'static str> {
         ("z/", "・"),
         ("wi", "うぃ"),
         ("we", "うぇ"),
-    ]);
+    ])
 }
 
 struct RomKanConverter {
@@ -336,7 +336,7 @@ impl RomKanConverter {
                 rom.to_string()
             }
         });
-        return retval.into_owned();
+        retval.into_owned()
     }
 }
 

@@ -25,7 +25,7 @@ impl KanaKanjiDictBuilder {
     }
 
     pub fn save(&self, filename: &String) -> std::io::Result<()> {
-        return self.trie_builder.save(filename);
+        self.trie_builder.save(filename)
     }
 
     pub fn build(&self) -> KanaKanjiDict {
@@ -53,10 +53,10 @@ impl KanaKanjiDict {
             .predictive_search([yomi.as_bytes(), b"\t"].concat().to_vec());
         for result in got {
             let s: String = String::from_utf8(result.keyword).unwrap();
-            let (_, kanjis) = s.split_once("\t")?;
-            return Some(kanjis.split("/").map(|f| f.to_string()).collect());
+            let (_, kanjis) = s.split_once('\t')?;
+            return Some(kanjis.split('/').map(|f| f.to_string()).collect());
         }
-        return None;
+        None
     }
 
     pub fn all_yomis(&self) -> Option<Vec<String>> {
@@ -64,10 +64,10 @@ impl KanaKanjiDict {
         let got = self.trie.predictive_search(b"".to_vec());
         for item in got {
             let item: String = String::from_utf8(item.keyword).unwrap();
-            let (yomi, _) = item.split_once("\t")?;
+            let (yomi, _) = item.split_once('\t')?;
             result.push(yomi.to_string())
         }
-        return Some(result);
+        Some(result)
     }
 }
 
@@ -80,8 +80,8 @@ mod tests {
         let tmpfile = "/tmp/kanakanji.tri".to_string();
         {
             let mut builder = KanaKanjiDictBuilder::new();
-            builder.add(&"わたし".to_string(), &"私/渡し".to_string());
-            builder.add(&"なまえ".to_string(), &"名前".to_string());
+            builder.add("わたし", "私/渡し");
+            builder.add("なまえ", "名前");
             builder.save(&tmpfile).unwrap();
         }
 
@@ -96,8 +96,8 @@ mod tests {
     #[test]
     fn test_find() {
         let mut builder = KanaKanjiDictBuilder::new();
-        builder.add(&"わたし".to_string(), &"私/渡し".to_string());
-        builder.add(&"なまえ".to_string(), &"名前".to_string());
+        builder.add("わたし", "私/渡し");
+        builder.add("なまえ", "名前");
         let dict = builder.build();
 
         let mut kanjis = dict.find(&"わたし".to_string()).unwrap();
