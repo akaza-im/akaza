@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+extern crate core;
+
 mod graph_builder;
 mod graph_resolver;
 pub mod kana;
