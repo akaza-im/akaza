@@ -13,9 +13,7 @@ fn process_unigram(srcpath: &String, dstpath: &String) {
     let mut i: u64 = 0;
     for line in BufReader::new(file).lines() {
         let line = line.unwrap();
-        let v: Vec<&str> = line.trim().split(" ").collect();
-        let word = v[0];
-        let score = v[1];
+        let (word, score) = line.trim().split_once(" ").unwrap();
         let score: f32 = score.parse().unwrap();
 
         builder.add(&word.to_string(), score);
@@ -46,10 +44,7 @@ fn process_2gram(unigram: &SystemUnigramLM, srcpath: &String, dstpath: &String) 
             let words: &str = tokens[0];
             let score = tokens[1];
 
-            let words: Vec<&str> = words.split("\t").collect();
-
-            let word1 = words[0];
-            let word2 = words[1];
+            let (word1, word2) = words.split_once("\t").unwrap();
             let score = score.parse().unwrap();
             return (word1.to_string(), word2.to_string(), score);
         }
@@ -59,10 +54,17 @@ fn process_2gram(unigram: &SystemUnigramLM, srcpath: &String, dstpath: &String) 
 
         // println!("word1='{}' word2='{}' score='{}'", word1, word2, score);
 
-        let (word_id1, _) = unigram.find_unigram(&word1.to_string()).unwrap();
-        let (word_id2, _) = unigram.find_unigram(&word2.to_string()).unwrap();
+        let Some((word_id1, _)) = unigram.find(&word1.to_string()) else {
+            println!("Can't find '{}' in unigram data", word2);
+            continue;
+        };
+        let Some((word_id2, _)) = unigram
+            .find(&word2.to_string()) else {
+            println!("Can't find '{}' in unigram data", word2);
+            continue;
+        };
 
-        builder.add(word_id1, word_id2, score);
+        builder.add(word_id1 as i32, word_id2 as i32, score);
     }
 
     builder.save(dstpath).unwrap();

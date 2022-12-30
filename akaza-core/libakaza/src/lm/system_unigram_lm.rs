@@ -1,4 +1,4 @@
-use crate::UNKNOWN_WORD_ID;
+use marisa_sys::{Keyset, Marisa};
 
 /**
  * unigram 言語モデル。
@@ -18,31 +18,29 @@ impl SystemUnigramLMBuilder {
     }
 
     pub fn save(&self, fname: &String) -> Result<(), String> {
-        return match sled::open(fname) {
-            Ok(db) => {
-                let mut word_id: i32 = 1;
-                for p in &self.data {
-                    let (word, score) = p;
-                    let result = db.insert(
-                        word,
-                        [word_id.to_le_bytes(), score.to_le_bytes()]
-                            .concat()
-                            .to_vec(),
-                    );
-                    if let Err(result) = result {
-                        return Err(result.to_string());
-                    }
-                    word_id += 1;
-                }
-                Ok(())
-            }
-            Err(err) => Err(err.to_string()),
-        };
+        let keyset = Keyset::new();
+        for (kanji, score) in &self.data {
+            // 区切り文字をいれなくても、末尾の4バイトを取り出せば十分な気がしないでもない。。
+            // 先頭一致にして、+4バイトになるものを探せばいいはず。
+            // 最適化の余地だけど、現実的には空間効率よりも速度のほうが重要かもしれない。
+            let key = [
+                kanji.as_bytes(),
+                b"\xff",
+                score.to_le_bytes().as_slice(), // バイナリにしてデータ容量を節約する
+            ]
+            .concat();
+            keyset.push_back(key.as_slice());
+        }
+
+        let marisa = Marisa::new();
+        marisa.build(&keyset);
+        marisa.save(fname)?;
+        Ok(())
     }
 }
 
 pub struct SystemUnigramLM {
-    pub db: sled::Db,
+    marisa: Marisa,
 }
 
 impl SystemUnigramLM {
@@ -56,53 +54,64 @@ impl SystemUnigramLM {
 
 impl SystemUnigramLM {
     pub fn num_keys(&self) -> usize {
-        return self.db.len();
+        self.marisa.num_keys()
     }
 
     pub fn load(fname: &String) -> Result<SystemUnigramLM, String> {
         println!("Reading {}", fname);
-        return match sled::open(fname) {
-            Ok(db) => Ok(SystemUnigramLM { db }),
-            Err(err) => Err(err.to_string()),
-        };
+        let marisa = Marisa::new();
+        marisa.load(fname)?;
+        Ok(SystemUnigramLM { marisa })
     }
 
     /// @return (word_id, score)。
-    pub fn find_unigram(&self, word: &String) -> Result<(i32, f32), String> {
-        return match self.db.get(word) {
-            Ok(Some(f)) => {
-                let word_id = i32::from_le_bytes(f[0..4].try_into().unwrap());
-                let score = f32::from_le_bytes(f[4..8].try_into().unwrap());
-                Ok((word_id, score))
-            }
-            Ok(None) => Ok((UNKNOWN_WORD_ID, 0_f32)),
-            Err(err) => Err(err.to_string()),
-        };
+    pub fn find(&self, word: &String) -> Option<(usize, f32)> {
+        assert_ne!(word.len(), 0);
+
+        let key = [word.as_bytes(), b"\xff"].concat();
+        let mut kanji_id: usize = usize::MAX;
+        let mut score = f32::MAX;
+        self.marisa.predictive_search(key.as_slice(), |word, id| {
+            kanji_id = id;
+
+            let idx = word.iter().position(|f| *f == b'\xff').unwrap();
+            let bytes: [u8; 4] = word[idx + 1..idx + 1 + 4].try_into().unwrap();
+            score = f32::from_le_bytes(bytes);
+            false
+        });
+        if kanji_id != usize::MAX {
+            Some((kanji_id, score))
+        } else {
+            None
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use tempfile::NamedTempFile;
+
     use super::*;
 
     #[test]
     fn test() {
+        let named_tmpfile = NamedTempFile::new().unwrap();
+        let tmpfile = named_tmpfile.path().to_str().unwrap().to_string();
+
         let mut builder = SystemUnigramLMBuilder::new();
         builder.add(&"hello".to_string(), 0.4);
         builder.add(&"world".to_string(), 0.2);
-        let got = builder.save(&"/tmp/system_unigram_lm.sled".to_string());
-        assert_eq!(got.is_ok(), true);
+        builder.save(&tmpfile).unwrap();
 
-        let lm = SystemUnigramLM::load(&"/tmp/system_unigram_lm.sled".to_string()).unwrap();
+        let lm = SystemUnigramLM::load(&tmpfile).unwrap();
         {
-            let (word_id, score) = lm.find_unigram(&"unknown".to_string()).unwrap();
-            assert_eq!(word_id, UNKNOWN_WORD_ID);
-            assert_eq!(score, 0_f32);
+            let (word_id, score) = lm.find(&"hello".to_string()).unwrap();
+            assert_eq!(word_id, 0);
+            assert_eq!(score, 0.4_f32);
         }
         {
-            let (word_id, score) = lm.find_unigram(&"hello".to_string()).unwrap();
-            assert_eq!(word_id, 1);
-            assert_eq!(score, 0.4_f32);
+            let p = lm.find(&"unknown".to_string());
+            assert_eq!(p, None);
         }
     }
 }
