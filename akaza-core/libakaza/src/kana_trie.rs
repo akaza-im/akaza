@@ -1,28 +1,28 @@
 use marisa_sys::{Keyset, Marisa};
 
-pub(crate) struct KanaTrieBuilder {
+pub struct KanaTrieBuilder {
     keyset: Keyset,
 }
 
 impl KanaTrieBuilder {
-    pub(crate) fn new() -> KanaTrieBuilder {
+    pub fn new() -> KanaTrieBuilder {
         KanaTrieBuilder {
             keyset: Keyset::default(),
         }
     }
 
-    pub(crate) fn add(&mut self, yomi: &String) {
+    pub fn add(&mut self, yomi: &String) {
         self.keyset.push_back(yomi.as_bytes());
     }
 
-    pub(crate) fn build(&self) -> KanaTrie {
+    pub fn build(&self) -> KanaTrie {
         let mut marisa = Marisa::default();
         marisa.build(&self.keyset);
         KanaTrie::new(marisa)
     }
 }
 
-pub(crate) struct KanaTrie {
+pub struct KanaTrie {
     marisa: Marisa,
 }
 

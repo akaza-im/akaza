@@ -3,15 +3,15 @@ use std::collections::HashMap;
 use std::io;
 
 use crate::kana_trie::KanaTrie;
-use crate::user_data::bigram_user_stats::BiGramUserStats;
-use crate::user_data::unigram_user_stats::UniGramUserStats;
-use crate::user_data::user_stats_utils::{read_user_stats_file, write_user_stats_file};
+use crate::user_side_data::bigram_user_stats::BiGramUserStats;
+use crate::user_side_data::unigram_user_stats::UniGramUserStats;
+use crate::user_side_data::user_stats_utils::{read_user_stats_file, write_user_stats_file};
 use marisa_sys::Marisa;
 
 /**
  * ユーザー固有データ
  */
-pub(crate) struct UserData {
+pub struct UserData {
     /// 読み仮名のトライ。入力変換時に共通接頭辞検索するために使用。
     kana_trie: KanaTrie,
     unigram_user_stats: UniGramUserStats,
@@ -24,11 +24,7 @@ pub(crate) struct UserData {
     pub(crate) need_save: bool,
 }
 impl UserData {
-    pub(crate) fn load(
-        unigram_path: &String,
-        bigram_path: &String,
-        kana_trie_path: &String,
-    ) -> UserData {
+    pub fn load(unigram_path: &String, bigram_path: &String, kana_trie_path: &String) -> UserData {
         // ユーザーデータが読み込めないことは fatal エラーではない。
         // 初回起動時にはデータがないので。
         // データがなければ初期所状態から始める

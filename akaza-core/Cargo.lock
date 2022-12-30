@@ -12,6 +12,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "akaza-demo"
+version = "0.1.0"
+dependencies = [
+ "env_logger",
+ "libakaza",
+ "tempfile",
+]
+
+[[package]]
 name = "akaza-make-binary-dict"
 version = "0.1.0"
 dependencies = [

@@ -8,7 +8,7 @@ use log::trace;
 use crate::kana_kanji_dict::KanaKanjiDict;
 use crate::kana_trie::KanaTrie;
 use crate::lm::system_unigram_lm::SystemUnigramLM;
-use crate::user_data::user_data::UserData;
+use crate::user_side_data::user_data::UserData;
 
 struct WordNode {
     start_pos: i32,
@@ -72,12 +72,12 @@ impl Display for WordNode {
     }
 }
 
-struct Segmenter {
+pub struct Segmenter {
     tries: Vec<KanaTrie>,
 }
 
 impl Segmenter {
-    pub(crate) fn new(tries: Vec<KanaTrie>) -> Segmenter {
+    pub fn new(tries: Vec<KanaTrie>) -> Segmenter {
         Segmenter { tries }
     }
 
@@ -86,7 +86,7 @@ impl Segmenter {
      */
     // シフトを押して → を押したときのような処理の場合、
     // このメソッドに入ってくる前に別に処理する前提。
-    fn build(&self, yomi: &str) -> HashMap<usize, Vec<String>> {
+    pub fn build(&self, yomi: &str) -> HashMap<usize, Vec<String>> {
         let mut queue: Vec<usize> = Vec::new(); // 検索対象となる開始位置
         queue.push(0);
         let mut seen: HashSet<usize> = HashSet::new();
@@ -142,14 +142,14 @@ impl Segmenter {
     }
 }
 
-struct GraphBuilder {
+pub struct GraphBuilder {
     system_kana_kanji_dict: KanaKanjiDict,
     user_data: Rc<UserData>,
     system_unigram_lm: Rc<SystemUnigramLM>,
 }
 
 impl GraphBuilder {
-    fn new(
+    pub fn new(
         system_kana_kanji_dict: KanaKanjiDict,
         user_data: Rc<UserData>,
         system_unigram_lm: Rc<SystemUnigramLM>,
@@ -161,7 +161,11 @@ impl GraphBuilder {
         }
     }
 
-    fn construct(&self, yomi: &String, words_ends_at: HashMap<usize, Vec<String>>) -> LatticeGraph {
+    pub fn construct(
+        &self,
+        yomi: &String,
+        words_ends_at: HashMap<usize, Vec<String>>,
+    ) -> LatticeGraph {
         // このグラフのインデクスは単語の終了位置。
         let mut graph: BTreeMap<i32, Vec<WordNode>> = BTreeMap::new();
         graph.insert(0, vec![WordNode::create_bos()]);
@@ -196,7 +200,7 @@ impl GraphBuilder {
 }
 
 // 考えられる単語の列全てを含むようなグラフ構造
-struct LatticeGraph {
+pub struct LatticeGraph {
     graph: BTreeMap<i32, Vec<WordNode>>,
     user_data: Rc<UserData>,
     system_unigram_lm: Rc<SystemUnigramLM>,
@@ -241,7 +245,7 @@ impl LatticeGraph {
     // for debugging purpose
     // graphviz の dot 形式で出力する。
     #[allow(unused)]
-    fn dump_dot(&self) -> String {
+    pub fn dump_dot(&self) -> String {
         let mut buf = String::new();
         buf += "digraph Lattice {\n";
         // start 及び end は、byte 数単位
@@ -318,14 +322,14 @@ impl LatticeGraph {
 }
 
 // 次に必要なのは、分割された文字列から、グラフを構築する仕組みである。
-struct GraphResolver {}
+pub struct GraphResolver {}
 
 impl GraphResolver {
-    fn new() -> GraphResolver {
+    pub fn new() -> GraphResolver {
         GraphResolver {}
     }
 
-    fn viterbi(&self, yomi: &String, lattice: LatticeGraph) -> String {
+    pub fn viterbi(&self, yomi: &String, lattice: LatticeGraph) -> String {
         let mut prevmap: HashMap<&WordNode, &WordNode> = HashMap::new();
         let mut costmap: HashMap<&WordNode, f32> = HashMap::new();
 
