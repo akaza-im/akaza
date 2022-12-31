@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 use crate::trie::{Trie, TrieBuilder};
 
 /**
@@ -7,7 +9,6 @@ use crate::trie::{Trie, TrieBuilder};
  * 実際には普通にキーバリューストアとしてしか利用していない。
  * 別のデータ構造もそのうち検討したほうが良いかもしれない。
  */
-
 #[derive(Default)]
 pub struct KanaKanjiDictBuilder {
     trie_builder: TrieBuilder,
@@ -19,7 +20,7 @@ impl KanaKanjiDictBuilder {
         self.trie_builder.add(key);
     }
 
-    pub fn save(&self, filename: &str) -> std::io::Result<()> {
+    pub fn save(&self, filename: &str) -> Result<()> {
         self.trie_builder.save(filename)
     }
 
@@ -35,11 +36,9 @@ pub struct KanaKanjiDict {
 }
 
 impl KanaKanjiDict {
-    pub fn load(file_name: &str) -> Result<KanaKanjiDict, String> {
-        match Trie::load(file_name) {
-            Ok(trie) => Ok(KanaKanjiDict { trie }),
-            Err(err) => Err(err.to_string()),
-        }
+    pub fn load(file_name: &str) -> Result<KanaKanjiDict> {
+        let trie = Trie::load(file_name)?;
+        Ok(KanaKanjiDict { trie })
     }
 
     pub fn find(&self, yomi: &String) -> Option<Vec<String>> {

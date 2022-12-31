@@ -23,7 +23,7 @@ impl SystemBigramLMBuilder {
         SystemBigramLM { trie }
     }
 
-    pub fn save(&self, ofname: &str) -> std::io::Result<()> {
+    pub fn save(&self, ofname: &str) -> anyhow::Result<()> {
         self.builder.save(ofname)
     }
 }
@@ -64,11 +64,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn build_and_load() {
+    fn build_and_load() -> anyhow::Result<()> {
         let mut builder = SystemBigramLMBuilder::default();
         builder.add(4649, 5963, 5.11_f32);
-        let trie = builder.build();
-        let got_score = trie.get_edge_cost(4649, 5963).unwrap();
+        let system_bigram_lm = builder.build();
+        let got_score = system_bigram_lm.get_edge_cost(4649, 5963).unwrap();
         assert_eq!(got_score, 5.11_f32);
+        Ok(())
     }
 }

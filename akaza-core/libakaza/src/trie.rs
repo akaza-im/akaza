@@ -1,5 +1,4 @@
-use std::io::Error;
-
+use anyhow::Result;
 use marisa_sys::{Keyset, Marisa};
 
 // Trie 木の実装詳細はこのファイルで隠蔽される。
@@ -14,10 +13,10 @@ impl TrieBuilder {
         self.keyset.push_back(key.as_slice());
     }
 
-    pub fn save(&self, ofname: &str) -> std::io::Result<()> {
+    pub fn save(&self, ofname: &str) -> Result<()> {
         let mut marisa = Marisa::default();
         marisa.build(&self.keyset);
-        marisa.save(ofname).unwrap();
+        marisa.save(ofname)?;
         Ok(())
     }
 
@@ -35,9 +34,9 @@ pub struct Trie {
 }
 
 impl Trie {
-    pub fn load(filename: &str) -> Result<Trie, Error> {
+    pub fn load(filename: &str) -> Result<Trie> {
         let mut marisa = Marisa::default();
-        marisa.load(filename).unwrap();
+        marisa.load(filename)?;
         Ok(Trie { marisa })
     }
 

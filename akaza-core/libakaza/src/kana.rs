@@ -131,9 +131,6 @@ mod tests {
     #[test]
     fn test_hira2kata() {
         let converter = KanaConverter::default();
-        assert_eq!(
-            converter.hira2kata("いうお"),
-            "イウオ".to_string()
-        )
+        assert_eq!(converter.hira2kata("いうお"), "イウオ".to_string())
     }
 }

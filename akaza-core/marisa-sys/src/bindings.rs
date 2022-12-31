@@ -3,6 +3,7 @@
 // ---------------------------------------------------
 
 use alloc::ffi::CString;
+use anyhow::{anyhow, Result};
 use std::ffi::c_char;
 use std::os::raw::c_void;
 
@@ -74,17 +75,19 @@ impl Default for Marisa {
 }
 
 impl Marisa {
-    pub fn load(&mut self, filename: &str) -> Result<(), String> {
+    pub fn load(&mut self, filename: &str) -> Result<()> {
         unsafe {
             let exc = marisa_load(self.marisa, filename.as_ptr());
             if exc.is_null() {
                 Ok(())
             } else {
-                Err(CString::from_raw((*exc).error_message)
-                    .into_string()
-                    .unwrap()
-                    + " : "
-                    + filename)
+                Err(anyhow!(
+                    "Cannot load file: {}, file={}",
+                    CString::from_raw((*exc).error_message)
+                        .into_string()
+                        .unwrap(),
+                    filename
+                ))
             }
         }
     }
@@ -95,15 +98,19 @@ impl Marisa {
         }
     }
 
-    pub fn save(&self, filename: &str) -> Result<(), String> {
+    pub fn save(&self, filename: &str) -> Result<()> {
         unsafe {
             let exc = marisa_save(self.marisa, filename.as_ptr());
             if exc.is_null() {
                 Ok(())
             } else {
-                Err(CString::from_raw((*exc).error_message)
-                    .into_string()
-                    .unwrap())
+                Err(anyhow!(
+                    "Cannot save marisa file: {}, filename={}",
+                    CString::from_raw((*exc).error_message)
+                        .into_string()
+                        .unwrap(),
+                    filename
+                ))
             }
         }
     }
@@ -251,9 +258,9 @@ mod tests {
             let mut marisa = Marisa::default();
             let result = marisa.load("UNKNOWN_PATH");
             if let Err(err) = result {
-                assert!(err.contains("MARISA_IO_"));
+                assert!(err.to_string().contains("MARISA_IO_"));
             } else {
-                assert!(false)
+                panic!() // unreachable
             }
         }
     }

@@ -1,3 +1,4 @@
+use anyhow::Result;
 use marisa_sys::{Keyset, Marisa};
 
 #[derive(Default)]
@@ -27,11 +28,11 @@ impl KanaTrie {
         KanaTrie { marisa }
     }
 
-    pub(crate) fn save(&self, file_name: &str) -> Result<(), String> {
+    pub(crate) fn save(&self, file_name: &str) -> Result<()> {
         self.marisa.save(file_name)
     }
 
-    pub fn load(file_name: &str) -> Result<KanaTrie, String> {
+    pub fn load(file_name: &str) -> Result<KanaTrie> {
         let mut marisa = Marisa::default();
         marisa.load(file_name)?;
         Ok(KanaTrie { marisa })

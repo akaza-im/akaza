@@ -1,3 +1,4 @@
+use anyhow::Result;
 use log::info;
 use marisa_sys::{Keyset, Marisa};
 
@@ -32,7 +33,7 @@ impl SystemUnigramLMBuilder {
         keyset
     }
 
-    pub fn save(&self, fname: &str) -> Result<(), String> {
+    pub fn save(&self, fname: &str) -> Result<()> {
         let mut marisa = Marisa::default();
         marisa.build(&self.keyset());
         marisa.save(fname)?;
@@ -64,7 +65,7 @@ impl SystemUnigramLM {
         self.marisa.num_keys()
     }
 
-    pub fn load(fname: &str) -> Result<SystemUnigramLM, String> {
+    pub fn load(fname: &str) -> Result<SystemUnigramLM> {
         info!("Reading {}", fname);
         let mut marisa = Marisa::default();
         marisa.load(fname)?;

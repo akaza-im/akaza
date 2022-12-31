@@ -10,7 +10,7 @@ use crate::graph::word_node::WordNode;
 pub struct GraphResolver {}
 
 impl GraphResolver {
-    pub fn viterbi(&self, yomi: &String, lattice: LatticeGraph) -> Result<String, String> {
+    pub fn viterbi(&self, yomi: &str, lattice: LatticeGraph) -> anyhow::Result<String> {
         let mut prevmap: HashMap<&WordNode, &WordNode> = HashMap::new();
         let mut costmap: HashMap<&WordNode, f32> = HashMap::new();
 

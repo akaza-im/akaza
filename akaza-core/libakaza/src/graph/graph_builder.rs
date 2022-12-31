@@ -31,7 +31,7 @@ impl GraphBuilder {
         }
     }
 
-    pub fn construct(&self, yomi: &String, words_ends_at: SegmentationResult) -> LatticeGraph {
+    pub fn construct(&self, yomi: &str, words_ends_at: SegmentationResult) -> LatticeGraph {
         // このグラフのインデクスは単語の終了位置。
         let mut graph: BTreeMap<i32, Vec<WordNode>> = BTreeMap::new();
         graph.insert(0, vec![WordNode::create_bos()]);
