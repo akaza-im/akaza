@@ -23,7 +23,7 @@ mod tests {
         let datadir = datadir();
         let path = datadir + "/lm_v2_2gram.trie";
         let bigram_lm = SystemBigramLM::load(&path).unwrap();
-        return bigram_lm;
+        bigram_lm
     }
 
     #[test]
@@ -42,7 +42,7 @@ mod tests {
         println!("id1={}, id2={}", id1, id2);
 
         let bigram_score = bigram
-            .get_edge_cost(id1 as i32, id2 as i32)
+            .get_edge_cost(id1, id2)
             .with_context(|| {
                 format!(
                     "bigram.num_entries={} id1={} id2={}",

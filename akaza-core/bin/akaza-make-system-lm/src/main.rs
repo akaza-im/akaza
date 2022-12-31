@@ -80,7 +80,7 @@ fn process_2gram(unigram: &SystemUnigramLM, srcpath: &str, dstpath: &str) -> Res
         }
          */
 
-        builder.add(word_id1 as i32, word_id2 as i32, score);
+        builder.add(word_id1, word_id2, score);
     }
 
     builder.save(dstpath).unwrap();

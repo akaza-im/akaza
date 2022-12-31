@@ -112,12 +112,12 @@ mod tests {
 
         let lm = SystemUnigramLM::load(&tmpfile).unwrap();
         {
-            let (word_id, score) = lm.find(&"hello".to_string()).unwrap();
+            let (word_id, score) = lm.find("hello").unwrap();
             assert_eq!(word_id, 0);
             assert_eq!(score, 0.4_f32);
         }
         {
-            let p = lm.find(&"unknown".to_string());
+            let p = lm.find("unknown");
             assert_eq!(p, None);
         }
     }
