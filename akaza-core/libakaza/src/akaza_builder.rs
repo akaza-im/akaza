@@ -21,7 +21,7 @@ impl Akaza {
     pub fn convert_to_string(&self, yomi: &str) -> Result<String> {
         let segmentation_result = self.segmenter.build(yomi);
         let lattice = self.graph_builder.construct(yomi, segmentation_result);
-        self.graph_resolver.viterbi(yomi, lattice)
+        self.graph_resolver.viterbi(&lattice)
     }
 }
 

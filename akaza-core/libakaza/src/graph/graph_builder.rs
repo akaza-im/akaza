@@ -59,6 +59,7 @@ impl GraphBuilder {
         }
         LatticeGraph {
             graph,
+            yomi: yomi.to_string(),
             user_data: self.user_data.clone(),
             system_unigram_lm: self.system_unigram_lm.clone(),
             system_bigram_lm: self.system_bigram_lm.clone(),

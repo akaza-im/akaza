@@ -12,6 +12,7 @@ const DEFAULT_SCORE: f32 = -20.0; // log10(1e-20)
 
 // 考えられる単語の列全てを含むようなグラフ構造
 pub struct LatticeGraph {
+    pub(crate) yomi: String,
     pub(crate) graph: BTreeMap<i32, Vec<WordNode>>,
     pub(crate) user_data: Rc<UserData>,
     pub(crate) system_unigram_lm: Rc<SystemUnigramLM>,

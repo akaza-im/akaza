@@ -10,15 +10,16 @@ use crate::graph::word_node::WordNode;
 pub struct GraphResolver {}
 
 impl GraphResolver {
-    pub fn viterbi(&self, yomi: &str, lattice: LatticeGraph) -> anyhow::Result<String> {
+    pub fn viterbi(&self, lattice: &LatticeGraph) -> anyhow::Result<String> {
+        let yomi = &lattice.yomi;
         let mut prevmap: HashMap<&WordNode, &WordNode> = HashMap::new();
         let mut costmap: HashMap<&WordNode, f32> = HashMap::new();
 
         for i in 1..yomi.len() + 2 {
-            let Some(nodes) = lattice.node_list(i as i32) else {
+            let Some(nodes) = &lattice.node_list(i as i32) else {
                 continue;
             };
-            for node in nodes {
+            for node in *nodes {
                 let node_cost = lattice.get_node_cost(node);
                 trace!("kanji={}, Cost={}", node, node_cost);
                 let mut cost = f32::MIN;
@@ -132,7 +133,7 @@ mod tests {
         );
         let lattice = graph_builder.construct("abc", graph);
         let resolver = GraphResolver::default();
-        let result = resolver.viterbi("abc", lattice).unwrap();
+        let result = resolver.viterbi(&lattice).unwrap();
         assert_eq!(result, "abc");
     }
 
@@ -183,7 +184,7 @@ mod tests {
             .write_all(lattice.dump_cost_dot().as_bytes())
             .unwrap();
         let resolver = GraphResolver::default();
-        let result = resolver.viterbi(&yomi, lattice).unwrap();
+        let result = resolver.viterbi(&lattice).unwrap();
         assert_eq!(result, "私");
     }
 }
