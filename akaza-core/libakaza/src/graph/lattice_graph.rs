@@ -1,4 +1,5 @@
 use std::collections::btree_map::BTreeMap;
+use std::collections::HashMap;
 
 use std::rc::Rc;
 
@@ -108,7 +109,6 @@ impl LatticeGraph {
         }
 
         return if let Some((_, system_unigram_cost)) = self.system_unigram_lm.find(key.as_str()) {
-            // foobar
             system_unigram_cost
         } else if node.kanji.len() < node.yomi.len() {
             // log10(1e-20)

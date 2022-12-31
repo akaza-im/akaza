@@ -1,4 +1,5 @@
-use crate::trie::TrieBuilder;
+use crate::trie::{Trie, TrieBuilder};
+use marisa_sys::Marisa;
 
 /**
  * bigram 言語モデル。
@@ -21,4 +22,14 @@ impl SystemBigramLMBuilder {
     pub fn save(&self, ofname: &str) -> std::io::Result<()> {
         self.builder.save(ofname)
     }
+}
+
+struct SystemBigramLM {
+    trie: Trie,
+}
+impl SystemBigramLM {
+    /**
+     * edge cost を得る。word1 と word2 は
+     */
+    fn get_edge_cost(word_id1: isize, word_id2: usize) -> Option<f32> {}
 }
