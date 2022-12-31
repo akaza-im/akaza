@@ -104,7 +104,7 @@ mod tests {
         let kana_trie = builder.build();
 
         let graph_builder = Segmenter::new(vec![kana_trie]);
-        let graph = graph_builder.build(&"わたし".to_string());
+        let graph = graph_builder.build("わたし");
         assert_eq!(
             graph,
             HashMap::from([
@@ -125,7 +125,7 @@ mod tests {
         let kana_trie = builder.build();
 
         let graph_builder = Segmenter::new(vec![kana_trie]);
-        let graph = graph_builder.build(&"abc".to_string());
+        let graph = graph_builder.build("abc");
         assert_eq!(
             graph,
             HashMap::from([
@@ -178,7 +178,7 @@ mod tests {
         let kana_trie = builder.build();
 
         let graph_builder = Segmenter::new(vec![kana_trie]);
-        let graph = graph_builder.build(&"わたし".to_string());
+        let graph = graph_builder.build("わたし");
         assert_eq!(
             graph,
             HashMap::from([
