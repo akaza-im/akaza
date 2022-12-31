@@ -32,6 +32,7 @@ dependencies = [
 name = "akaza-make-system-lm"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "libakaza",
 ]
 

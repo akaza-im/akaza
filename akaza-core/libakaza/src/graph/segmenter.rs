@@ -5,11 +5,16 @@ use log::trace;
 
 use crate::kana_trie::KanaTrie;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub struct SegmentationResult {
     base: BTreeMap<usize, Vec<String>>,
 }
+
 impl SegmentationResult {
+    pub(crate) fn new(base: BTreeMap<usize, Vec<String>>) -> SegmentationResult {
+        SegmentationResult { base }
+    }
+
     pub(crate) fn iter(&self) -> Iter<'_, usize, Vec<String>> {
         self.base.iter()
     }
@@ -121,10 +126,10 @@ mod tests {
         let graph = segmenter.build("わたし");
         assert_eq!(
             graph,
-            HashMap::from([
+            SegmentationResult::new(BTreeMap::from([
                 (6, vec!["わた".to_string()]),
                 (9, vec!["わたし".to_string(), "し".to_string()]),
-            ])
+            ]))
         )
     }
 
@@ -137,11 +142,11 @@ mod tests {
         let graph = segmenter.build("わたし");
         assert_eq!(
             graph,
-            HashMap::from([
+            SegmentationResult::new(BTreeMap::from([
                 (3, vec!["わ".to_string()]),
                 (6, vec!["た".to_string()]),
                 (9, vec!["し".to_string()]),
-            ])
+            ]))
         )
     }
 }

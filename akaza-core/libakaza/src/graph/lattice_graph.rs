@@ -1,11 +1,9 @@
 use std::collections::btree_map::BTreeMap;
-use std::collections::HashMap;
-
 use std::rc::Rc;
 
-use crate::graph::word_node::WordNode;
 use log::{error, trace};
 
+use crate::graph::word_node::WordNode;
 use crate::lm::system_unigram_lm::SystemUnigramLM;
 use crate::user_side_data::user_data::UserData;
 

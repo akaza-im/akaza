@@ -72,7 +72,7 @@ impl SystemUnigramLM {
     }
 
     /// @return (word_id, score)。
-    pub fn find(&self, word: &str) -> Option<(usize, f32)> {
+    pub fn find(&self, word: &str) -> Option<(i32, f32)> {
         assert_ne!(word.len(), 0);
 
         let key = [word.as_bytes(), b"\xff"].concat();
@@ -87,7 +87,7 @@ impl SystemUnigramLM {
             false
         });
         if kanji_id != usize::MAX {
-            Some((kanji_id, score))
+            Some((kanji_id as i32, score))
         } else {
             None
         }

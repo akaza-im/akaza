@@ -1,7 +1,9 @@
+use std::collections::HashMap;
+
+use log::trace;
+
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::word_node::WordNode;
-use log::trace;
-use std::collections::HashMap;
 
 // 次に必要なのは、分割された文字列から、グラフを構築する仕組みである。
 #[derive(Default)]
@@ -83,10 +85,10 @@ mod tests {
     use std::io::Write;
     use std::rc::Rc;
 
-    use crate::graph::graph_builder::GraphBuilder;
-    use crate::graph::segmenter::{SegmentationResult, Segmenter};
     use tempfile::NamedTempFile;
 
+    use crate::graph::graph_builder::GraphBuilder;
+    use crate::graph::segmenter::{SegmentationResult, Segmenter};
     use crate::kana_kanji_dict::KanaKanjiDictBuilder;
     use crate::kana_trie::KanaTrieBuilder;
     use crate::lm::system_unigram_lm::SystemUnigramLMBuilder;
@@ -108,10 +110,10 @@ mod tests {
         let graph = graph_builder.build("abc");
         assert_eq!(
             graph,
-            HashMap::from([
+            SegmentationResult::new(BTreeMap::from([
                 (2, vec!["ab".to_string()]),
                 (3, vec!["abc".to_string(), "c".to_string()]),
-            ])
+            ]))
         );
 
         // -1  0  1  2
@@ -143,7 +145,7 @@ mod tests {
         let graph_builder = GraphBuilder::new(dict, Rc::new(user_data), Rc::new(system_unigram_lm));
         let lattice = graph_builder.construct(&"abc".to_string(), graph);
         let resolver = GraphResolver::default();
-        let result = resolver.viterbi(&"abc".to_string(), lattice);
+        let result = resolver.viterbi(&"abc".to_string(), lattice).unwrap();
         assert_eq!(result, "abc");
     }
 
@@ -161,12 +163,10 @@ mod tests {
         let graph = graph_builder.build("わたし");
         assert_eq!(
             graph,
-            SegmentationResult {
-                base: BTreeMap::from([
-                    (6, vec!["わた".to_string()]),
-                    (9, vec!["わたし".to_string(), "し".to_string()]),
-                ])
-            }
+            SegmentationResult::new(BTreeMap::from([
+                (6, vec!["わた".to_string()]),
+                (9, vec!["わたし".to_string(), "し".to_string()]),
+            ]))
         );
 
         let mut dict_builder = KanaKanjiDictBuilder::default();
@@ -178,26 +178,7 @@ mod tests {
         let dict = dict_builder.build();
         let system_unigram_lm_builder = SystemUnigramLMBuilder::default();
         let system_unigram_lm = system_unigram_lm_builder.build();
-        let mut user_data = UserData::load(
-            &NamedTempFile::new()
-                .unwrap()
-                .path()
-                .to_str()
-                .unwrap()
-                .to_string(),
-            &NamedTempFile::new()
-                .unwrap()
-                .path()
-                .to_str()
-                .unwrap()
-                .to_string(),
-            &NamedTempFile::new()
-                .unwrap()
-                .path()
-                .to_str()
-                .unwrap()
-                .to_string(),
-        );
+        let mut user_data = UserData::default();
         // 私/わたし のスコアをガッと上げる。
         user_data.record_entries(vec!["私/わたし".to_string()]);
         let graph_builder = GraphBuilder::new(dict, Rc::new(user_data), Rc::new(system_unigram_lm));
@@ -208,7 +189,7 @@ mod tests {
             .write_all(lattice.dump_cost_dot().as_bytes())
             .unwrap();
         let resolver = GraphResolver::default();
-        let result = resolver.viterbi(&yomi, lattice);
+        let result = resolver.viterbi(&yomi, lattice).unwrap();
         assert_eq!(result, "私");
     }
 }

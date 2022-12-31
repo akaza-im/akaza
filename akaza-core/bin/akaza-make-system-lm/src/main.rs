@@ -2,7 +2,10 @@ use std::env;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
-use libakaza::lm::system_bigram::SystemBigramLMBuilder;
+use anyhow::Result;
+use anyhow::{anyhow, Context};
+
+use libakaza::lm::system_bigram::{SystemBigramLM, SystemBigramLMBuilder};
 use libakaza::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
 
 // e.g.g 倉庫会社/そうこがいしゃ -6.973789593503506
@@ -20,7 +23,10 @@ fn process_unigram(srcpath: &String, dstpath: &String) {
 
         i += 1;
         if i >= 8388608 {
-            // 3 byte に ID が収まる必要がある
+            // edge cost 言語モデルファイルの容量を小さく保つために
+            // 3 byte に ID が収めるようにする。
+            // よって、最大でも 8,388,608 単語までになるように vocab を制限する。
+            // 現実的な線で切っても、500万単語ぐらいで十分。
             panic!("too much words.");
         }
     }
@@ -29,13 +35,13 @@ fn process_unigram(srcpath: &String, dstpath: &String) {
     builder.save(dstpath).unwrap();
 }
 
-fn process_2gram(unigram: &SystemUnigramLM, srcpath: &str, dstpath: &str) {
-    let file = File::open(srcpath).unwrap();
+fn process_2gram(unigram: &SystemUnigramLM, srcpath: &str, dstpath: &str) -> Result<()> {
+    let file = File::open(srcpath)?;
 
     let mut builder = SystemBigramLMBuilder::default();
 
     for line in BufReader::new(file).lines() {
-        fn parse_2gram_line(line: &str) -> (String, String, f32) {
+        fn parse_2gram_line(line: &str) -> Result<(String, String, f32)> {
             let tokens: Vec<&str> = line.split(' ').collect();
             if tokens.len() != 2 {
                 println!("Invalid tokens: {:?}", tokens);
@@ -44,13 +50,15 @@ fn process_2gram(unigram: &SystemUnigramLM, srcpath: &str, dstpath: &str) {
             let words: &str = tokens[0];
             let score = tokens[1];
 
-            let (word1, word2) = words.split_once('\t').unwrap();
+            let Some((word1, word2)) = words.split_once('\t') else {
+                return Err(anyhow!("Cannot split words: {}", words));
+            };
             let score = score.parse().unwrap();
-            (word1.to_string(), word2.to_string(), score)
+            Ok((word1.to_string(), word2.to_string(), score))
         }
 
         let line = line.unwrap();
-        let (word1, word2, score) = parse_2gram_line(&line);
+        let (word1, word2, score) = parse_2gram_line(&line)?;
 
         // println!("word1='{}' word2='{}' score='{}'", word1, word2, score);
 
@@ -63,14 +71,23 @@ fn process_2gram(unigram: &SystemUnigramLM, srcpath: &str, dstpath: &str) {
             println!("Can't find '{}' in unigram data", word2);
             continue;
         };
+        /*
+        {
+            // debugging
+            if word1 == "私/わたし" {
+                println!("Inserting: {}({}) {}({})", word1, word_id1, word2, word_id2)
+            }
+        }
+         */
 
         builder.add(word_id1 as i32, word_id2 as i32, score);
     }
 
     builder.save(dstpath).unwrap();
+    Ok(())
 }
 
-fn main() {
+fn main() -> Result<()> {
     // 1gram ファイルから読む。
     // 1gram の map<string, int> の ID mapping を作成する
     // 1gram データを書いていく。
@@ -96,7 +113,38 @@ fn main() {
 
     let unigram_lm = SystemUnigramLM::load(unigram_dst).unwrap();
     println!("Unigram system lm: {}", unigram_lm.num_keys());
-    process_2gram(&unigram_lm, bigram_src, bigram_dst);
+    process_2gram(&unigram_lm, bigram_src, bigram_dst)?;
+
+    validation(unigram_dst, bigram_dst)?;
 
     println!("DONE");
+    Ok(())
+}
+
+// 言語モデルファイルが正確に生成されたか確認を実施する
+fn validation(unigram_dst: &str, bigram_dst: &str) -> Result<()> {
+    let unigram = SystemUnigramLM::load(unigram_dst).unwrap();
+    let bigram = SystemBigramLM::load(bigram_dst).unwrap();
+
+    let word1 = "私/わたし";
+
+    let (word1_id, watshi_cost) = unigram
+        .find(word1)
+        .ok_or_else(|| anyhow!("Cannot find '{}' in unigram dict.", word1))?;
+    println!("word1_id={} word1_cost={}", word1_id, watshi_cost);
+
+    let word2 = "から/から";
+    let (word2_id, word2_cost) = unigram
+        .find(word2)
+        .ok_or_else(|| anyhow!("Cannot find '{}' in unigram dict.", word1))?;
+    println!("word2_id={} word2_cost={}", word2_id, word2_cost);
+
+    bigram.get_edge_cost(word1_id, word2_id).with_context(|| {
+        format!(
+            "Get bigram entry: '{} -> {}' {},{}",
+            word1, word2, word1_id, word2_id
+        )
+    })?;
+
+    Ok(())
 }

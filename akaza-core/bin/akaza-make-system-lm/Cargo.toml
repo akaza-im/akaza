@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 libakaza = { path = "../../libakaza" }
+anyhow = "1.0.68"
