@@ -1,4 +1,5 @@
 use anyhow::Result;
+use half::f16;
 
 use crate::trie::{Trie, TrieBuilder};
 
@@ -26,6 +27,9 @@ impl SystemBigramLMBuilder {
         // 本来なら 23.3 MB ぐらいまで減ってほしいところだけど、そこまではいかない。
         // TRIE 構造だからそういう感じには減らない。
 
+        // さらに、スコアを f16 にしてみたが、あまりかわらない。
+        // -rw-r--r-- 1 tokuhirom tokuhirom  27M Jan  1 02:14 lm_v2_2gram.trie
+
         let id1_bytes = word_id1.to_le_bytes();
         let id2_bytes = word_id2.to_le_bytes();
 
@@ -35,7 +39,7 @@ impl SystemBigramLMBuilder {
         let mut key: Vec<u8> = Vec::new();
         key.extend(id1_bytes[0..3].iter());
         key.extend(id2_bytes[0..3].iter());
-        key.extend(score.to_le_bytes());
+        key.extend(f16::from_f32(score).to_le_bytes());
         self.builder.add(key);
     }
 
@@ -75,11 +79,11 @@ impl SystemBigramLM {
         let Some(result) = got.first() else {
             return None;
         };
-        let last4: [u8; 4] = result.keyword[result.keyword.len() - 4..result.keyword.len()]
+        let last2: [u8; 2] = result.keyword[result.keyword.len() - 2..result.keyword.len()]
             .try_into()
             .unwrap();
-        let score = f32::from_le_bytes(last4);
-        Some(score)
+        let score: f16 = f16::from_le_bytes(last2);
+        Some(score.to_f32())
     }
 }
 
@@ -93,7 +97,7 @@ mod tests {
         builder.add(4649, 5963, 5.11_f32);
         let system_bigram_lm = builder.build();
         let got_score = system_bigram_lm.get_edge_cost(4649, 5963).unwrap();
-        assert_eq!(got_score, 5.11_f32);
+        assert!(5.0 < got_score && got_score < 5.12);
         Ok(())
     }
 }
