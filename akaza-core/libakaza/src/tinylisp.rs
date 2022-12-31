@@ -247,6 +247,6 @@ mod tests {
         let parsed = TinyLisp::parse(&src).unwrap();
         dump_node(&parsed, 0);
         let p = TinyLisp::run(&src).unwrap();
-        assert_eq!(p.starts_with('2'), true); // this test succeeds until year of 2999.
+        assert!(p.starts_with('2')); // this test succeeds until year of 2999.
     }
 }

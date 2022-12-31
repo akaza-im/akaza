@@ -130,9 +130,9 @@ mod tests {
             Rc::new(system_unigram_lm),
             Rc::new(system_bigram_lm),
         );
-        let lattice = graph_builder.construct(&"abc".to_string(), graph);
+        let lattice = graph_builder.construct("abc", graph);
         let resolver = GraphResolver::default();
-        let result = resolver.viterbi(&"abc".to_string(), lattice).unwrap();
+        let result = resolver.viterbi("abc", lattice).unwrap();
         assert_eq!(result, "abc");
     }
 

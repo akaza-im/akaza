@@ -82,9 +82,9 @@ impl AkazaBuilder {
         let graph_resolver = GraphResolver::default();
 
         Ok(Akaza {
-            graph_builder: graph_builder,
-            segmenter: segmenter,
-            graph_resolver: graph_resolver,
+            graph_builder,
+            segmenter,
+            graph_resolver,
         })
     }
 }

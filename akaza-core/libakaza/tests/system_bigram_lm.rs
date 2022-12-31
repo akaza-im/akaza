@@ -22,8 +22,8 @@ mod tests {
     fn load_bigram() -> SystemBigramLM {
         let datadir = datadir();
         let path = datadir + "/lm_v2_2gram.trie";
-        let bigram_lm = SystemBigramLM::load(&path).unwrap();
-        bigram_lm
+        
+        SystemBigramLM::load(&path).unwrap()
     }
 
     #[test]
