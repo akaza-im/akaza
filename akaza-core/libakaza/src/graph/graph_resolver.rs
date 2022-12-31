@@ -1,3 +1,7 @@
+use crate::graph::lattice_graph::LatticeGraph;
+use crate::graph::word_node::WordNode;
+use std::collections::HashMap;
+
 // 次に必要なのは、分割された文字列から、グラフを構築する仕組みである。
 pub struct GraphResolver {}
 
@@ -79,11 +83,13 @@ mod tests {
     use std::fs::File;
     use std::io::Write;
 
+    use crate::graph::segmenter::Segmenter;
     use tempfile::NamedTempFile;
 
     use crate::kana_kanji_dict::KanaKanjiDictBuilder;
     use crate::kana_trie::KanaTrieBuilder;
     use crate::lm::system_unigram_lm::SystemUnigramLMBuilder;
+    use crate::user_side_data::user_data::UserData;
 
     use super::*;
 
@@ -110,7 +116,7 @@ mod tests {
     fn test_resolver() {
         let _ = env_logger::builder().is_test(true).try_init();
 
-        let mut builder = KanaTrieBuilder::new();
+        let mut builder = KanaTrieBuilder::default();
         builder.add(&"abc".to_string());
         builder.add(&"ab".to_string());
         builder.add(&"c".to_string());
@@ -163,7 +169,7 @@ mod tests {
     fn test_kana_kanji() {
         let _ = env_logger::builder().is_test(true).try_init();
 
-        let mut builder = KanaTrieBuilder::new();
+        let mut builder = KanaTrieBuilder::default();
         builder.add(&"わたし".to_string());
         builder.add(&"わた".to_string());
         builder.add(&"し".to_string());

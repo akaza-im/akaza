@@ -2,7 +2,7 @@
 
 extern crate core;
 
-mod graph;
+pub mod graph;
 pub mod kana;
 pub mod kana_kanji_dict;
 pub mod kana_trie;

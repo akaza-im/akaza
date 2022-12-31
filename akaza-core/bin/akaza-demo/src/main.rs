@@ -1,4 +1,6 @@
-use libakaza::graph_builder::{GraphBuilder, GraphResolver, Segmenter};
+use libakaza::graph::graph_builder::GraphBuilder;
+use libakaza::graph::graph_resolver::GraphResolver;
+use libakaza::graph::segmenter::Segmenter;
 use libakaza::kana_kanji_dict::KanaKanjiDictBuilder;
 use libakaza::kana_trie::KanaTrie;
 use libakaza::lm::system_unigram_lm::SystemUnigramLM;

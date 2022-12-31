@@ -1,4 +1,5 @@
-mod graph_builder;
-mod lattice_graph;
-mod segmenter;
-mod word_node;
+pub mod graph_builder;
+pub mod graph_resolver;
+pub mod lattice_graph;
+pub mod segmenter;
+pub mod word_node;

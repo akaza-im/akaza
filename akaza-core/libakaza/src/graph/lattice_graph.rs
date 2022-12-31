@@ -1,13 +1,9 @@
 use std::collections::btree_map::BTreeMap;
 
-
-
 use std::rc::Rc;
 
 use crate::graph::word_node::WordNode;
 use log::trace;
-
-
 
 use crate::lm::system_unigram_lm::SystemUnigramLM;
 use crate::user_side_data::user_data::UserData;
@@ -21,7 +17,7 @@ pub struct LatticeGraph {
 
 impl LatticeGraph {
     /// i文字目で終わるノードを探す
-    fn node_list(&self, i: i32) -> Option<&Vec<WordNode>> {
+    pub(crate) fn node_list(&self, i: i32) -> Option<&Vec<WordNode>> {
         self.graph.get(&i)
     }
 
@@ -29,19 +25,19 @@ impl LatticeGraph {
     // BOS わ た し
     //     [  ][ ]
     //     [     ]
-    fn get_prev_nodes(&self, node: &WordNode) -> Option<&Vec<WordNode>> {
+    pub(crate) fn get_prev_nodes(&self, node: &WordNode) -> Option<&Vec<WordNode>> {
         // ここの処理を簡単にするために BOS が入っている、のだとおもう。
         trace!("get_prev_nodes: {}", node.start_pos - 1);
         self.graph.get(&(node.start_pos))
     }
 
-    fn get(&self, n: i32) -> Option<&Vec<WordNode>> {
+    pub(crate) fn get(&self, n: i32) -> Option<&Vec<WordNode>> {
         return self.graph.get(&n);
     }
 
     // for debugging purpose
     #[allow(unused)]
-    fn dump(&self) {
+    pub(crate) fn dump(&self) {
         // start 及び end は、byte 数単位
         for (end_pos, nodes) in self.graph.iter() {
             for node in nodes {
@@ -88,7 +84,7 @@ impl LatticeGraph {
         buf
     }
 
-    fn get_node_cost(&self, node: &WordNode) -> f32 {
+    pub(crate) fn get_node_cost(&self, node: &WordNode) -> f32 {
         // 簡単のために、一旦スコアを文字列長とする。
         // 経験上、長い文字列のほうがあたり、というルールでもそこそこ変換できる。
         // TODO あとでちゃんと unigram のコストを使うよに変える。
@@ -128,7 +124,7 @@ impl LatticeGraph {
         */
     }
 
-    fn get_edge_cost(&self, _prev: &WordNode, _node: &WordNode) -> f32 {
+    pub(crate) fn get_edge_cost(&self, _prev: &WordNode, _node: &WordNode) -> f32 {
         // TODO: あとで実装する
         0.0
     }
