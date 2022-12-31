@@ -1,10 +1,11 @@
 use libakaza::graph::graph_builder::GraphBuilder;
 use libakaza::graph::graph_resolver::GraphResolver;
 use libakaza::graph::segmenter::Segmenter;
-use libakaza::kana_kanji_dict::KanaKanjiDictBuilder;
-use libakaza::kana_trie::KanaTrie;
+use libakaza::kana_kanji_dict::{KanaKanjiDict, KanaKanjiDictBuilder};
+use libakaza::kana_trie::KanaTrieBuilder;
 use libakaza::lm::system_unigram_lm::SystemUnigramLM;
 use libakaza::user_side_data::user_data::UserData;
+use log::info;
 use std::env;
 use std::fs::File;
 use std::io::Write;
@@ -12,22 +13,28 @@ use std::rc::Rc;
 use tempfile::NamedTempFile;
 
 fn main() {
-    let _ = env_logger::builder().try_init();
+    env_logger::init_from_env(
+        env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "info"),
+    );
 
     let args: Vec<String> = env::args().collect();
     let datadir = args[1].to_owned();
+    let yomi = args[2].to_owned();
     let system_unigram_path = &(datadir.to_string() + "/lm_v2_1gram.trie");
     let system_unigram_lm = SystemUnigramLM::load(system_unigram_path).unwrap();
 
-    let system_dict = KanaTrie::load(&(datadir + "/system_dict.trie")).unwrap();
+    let system_kana_kanji_dict = KanaKanjiDict::load(&(datadir + "/system_dict.trie")).unwrap();
+    let mut system_dict_yomis_builder = KanaTrieBuilder::default();
+    for yomi in system_kana_kanji_dict.all_yomis().unwrap() {
+        system_dict_yomis_builder.add(&yomi);
+    }
+    let system_kana_trie = system_dict_yomis_builder.build();
 
-    let graph_builder = Segmenter::new(vec![system_dict]);
+    let graph_builder = Segmenter::new(vec![system_kana_trie]);
     let graph = graph_builder.build("わたし");
 
     let mut dict_builder = KanaKanjiDictBuilder::default();
     dict_builder.add("わたし", "私/渡し");
-
-    let yomi = "わたし".to_string();
 
     // TODO このへん、ちょっとコピペしまくらないといけなくて渋い。
     let dict = dict_builder.build();
@@ -62,7 +69,5 @@ fn main() {
         .unwrap();
     let resolver = GraphResolver::default();
     let result = resolver.viterbi(&yomi, lattice);
-    assert_eq!(result, "私");
-
-    println!("Hello, world!");
+    info!("RESULT IS!!! '{}'", result);
 }
