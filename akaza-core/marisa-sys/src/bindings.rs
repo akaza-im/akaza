@@ -2,10 +2,10 @@
 // low level C wrappers
 // ---------------------------------------------------
 
-use alloc::ffi::CString;
-use anyhow::{anyhow, Result};
-use std::ffi::c_char;
+use std::ffi::{c_char, CString};
 use std::os::raw::c_void;
+
+use anyhow::{anyhow, Result};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -32,8 +32,8 @@ extern "C" {
     fn marisa_new() -> *mut marisa_obj;
     fn marisa_release(self_: *mut marisa_obj);
     fn marisa_build(self_: *mut marisa_obj, keyset: *mut marisa_keyset);
-    fn marisa_load(self_: *mut marisa_obj, filename: *const u8) -> *mut marisa_exception;
-    fn marisa_save(self_: *mut marisa_obj, filename: *const u8) -> *mut marisa_exception;
+    fn marisa_load(self_: *mut marisa_obj, filename: *const c_char) -> *mut marisa_exception;
+    fn marisa_save(self_: *mut marisa_obj, filename: *const c_char) -> *mut marisa_exception;
     fn marisa_predictive_search(
         self_: *mut marisa_obj,
         query: *const u8,
@@ -77,7 +77,8 @@ impl Default for Marisa {
 impl Marisa {
     pub fn load(&mut self, filename: &str) -> Result<()> {
         unsafe {
-            let exc = marisa_load(self.marisa, filename.as_ptr());
+            let cstring = CString::new(filename).unwrap();
+            let exc = marisa_load(self.marisa, cstring.as_ptr());
             if exc.is_null() {
                 Ok(())
             } else {
@@ -100,7 +101,8 @@ impl Marisa {
 
     pub fn save(&self, filename: &str) -> Result<()> {
         unsafe {
-            let exc = marisa_save(self.marisa, filename.as_ptr());
+            let cstring = CString::new(filename).unwrap();
+            let exc = marisa_save(self.marisa, cstring.as_ptr());
             if exc.is_null() {
                 Ok(())
             } else {
