@@ -4,14 +4,18 @@ use std::rc::Rc;
 use log::{error, trace};
 
 use crate::graph::word_node::WordNode;
+use crate::lm::system_bigram::SystemBigramLM;
 use crate::lm::system_unigram_lm::SystemUnigramLM;
 use crate::user_side_data::user_data::UserData;
+
+const DEFAULT_SCORE: f32 = -20.0; // log10(1e-20)
 
 // 考えられる単語の列全てを含むようなグラフ構造
 pub struct LatticeGraph {
     pub(crate) graph: BTreeMap<i32, Vec<WordNode>>,
     pub(crate) user_data: Rc<UserData>,
     pub(crate) system_unigram_lm: Rc<SystemUnigramLM>,
+    pub(crate) system_bigram_lm: Rc<SystemBigramLM>,
 }
 
 impl LatticeGraph {
@@ -138,8 +142,17 @@ impl LatticeGraph {
         */
     }
 
-    pub(crate) fn get_edge_cost(&self, _prev: &WordNode, _node: &WordNode) -> f32 {
-        // TODO: あとで実装する
-        0.0
+    pub(crate) fn get_edge_cost(&self, prev: &WordNode, node: &WordNode) -> f32 {
+        // TODO ID 引く処理のキャッシュ。
+        let Some((prev_id, _)) = self.system_unigram_lm.find(prev.key().as_str()) else {
+            return DEFAULT_SCORE;
+        };
+        let Some((node_id, _)) = self.system_unigram_lm.find(node.key().as_str()) else {
+            return DEFAULT_SCORE;
+        };
+        let Some(cost) = self.system_bigram_lm.get_edge_cost(prev_id, node_id) else {
+            return DEFAULT_SCORE;
+        };
+        cost
     }
 }

@@ -5,6 +5,7 @@ use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::SegmentationResult;
 use crate::graph::word_node::WordNode;
 use crate::kana_kanji_dict::KanaKanjiDict;
+use crate::lm::system_bigram::SystemBigramLM;
 use crate::lm::system_unigram_lm::SystemUnigramLM;
 use crate::user_side_data::user_data::UserData;
 
@@ -12,6 +13,7 @@ pub struct GraphBuilder {
     system_kana_kanji_dict: KanaKanjiDict,
     user_data: Rc<UserData>,
     system_unigram_lm: Rc<SystemUnigramLM>,
+    system_bigram_lm: Rc<SystemBigramLM>,
 }
 
 impl GraphBuilder {
@@ -19,11 +21,13 @@ impl GraphBuilder {
         system_kana_kanji_dict: KanaKanjiDict,
         user_data: Rc<UserData>,
         system_unigram_lm: Rc<SystemUnigramLM>,
+        system_bigram_lm: Rc<SystemBigramLM>,
     ) -> GraphBuilder {
         GraphBuilder {
             system_kana_kanji_dict,
             user_data,
             system_unigram_lm,
+            system_bigram_lm,
         }
     }
 
@@ -57,6 +61,7 @@ impl GraphBuilder {
             graph,
             user_data: self.user_data.clone(),
             system_unigram_lm: self.system_unigram_lm.clone(),
+            system_bigram_lm: self.system_bigram_lm.clone(),
         }
     }
 }

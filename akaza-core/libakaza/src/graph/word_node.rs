@@ -1,15 +1,5 @@
-
-
 use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
-
-
-
-
-
-
-
-
 
 pub struct WordNode {
     pub start_pos: i32,
@@ -41,6 +31,14 @@ impl PartialEq<Self> for WordNode {
 impl Eq for WordNode {}
 
 impl WordNode {
+    pub fn key(&self) -> String {
+        let mut buf = String::new();
+        buf += self.kanji.as_str();
+        buf += "/";
+        buf += self.yomi.as_str();
+        buf
+    }
+
     pub(crate) fn create_bos() -> WordNode {
         WordNode {
             start_pos: 0,

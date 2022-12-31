@@ -35,7 +35,7 @@ mod tests {
         assert!(id1 > 0);
         assert!(score1 < 0.0_f32);
 
-        let (id2, score2) = unigram.find("の/の").unwrap();
+        let (id2, score2) = unigram.find("から/から").unwrap();
         assert!(id2 > 0);
         assert!(score2 < 0.0_f32);
 

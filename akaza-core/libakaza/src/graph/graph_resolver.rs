@@ -85,12 +85,11 @@ mod tests {
     use std::io::Write;
     use std::rc::Rc;
 
-    use tempfile::NamedTempFile;
-
     use crate::graph::graph_builder::GraphBuilder;
     use crate::graph::segmenter::{SegmentationResult, Segmenter};
     use crate::kana_kanji_dict::KanaKanjiDictBuilder;
     use crate::kana_trie::KanaTrieBuilder;
+    use crate::lm::system_bigram::SystemBigramLMBuilder;
     use crate::lm::system_unigram_lm::SystemUnigramLMBuilder;
     use crate::user_side_data::user_data::UserData;
 
@@ -122,27 +121,15 @@ mod tests {
         let dict = dict_builder.build();
         let system_unigram_lm_builder = SystemUnigramLMBuilder::default();
         let system_unigram_lm = system_unigram_lm_builder.build();
-        let user_data = UserData::load(
-            &NamedTempFile::new()
-                .unwrap()
-                .path()
-                .to_str()
-                .unwrap()
-                .to_string(),
-            &NamedTempFile::new()
-                .unwrap()
-                .path()
-                .to_str()
-                .unwrap()
-                .to_string(),
-            &NamedTempFile::new()
-                .unwrap()
-                .path()
-                .to_str()
-                .unwrap()
-                .to_string(),
+        let system_bigram_lm_builder = SystemBigramLMBuilder::default();
+        let system_bigram_lm = system_bigram_lm_builder.build();
+        let user_data = UserData::default();
+        let graph_builder = GraphBuilder::new(
+            dict,
+            Rc::new(user_data),
+            Rc::new(system_unigram_lm),
+            Rc::new(system_bigram_lm),
         );
-        let graph_builder = GraphBuilder::new(dict, Rc::new(user_data), Rc::new(system_unigram_lm));
         let lattice = graph_builder.construct(&"abc".to_string(), graph);
         let resolver = GraphResolver::default();
         let result = resolver.viterbi(&"abc".to_string(), lattice).unwrap();
@@ -178,10 +165,17 @@ mod tests {
         let dict = dict_builder.build();
         let system_unigram_lm_builder = SystemUnigramLMBuilder::default();
         let system_unigram_lm = system_unigram_lm_builder.build();
+        let system_bigram_lm_builder = SystemBigramLMBuilder::default();
+        let system_bigram_lm = system_bigram_lm_builder.build();
         let mut user_data = UserData::default();
         // 私/わたし のスコアをガッと上げる。
         user_data.record_entries(vec!["私/わたし".to_string()]);
-        let graph_builder = GraphBuilder::new(dict, Rc::new(user_data), Rc::new(system_unigram_lm));
+        let graph_builder = GraphBuilder::new(
+            dict,
+            Rc::new(user_data),
+            Rc::new(system_unigram_lm),
+            Rc::new(system_bigram_lm),
+        );
         let lattice = graph_builder.construct(&yomi, graph);
         // dot -Tpng -o /tmp/lattice.png /tmp/lattice.dot && open /tmp/lattice.png
         File::create("/tmp/lattice.dot")

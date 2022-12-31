@@ -10,6 +10,7 @@ use libakaza::graph::graph_resolver::GraphResolver;
 use libakaza::graph::segmenter::Segmenter;
 use libakaza::kana_kanji_dict::KanaKanjiDict;
 use libakaza::kana_trie::KanaTrieBuilder;
+use libakaza::lm::system_bigram::SystemBigramLM;
 use libakaza::lm::system_unigram_lm::SystemUnigramLM;
 use libakaza::user_side_data::user_data::UserData;
 
@@ -28,12 +29,16 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let datadir = args[1].to_owned();
     let yomi = args[2].to_owned();
+
     let system_unigram_path = &(datadir.to_string() + "/lm_v2_1gram.trie");
     let system_unigram_lm = SystemUnigramLM::load(system_unigram_path).unwrap();
     info!(
         "system-unigram-lm: {} entries",
         system_unigram_lm.num_keys()
     );
+    let system_bigram_path = &(datadir.to_string() + "/lm_v2_2gram.trie");
+    let system_bigram_lm = SystemBigramLM::load(system_bigram_path).unwrap();
+    info!("system-bgram-lm: {} entries", system_bigram_lm.num_keys());
 
     let system_kana_kanji_dict = KanaKanjiDict::load(&(datadir + "/system_dict.trie")).unwrap();
     let mut system_dict_yomis_builder = KanaTrieBuilder::default();
@@ -55,6 +60,7 @@ fn main() {
         system_kana_kanji_dict,
         Rc::new(user_data),
         Rc::new(system_unigram_lm),
+        Rc::new(system_bigram_lm),
     );
     let lattice = graph_builder.construct(&yomi, segmentation_result);
     // dot -Tpng -o /tmp/lattice.png /tmp/lattice.dot && open /tmp/lattice.png
