@@ -93,25 +93,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test() {
-        let mut builder = KanaTrieBuilder::default();
-        builder.add(&"わたし".to_string());
-        builder.add(&"わた".to_string());
-        builder.add(&"し".to_string());
-        let kana_trie = builder.build();
-
-        let graph_builder = Segmenter::new(vec![kana_trie]);
-        let graph = graph_builder.build("わたし");
-        assert_eq!(
-            graph,
-            HashMap::from([
-                (6, vec!["わた".to_string()]),
-                (9, vec!["わたし".to_string(), "し".to_string()]),
-            ])
-        )
-    }
-
-    #[test]
     fn test_resolver() {
         let _ = env_logger::builder().is_test(true).try_init();
 

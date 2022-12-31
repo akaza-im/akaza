@@ -1,13 +1,8 @@
-use log::trace;
-
 use std::collections::{HashMap, HashSet};
 
-
-
+use log::trace;
 
 use crate::kana_trie::KanaTrie;
-
-
 
 pub struct Segmenter {
     tries: Vec<KanaTrie>,
@@ -66,8 +61,8 @@ impl Segmenter {
 
                 trace!("There's no candidates. '{}'", yomi);
 
-                let (i, _) = yomi.char_indices().nth(1).unwrap();
-                let first = &yomi[0..i];
+                let (_, c) = yomi.char_indices().next().unwrap();
+                let first = &yomi[0..c.len_utf8()];
                 let ends_at = start_pos + first.len();
 
                 let vec = words_ends_at.entry(ends_at).or_default();
@@ -78,5 +73,47 @@ impl Segmenter {
         }
 
         words_ends_at
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::kana_trie::KanaTrieBuilder;
+
+    #[test]
+    fn test_simple() {
+        let mut builder = KanaTrieBuilder::default();
+        builder.add(&"わたし".to_string());
+        builder.add(&"わた".to_string());
+        builder.add(&"し".to_string());
+        let kana_trie = builder.build();
+
+        let segmenter = Segmenter::new(vec![kana_trie]);
+        let graph = segmenter.build("わたし");
+        assert_eq!(
+            graph,
+            HashMap::from([
+                (6, vec!["わた".to_string()]),
+                (9, vec!["わたし".to_string(), "し".to_string()]),
+            ])
+        )
+    }
+
+    #[test]
+    fn test_without_kanatrie() {
+        let builder = KanaTrieBuilder::default();
+        let kana_trie = builder.build();
+
+        let segmenter = Segmenter::new(vec![kana_trie]);
+        let graph = segmenter.build("わたし");
+        assert_eq!(
+            graph,
+            HashMap::from([
+                (3, vec!["わ".to_string()]),
+                (6, vec!["た".to_string()]),
+                (9, vec!["し".to_string()]),
+            ])
+        )
     }
 }
