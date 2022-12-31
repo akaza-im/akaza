@@ -1,16 +1,11 @@
 use marisa_sys::{Keyset, Marisa};
 
+#[derive(Default)]
 pub struct KanaTrieBuilder {
     keyset: Keyset,
 }
 
 impl KanaTrieBuilder {
-    pub fn new() -> KanaTrieBuilder {
-        KanaTrieBuilder {
-            keyset: Keyset::default(),
-        }
-    }
-
     pub fn add(&mut self, yomi: &String) {
         self.keyset.push_back(yomi.as_bytes());
     }
