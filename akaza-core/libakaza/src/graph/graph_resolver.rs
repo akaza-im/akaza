@@ -3,13 +3,10 @@ use crate::graph::word_node::WordNode;
 use std::collections::HashMap;
 
 // 次に必要なのは、分割された文字列から、グラフを構築する仕組みである。
+#[derive(Default)]
 pub struct GraphResolver {}
 
 impl GraphResolver {
-    pub fn new() -> GraphResolver {
-        GraphResolver {}
-    }
-
     pub fn viterbi(&self, yomi: &String, lattice: LatticeGraph) -> String {
         let mut prevmap: HashMap<&WordNode, &WordNode> = HashMap::new();
         let mut costmap: HashMap<&WordNode, f32> = HashMap::new();
@@ -162,7 +159,7 @@ mod tests {
         );
         let graph_builder = GraphBuilder::new(dict, Rc::new(user_data), Rc::new(system_unigram_lm));
         let lattice = graph_builder.construct(&"abc".to_string(), graph);
-        let resolver = GraphResolver::new();
+        let resolver = GraphResolver::default();
         let result = resolver.viterbi(&"abc".to_string(), lattice);
         assert_eq!(result, "abc");
     }
@@ -225,7 +222,7 @@ mod tests {
             .unwrap()
             .write_all(lattice.dump_dot().as_bytes())
             .unwrap();
-        let resolver = GraphResolver::new();
+        let resolver = GraphResolver::default();
         let result = resolver.viterbi(&yomi, lattice);
         assert_eq!(result, "私");
     }

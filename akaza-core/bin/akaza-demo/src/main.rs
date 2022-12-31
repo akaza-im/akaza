@@ -60,7 +60,7 @@ fn main() {
         .unwrap()
         .write_all(lattice.dump_dot().as_bytes())
         .unwrap();
-    let resolver = GraphResolver::new();
+    let resolver = GraphResolver::default();
     let result = resolver.viterbi(&yomi, lattice);
     assert_eq!(result, "私");
 
