@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 const ALPHA: f32 = 0.00001;
 
+#[derive(Default)]
 pub(crate) struct BiGramUserStats {
     /// ユニーク単語数
     unique_words: u32,

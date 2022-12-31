@@ -17,6 +17,7 @@ impl KanaTrieBuilder {
     }
 }
 
+#[derive(Default)]
 pub struct KanaTrie {
     marisa: Marisa,
 }

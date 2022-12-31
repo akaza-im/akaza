@@ -11,15 +11,16 @@ use marisa_sys::Marisa;
 /**
  * ユーザー固有データ
  */
+#[derive(Default)]
 pub struct UserData {
     /// 読み仮名のトライ。入力変換時に共通接頭辞検索するために使用。
     kana_trie: KanaTrie,
     unigram_user_stats: UniGramUserStats,
     bigram_user_stats: BiGramUserStats,
 
-    unigram_path: String,
-    bigram_path: String,
-    kana_trie_path: String,
+    unigram_path: Option<String>,
+    bigram_path: Option<String>,
+    kana_trie_path: Option<String>,
 
     pub(crate) need_save: bool,
 }
@@ -78,9 +79,9 @@ impl UserData {
             unigram_user_stats,
             bigram_user_stats,
             kana_trie,
-            unigram_path: unigram_path.clone(),
-            bigram_path: bigram_path.clone(),
-            kana_trie_path: kana_trie_path.clone(),
+            unigram_path: Some(unigram_path.clone()),
+            bigram_path: Some(bigram_path.clone()),
+            kana_trie_path: Some(kana_trie_path.clone()),
             need_save: false,
         }
     }
@@ -96,8 +97,12 @@ impl UserData {
     }
 
     fn write_user_stats_file(&self) -> Result<(), io::Error> {
-        write_user_stats_file(&self.unigram_path, &self.unigram_user_stats.word_count)?;
-        write_user_stats_file(&self.bigram_path, &self.bigram_user_stats.word_count)?;
+        if let Some(unigram_path) = &self.unigram_path {
+            write_user_stats_file(unigram_path, &self.unigram_user_stats.word_count)?;
+        }
+        if let Some(bigram_path) = &self.bigram_path {
+            write_user_stats_file(bigram_path, &self.bigram_user_stats.word_count)?;
+        }
         Ok(())
     }
 

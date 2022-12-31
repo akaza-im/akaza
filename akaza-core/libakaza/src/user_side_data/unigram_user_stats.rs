@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 const ALPHA: f32 = 0.00001;
 
+#[derive(Default)]
 pub(crate) struct UniGramUserStats {
     /// ユニーク単語数
     unique_words: u32, // C
@@ -32,7 +33,7 @@ impl UniGramUserStats {
         let Some(count) = self.word_count.get(key.as_str()) else {
             return None;
         };
-        
+
         Some(f32::log10(
             ((*count as f32) + ALPHA)
                 / ((self.unique_words as f32) + ALPHA * (self.total_words as f32)),

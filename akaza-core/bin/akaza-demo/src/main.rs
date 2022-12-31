@@ -10,7 +10,6 @@ use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::rc::Rc;
-use tempfile::NamedTempFile;
 
 fn main() {
     env_logger::init_from_env(
@@ -38,26 +37,8 @@ fn main() {
 
     // TODO このへん、ちょっとコピペしまくらないといけなくて渋い。
     let dict = dict_builder.build();
-    let mut user_data = UserData::load(
-        &NamedTempFile::new()
-            .unwrap()
-            .path()
-            .to_str()
-            .unwrap()
-            .to_string(),
-        &NamedTempFile::new()
-            .unwrap()
-            .path()
-            .to_str()
-            .unwrap()
-            .to_string(),
-        &NamedTempFile::new()
-            .unwrap()
-            .path()
-            .to_str()
-            .unwrap()
-            .to_string(),
-    );
+    let mut user_data = UserData::default();
+
     // 私/わたし のスコアをガッと上げる。
     user_data.record_entries(vec!["私/わたし".to_string()]);
     let graph_builder = GraphBuilder::new(dict, Rc::new(user_data), Rc::new(system_unigram_lm));

@@ -67,7 +67,7 @@ impl LatticeGraph {
                     self.get_node_cost(node),
                     "\n"
                 );
-                for prev_node in self.get_prev_nodes(node).unwrap() {
+                for prev_node in self.get_prev_nodes(node).expect("There's previous nodes.") {
                     buf += &*format!(
                         r#"    "{}/{}" -> "{}/{}" [label="{}"]{}"#,
                         prev_node.kanji,
