@@ -30,6 +30,10 @@ fn main() {
     let yomi = args[2].to_owned();
     let system_unigram_path = &(datadir.to_string() + "/lm_v2_1gram.trie");
     let system_unigram_lm = SystemUnigramLM::load(system_unigram_path).unwrap();
+    info!(
+        "system-unigram-lm: {} entries",
+        system_unigram_lm.num_keys()
+    );
 
     let system_kana_kanji_dict = KanaKanjiDict::load(&(datadir + "/system_dict.trie")).unwrap();
     let mut system_dict_yomis_builder = KanaTrieBuilder::default();

@@ -100,18 +100,23 @@ impl LatticeGraph {
         // 経験上、長い文字列のほうがあたり、というルールでもそこそこ変換できる。
         // TODO あとでちゃんと unigram のコストを使うよに変える。
 
+        let key = node.kanji.to_string() + "/" + &node.yomi;
+
         if let Some(user_cost) = self.user_data.get_unigram_cost(&node.kanji, &node.yomi) {
             // use user's score. if it's exists.
             return user_cost;
         }
 
-        if node.kanji.len() < node.yomi.len() {
+        return if let Some((_, system_unigram_cost)) = self.system_unigram_lm.find(key.as_str()) {
+            // foobar
+            system_unigram_cost
+        } else if node.kanji.len() < node.yomi.len() {
             // log10(1e-20)
             -20.0
         } else {
             // log10(1e-19)
             -19.0
-        }
+        };
 
         /*
                 if let Some(user_cost) = user_language_model.get_unigram_cost(&self.key) {

@@ -64,7 +64,7 @@ impl SystemUnigramLM {
         self.marisa.num_keys()
     }
 
-    pub fn load(fname: &String) -> Result<SystemUnigramLM, String> {
+    pub fn load(fname: &str) -> Result<SystemUnigramLM, String> {
         info!("Reading {}", fname);
         let mut marisa = Marisa::default();
         marisa.load(fname)?;
@@ -72,7 +72,7 @@ impl SystemUnigramLM {
     }
 
     /// @return (word_id, score)。
-    pub fn find(&self, word: &String) -> Option<(usize, f32)> {
+    pub fn find(&self, word: &str) -> Option<(usize, f32)> {
         assert_ne!(word.len(), 0);
 
         let key = [word.as_bytes(), b"\xff"].concat();
