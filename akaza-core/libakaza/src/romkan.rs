@@ -347,7 +347,7 @@ mod tests {
     #[test]
     fn test_romkan() {
         let converter = RomKanConverter::new();
-        assert_eq!(converter.to_hiragana(&"aiu".to_string()), "あいう");
+        assert_eq!(converter.to_hiragana("aiu"), "あいう");
     }
 
     #[test]
@@ -389,7 +389,7 @@ mod tests {
         ];
         let converter = RomKanConverter::new();
         for (rom, kana) in data {
-            assert_eq!(converter.to_hiragana(&rom.to_string()), kana);
+            assert_eq!(converter.to_hiragana(rom), kana);
         }
     }
 }

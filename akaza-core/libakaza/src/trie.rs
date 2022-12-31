@@ -70,9 +70,9 @@ fn test() {
     {
         let mut builder = TrieBuilder::default();
         builder.add("foobar".as_bytes().to_vec());
-        builder.save(&"/tmp/dump.trie".to_string()).unwrap();
+        builder.save("/tmp/dump.trie").unwrap();
 
-        let trie = Trie::load(&"/tmp/dump.trie".to_string()).unwrap();
+        let trie = Trie::load("/tmp/dump.trie").unwrap();
         let result = trie.predictive_search("foobar".to_string().into_bytes());
         assert_eq!(result.len(), 1);
         assert_eq!(

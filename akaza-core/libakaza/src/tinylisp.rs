@@ -220,7 +220,7 @@ mod tests {
 
     #[test]
     fn test_tokenize() {
-        let tokens = TinyLisp::tokenize(&"(. \"a\" \"b\")".to_string());
+        let tokens = TinyLisp::tokenize("(. \"a\" \"b\")");
         assert_eq!(tokens.len(), 5);
         assert_eq!(tokens[0], "(".to_string());
         assert_eq!(tokens[1], ".".to_string());
@@ -231,13 +231,13 @@ mod tests {
 
     #[test]
     fn test_run() {
-        let p = TinyLisp::run(&"\"hoge\"".to_string()).unwrap();
+        let p = TinyLisp::run("\"hoge\"").unwrap();
         assert_eq!(p, "hoge");
     }
 
     #[test]
     fn test_builtin_concat() {
-        let p = TinyLisp::run(&"(. \"h\" \"b\")".to_string()).unwrap();
+        let p = TinyLisp::run("(. \"h\" \"b\")").unwrap();
         assert_eq!(p, "hb");
     }
 

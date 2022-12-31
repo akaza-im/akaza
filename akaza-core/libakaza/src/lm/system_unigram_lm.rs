@@ -106,8 +106,8 @@ mod tests {
         let tmpfile = named_tmpfile.path().to_str().unwrap().to_string();
 
         let mut builder = SystemUnigramLMBuilder::default();
-        builder.add(&"hello".to_string(), 0.4);
-        builder.add(&"world".to_string(), 0.2);
+        builder.add("hello", 0.4);
+        builder.add("world", 0.2);
         builder.save(&tmpfile).unwrap();
 
         let lm = SystemUnigramLM::load(&tmpfile).unwrap();
