@@ -16,13 +16,13 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
     let datadir = args[1].to_owned();
-    let system_unigram_path = &((&datadir).to_string() + "/lm_v2_1gram.trie");
+    let system_unigram_path = &(datadir.to_string() + "/lm_v2_1gram.trie");
     let system_unigram_lm = SystemUnigramLM::load(system_unigram_path).unwrap();
 
-    let system_dict = KanaTrie::load(&(datadir.to_string() + "/system_dict.trie")).unwrap();
+    let system_dict = KanaTrie::load(&(datadir + "/system_dict.trie")).unwrap();
 
     let graph_builder = Segmenter::new(vec![system_dict]);
-    let graph = graph_builder.build(&"わたし".to_string());
+    let graph = graph_builder.build("わたし");
 
     let mut dict_builder = KanaKanjiDictBuilder::default();
     dict_builder.add("わたし", "私/渡し");

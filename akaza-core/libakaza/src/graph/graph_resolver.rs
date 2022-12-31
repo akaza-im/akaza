@@ -82,7 +82,9 @@ impl GraphResolver {
 mod tests {
     use std::fs::File;
     use std::io::Write;
+    use std::rc::Rc;
 
+    use crate::graph::graph_builder::GraphBuilder;
     use crate::graph::segmenter::Segmenter;
     use tempfile::NamedTempFile;
 
@@ -95,7 +97,7 @@ mod tests {
 
     #[test]
     fn test() {
-        let mut builder = KanaTrieBuilder::new();
+        let mut builder = KanaTrieBuilder::default();
         builder.add(&"わたし".to_string());
         builder.add(&"わた".to_string());
         builder.add(&"し".to_string());

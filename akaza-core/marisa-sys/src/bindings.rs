@@ -249,7 +249,7 @@ mod tests {
     fn test_exc() {
         {
             let mut marisa = Marisa::default();
-            let result = marisa.load(&"UNKNOWN_PATH".to_string());
+            let result = marisa.load("UNKNOWN_PATH");
             if let Err(err) = result {
                 assert!(err.contains("MARISA_IO_"));
             } else {
