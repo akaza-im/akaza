@@ -3,7 +3,7 @@ use std::collections::btree_map::BTreeMap;
 use std::rc::Rc;
 
 use crate::graph::word_node::WordNode;
-use log::trace;
+use log::{error, trace};
 
 use crate::lm::system_unigram_lm::SystemUnigramLM;
 use crate::user_side_data::user_data::UserData;
@@ -37,24 +37,31 @@ impl LatticeGraph {
 
     // for debugging purpose
     #[allow(unused)]
-    pub(crate) fn dump(&self) {
+    pub fn dump_position_dot(&self) -> String {
+        let mut buf = String::new();
+        buf += "digraph Lattice {\n";
         // start 及び end は、byte 数単位
         for (end_pos, nodes) in self.graph.iter() {
             for node in nodes {
-                print!("start={} end={}:", node.start_pos, end_pos);
-                // 典型的には unicode で日本語文字が3バイトで2文字幅
-                for _ in 0..(node.start_pos / 3 * 2) {
-                    print!(" ");
-                }
-                println!("{}", node.kanji);
+                buf += &*format!(
+                    r#"    {} -> "{}/{}"{}"#,
+                    node.start_pos, node.kanji, node.yomi, "\n"
+                );
+                buf += &*format!(
+                    r#"    "{}/{}" -> {}{}"#,
+                    node.kanji, node.yomi, end_pos, "\n"
+                );
             }
         }
+        buf += &*"}\n".to_string();
+        buf
     }
 
     // for debugging purpose
-    // graphviz の dot 形式で出力する。
+    /// コストが各ノードおよびエッジについているかを出力する。
+    /// graphviz の dot 形式で出力する。
     #[allow(unused)]
-    pub fn dump_dot(&self) -> String {
+    pub fn dump_cost_dot(&self) -> String {
         let mut buf = String::new();
         buf += "digraph Lattice {\n";
         // start 及び end は、byte 数単位
@@ -67,16 +74,20 @@ impl LatticeGraph {
                     self.get_node_cost(node),
                     "\n"
                 );
-                for prev_node in self.get_prev_nodes(node).expect("There's previous nodes.") {
-                    buf += &*format!(
-                        r#"    "{}/{}" -> "{}/{}" [label="{}"]{}"#,
-                        prev_node.kanji,
-                        prev_node.yomi,
-                        node.kanji,
-                        node.yomi,
-                        self.get_edge_cost(prev_node, node),
-                        "\n"
-                    );
+                if let Some(prev_nodes) = self.get_prev_nodes(node) {
+                    for prev_node in prev_nodes {
+                        buf += &*format!(
+                            r#"    "{}/{}" -> "{}/{}" [label="{}"]{}"#,
+                            prev_node.kanji,
+                            prev_node.yomi,
+                            node.kanji,
+                            node.yomi,
+                            self.get_edge_cost(prev_node, node),
+                            "\n"
+                        );
+                    }
+                } else {
+                    error!("Missing previous nodes for {}", node);
                 }
             }
         }

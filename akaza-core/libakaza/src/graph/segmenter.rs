@@ -1,8 +1,33 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::btree_map::Iter;
+use std::collections::{BTreeMap, HashSet};
 
 use log::trace;
 
 use crate::kana_trie::KanaTrie;
+
+#[derive(PartialEq)]
+pub struct SegmentationResult {
+    base: BTreeMap<usize, Vec<String>>,
+}
+impl SegmentationResult {
+    pub(crate) fn iter(&self) -> Iter<'_, usize, Vec<String>> {
+        self.base.iter()
+    }
+
+    pub fn dump_dot(&self) -> String {
+        let mut buf = String::new();
+        buf += "digraph Lattice {\n";
+        // start 及び end は、byte 数単位
+        for (end_pos, yomis) in self.base.iter() {
+            for yomi in yomis {
+                buf += &*format!(r#"    {} -> "{}"{}"#, end_pos - yomi.len(), yomi, "\n");
+                buf += &*format!(r#"    {} -> "{}"{}"#, yomi, end_pos, "\n");
+            }
+        }
+        buf += &*"}\n".to_string();
+        buf
+    }
+}
 
 pub struct Segmenter {
     tries: Vec<KanaTrie>,
@@ -18,13 +43,13 @@ impl Segmenter {
      */
     // シフトを押して → を押したときのような処理の場合、
     // このメソッドに入ってくる前に別に処理する前提。
-    pub fn build(&self, yomi: &str) -> HashMap<usize, Vec<String>> {
+    pub fn build(&self, yomi: &str) -> SegmentationResult {
         let mut queue: Vec<usize> = Vec::new(); // 検索対象となる開始位置
         queue.push(0);
         let mut seen: HashSet<usize> = HashSet::new();
 
         // 終了位置ごとの候補単語リスト
-        let mut words_ends_at: HashMap<usize, Vec<String>> = HashMap::new();
+        let mut words_ends_at: BTreeMap<usize, Vec<String>> = BTreeMap::new();
 
         while !queue.is_empty() {
             let start_pos = queue.pop().unwrap();
@@ -72,14 +97,17 @@ impl Segmenter {
             }
         }
 
-        words_ends_at
+        SegmentationResult {
+            base: words_ends_at,
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::kana_trie::KanaTrieBuilder;
+
+    use super::*;
 
     #[test]
     fn test_simple() {

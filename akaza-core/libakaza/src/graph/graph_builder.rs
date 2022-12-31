@@ -1,15 +1,10 @@
 use std::collections::btree_map::BTreeMap;
-use std::collections::{HashMap};
-
-
 use std::rc::Rc;
 
 use crate::graph::lattice_graph::LatticeGraph;
+use crate::graph::segmenter::SegmentationResult;
 use crate::graph::word_node::WordNode;
-
-
 use crate::kana_kanji_dict::KanaKanjiDict;
-
 use crate::lm::system_unigram_lm::SystemUnigramLM;
 use crate::user_side_data::user_data::UserData;
 
@@ -32,11 +27,7 @@ impl GraphBuilder {
         }
     }
 
-    pub fn construct(
-        &self,
-        yomi: &String,
-        words_ends_at: HashMap<usize, Vec<String>>,
-    ) -> LatticeGraph {
+    pub fn construct(&self, yomi: &String, words_ends_at: SegmentationResult) -> LatticeGraph {
         // このグラフのインデクスは単語の終了位置。
         let mut graph: BTreeMap<i32, Vec<WordNode>> = BTreeMap::new();
         graph.insert(0, vec![WordNode::create_bos()]);
@@ -45,18 +36,18 @@ impl GraphBuilder {
             vec![WordNode::create_eos(yomi.len() as i32)],
         );
 
-        for (end_pos, yomis) in words_ends_at {
+        for (end_pos, yomis) in words_ends_at.iter() {
             for yomi in yomis {
-                let vec = graph.entry(end_pos as i32).or_default();
+                let vec = graph.entry(*end_pos as i32).or_default();
 
                 // ひらがなそのものもエントリーとして登録しておく。
-                let node = WordNode::new((end_pos - yomi.len()) as i32, &yomi, &yomi);
+                let node = WordNode::new((end_pos - yomi.len()) as i32, yomi, yomi);
                 vec.push(node);
 
                 // 漢字に変換した結果もあれば insert する。
-                if let Some(kanjis) = self.system_kana_kanji_dict.find(&yomi) {
+                if let Some(kanjis) = self.system_kana_kanji_dict.find(yomi) {
                     for kanji in kanjis {
-                        let node = WordNode::new((end_pos - yomi.len()) as i32, &kanji, &yomi);
+                        let node = WordNode::new((end_pos - yomi.len()) as i32, &kanji, yomi);
                         vec.push(node);
                     }
                 }

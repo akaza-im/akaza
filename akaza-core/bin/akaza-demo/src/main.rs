@@ -1,15 +1,24 @@
-use libakaza::graph::graph_builder::GraphBuilder;
-use libakaza::graph::graph_resolver::GraphResolver;
-use libakaza::graph::segmenter::Segmenter;
-use libakaza::kana_kanji_dict::{KanaKanjiDict, KanaKanjiDictBuilder};
-use libakaza::kana_trie::KanaTrieBuilder;
-use libakaza::lm::system_unigram_lm::SystemUnigramLM;
-use libakaza::user_side_data::user_data::UserData;
-use log::info;
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::rc::Rc;
+
+use log::info;
+
+use libakaza::graph::graph_builder::GraphBuilder;
+use libakaza::graph::graph_resolver::GraphResolver;
+use libakaza::graph::segmenter::Segmenter;
+use libakaza::kana_kanji_dict::KanaKanjiDict;
+use libakaza::kana_trie::KanaTrieBuilder;
+use libakaza::lm::system_unigram_lm::SystemUnigramLM;
+use libakaza::user_side_data::user_data::UserData;
+
+fn dump_dot(fname: &str, dot: &str) {
+    info!("Writing {}", fname);
+    let mut file = File::create(fname).unwrap();
+    file.write_all(dot.as_bytes()).unwrap();
+    file.sync_all().unwrap();
+}
 
 fn main() {
     env_logger::init_from_env(
@@ -30,25 +39,27 @@ fn main() {
     let system_kana_trie = system_dict_yomis_builder.build();
 
     let graph_builder = Segmenter::new(vec![system_kana_trie]);
-    let graph = graph_builder.build("わたし");
+    let segmentation_result = graph_builder.build("わたし");
+    dump_dot(
+        "/tmp/segmentation-result.dot",
+        segmentation_result.dump_dot().as_str(),
+    );
 
-    let mut dict_builder = KanaKanjiDictBuilder::default();
-    dict_builder.add("わたし", "私/渡し");
+    let user_data = UserData::default();
 
-    // TODO このへん、ちょっとコピペしまくらないといけなくて渋い。
-    let dict = dict_builder.build();
-    let mut user_data = UserData::default();
-
-    // 私/わたし のスコアをガッと上げる。
-    user_data.record_entries(vec!["私/わたし".to_string()]);
-    let graph_builder = GraphBuilder::new(dict, Rc::new(user_data), Rc::new(system_unigram_lm));
-    let lattice = graph_builder.construct(&yomi, graph);
+    let graph_builder = GraphBuilder::new(
+        system_kana_kanji_dict,
+        Rc::new(user_data),
+        Rc::new(system_unigram_lm),
+    );
+    let lattice = graph_builder.construct(&yomi, segmentation_result);
     // dot -Tpng -o /tmp/lattice.png /tmp/lattice.dot && open /tmp/lattice.png
-    File::create("/tmp/lattice.dot")
-        .unwrap()
-        .write_all(lattice.dump_dot().as_bytes())
-        .unwrap();
+    dump_dot(
+        "/tmp/lattice-position.dot",
+        lattice.dump_position_dot().as_str(),
+    );
+    dump_dot("/tmp/lattice-cost.dot", lattice.dump_cost_dot().as_str());
     let resolver = GraphResolver::default();
     let result = resolver.viterbi(&yomi, lattice);
-    info!("RESULT IS!!! '{}'", result);
+    info!("RESULT IS!!! '{}'", result.unwrap());
 }

@@ -1,5 +1,6 @@
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::word_node::WordNode;
+use log::trace;
 use std::collections::HashMap;
 
 // 次に必要なのは、分割された文字列から、グラフを構築する仕組みである。
@@ -7,12 +8,9 @@ use std::collections::HashMap;
 pub struct GraphResolver {}
 
 impl GraphResolver {
-    pub fn viterbi(&self, yomi: &String, lattice: LatticeGraph) -> String {
+    pub fn viterbi(&self, yomi: &String, lattice: LatticeGraph) -> Result<String, String> {
         let mut prevmap: HashMap<&WordNode, &WordNode> = HashMap::new();
         let mut costmap: HashMap<&WordNode, f32> = HashMap::new();
-
-        lattice.dump();
-        lattice.dump_dot();
 
         for i in 1..yomi.len() + 2 {
             let Some(nodes) = lattice.node_list(i as i32) else {
@@ -20,7 +18,7 @@ impl GraphResolver {
             };
             for node in nodes {
                 let node_cost = lattice.get_node_cost(node);
-                println!("kanji={}, Cost={}", node, node_cost);
+                trace!("kanji={}, Cost={}", node, node_cost);
                 let mut cost = f32::MIN;
                 let mut shortest_prev = None;
                 let prev_nodes = lattice.get_prev_nodes(node).unwrap_or_else(|| {
@@ -33,15 +31,18 @@ impl GraphResolver {
                     let edge_cost = lattice.get_edge_cost(prev, node);
                     let prev_cost = costmap.get(prev).unwrap_or(&0_f32); // unwrap が必要なのは、 __BOS__ 用。
                     let tmp_cost = prev_cost + edge_cost + node_cost;
-                    println!(
+                    trace!(
                         "Replace??? prev_cost={} tmp_cost={} < cost={}: {}",
-                        prev_cost, tmp_cost, cost, prev
+                        prev_cost,
+                        tmp_cost,
+                        cost,
+                        prev
                     );
                     // コストが最大な経路を選ぶようにする。
                     // そういうふうにコストを付与しているので。
                     if cost < tmp_cost {
                         if shortest_prev.is_none() {
-                            println!("Replace None by {}", prev);
+                            trace!("Replace None by {}", prev);
                         } else {
                             println!("Replace {} by {}", shortest_prev.unwrap(), prev);
                         }
@@ -71,18 +72,19 @@ impl GraphResolver {
                 .unwrap_or_else(|| panic!("Cannot get previous node: {}", node.kanji));
         }
         result.reverse();
-        result.join("")
+        Ok(result.join(""))
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeMap;
     use std::fs::File;
     use std::io::Write;
     use std::rc::Rc;
 
     use crate::graph::graph_builder::GraphBuilder;
-    use crate::graph::segmenter::Segmenter;
+    use crate::graph::segmenter::{SegmentationResult, Segmenter};
     use tempfile::NamedTempFile;
 
     use crate::kana_kanji_dict::KanaKanjiDictBuilder;
@@ -159,10 +161,12 @@ mod tests {
         let graph = graph_builder.build("わたし");
         assert_eq!(
             graph,
-            HashMap::from([
-                (6, vec!["わた".to_string()]),
-                (9, vec!["わたし".to_string(), "し".to_string()]),
-            ])
+            SegmentationResult {
+                base: BTreeMap::from([
+                    (6, vec!["わた".to_string()]),
+                    (9, vec!["わたし".to_string(), "し".to_string()]),
+                ])
+            }
         );
 
         let mut dict_builder = KanaKanjiDictBuilder::default();
@@ -201,7 +205,7 @@ mod tests {
         // dot -Tpng -o /tmp/lattice.png /tmp/lattice.dot && open /tmp/lattice.png
         File::create("/tmp/lattice.dot")
             .unwrap()
-            .write_all(lattice.dump_dot().as_bytes())
+            .write_all(lattice.dump_cost_dot().as_bytes())
             .unwrap();
         let resolver = GraphResolver::default();
         let result = resolver.viterbi(&yomi, lattice);
