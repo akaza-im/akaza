@@ -1,12 +1,14 @@
-use log::warn;
 use std::collections::HashMap;
-use std::io;
+
+use anyhow::Result;
+use log::warn;
+
+use marisa_sys::Marisa;
 
 use crate::kana_trie::KanaTrie;
 use crate::user_side_data::bigram_user_stats::BiGramUserStats;
 use crate::user_side_data::unigram_user_stats::UniGramUserStats;
 use crate::user_side_data::user_stats_utils::{read_user_stats_file, write_user_stats_file};
-use marisa_sys::Marisa;
 
 /**
  * ユーザー固有データ
@@ -24,6 +26,7 @@ pub struct UserData {
 
     pub(crate) need_save: bool,
 }
+
 impl UserData {
     pub fn load(unigram_path: &String, bigram_path: &String, kana_trie_path: &String) -> UserData {
         // ユーザーデータが読み込めないことは fatal エラーではない。
@@ -96,7 +99,7 @@ impl UserData {
         // }
     }
 
-    fn write_user_stats_file(&self) -> Result<(), io::Error> {
+    fn write_user_stats_file(&self) -> Result<()> {
         if let Some(unigram_path) = &self.unigram_path {
             write_user_stats_file(unigram_path, &self.unigram_user_stats.word_count)?;
         }

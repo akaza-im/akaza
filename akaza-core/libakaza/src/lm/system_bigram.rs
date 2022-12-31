@@ -1,4 +1,5 @@
 use crate::trie::{Trie, TrieBuilder};
+use anyhow::Result;
 
 /**
  * bigram 言語モデル。
@@ -33,7 +34,7 @@ pub struct SystemBigramLM {
 }
 
 impl SystemBigramLM {
-    pub fn load(filename: &str) -> Result<SystemBigramLM, anyhow::Error> {
+    pub fn load(filename: &str) -> Result<SystemBigramLM> {
         let trie = Trie::load(filename)?;
         Ok(SystemBigramLM { trie })
     }

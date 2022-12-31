@@ -1,13 +1,14 @@
+use anyhow::{anyhow, Result};
 use std::collections::HashMap;
+use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
-use std::{fs, io};
 
-pub(crate) fn read_user_stats_file(path: &String) -> Result<Vec<(String, u32)>, String> {
+pub(crate) fn read_user_stats_file(path: &String) -> Result<Vec<(String, u32)>> {
     let file = match File::open(path) {
         Ok(file) => file,
         Err(err) => {
-            return Err(err.to_string());
+            return Err(anyhow!(err));
         }
     };
 
@@ -15,14 +16,14 @@ pub(crate) fn read_user_stats_file(path: &String) -> Result<Vec<(String, u32)>, 
 
     for line in BufReader::new(file).lines() {
         let Ok(line) = line else {
-            return Err("Cannot read user language model file".to_string());
+            return Err(anyhow!("Cannot read user language model file"));
         };
         let Some((key, count)) = line.trim().split_once(' ') else {
             continue;
         };
 
         let Ok(count) = count.to_string().parse::<u32>() else {
-            return Err("Invalid line in user language model: ".to_string() + count);
+            return Err(anyhow!("Invalid line in user language model: {}", count));
         };
 
         result.push((key.to_string(), count));
@@ -31,10 +32,7 @@ pub(crate) fn read_user_stats_file(path: &String) -> Result<Vec<(String, u32)>, 
     Ok(result)
 }
 
-pub(crate) fn write_user_stats_file(
-    path: &str,
-    word_count: &HashMap<String, u32>,
-) -> Result<(), io::Error> {
+pub(crate) fn write_user_stats_file(path: &str, word_count: &HashMap<String, u32>) -> Result<()> {
     let mut tmpfile = File::create(path.to_string() + ".tmp")?;
 
     for (key, cnt) in word_count {
