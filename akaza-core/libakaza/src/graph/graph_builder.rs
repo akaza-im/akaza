@@ -1,15 +1,15 @@
 use std::collections::btree_map::BTreeMap;
-use std::collections::{HashMap, HashSet};
-use std::fmt::{Display, Formatter};
-use std::hash::{Hash, Hasher};
+use std::collections::{HashMap};
+
+
 use std::rc::Rc;
 
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::word_node::WordNode;
-use log::trace;
+
 
 use crate::kana_kanji_dict::KanaKanjiDict;
-use crate::kana_trie::KanaTrie;
+
 use crate::lm::system_unigram_lm::SystemUnigramLM;
 use crate::user_side_data::user_data::UserData;
 
