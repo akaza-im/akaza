@@ -1,7 +1,7 @@
 use std::borrow::Borrow;
 use std::collections::VecDeque;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use chrono::{DateTime, Local};
 
 /**
@@ -52,10 +52,10 @@ fn builtin_string_concat(args: VecDeque<TinyLispNode>) -> Result<TinyLispNode> {
     let b = &args[1];
 
     let TinyLispNode::String(a_str) = a else {
-        return Err(anyhow!("argument for '.' operator should be string."));
+        bail!("argument for '.' operator should be string.");
     };
     let TinyLispNode::String(b_str) = b else {
-        return Err(anyhow!("argument for '.' operator should be string."));
+        bail!("argument for '.' operator should be string.");
     };
 
     Ok(TinyLispNode::String(a_str.clone() + b_str))
@@ -69,10 +69,10 @@ fn builtin_strftime(args: VecDeque<TinyLispNode>) -> Result<TinyLispNode> {
     let dt = &args[0];
     let fmt = &args[1];
     let TinyLispNode::LocalDateTime(dt) = dt else {
-        return Err(anyhow!("1st argument of strftime should be LocalDateTime"));
+        bail!("1st argument of strftime should be LocalDateTime");
     };
     let TinyLispNode::String(fmt) = fmt else {
-        return Err(anyhow!("2nd argument of strftime should be string"));
+        bail!("2nd argument of strftime should be string");
     };
     let got = dt.format(fmt).to_string();
     Ok(TinyLispNode::String(got))
@@ -134,7 +134,7 @@ impl TinyLisp {
                     }
                 }
                 let Some(proc) = exps.pop_front() else {
-                    return Err(anyhow!("Empty list."));
+                    bail!("Empty list.");
                 };
                 if let TinyLispNode::Function(proc) = proc {
                     proc(exps)
@@ -160,11 +160,11 @@ impl TinyLisp {
 
     fn _read_from(tokens: &mut VecDeque<String>, _depth: i32) -> Result<TinyLispNode> {
         if tokens.is_empty() {
-            return Err(anyhow!("Unexpected EOF while reading(LISP)"));
+            bail!("Unexpected EOF while reading(LISP)");
         }
 
         let Some(token) = tokens.pop_front() else {
-            return Err(anyhow!("Missing token... Unexpected EOS."));
+            bail!("Missing token... Unexpected EOS.");
         };
         if token == "(" {
             let mut values: Vec<TinyLispNode> = Vec::new();

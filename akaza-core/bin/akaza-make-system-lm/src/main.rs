@@ -2,8 +2,8 @@ use std::env;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
-use anyhow::Result;
 use anyhow::{anyhow, Context};
+use anyhow::{bail, Result};
 
 use libakaza::lm::system_bigram::{SystemBigramLM, SystemBigramLMBuilder};
 use libakaza::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
@@ -51,7 +51,7 @@ fn process_2gram(unigram: &SystemUnigramLM, srcpath: &str, dstpath: &str) -> Res
             let score = tokens[1];
 
             let Some((word1, word2)) = words.split_once('\t') else {
-                return Err(anyhow!("Cannot split words: {}", words));
+                bail!("Cannot split words: {}", words);
             };
             let score = score.parse().unwrap();
             Ok((word1.to_string(), word2.to_string(), score))

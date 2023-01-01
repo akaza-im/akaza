@@ -1,30 +1,24 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 
 pub(crate) fn read_user_stats_file(path: &String) -> Result<Vec<(String, u32)>> {
-    let file = match File::open(path) {
-        Ok(file) => file,
-        Err(err) => {
-            return Err(anyhow!(err));
-        }
-    };
+    let file = File::open(path)?;
 
     let mut result: Vec<(String, u32)> = Vec::new();
 
     for line in BufReader::new(file).lines() {
-        let Ok(line) = line else {
-            return Err(anyhow!("Cannot read user language model file"));
-        };
+        let line = line.context("Cannot read user language model file")?;
         let Some((key, count)) = line.trim().split_once(' ') else {
             continue;
         };
 
-        let Ok(count) = count.to_string().parse::<u32>() else {
-            return Err(anyhow!("Invalid line in user language model: {}", count));
-        };
+        let count = count
+            .to_string()
+            .parse::<u32>()
+            .with_context(|| format!("Invalid line in user language model: {}", count))?;
 
         result.push((key.to_string(), count));
     }
