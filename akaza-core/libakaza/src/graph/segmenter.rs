@@ -1,5 +1,6 @@
 use std::collections::btree_map::Iter;
 use std::collections::{BTreeMap, HashSet};
+use std::ops::Range;
 
 use log::trace;
 
@@ -46,9 +47,29 @@ impl Segmenter {
     /**
      * 読みをうけとって、グラフを構築する。
      */
+    // TODO 廃止
+    pub fn build(&self, yomi: &str) -> SegmentationResult {
+        self.build_force(yomi, &Vec::new())
+    }
+
+    /**
+     * 「読み」を受け取って Latttice を構築する。
+     *
+     * force_ranges: 一般的な IME でシフトおしてから→をおして、ユーザーが明示的に範囲選択した場合
+     *               の選択範囲。
+     */
     // シフトを押して → を押したときのような処理の場合、
     // このメソッドに入ってくる前に別に処理する前提。
-    pub fn build(&self, yomi: &str) -> SegmentationResult {
+    pub fn build_force(&self, yomi: &str, force_ranges: &Vec<Range<usize>>) -> SegmentationResult {
+        if !force_ranges.is_empty() {
+            for force_range in force_ranges {
+                trace!(
+                    "force_range detected: {}",
+                    yomi[force_range.start..force_range.end].to_string()
+                );
+            }
+        }
+
         let mut queue: Vec<usize> = Vec::new(); // 検索対象となる開始位置
         queue.push(0);
         let mut seen: HashSet<usize> = HashSet::new();
@@ -56,12 +77,26 @@ impl Segmenter {
         // 終了位置ごとの候補単語リスト
         let mut words_ends_at: BTreeMap<usize, Vec<String>> = BTreeMap::new();
 
-        while !queue.is_empty() {
+        'queue_processing: while !queue.is_empty() {
             let start_pos = queue.pop().unwrap();
             if seen.contains(&start_pos) {
                 continue;
             } else {
                 seen.insert(start_pos);
+            }
+
+            // start_pos が force の範囲に入っていたら処理しない。
+            for force_range in force_ranges {
+                if force_range.start == start_pos {
+                    trace!("force_range detected.");
+                    let vec = words_ends_at.entry(force_range.end).or_default();
+                    vec.push(yomi[force_range.start..force_range.end].to_string());
+                    queue.push(start_pos + force_range.len());
+                    continue 'queue_processing;
+                }
+                if force_range.contains(&start_pos) {
+                    continue 'queue_processing;
+                }
             }
 
             let yomi = &yomi[start_pos..];
@@ -72,8 +107,21 @@ impl Segmenter {
             let mut candidates: HashSet<String> = HashSet::new();
             for trie in &self.tries {
                 let got = trie.common_prefix_search(&yomi.to_string());
-                for g in got {
-                    candidates.insert(g);
+                'insert: for word in got {
+                    let ends_at = start_pos + word.len();
+
+                    // end_pos が force の範囲に入っていたら処理しない。
+                    for force_range in force_ranges {
+                        // force_range は exclusive で、厳しい。
+                        if force_range.contains(&ends_at) || force_range.end == ends_at {
+                            trace!("Blocked candidate range: {}, {:?}", word, force_range);
+                            continue 'insert;
+                        } else {
+                            trace!("Accepted candidate range: {}, {:?}", word, force_range);
+                        }
+                    }
+
+                    candidates.insert(word);
                 }
             }
             if !candidates.is_empty() {
@@ -81,6 +129,7 @@ impl Segmenter {
                     let ends_at = start_pos + candidate.len();
 
                     let vec = words_ends_at.entry(ends_at).or_default();
+                    trace!("Add candidate: {}", candidate);
                     vec.push(candidate.clone());
 
                     queue.push(start_pos + candidate.len());
@@ -148,5 +197,33 @@ mod tests {
                 (9, vec!["し".to_string()]),
             ]))
         )
+    }
+
+    #[test]
+    fn test_force() -> anyhow::Result<()> {
+        // env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "info");
+        // env_logger::builder().is_test(true).try_init()?;
+
+        let mut builder = KanaTrieBuilder::default();
+        builder.add(&"わたし".to_string());
+        builder.add(&"わた".to_string());
+        builder.add(&"わ".to_string());
+        builder.add(&"し".to_string());
+        let kana_trie = builder.build();
+
+        let segmenter = Segmenter::new(vec![kana_trie]);
+        let yomi = "わたし";
+        // force_range に "たし" を指定する。
+        let (i2, _) = yomi.char_indices().nth(1).unwrap();
+        let (i3, c3) = yomi.char_indices().nth(2).unwrap();
+        let graph = segmenter.build_force(yomi, &vec![i2..(i3 + c3.len_utf8())]);
+        assert_eq!(
+            graph,
+            SegmentationResult::new(BTreeMap::from([
+                (3, vec!["わ".to_string()]),
+                (9, vec!["たし".to_string()]),
+            ]))
+        );
+        Ok(())
     }
 }
