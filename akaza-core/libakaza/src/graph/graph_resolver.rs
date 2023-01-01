@@ -21,18 +21,17 @@ impl Candidate {
     }
 }
 
-// 次に必要なのは、分割された文字列から、グラフを構築する仕組みである。
+/**
+ * Segmenter により分割されたかな表現から、グラフを構築する。
+ */
 #[derive(Default)]
 pub struct GraphResolver {}
 
 impl GraphResolver {
-    pub fn viterbi(&self, lattice: &LatticeGraph) -> anyhow::Result<String> {
-        let got = self.viterbi_raw(lattice)?;
-        let terms: Vec<String> = got.iter().map(|f| f[0].kanji.clone()).collect();
-        Ok(terms.join(""))
-    }
-
-    pub fn viterbi_raw(&self, lattice: &LatticeGraph) -> anyhow::Result<Vec<VecDeque<Candidate>>> {
+    /**
+     * ビタビアルゴリズムで最適な経路を見つける。
+     */
+    pub fn resolve(&self, lattice: &LatticeGraph) -> anyhow::Result<Vec<VecDeque<Candidate>>> {
         let yomi = &lattice.yomi;
         let mut prevmap: HashMap<&WordNode, &WordNode> = HashMap::new();
         let mut costmap: HashMap<&WordNode, f32> = HashMap::new();
@@ -125,6 +124,7 @@ impl GraphResolver {
 
 #[cfg(test)]
 mod tests {
+    use anyhow::Result;
     use std::collections::BTreeMap;
     use std::fs::File;
     use std::io::Write;
@@ -141,7 +141,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_resolver() {
+    fn test_resolver() -> Result<()> {
         let _ = env_logger::builder().is_test(true).try_init();
 
         let mut builder = KanaTrieBuilder::default();
@@ -178,12 +178,15 @@ mod tests {
         );
         let lattice = graph_builder.construct("abc", graph);
         let resolver = GraphResolver::default();
-        let result = resolver.viterbi(&lattice).unwrap();
+        let got = resolver.resolve(&lattice)?;
+        let terms: Vec<String> = got.iter().map(|f| f[0].kanji.clone()).collect();
+        let result = terms.join("");
         assert_eq!(result, "abc");
+        Ok(())
     }
 
     #[test]
-    fn test_kana_kanji() {
+    fn test_kana_kanji() -> Result<()> {
         let _ = env_logger::builder().is_test(true).try_init();
 
         let mut builder = KanaTrieBuilder::default();
@@ -229,7 +232,10 @@ mod tests {
             .write_all(lattice.dump_cost_dot().as_bytes())
             .unwrap();
         let resolver = GraphResolver::default();
-        let result = resolver.viterbi(&lattice).unwrap();
+        let got = resolver.resolve(&lattice)?;
+        let terms: Vec<String> = got.iter().map(|f| f[0].kanji.clone()).collect();
+        let result = terms.join("");
         assert_eq!(result, "私");
+        Ok(())
     }
 }

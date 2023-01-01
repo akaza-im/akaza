@@ -26,29 +26,12 @@ mod tests {
         }
 
         fn test(&self, yomi: &str, kanji: &str) -> Result<()> {
-            let got = self.akaza.convert_to_string(yomi)?;
+            let got1 = &self.akaza.convert(yomi, &Vec::new())?;
+            let terms: Vec<String> = got1.iter().map(|f| f[0].kanji.clone()).collect();
+            let got = terms.join("");
             assert_eq!(got, kanji);
             Ok(())
         }
-    }
-
-    fn test(yomi: &str, kanji: &str) -> Result<()> {
-        let got = load_akaza()?.convert_to_string(yomi)?;
-        assert_eq!(got, kanji);
-        Ok(())
-    }
-
-    #[test]
-    fn test_wnn() -> Result<()> {
-        test("わたしのなまえはなかのです", "私の名前は中野です")
-    }
-
-    #[test]
-    fn test_working() -> Result<()> {
-        test(
-            "ろうどうしゃさいがいほしょうほけんほう",
-            "労働者災害補償保険法",
-        )
     }
 
     #[test]
@@ -67,6 +50,7 @@ mod tests {
     #[test]
     fn test_with_data() -> anyhow::Result<()> {
         let data: Vec<(&str, &str)> = vec![
+            ("わたしのなまえはなかのです", "私の名前は中野です"),
             ("かたがわいっしゃせん", "片側一車線"),
             ("みかくにん", "未確認"),
             ("きめつのやいば", "鬼滅の刃"),

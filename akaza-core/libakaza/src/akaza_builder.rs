@@ -22,13 +22,6 @@ pub struct Akaza {
 }
 
 impl Akaza {
-    // TODO: DEPRECATE THIS. This method is only useful for debugging purpose.
-    pub fn convert_to_string(&self, yomi: &str) -> Result<String> {
-        let got = self.convert(yomi, &Vec::new())?;
-        let terms: Vec<String> = got.iter().map(|f| f[0].kanji.clone()).collect();
-        Ok(terms.join(""))
-    }
-
     pub fn convert(
         &self,
         yomi: &str,
@@ -88,7 +81,7 @@ impl Akaza {
         let lattice = self
             .graph_builder
             .construct(yomi.as_str(), segmentation_result);
-        self.graph_resolver.viterbi_raw(&lattice)
+        self.graph_resolver.resolve(&lattice)
     }
 }
 
