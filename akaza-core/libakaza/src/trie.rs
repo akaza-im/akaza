@@ -1,4 +1,5 @@
 use anyhow::Result;
+
 use marisa_sys::{Keyset, Marisa};
 
 // Trie 木の実装詳細はこのファイルで隠蔽される。

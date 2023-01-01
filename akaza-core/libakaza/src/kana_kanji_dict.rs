@@ -15,9 +15,10 @@ pub struct KanaKanjiDictBuilder {
 }
 
 impl KanaKanjiDictBuilder {
-    pub fn add(&mut self, yomi: &str, kanjis: &str) {
+    pub fn add(&mut self, yomi: &str, kanjis: &str) -> &mut KanaKanjiDictBuilder {
         let key = [yomi.as_bytes(), b"\t", kanjis.as_bytes()].concat();
         self.trie_builder.add(key);
+        self
     }
 
     pub fn save(&self, filename: &str) -> Result<()> {
@@ -35,13 +36,19 @@ pub struct KanaKanjiDict {
     trie: Trie,
 }
 
+impl Default for KanaKanjiDict {
+    fn default() -> Self {
+        KanaKanjiDictBuilder::default().build()
+    }
+}
+
 impl KanaKanjiDict {
     pub fn load(file_name: &str) -> Result<KanaKanjiDict> {
         let trie = Trie::load(file_name)?;
         Ok(KanaKanjiDict { trie })
     }
 
-    pub fn find(&self, yomi: &String) -> Option<Vec<String>> {
+    pub fn find(&self, yomi: &str) -> Option<Vec<String>> {
         let got = self
             .trie
             .predictive_search([yomi.as_bytes(), b"\t"].concat().to_vec());

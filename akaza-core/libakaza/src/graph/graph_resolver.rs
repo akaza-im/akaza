@@ -5,6 +5,7 @@ use log::trace;
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::word_node::WordNode;
 
+#[derive(Debug)]
 pub struct Candidate {
     pub kanji: String,
     pub yomi: String,
@@ -122,7 +123,7 @@ mod tests {
 
     use crate::graph::graph_builder::GraphBuilder;
     use crate::graph::segmenter::{SegmentationResult, Segmenter};
-    use crate::kana_kanji_dict::KanaKanjiDictBuilder;
+    use crate::kana_kanji_dict::{KanaKanjiDict, KanaKanjiDictBuilder};
     use crate::kana_trie::KanaTrieBuilder;
     use crate::lm::system_bigram::SystemBigramLMBuilder;
     use crate::lm::system_unigram_lm::SystemUnigramLMBuilder;
@@ -161,6 +162,7 @@ mod tests {
         let user_data = UserData::default();
         let graph_builder = GraphBuilder::new(
             dict,
+            Default::default(),
             Rc::new(user_data),
             Rc::new(system_unigram_lm),
             Rc::new(system_bigram_lm),
@@ -196,7 +198,6 @@ mod tests {
 
         let yomi = "わたし".to_string();
 
-        // TODO このへん、ちょっとコピペしまくらないといけなくて渋い。
         let dict = dict_builder.build();
         let system_unigram_lm_builder = SystemUnigramLMBuilder::default();
         let system_unigram_lm = system_unigram_lm_builder.build();
@@ -207,6 +208,7 @@ mod tests {
         user_data.record_entries(vec!["私/わたし".to_string()]);
         let graph_builder = GraphBuilder::new(
             dict,
+            KanaKanjiDict::default(),
             Rc::new(user_data),
             Rc::new(system_unigram_lm),
             Rc::new(system_bigram_lm),

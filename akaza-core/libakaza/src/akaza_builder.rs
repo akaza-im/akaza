@@ -69,6 +69,13 @@ impl AkazaBuilder {
             }
             None => KanaKanjiDictBuilder::default().build(),
         };
+        let system_single_term_dict = match &self.system_data_dir {
+            Some(dir) => {
+                let path = dir.to_string() + "/single_term.trie";
+                KanaKanjiDict::load(path.as_str())?
+            }
+            None => KanaKanjiDictBuilder::default().build(),
+        };
 
         // TODO キャッシュする余地
         let mut system_dict_yomis_builder = KanaTrieBuilder::default();
@@ -84,6 +91,7 @@ impl AkazaBuilder {
 
         let graph_builder = GraphBuilder::new(
             system_kana_kanji_dict,
+            system_single_term_dict,
             Rc::new(user_data),
             Rc::new(system_unigram_lm),
             Rc::new(system_bigram_lm),

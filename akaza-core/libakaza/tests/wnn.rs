@@ -1,31 +1,48 @@
 #[cfg(test)]
 mod tests {
+    use anyhow::Result;
     use libakaza::akaza_builder::{Akaza, AkazaBuilder};
+    use libakaza::graph::graph_resolver::Candidate;
+    use log::info;
+    use std::collections::vec_deque::VecDeque;
 
-    fn load_akaza() -> anyhow::Result<Akaza> {
+    fn load_akaza() -> Result<Akaza> {
         let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/../../akaza-data/data/";
         AkazaBuilder::default()
             .system_data_dir(datadir.as_str())
             .build()
     }
 
-    fn test(yomi: &str, kanji: &str) -> anyhow::Result<()> {
+    fn test(yomi: &str, kanji: &str) -> Result<()> {
         let got = load_akaza()?.convert_to_string(yomi)?;
         assert_eq!(got, kanji);
         Ok(())
     }
 
     #[test]
-    fn test_wnn() -> anyhow::Result<()> {
+    fn test_wnn() -> Result<()> {
         test("わたしのなまえはなかのです", "私の名前は中野です")
     }
 
     #[test]
-    fn test_working() -> anyhow::Result<()> {
+    fn test_working() -> Result<()> {
         test(
             "ろうどうしゃさいがいほしょうほけんほう",
             "労働者災害補償保険法",
         )
+    }
+
+    #[test]
+    fn test_sushi() -> Result<()> {
+        env_logger::builder().is_test(true).try_init()?;
+
+        let yomi = "すし";
+        let got: Vec<VecDeque<Candidate>> = load_akaza()?.convert(yomi)?;
+        assert_eq!(&got[0][0].yomi, "すし");
+        let words: Vec<String> = got[0].iter().map(|x| x.kanji.to_string()).collect();
+        assert!(words.contains(&"🍣".to_string()));
+        // assert_eq!(got, kanji);
+        Ok(())
     }
 
     #[test]
