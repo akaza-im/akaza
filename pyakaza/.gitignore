@@ -1,4 +1,0 @@
-/build/
-*.cmake
-CMakeCache.txt
-CMakeFiles

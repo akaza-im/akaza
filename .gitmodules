@@ -7,12 +7,6 @@
 [submodule "akaza-data/jawiki-kana-kanji-dict"]
 	path = akaza-data/jawiki-kana-kanji-dict
 	url = https://github.com/tokuhirom/jawiki-kana-kanji-dict.git
-[submodule "libakaza/picotest"]
-	path = libakaza/picotest
-	url = https://github.com/h2o/picotest.git
-[submodule "pyakaza/pybind11"]
-	path = pyakaza/pybind11
-	url = https://github.com/pybind/pybind11.git
 [submodule "rx-sys/rx"]
 	path = rx-sys/rx
 	url = git@github.com:yt76/rx.git
