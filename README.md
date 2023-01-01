@@ -9,6 +9,9 @@ Yet another kana-kanji-converter on IBus, written in Python.
 いじりやすくてある程度UIが使いやすいかな漢字変換があったら面白いなと思ったので作ってみています。
 「いじりやすくて」というのはつまり、Hack-able であるという意味です。
 
+kkc はモデルデータを自分で再構築することができない。気がします。
+あと、vala を学ぶのがしんどい。。
+
 ## 特徴
 
  * UI wo Python で書いてあるので、拡張が容易です。
@@ -16,19 +19,18 @@ Yet another kana-kanji-converter on IBus, written in Python.
    * 言語モデルの生成元は日本語 Wikipedia のみをベースとしています。
      * kytea で分析した結果をベースに 2gram 言語モデルを構築しています。
      * 利用者の環境で、1から言語モデルを再生成することが可能です。
- * 変換結果を学習します(unigram, bigramのスコアを学習します)
+     * そこそこのマシンパワーとディスク容量を必要とします。
+ * ユーザー環境で、利用者の変換結果を学習します(unigram, bigramのスコアを学習します)
 
 ## Dependencies
 
  * ibus
- * python3
  * marisa-trie
 
 ## Install 方法
 
     cd akaza-data/ && pip install -r requirements.txt
-    cd akaza-core/ && pip install -r requirements.txt
-    cd ibus-akaza/ && pip install -r requirements.txt
+    cd akaza-core/ && cargo install
     make && sudo make install && ibus restart
 
 ibus 側の設定をすればOKです。
