@@ -15,45 +15,27 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: true
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v2
+    - uses: actions/cache@v2
       with:
-        python-version: 3.8
+      path: |
+        ~/.cargo/registry
+        ~/.cargo/git
+        akaza-core/target          
+      key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest
-        # deps for akaza-data building
-        pip install wikiextractor kytea psutil wheel pybind11
         sudo apt-get update
         sudo apt-get install ibus libgirepository1.0-dev libmarisa-dev cmake clang
-    #- name: Lint with flake8
-    #  run: |
-        # stop the build if there are Python syntax errors or undefined names
-        # flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        #flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test libakaza
-      run: |
-        cd libakaza
-        cmake . -DCMAKE_INSTALL_PREFIX=/usr
-        VERBOSE=1 make
-        sudo make install
-    - name: Test akaza-data
-      run: |
-        cd akaza-data
-        sudo make install
-    - name: Test pyakaza
-      run: |
-        cd pyakaza
-        pip install -r requirements.txt
-        make
-        pytest tests
-        sudo python setup.py install
-    - name: Test ibus-akaza
-      run: |
-        cd ibus-akaza
-        pip install -r requirements.txt
-        make ibus_akaza/config.py
-        pytest
-        sudo python setup.py install
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        components: rustfmt, clippy
+    - uses: actions-rs/cargo@v1
+      with:
+        command: fmt
+        args: --manifest-path akaza-core/Carglo.toml --all -- --check
+    - uses: actions-rs/cargo@v1
+      with:
+        command: clippy
+        args: --manifest-path akaza-core/Carglo.toml -- -D warnings
+
