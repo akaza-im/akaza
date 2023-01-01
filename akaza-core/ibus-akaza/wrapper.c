@@ -1,3 +1,2 @@
-#include <cstring>
-#include <cstdlib>
+#include <string.h>
 

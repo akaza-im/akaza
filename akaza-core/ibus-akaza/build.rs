@@ -6,5 +6,5 @@ fn main() {
         .include("wrapper")
         .compile("wrapper");
 
-    println!("cargo:rustc-link-lib=ibus");
+    println!("cargo:rustc-link-lib=ibus-1.0");
 }
