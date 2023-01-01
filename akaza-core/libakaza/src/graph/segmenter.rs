@@ -45,14 +45,6 @@ impl Segmenter {
     }
 
     /**
-     * 読みをうけとって、グラフを構築する。
-     */
-    // TODO 廃止
-    pub fn build(&self, yomi: &str) -> SegmentationResult {
-        self.build_force(yomi, &Vec::new())
-    }
-
-    /**
      * 「読み」を受け取って Latttice を構築する。
      *
      * force_ranges: 一般的な IME でシフトおしてから→をおして、ユーザーが明示的に範囲選択した場合
@@ -60,7 +52,7 @@ impl Segmenter {
      */
     // シフトを押して → を押したときのような処理の場合、
     // このメソッドに入ってくる前に別に処理する前提。
-    pub fn build_force(&self, yomi: &str, force_ranges: &Vec<Range<usize>>) -> SegmentationResult {
+    pub fn build(&self, yomi: &str, force_ranges: &Vec<Range<usize>>) -> SegmentationResult {
         if !force_ranges.is_empty() {
             for force_range in force_ranges {
                 trace!(
@@ -172,7 +164,7 @@ mod tests {
         let kana_trie = builder.build();
 
         let segmenter = Segmenter::new(vec![kana_trie]);
-        let graph = segmenter.build("わたし");
+        let graph = segmenter.build("わたし", &Vec::new());
         assert_eq!(
             graph,
             SegmentationResult::new(BTreeMap::from([
@@ -188,7 +180,7 @@ mod tests {
         let kana_trie = builder.build();
 
         let segmenter = Segmenter::new(vec![kana_trie]);
-        let graph = segmenter.build("わたし");
+        let graph = segmenter.build("わたし", &Vec::new());
         assert_eq!(
             graph,
             SegmentationResult::new(BTreeMap::from([
@@ -216,7 +208,7 @@ mod tests {
         // force_range に "たし" を指定する。
         let (i2, _) = yomi.char_indices().nth(1).unwrap();
         let (i3, c3) = yomi.char_indices().nth(2).unwrap();
-        let graph = segmenter.build_force(yomi, &vec![i2..(i3 + c3.len_utf8())]);
+        let graph = segmenter.build(yomi, &vec![i2..(i3 + c3.len_utf8())]);
         assert_eq!(
             graph,
             SegmentationResult::new(BTreeMap::from([

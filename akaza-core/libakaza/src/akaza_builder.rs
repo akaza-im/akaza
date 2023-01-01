@@ -21,13 +21,15 @@ pub struct Akaza {
 impl Akaza {
     // TODO: DEPRECATE THIS
     pub fn convert_to_string(&self, yomi: &str) -> Result<String> {
-        let segmentation_result = self.segmenter.build(yomi);
+        let self1 = &self.segmenter;
+        let segmentation_result = self1.build(yomi, &Vec::new());
         let lattice = self.graph_builder.construct(yomi, segmentation_result);
         self.graph_resolver.viterbi(&lattice)
     }
 
     pub fn convert(&self, yomi: &str) -> Result<Vec<VecDeque<Candidate>>> {
-        let segmentation_result = self.segmenter.build(yomi);
+        let self1 = &self.segmenter;
+        let segmentation_result = self1.build(yomi, &Vec::new());
         let lattice = self.graph_builder.construct(yomi, segmentation_result);
         self.graph_resolver.viterbi_raw(&lattice)
     }

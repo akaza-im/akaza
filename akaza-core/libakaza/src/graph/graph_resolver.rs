@@ -141,7 +141,7 @@ mod tests {
         let kana_trie = builder.build();
 
         let graph_builder = Segmenter::new(vec![kana_trie]);
-        let graph = graph_builder.build("abc");
+        let graph = graph_builder.build("abc", &Vec::new());
         assert_eq!(
             graph,
             SegmentationResult::new(BTreeMap::from([
@@ -182,7 +182,7 @@ mod tests {
         let kana_trie = builder.build();
 
         let graph_builder = Segmenter::new(vec![kana_trie]);
-        let graph = graph_builder.build("わたし");
+        let graph = graph_builder.build("わたし", &Vec::new());
         assert_eq!(
             graph,
             SegmentationResult::new(BTreeMap::from([
