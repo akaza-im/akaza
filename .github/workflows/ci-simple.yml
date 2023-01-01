@@ -33,9 +33,9 @@ jobs:
     - uses: actions-rs/cargo@v1
       with:
         command: fmt
-        args: --manifest-path akaza-core/Carglo.toml --all -- --check
+        args: --manifest-path akaza-core/Cargo.toml --all -- --check
     - uses: actions-rs/cargo@v1
       with:
         command: clippy
-        args: --manifest-path akaza-core/Carglo.toml -- -D warnings
+        args: --manifest-path akaza-core/Cargo.toml -- -D warnings
 
