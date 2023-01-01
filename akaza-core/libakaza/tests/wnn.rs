@@ -1,10 +1,11 @@
 #[cfg(test)]
 mod tests {
+    use std::collections::vec_deque::VecDeque;
+
     use anyhow::Result;
+
     use libakaza::akaza_builder::{Akaza, AkazaBuilder};
     use libakaza::graph::graph_resolver::Candidate;
-    use log::info;
-    use std::collections::vec_deque::VecDeque;
 
     fn load_akaza() -> Result<Akaza> {
         let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/../../akaza-data/data/";

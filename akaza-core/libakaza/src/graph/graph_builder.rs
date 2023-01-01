@@ -1,6 +1,8 @@
 use std::collections::btree_map::BTreeMap;
 use std::rc::Rc;
 
+use kelp::{hira2kata, ConvOption};
+
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::SegmentationResult;
 use crate::graph::word_node::WordNode;
@@ -46,15 +48,25 @@ impl GraphBuilder {
         for (end_pos, segmented_yomis) in words_ends_at.iter() {
             for segmented_yomi in segmented_yomis {
                 let vec = graph.entry(*end_pos as i32).or_default();
-
-                // ひらがなそのものもエントリーとして登録しておく。
-                // TODO これが結果として重複につながってそう。辞書にないときだけ入れるようにしたほうが良いかも。
-                let node = WordNode::new(
-                    (end_pos - segmented_yomi.len()) as i32,
-                    segmented_yomi,
-                    segmented_yomi,
-                );
-                vec.push(node);
+                {
+                    // ひらがなそのものもエントリーとして登録しておく。
+                    // TODO これが結果として重複につながってそう。辞書にないときだけ入れるようにしたほうが良いかも。
+                    let node = WordNode::new(
+                        (end_pos - segmented_yomi.len()) as i32,
+                        segmented_yomi,
+                        segmented_yomi,
+                    );
+                    vec.push(node);
+                }
+                {
+                    // カタカナも登録しておく。
+                    let node = WordNode::new(
+                        (end_pos - segmented_yomi.len()) as i32,
+                        hira2kata(segmented_yomi, ConvOption::default()).as_str(),
+                        segmented_yomi,
+                    );
+                    vec.push(node);
+                }
 
                 // 漢字に変換した結果もあれば insert する。
                 if let Some(kanjis) = self.system_kana_kanji_dict.find(segmented_yomi) {
@@ -118,5 +130,25 @@ mod tests {
         let nodes = got.node_list(6).unwrap();
         let got_surfaces: Vec<String> = nodes.iter().map(|f| f.kanji.to_string()).collect();
         assert_eq!(got_surfaces, vec!["すし".to_string(), "🍣".to_string()]);
+    }
+
+    // ひらがな、カタカナのエントリーが自動的に入るようにする。
+    #[test]
+    fn test_default_terms() {
+        let graph_builder = GraphBuilder::new(
+            KanaKanjiDict::default(),
+            KanaKanjiDictBuilder::default().build(),
+            Rc::new(UserData::default()),
+            Rc::new(SystemUnigramLMBuilder::default().build()),
+            Rc::new(SystemBigramLMBuilder::default().build()),
+        );
+        let yomi = "す";
+        let got = graph_builder.construct(
+            yomi,
+            SegmentationResult::new(BTreeMap::from([(3, vec!["す".to_string()])])),
+        );
+        let nodes = got.node_list(3).unwrap();
+        let got_surfaces: Vec<String> = nodes.iter().map(|f| f.kanji.to_string()).collect();
+        assert_eq!(got_surfaces, vec!["す".to_string(), "ス".to_string()]);
     }
 }
