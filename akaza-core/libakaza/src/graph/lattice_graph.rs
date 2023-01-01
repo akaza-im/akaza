@@ -110,12 +110,15 @@ impl LatticeGraph {
         return if let Some((_, system_unigram_cost)) = self.system_unigram_lm.find(key.as_str()) {
             system_unigram_cost
         } else if node.kanji.len() < node.yomi.len() {
-            // 変換後のほうが短くなるもののほうをコストを安くしておく。
-            // log10(1e-20)
-            -20.0
-        } else {
+            // 労働者災害補償保険法 のように、システム辞書には wikipedia から採録されているが,
+            // 言語モデルには採録されていない場合,漢字候補を先頭に持ってくる。
+            // つまり、変換後のほうが短くなるもののほうをコストを安くしておく。
+
             // log10(1e-19)
             -19.0
+        } else {
+            // log10(1e-20)
+            -20.0
         };
     }
 
