@@ -38,4 +38,8 @@ jobs:
       with:
         command: clippy
         args: --manifest-path akaza-core/Cargo.toml -- -D warnings
+    - uses: actions-rs/cargo@v1
+      with:
+        command: test
+        args: --manifest-path akaza-core/Cargo.toml
 
