@@ -301,13 +301,13 @@ fn default_romkan_map() -> HashMap<&'static str, &'static str> {
     ])
 }
 
-struct RomKanConverter {
+pub struct RomKanConverter {
     romkan_pattern: Regex,
     romkan_map: HashMap<&'static str, &'static str>,
 }
 
 impl RomKanConverter {
-    fn new() -> RomKanConverter {
+    pub fn new() -> RomKanConverter {
         let romkan_map = default_romkan_map().clone();
         let mut romas = Vec::from_iter(romkan_map.keys());
         romas.sort_by_key(|a| std::cmp::Reverse(a.len()));
@@ -325,7 +325,7 @@ impl RomKanConverter {
         }
     }
 
-    fn to_hiragana(&self, src: &str) -> String {
+    pub fn to_hiragana(&self, src: &str) -> String {
         let src = src.to_ascii_lowercase();
         let src = src.replace("nn", "n");
         let retval = self.romkan_pattern.replace_all(&src, |caps: &Captures| {

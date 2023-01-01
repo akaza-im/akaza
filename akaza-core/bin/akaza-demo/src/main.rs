@@ -22,7 +22,7 @@ fn main() -> anyhow::Result<()> {
         .system_data_dir(datadir.as_str())
         .build()?;
 
-    let result = akaza.convert(yomi.as_str())?;
+    let result = akaza.convert(yomi.as_str(), &vec![])?;
     for terms in result {
         println!("- {}/{}({})", terms[0].kanji, terms[0].yomi, terms[0].cost);
         let words: Vec<String> = terms

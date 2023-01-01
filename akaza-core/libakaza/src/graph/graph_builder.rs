@@ -129,7 +129,10 @@ mod tests {
         );
         let nodes = got.node_list(6).unwrap();
         let got_surfaces: Vec<String> = nodes.iter().map(|f| f.kanji.to_string()).collect();
-        assert_eq!(got_surfaces, vec!["すし".to_string(), "🍣".to_string()]);
+        assert_eq!(
+            got_surfaces,
+            vec!["すし".to_string(), "スシ".to_string(), "🍣".to_string()]
+        );
     }
 
     // ひらがな、カタカナのエントリーが自動的に入るようにする。

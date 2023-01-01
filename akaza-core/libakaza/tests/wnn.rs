@@ -14,6 +14,24 @@ mod tests {
             .build()
     }
 
+    struct Tester {
+        akaza: Akaza,
+    }
+
+    impl Tester {
+        fn new() -> Result<Tester> {
+            Ok(Tester {
+                akaza: load_akaza()?,
+            })
+        }
+
+        fn test(&self, yomi: &str, kanji: &str) -> Result<()> {
+            let got = self.akaza.convert_to_string(yomi)?;
+            assert_eq!(got, kanji);
+            Ok(())
+        }
+    }
+
     fn test(yomi: &str, kanji: &str) -> Result<()> {
         let got = load_akaza()?.convert_to_string(yomi)?;
         assert_eq!(got, kanji);
@@ -38,7 +56,7 @@ mod tests {
         env_logger::builder().is_test(true).try_init()?;
 
         let yomi = "すし";
-        let got: Vec<VecDeque<Candidate>> = load_akaza()?.convert(yomi)?;
+        let got: Vec<VecDeque<Candidate>> = load_akaza()?.convert(yomi, &vec![])?;
         assert_eq!(&got[0][0].yomi, "すし");
         let words: Vec<String> = got[0].iter().map(|x| x.kanji.to_string()).collect();
         assert!(words.contains(&"🍣".to_string()));
@@ -55,12 +73,52 @@ mod tests {
             ("はくしかてい", "博士課程"),
             ("にほん", "日本"),
             ("にっぽん", "日本"),
+            ("http://mixi.jp", "http://mixi.jp"),
+            ("https://mixi.jp", "https://mixi.jp"),
+            ("nisitemo,", "にしても、"),
+            (
+                "けいやくないようをめいかくにするいぎ",
+                "契約内容を明確にする意義",
+            ),
+            (
+                "ろうどうしゃさいがいほしょうほけんほう",
+                "労働者災害補償保険法",
+            ),
+            ("けいやくのしゅたいとは", "契約の主体とは"),
+            ("tanosiijikan", "楽しい時間"),
+            ("たのしいじかん", "楽しい時間"),
+            ("zh", "←"),
+            ("それなwww", "それなwww"),
+            ("sorenawww", "それなwww"),
+            ("watasinonamaehanakanodesu.", "私の名前は中野です。"),
+            ("わたしのなまえはなかのです。", "私の名前は中野です。"),
+            ("わーど", "ワード"),
+            ("にほん", "日本"),
+            ("にっぽん", "日本"),
+            ("siinn", "子音"),
+            ("IME", "IME"),
+            ("ややこしい", "ややこしい"),
+            ("むずかしくない", "難しく無い"),
+            ("きぞん", "既存"),
+            ("のぞましい", "望ましい"),
+            ("こういう", "こういう"),
+            ("はやくち", "早口"),
+            ("しょうがっこう", "小学校"),
+            ("げすとだけ", "ゲストだけ"),
+            ("ぜんぶでてるやつ", "全部でてるやつ"),
+            ("えらべる", "選べる"),
+            ("わたしだよ", "わたしだよ"),
+            ("にほんごじょうほう", "日本語情報"),
+            ("れいわ", "令和"),
+            ("ちいさい", "小さい"),
             // ↓現状のロジックでうまく変換できないもの。
             // ("かりきゅれーたー", "カリキュレーター"),
             // ("いたいのいたいのとんでけー", "痛いの痛いのとんでけー"),
+            // ("そうみたいですね", "そうみたいですね"),
         ];
+        let tester = Tester::new()?;
         for (yomi, surface) in data {
-            test(yomi, surface)?;
+            tester.test(yomi, surface)?;
         }
         Ok(())
     }

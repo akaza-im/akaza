@@ -11,6 +11,15 @@ pub struct Candidate {
     pub yomi: String,
     pub cost: f32,
 }
+impl Candidate {
+    pub fn new(yomi: &str, surface: &str, cost: f32) -> Candidate {
+        Candidate {
+            yomi: yomi.to_string(),
+            kanji: surface.to_string(),
+            cost,
+        }
+    }
+}
 
 // 次に必要なのは、分割された文字列から、グラフを構築する仕組みである。
 #[derive(Default)]
@@ -60,7 +69,7 @@ impl GraphResolver {
                         if shortest_prev.is_none() {
                             trace!("Replace None by {}", prev);
                         } else {
-                            println!("Replace {} by {}", shortest_prev.unwrap(), prev);
+                            trace!("Replace {} by {}", shortest_prev.unwrap(), prev);
                         }
                         cost = tmp_cost;
                         shortest_prev = Some(prev);

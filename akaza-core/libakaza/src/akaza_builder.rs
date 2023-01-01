@@ -1,36 +1,93 @@
 use std::collections::VecDeque;
+use std::ops::Range;
 use std::rc::Rc;
+
+use anyhow::Result;
 
 use crate::graph::graph_builder::GraphBuilder;
 use crate::graph::graph_resolver::{Candidate, GraphResolver};
 use crate::graph::segmenter::Segmenter;
 use crate::kana_kanji_dict::{KanaKanjiDict, KanaKanjiDictBuilder};
 use crate::kana_trie::KanaTrieBuilder;
-use anyhow::Result;
-
 use crate::lm::system_bigram::{SystemBigramLM, SystemBigramLMBuilder};
 use crate::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
+use crate::romkan::RomKanConverter;
 use crate::user_side_data::user_data::UserData;
 
 pub struct Akaza {
     graph_builder: GraphBuilder,
     pub segmenter: Segmenter,
     pub graph_resolver: GraphResolver,
+    romkan_converter: RomKanConverter,
 }
 
 impl Akaza {
-    // TODO: DEPRECATE THIS
+    // TODO: DEPRECATE THIS. This method is only useful for debugging purpose.
     pub fn convert_to_string(&self, yomi: &str) -> Result<String> {
-        let self1 = &self.segmenter;
-        let segmentation_result = self1.build(yomi, &Vec::new());
-        let lattice = self.graph_builder.construct(yomi, segmentation_result);
-        self.graph_resolver.viterbi(&lattice)
+        let got = self.convert(yomi, &Vec::new())?;
+        let terms: Vec<String> = got.iter().map(|f| f[0].kanji.clone()).collect();
+        Ok(terms.join(""))
     }
 
-    pub fn convert(&self, yomi: &str) -> Result<Vec<VecDeque<Candidate>>> {
+    pub fn convert(
+        &self,
+        yomi: &str,
+        force_ranges: &Vec<Range<usize>>,
+    ) -> Result<Vec<VecDeque<Candidate>>> {
+        // 先頭が大文字なケースと、URL っぽい文字列のときは変換処理を実施しない。
+        if (!yomi.is_empty()
+            && yomi.chars().next().unwrap().is_ascii_uppercase()
+            && force_ranges.is_empty())
+            || yomi.starts_with("https://")
+            || yomi.starts_with("http://")
+        {
+            return Ok(vec![VecDeque::from([Candidate::new(yomi, yomi, 0_f32)])]);
+        }
+
+        // ローマ字からひらがなへの変換をする。
+        let yomi = self.romkan_converter.to_hiragana(yomi);
+
+        /*
+            TODO: C++ 版 akaza では子音を先に取り除いておいて、あとからまたくっつけるという処理をしていたようだが、
+            これをやる意味が今はわからないので一旦あとまわし。
+
+                // 子音だが、N は NN だと「ん」になるので処理しない。
+        std::string consonant;
+        {
+            std::wregex trailing_consonant(cnv.from_bytes(R"(^(.*?)([qwrtypsdfghjklzxcvbm]+)$)"));
+            std::wsmatch sm;
+            if (std::regex_match(whiragana, sm, trailing_consonant)) {
+                hiragana = cnv.to_bytes(sm.str(1));
+                consonant = cnv.to_bytes(sm.str(2));
+                D(std::cout << "CONSONANT=" << consonant << std::endl);
+            }
+        }
+
+        Graph graph = graphResolver_->graph_construct(cnv.from_bytes(hiragana), forceSelectedClauses);
+        graphResolver_->fill_cost(graph);
+        D(graph.dump());
+        std::vector<std::vector<std::shared_ptr<akaza::Node>>> nodes = graphResolver_->find_nbest(graph);
+        if (consonant.empty()) {
+            return nodes;
+        } else {
+            D(std::cout << " Adding Consonant=" << consonant << std::endl);
+            nodes.push_back({{
+                                     akaza::create_node(
+                                             graphResolver_->system_unigram_lm_,
+                                             src.size(),
+                                             cnv.from_bytes(consonant),
+                                             cnv.from_bytes(consonant)
+                                     )
+                             }});
+            return nodes;
+        }
+             */
+
         let self1 = &self.segmenter;
-        let segmentation_result = self1.build(yomi, &Vec::new());
-        let lattice = self.graph_builder.construct(yomi, segmentation_result);
+        let segmentation_result = self1.build(yomi.as_str(), force_ranges);
+        let lattice = self
+            .graph_builder
+            .construct(yomi.as_str(), segmentation_result);
         self.graph_resolver.viterbi_raw(&lattice)
     }
 }
@@ -99,10 +156,13 @@ impl AkazaBuilder {
 
         let graph_resolver = GraphResolver::default();
 
+        let romkan_converter = RomKanConverter::new();
+
         Ok(Akaza {
             graph_builder,
             segmenter,
             graph_resolver,
+            romkan_converter,
         })
     }
 }
