@@ -1,9 +1,15 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use log::trace;
 
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::word_node::WordNode;
+
+pub struct Candidate {
+    pub kanji: String,
+    pub yomi: String,
+    pub cost: f32,
+}
 
 // 次に必要なのは、分割された文字列から、グラフを構築する仕組みである。
 #[derive(Default)]
@@ -11,6 +17,12 @@ pub struct GraphResolver {}
 
 impl GraphResolver {
     pub fn viterbi(&self, lattice: &LatticeGraph) -> anyhow::Result<String> {
+        let got = self.viterbi_raw(lattice)?;
+        let terms: Vec<String> = got.iter().map(|f| f[0].kanji.clone()).collect();
+        Ok(terms.join(""))
+    }
+
+    pub fn viterbi_raw(&self, lattice: &LatticeGraph) -> anyhow::Result<Vec<VecDeque<Candidate>>> {
         let yomi = &lattice.yomi;
         let mut prevmap: HashMap<&WordNode, &WordNode> = HashMap::new();
         let mut costmap: HashMap<&WordNode, f32> = HashMap::new();
@@ -65,17 +77,39 @@ impl GraphResolver {
             .unwrap();
         let bos = lattice.get(0).unwrap().get(0).unwrap();
         let mut node = eos;
-        let mut result: Vec<String> = Vec::new();
+        let mut result: Vec<VecDeque<Candidate>> = Vec::new();
         while node != bos {
             if node.kanji != "__EOS__" {
-                result.push(node.kanji.to_string());
+                // 同一の開始位置、終了位置を持つものを集める。
+                let end_pos = node.start_pos + (node.yomi.len() as i32);
+                let mut candidates: VecDeque<Candidate> = lattice
+                    .node_list(end_pos)
+                    .unwrap()
+                    .iter()
+                    .filter(|alt_node| {
+                        alt_node.start_pos == node.start_pos
+                            && alt_node.yomi.len() == node.yomi.len()
+                            && alt_node != &node
+                    })
+                    .map(|f| Candidate {
+                        kanji: f.kanji.clone(),
+                        yomi: f.yomi.clone(),
+                        cost: *costmap.get(f).unwrap(),
+                    })
+                    .collect();
+                candidates.push_front(Candidate {
+                    kanji: node.kanji.clone(),
+                    yomi: node.yomi.clone(),
+                    cost: *costmap.get(node).unwrap(),
+                });
+                result.push(candidates);
             }
             node = prevmap
                 .get(node)
                 .unwrap_or_else(|| panic!("Cannot get previous node: {}", node.kanji));
         }
         result.reverse();
-        Ok(result.join(""))
+        Ok(result)
     }
 }
 

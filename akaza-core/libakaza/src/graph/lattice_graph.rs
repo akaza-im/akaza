@@ -21,8 +21,8 @@ pub struct LatticeGraph {
 
 impl LatticeGraph {
     /// i文字目で終わるノードを探す
-    pub(crate) fn node_list(&self, i: i32) -> Option<&Vec<WordNode>> {
-        self.graph.get(&i)
+    pub(crate) fn node_list(&self, end_pos: i32) -> Option<&Vec<WordNode>> {
+        self.graph.get(&end_pos)
     }
 
     // -1  0  1 2

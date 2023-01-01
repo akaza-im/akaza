@@ -1,7 +1,6 @@
 use std::env;
 
 use libakaza::akaza_builder::AkazaBuilder;
-use log::info;
 
 // fn dump_dot(fname: &str, dot: &str) {
 //     info!("Writing {}", fname);
@@ -23,13 +22,22 @@ fn main() -> anyhow::Result<()> {
         .system_data_dir(datadir.as_str())
         .build()?;
 
-    let result = akaza.convert_to_string(yomi.as_str())?;
+    let result = akaza.convert(yomi.as_str())?;
+    for terms in result {
+        println!("- {}/{}({})", terms[0].kanji, terms[0].yomi, terms[0].cost);
+        let words: Vec<String> = terms
+            .iter()
+            .skip(1)
+            .map(|f| format!("{}/{}({})", f.kanji, f.yomi, f.cost))
+            .collect();
+        println!("    {}", words.join(","));
+    }
 
     // dot -Tpng -o /tmp/lattice.png /tmp/lattice.dot && open /tmp/lattice.png
     // dump_dot(
     //     "/tmp/lattice-position.dot",
     //     lattice.dump_position_dot().as_str(),
     // );
-    info!("RESULT IS!!! '{}'", result);
+    // info!("RESULT IS!!! '{}'", result);
     Ok(())
 }

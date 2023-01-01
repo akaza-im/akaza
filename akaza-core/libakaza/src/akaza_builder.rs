@@ -1,7 +1,8 @@
+use std::collections::VecDeque;
 use std::rc::Rc;
 
 use crate::graph::graph_builder::GraphBuilder;
-use crate::graph::graph_resolver::GraphResolver;
+use crate::graph::graph_resolver::{Candidate, GraphResolver};
 use crate::graph::segmenter::Segmenter;
 use crate::kana_kanji_dict::{KanaKanjiDict, KanaKanjiDictBuilder};
 use crate::kana_trie::KanaTrieBuilder;
@@ -18,10 +19,17 @@ pub struct Akaza {
 }
 
 impl Akaza {
+    // TODO: DEPRECATE THIS
     pub fn convert_to_string(&self, yomi: &str) -> Result<String> {
         let segmentation_result = self.segmenter.build(yomi);
         let lattice = self.graph_builder.construct(yomi, segmentation_result);
         self.graph_resolver.viterbi(&lattice)
+    }
+
+    pub fn convert(&self, yomi: &str) -> Result<Vec<VecDeque<Candidate>>> {
+        let segmentation_result = self.segmenter.build(yomi);
+        let lattice = self.graph_builder.construct(yomi, segmentation_result);
+        self.graph_resolver.viterbi_raw(&lattice)
     }
 }
 
