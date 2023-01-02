@@ -53,9 +53,9 @@ static gboolean ibus_akaza_engine_process_key_event(IBusEngine *engine,
                                                       guint keyval,
                                                       guint keycode,
                                                       guint modifiers);
-static void ibus_akaza_engine_commit_string(IBusAkazaEngine *enchant,
+static void ibus_akaza_engine_commit_string(IBusAkazaEngine *akaza,
                                               const gchar *string);
-static void ibus_akaza_engine_update(IBusAkazaEngine *enchant);
+static void ibus_akaza_engine_update(IBusAkazaEngine *akaza);
 
 static EnchantBroker *broker = NULL;
 static EnchantDict *dict = NULL;
@@ -72,17 +72,17 @@ static void ibus_akaza_engine_class_init(IBusAkazaEngineClass *klass) {
   engine_class->process_key_event = ibus_akaza_engine_process_key_event;
 }
 
-static void ibus_akaza_engine_init(IBusAkazaEngine *enchant) {
+static void ibus_akaza_engine_init(IBusAkazaEngine *akaza) {
   if (broker == NULL) {
     broker = enchant_broker_init();
     dict = enchant_broker_request_dict(broker, "en");
   }
 
-  enchant->preedit = g_string_new("");
-  enchant->cursor_pos = 0;
+  akaza->preedit = g_string_new("");
+  akaza->cursor_pos = 0;
 
-  enchant->table = ibus_lookup_table_new(9, 0, TRUE, TRUE);
-  g_object_ref_sink(enchant->table);
+  akaza->table = ibus_lookup_table_new(9, 0, TRUE, TRUE);
+  g_object_ref_sink(akaza->table);
 }
 
 static void ibus_akaza_engine_destroy(IBusAkazaEngine *akaza) {
