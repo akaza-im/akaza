@@ -1,3 +1,6 @@
+use std::fs::File;
+use anyhow::Result;
+
 pub type IBusBus = [u64; 6usize];
 
 extern "C" {
@@ -8,11 +11,14 @@ extern "C" {
     pub fn tmp_akaza_init(is_ibus: bool);
 }
 
-fn main() {
+fn main() -> Result<()> {
     unsafe {
+        File::create("/tmp/ibus-akaza-started.log")?;
+
         tmp_akaza_init(true);
 
         // run main loop
         ibus_main();
     }
+    Ok(())
 }
