@@ -4,7 +4,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "config.h"
+#include "wrapper.h"
 
+// for debugging
+// TODO remove this? or configurable path?
 void akaza_log(const char*format, ...) {
     va_list ap;
 
@@ -21,6 +24,9 @@ void akaza_log(const char*format, ...) {
     fclose(fp);
 }
 
+// Callback for key typed.
+static ibus_akaza_callback_key_event global_key_event_cb;
+
 #define IBUS_TYPE_AKAZA_ENGINE        \
         (ibus_akaza_engine_get_type ())
 
@@ -28,18 +34,8 @@ GType   ibus_akaza_engine_get_type    (void);
 
 
 
-typedef struct _IBusAkazaEngine IBusAkazaEngine;
 typedef struct _IBusAkazaEngineClass IBusAkazaEngineClass;
 
-struct _IBusAkazaEngine {
-  IBusEngine parent;
-
-  /* members */
-  GString *preedit;
-  gint cursor_pos;
-
-  IBusLookupTable *table;
-};
 
 struct _IBusAkazaEngineClass {
   IBusEngineClass parent;
@@ -171,9 +167,9 @@ static gboolean ibus_akaza_engine_commit_preedit(IBusAkazaEngine *akaza) {
 
 static void ibus_akaza_engine_commit_string(IBusAkazaEngine *akaza,
                                               const gchar *string) {
-  IBusText *text;
-  text = ibus_text_new_from_static_string(string);
+  IBusText* text = ibus_text_new_from_static_string(string);
   ibus_engine_commit_text((IBusEngine *)akaza, text);
+  // [text] will be released by ibus_engine_commit_text.
 }
 
 static void ibus_akaza_engine_update(IBusAkazaEngine *akaza) {
@@ -190,6 +186,9 @@ static gboolean ibus_akaza_engine_process_key_event(IBusEngine *engine,
                                                       guint modifiers) {
   IBusAkazaEngine *akaza = (IBusAkazaEngine *)engine;
 
+  akaza_log("process_key_event(%04x, %04x, %04x)\n", keyval, keycode, modifiers);
+
+  // ignore key release event.
   if (modifiers & IBUS_RELEASE_MASK) return FALSE;
 
   modifiers &= (IBUS_CONTROL_MASK | IBUS_MOD1_MASK);
@@ -273,7 +272,9 @@ static gboolean ibus_akaza_engine_process_key_event(IBusEngine *engine,
       return TRUE;
   }
 
-  if (is_alpha(keyval)) {
+  global_key_event_cb(akaza, keyval, keycode, modifiers);
+
+  if ('!' <= keyval && keyval <= '~') {
     g_string_insert_c(akaza->preedit, akaza->cursor_pos, keyval);
 
     akaza->cursor_pos++;
@@ -287,6 +288,11 @@ static gboolean ibus_akaza_engine_process_key_event(IBusEngine *engine,
 
 static void ibus_disconnected_cb(IBusBus *bus, gpointer user_data) {
   ibus_quit();
+}
+
+
+void ibus_akaza_set_callback(ibus_akaza_callback_key_event* cb) {
+    global_key_event_cb = cb;
 }
 
 void ibus_akaza_init(bool ibus) {

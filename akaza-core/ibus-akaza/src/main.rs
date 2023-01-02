@@ -1,21 +1,36 @@
+mod bindings;
+mod wrapper_bindings;
+
+use crate::bindings::{gboolean, guint, ibus_main, IBusEngine};
+use crate::wrapper_bindings::{ibus_akaza_init, ibus_akaza_set_callback};
 use anyhow::Result;
-use std::fs::File;
+use flexi_logger::{FileSpec, Logger};
+use log::info;
 
-pub type IBusBus = [u64; 6usize];
-
-extern "C" {
-    pub fn ibus_bus_new() -> *mut IBusBus;
-    pub fn ibus_init();
-    pub fn ibus_main();
-
-    /// is_ibus: true if the project run with `--ibus` option.
-    pub fn ibus_akaza_init(is_ibus: bool);
-
+unsafe extern "C" fn process_key_event(
+    _engine: *mut IBusEngine,
+    keyval: guint,
+    keycode: guint,
+    modifiers: guint,
+) -> gboolean {
+    info!("process_key_event~~ {}, {}, {}", keyval, keycode, modifiers);
+    0
 }
 
 fn main() -> Result<()> {
+    Logger::try_with_str("info")?
+        .log_to_file(
+            FileSpec::default()
+                .directory("/tmp") // create files in folder ./log_files
+                .basename("ibus-akaza")
+                .discriminant("Sample4711A") // use infix in log file name
+                .suffix("trc"), // use suffix .trc instead of .log
+        )
+        .print_message() //
+        .start()?;
+
     unsafe {
-        File::create("/tmp/ibus-akaza-started.log")?;
+        ibus_akaza_set_callback(process_key_event);
 
         ibus_akaza_init(true);
 

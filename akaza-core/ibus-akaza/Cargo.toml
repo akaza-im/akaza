@@ -8,6 +8,8 @@ edition = "2021"
 [dependencies]
 tempfile = "3"
 anyhow = "1.0.68"
+flexi_logger = "0.24.2"
+log = "0.4.17"
 
 [build-dependencies]
 cc = "1.0.78"

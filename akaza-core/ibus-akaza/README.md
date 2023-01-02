@@ -1,4 +1,8 @@
 Current status: WIP!
 
-ibus-akaza is totally broken.
-I'll implement fcitx5-akaza first.
+## Debugging
+
+    cargo build
+    pkill -f ibus-akaza
+    ibus engine akaza
+
