@@ -21,7 +21,10 @@ fn main() {
 
     let mut p = cc::Build::new();
     let mut c = p.file("src/fcitx5-akaza.cc");
-    c = c.include("wrapper");
+    c = c.include("wrapper")
+        .cpp(true)
+        .flag("-std=c++17")
+        .flag("-g");
 
     for module in &["Fcitx5Core"] {
         for flag in pkgconfig(module, "--cflags") {
@@ -31,5 +34,5 @@ fn main() {
             println!("cargo:rustc-link-arg={}", flag);
         }
     }
-    p.compile("fcitx5-akaza");
+    p.compile("fcitx5-akaza2");
 }

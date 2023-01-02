@@ -7,3 +7,6 @@ void AkazaEngine::keyEvent(const fcitx::InputMethodEntry& entry, fcitx::KeyEvent
 }
 
 FCITX_ADDON_FACTORY(AkazaEngineFactory);
+
+void hello() {
+}
