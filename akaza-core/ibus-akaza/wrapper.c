@@ -1,6 +1,7 @@
 #include <ibus.h>
 #include <string.h>
 #include <enchant.h>
+#include <stdbool.h>
 #include "config.h"
 
 
@@ -132,7 +133,7 @@ static void ibus_enchant_engine_update_lookup_table(
 
   ibus_engine_update_lookup_table((IBusEngine *)enchant, enchant->table, TRUE);
 
-  if (sugs) enchant_dict_free_suggestions(dict, sugs);
+//  if (sugs) enchant_dict_free_suggestions(dict, sugs);
 }
 
 static void ibus_enchant_engine_update_preedit(IBusEnchantEngine *enchant) {
@@ -293,22 +294,11 @@ static gboolean ibus_enchant_engine_process_key_event(IBusEngine *engine,
 static IBusBus *bus = NULL;
 static IBusFactory *factory = NULL;
 
-/* command line options */
-static gboolean ibus = FALSE;
-static gboolean verbose = FALSE;
-
-static const GOptionEntry entries[] = {
-    {"ibus", 'i', 0, G_OPTION_ARG_NONE, &ibus, "component is executed by ibus",
-     NULL},
-    {"verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, "verbose", NULL},
-    {NULL},
-};
-
 static void ibus_disconnected_cb(IBusBus *bus, gpointer user_data) {
   ibus_quit();
 }
 
-static void init(void) {
+static void init(bool ibus) {
   ibus_init();
 
   bus = ibus_bus_new();
@@ -320,14 +310,14 @@ static void init(void) {
   ibus_factory_add_engine(factory, "akaza", IBUS_TYPE_ENCHANT_ENGINE);
 
   if (ibus) {
-    ibus_bus_request_name(bus, "org.freedesktop.IBus.Enchant", 0);
+    ibus_bus_request_name(bus, "org.freedesktop.IBus.Akaza", 0);
   } else {
     IBusComponent *component;
 
     component =
-        ibus_component_new("org.freedesktop.IBus.Enchant", "Enchant", "0.1.0",
-                           "GPL", "Peng Huang <shawn.p.huang@gmail.com>",
-                           "http://code.google.com/p/ibus/", "", "ibus-tmpl");
+        ibus_component_new("org.freedesktop.IBus.Akaza", "Akaza", "0.1.0",
+                           "GPL", "Tokuhiro Matsuno <tokuhirom@gmail.com>",
+                           "https://github.com/tokuhirom/akaza/", "", "ibus-akaza");
     ibus_component_add_engine(
         component,
         ibus_engine_desc_new("akaza", "Akaza", "Akaza", "ja", "MIT",
@@ -337,21 +327,21 @@ static void init(void) {
   }
 }
 
-int main2(int argc, char **argv) {
-  GError *error = NULL;
-  GOptionContext *context;
+void main2() {
+//  GError *error = NULL;
+//  GOptionContext *context;
 
   /* Parse the command line */
-  context = g_option_context_new("- ibus akaza engine");
-  g_option_context_add_main_entries(context, entries, "ibus-akaza");
+//  context = g_option_context_new("- ibus akaza engine");
+//  g_option_context_add_main_entries(context, entries, "ibus-akaza");
 
-  if (!g_option_context_parse(context, &argc, &argv, &error)) {
-    g_print("Option parsing failed: %s\n", error->message);
-    g_error_free(error);
-    return (-1);
-  }
+//  if (!g_option_context_parse(context, &argc, &argv, &error)) {
+//    g_print("Option parsing failed: %s\n", error->message);
+//    g_error_free(error);
+//    return (-1);
+//  }
 
   /* Go */
-  init();
+  init(true);
   ibus_main();
 }
