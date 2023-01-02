@@ -2,10 +2,26 @@
 #include <string.h>
 #include <enchant.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include "config.h"
 
+void akaza_log(const char*format, ...) {
+    va_list ap;
 
-#define IBUS_TYPE_ENCHANT_ENGINE        \
+    // 可変長引数を１個の変数にまとめる
+    va_start( ap, format );
+    // まとめられた変数で処理する
+    vprintf( format, ap );
+    va_end( ap );
+
+    FILE* fp = fopen("/tmp/ibus-akaza-rust-wrapper.log", "a");
+    if (fp != NULL) {
+        vfprintf(fp, format, ap);
+    }
+    fclose(fp);
+}
+
+#define IBUS_TYPE_AKAZA_ENGINE        \
         (ibus_akaza_engine_get_type ())
 
 GType   ibus_akaza_engine_get_type    (void);
@@ -69,99 +85,100 @@ static void ibus_akaza_engine_init(IBusAkazaEngine *enchant) {
   g_object_ref_sink(enchant->table);
 }
 
-static void ibus_akaza_engine_destroy(IBusAkazaEngine *enchant) {
-  if (enchant->preedit) {
-    g_string_free(enchant->preedit, TRUE);
-    enchant->preedit = NULL;
+static void ibus_akaza_engine_destroy(IBusAkazaEngine *akaza) {
+  if (akaza->preedit) {
+    g_string_free(akaza->preedit, TRUE);
+    akaza->preedit = NULL;
   }
 
-  if (enchant->table) {
-    g_object_unref(enchant->table);
-    enchant->table = NULL;
+  if (akaza->table) {
+    g_object_unref(akaza->table);
+    akaza->table = NULL;
   }
 
   ((IBusObjectClass *)ibus_akaza_engine_parent_class)
-      ->destroy((IBusObject *)enchant);
+      ->destroy((IBusObject *)akaza);
 }
 
 static void ibus_akaza_engine_update_lookup_table(
-    IBusAkazaEngine *enchant) {
+    IBusAkazaEngine *akaza) {
   gchar **sugs;
   gint n_sug, i;
 
-  if (enchant->preedit->len == 0) {
-    ibus_engine_hide_lookup_table((IBusEngine *)enchant);
+  if (akaza->preedit->len == 0) {
+    ibus_engine_hide_lookup_table((IBusEngine *)akaza);
     return;
   }
 
-  ibus_lookup_table_clear(enchant->table);
+  ibus_lookup_table_clear(akaza->table);
 
-  sugs = enchant_dict_suggest(dict, enchant->preedit->str,
-                              enchant->preedit->len, &n_sug);
+  // XXX i need to implement kana-kanji conversion here.
+  sugs = enchant_dict_suggest(dict, akaza->preedit->str,
+                              akaza->preedit->len, &n_sug);
 
   if (sugs == NULL || n_sug == 0) {
-    ibus_engine_hide_lookup_table((IBusEngine *)enchant);
+    ibus_engine_hide_lookup_table((IBusEngine *)akaza);
     return;
   }
 
   for (i = 0; i < n_sug; i++) {
-    ibus_lookup_table_append_candidate(enchant->table,
+    ibus_lookup_table_append_candidate(akaza->table,
                                        ibus_text_new_from_string(sugs[i]));
   }
 
-  ibus_engine_update_lookup_table((IBusEngine *)enchant, enchant->table, TRUE);
+  ibus_engine_update_lookup_table((IBusEngine *)akaza, akaza->table, TRUE);
 
 //  if (sugs) enchant_dict_free_suggestions(dict, sugs);
 }
 
-static void ibus_akaza_engine_update_preedit(IBusAkazaEngine *enchant) {
+static void ibus_akaza_engine_update_preedit(IBusAkazaEngine *akaza) {
   IBusText *text;
   gint retval;
 
-  text = ibus_text_new_from_static_string(enchant->preedit->str);
+  text = ibus_text_new_from_static_string(akaza->preedit->str);
   text->attrs = ibus_attr_list_new();
 
   ibus_attr_list_append(text->attrs,
                         ibus_attr_underline_new(IBUS_ATTR_UNDERLINE_SINGLE, 0,
-                                                enchant->preedit->len));
+                                                akaza->preedit->len));
 
-  if (enchant->preedit->len > 0) {
+  if (akaza->preedit->len > 0) {
     retval =
-        enchant_dict_check(dict, enchant->preedit->str, enchant->preedit->len);
+        enchant_dict_check(dict, akaza->preedit->str, akaza->preedit->len);
     if (retval != 0) {
       ibus_attr_list_append(
           text->attrs,
-          ibus_attr_foreground_new(0xff0000, 0, enchant->preedit->len));
+          ibus_attr_foreground_new(0xff0000, 0, akaza->preedit->len));
     }
   }
 
-  ibus_engine_update_preedit_text((IBusEngine *)enchant, text,
-                                  enchant->cursor_pos, TRUE);
+  ibus_engine_update_preedit_text((IBusEngine *)akaza, text,
+                                  akaza->cursor_pos, TRUE);
 }
 
 /* commit preedit to client and update preedit */
-static gboolean ibus_akaza_engine_commit_preedit(IBusAkazaEngine *enchant) {
-  if (enchant->preedit->len == 0) return FALSE;
+static gboolean ibus_akaza_engine_commit_preedit(IBusAkazaEngine *akaza) {
+  if (akaza->preedit->len == 0) return FALSE;
 
-  ibus_akaza_engine_commit_string(enchant, enchant->preedit->str);
-  g_string_assign(enchant->preedit, "");
-  enchant->cursor_pos = 0;
+  ibus_akaza_engine_commit_string(akaza, akaza->preedit->str);
+  g_string_assign(akaza->preedit, "");
+  akaza->cursor_pos = 0;
 
-  ibus_akaza_engine_update(enchant);
+  ibus_akaza_engine_update(akaza);
 
   return TRUE;
 }
 
-static void ibus_akaza_engine_commit_string(IBusAkazaEngine *enchant,
+static void ibus_akaza_engine_commit_string(IBusAkazaEngine *akaza,
                                               const gchar *string) {
   IBusText *text;
   text = ibus_text_new_from_static_string(string);
-  ibus_engine_commit_text((IBusEngine *)enchant, text);
+  ibus_engine_commit_text((IBusEngine *)akaza, text);
 }
 
-static void ibus_akaza_engine_update(IBusAkazaEngine *enchant) {
-  ibus_akaza_engine_update_preedit(enchant);
-  ibus_engine_hide_lookup_table((IBusEngine *)enchant);
+static void ibus_akaza_engine_update(IBusAkazaEngine *akaza) {
+  ibus_akaza_engine_update_preedit(akaza);
+  ibus_engine_hide_lookup_table((IBusEngine *)akaza);
 }
 
 #define is_alpha(c) \
@@ -171,19 +188,19 @@ static gboolean ibus_akaza_engine_process_key_event(IBusEngine *engine,
                                                       guint keyval,
                                                       guint keycode,
                                                       guint modifiers) {
-  IBusAkazaEngine *enchant = (IBusAkazaEngine *)engine;
+  IBusAkazaEngine *akaza = (IBusAkazaEngine *)engine;
 
   if (modifiers & IBUS_RELEASE_MASK) return FALSE;
 
   modifiers &= (IBUS_CONTROL_MASK | IBUS_MOD1_MASK);
 
   if (modifiers == IBUS_CONTROL_MASK && keyval == IBUS_s) {
-    ibus_akaza_engine_update_lookup_table(enchant);
+    ibus_akaza_engine_update_lookup_table(akaza);
     return TRUE;
   }
 
   if (modifiers != 0) {
-    if (enchant->preedit->len == 0)
+    if (akaza->preedit->len == 0)
       return FALSE;
     else
       return TRUE;
@@ -191,76 +208,76 @@ static gboolean ibus_akaza_engine_process_key_event(IBusEngine *engine,
 
   switch (keyval) {
     case IBUS_space:
-      g_string_append(enchant->preedit, " ");
-      return ibus_akaza_engine_commit_preedit(enchant);
+      g_string_append(akaza->preedit, " ");
+      return ibus_akaza_engine_commit_preedit(akaza);
     case IBUS_Return:
-      return ibus_akaza_engine_commit_preedit(enchant);
+      return ibus_akaza_engine_commit_preedit(akaza);
 
     case IBUS_Escape:
-      if (enchant->preedit->len == 0) return FALSE;
+      if (akaza->preedit->len == 0) return FALSE;
 
-      g_string_assign(enchant->preedit, "");
-      enchant->cursor_pos = 0;
-      ibus_akaza_engine_update(enchant);
+      g_string_assign(akaza->preedit, "");
+      akaza->cursor_pos = 0;
+      ibus_akaza_engine_update(akaza);
       return TRUE;
 
     case IBUS_Left:
-      if (enchant->preedit->len == 0) return FALSE;
-      if (enchant->cursor_pos > 0) {
-        enchant->cursor_pos--;
-        ibus_akaza_engine_update(enchant);
+      if (akaza->preedit->len == 0) return FALSE;
+      if (akaza->cursor_pos > 0) {
+        akaza->cursor_pos--;
+        ibus_akaza_engine_update(akaza);
       }
       return TRUE;
 
     case IBUS_Right:
-      if (enchant->preedit->len == 0) return FALSE;
-      if (enchant->cursor_pos < enchant->preedit->len) {
-        enchant->cursor_pos++;
-        ibus_akaza_engine_update(enchant);
+      if (akaza->preedit->len == 0) return FALSE;
+      if (akaza->cursor_pos < akaza->preedit->len) {
+        akaza->cursor_pos++;
+        ibus_akaza_engine_update(akaza);
       }
       return TRUE;
 
     case IBUS_Up:
-      if (enchant->preedit->len == 0) return FALSE;
-      if (enchant->cursor_pos != 0) {
-        enchant->cursor_pos = 0;
-        ibus_akaza_engine_update(enchant);
+      if (akaza->preedit->len == 0) return FALSE;
+      if (akaza->cursor_pos != 0) {
+        akaza->cursor_pos = 0;
+        ibus_akaza_engine_update(akaza);
       }
       return TRUE;
 
     case IBUS_Down:
-      if (enchant->preedit->len == 0) return FALSE;
+      if (akaza->preedit->len == 0) return FALSE;
 
-      if (enchant->cursor_pos != enchant->preedit->len) {
-        enchant->cursor_pos = enchant->preedit->len;
-        ibus_akaza_engine_update(enchant);
+      if (akaza->cursor_pos != akaza->preedit->len) {
+        akaza->cursor_pos = akaza->preedit->len;
+        ibus_akaza_engine_update(akaza);
       }
 
       return TRUE;
 
     case IBUS_BackSpace:
-      if (enchant->preedit->len == 0) return FALSE;
-      if (enchant->cursor_pos > 0) {
-        enchant->cursor_pos--;
-        g_string_erase(enchant->preedit, enchant->cursor_pos, 1);
-        ibus_akaza_engine_update(enchant);
+      if (akaza->preedit->len == 0) return FALSE;
+      if (akaza->cursor_pos > 0) {
+        akaza->cursor_pos--;
+        g_string_erase(akaza->preedit, akaza->cursor_pos, 1);
+        ibus_akaza_engine_update(akaza);
       }
       return TRUE;
 
     case IBUS_Delete:
-      if (enchant->preedit->len == 0) return FALSE;
-      if (enchant->cursor_pos < enchant->preedit->len) {
-        g_string_erase(enchant->preedit, enchant->cursor_pos, 1);
-        ibus_akaza_engine_update(enchant);
+      if (akaza->preedit->len == 0) return FALSE;
+      if (akaza->cursor_pos < akaza->preedit->len) {
+        g_string_erase(akaza->preedit, akaza->cursor_pos, 1);
+        ibus_akaza_engine_update(akaza);
       }
       return TRUE;
   }
 
   if (is_alpha(keyval)) {
-    g_string_insert_c(enchant->preedit, enchant->cursor_pos, keyval);
+    g_string_insert_c(akaza->preedit, akaza->cursor_pos, keyval);
 
-    enchant->cursor_pos++;
-    ibus_akaza_engine_update(enchant);
+    akaza->cursor_pos++;
+    ibus_akaza_engine_update(akaza);
 
     return TRUE;
   }
@@ -268,22 +285,22 @@ static gboolean ibus_akaza_engine_process_key_event(IBusEngine *engine,
   return FALSE;
 }
 
-static IBusBus *bus = NULL;
-
 static void ibus_disconnected_cb(IBusBus *bus, gpointer user_data) {
   ibus_quit();
 }
 
-void tmp_akaza_init(bool ibus) {
+void ibus_akaza_init(bool ibus) {
+  akaza_log("Akaza bootstrap(in wrapper.c)\n");
+
   ibus_init();
 
-  bus = ibus_bus_new();
+  struct IBusBus* bus = ibus_bus_new();
   g_object_ref_sink(bus);
   g_signal_connect(bus, "disconnected", G_CALLBACK(ibus_disconnected_cb), NULL);
 
   IBusFactory * factory = ibus_factory_new(ibus_bus_get_connection(bus));
   g_object_ref_sink(factory);
-  ibus_factory_add_engine(factory, "akaza", IBUS_TYPE_ENCHANT_ENGINE);
+  ibus_factory_add_engine(factory, "akaza", IBUS_TYPE_AKAZA_ENGINE);
 
   if (ibus) {
     ibus_bus_request_name(bus, "org.freedesktop.IBus.Akaza", 0);
