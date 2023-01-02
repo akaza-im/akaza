@@ -23,6 +23,14 @@ fn main() {
     let mut p = cc::Build::new();
     let mut c = p.file("wrapper.c");
     c = c.include("wrapper");
+
+    // Normally, I dislike following options.
+    // But, it's a temporary code.
+    // TODO: I will remove following options.
+    c = c.flag("-Wno-unused-parameter");
+    c = c.flag("-Wno-sign-compare");
+    c = c.flag("-Wno-incompatible-pointer-types");
+
     for module in &["ibus-1.0", "enchant-2"] {
         for flag in pkgconfig(module, "--cflags") {
             c = c.flag(flag.as_str());
@@ -31,6 +39,5 @@ fn main() {
             println!("cargo:rustc-link-arg={}", flag);
         }
     }
-    c.flag("-lgobject-2.0");
     p.compile("wrapper");
 }
