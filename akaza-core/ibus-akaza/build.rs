@@ -32,7 +32,8 @@ fn main() {
     c = c.flag("-Wno-sign-compare");
     c = c.flag("-Wno-incompatible-pointer-types");
 
-    for module in &["ibus-1.0", "enchant-2"] {
+    {
+        let module = &"ibus-1.0";
         for flag in pkgconfig(module, "--cflags") {
             c = c.flag(flag.as_str());
         }

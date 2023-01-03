@@ -8,10 +8,4 @@ void ibus_akaza_set_callback(void* ctx, ibus_akaza_callback_key_event* cb);
 // TODO deprecate this
 typedef struct {
   IBusEngine parent;
-
-  /* members */
-  GString *preedit;
-  gint cursor_pos;
-
-  IBusLookupTable *table;
 } IBusAkazaEngine;
