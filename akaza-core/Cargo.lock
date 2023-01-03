@@ -327,6 +327,7 @@ dependencies = [
  "anyhow",
  "cc",
  "flexi_logger",
+ "libakaza",
  "log",
  "tempfile",
 ]

@@ -53,9 +53,6 @@ static void ibus_akaza_engine_commit_string(IBusAkazaEngine *akaza,
                                               const gchar *string);
 static void ibus_akaza_engine_update(IBusAkazaEngine *akaza);
 
-static EnchantBroker *broker = NULL;
-static EnchantDict *dict = NULL;
-
 G_DEFINE_TYPE(IBusAkazaEngine, ibus_akaza_engine, IBUS_TYPE_ENGINE)
 
 static void ibus_akaza_engine_class_init(IBusAkazaEngineClass *klass) {
@@ -69,10 +66,10 @@ static void ibus_akaza_engine_class_init(IBusAkazaEngineClass *klass) {
 }
 
 static void ibus_akaza_engine_init(IBusAkazaEngine *akaza) {
-  if (broker == NULL) {
-    broker = enchant_broker_init();
-    dict = enchant_broker_request_dict(broker, "en");
-  }
+//  if (broker == NULL) {
+//    broker = enchant_broker_init();
+//    dict = enchant_broker_request_dict(broker, "en");
+//  }
 
   akaza->preedit = g_string_new("");
   akaza->cursor_pos = 0;
@@ -110,9 +107,10 @@ static void ibus_akaza_engine_update_lookup_table(
   ibus_lookup_table_clear(akaza->table);
 
   // XXX i need to implement kana-kanji conversion here.
-  sugs = enchant_dict_suggest(dict, akaza->preedit->str,
-                              akaza->preedit->len, &n_sug);
-
+//  sugs = enchant_dict_suggest(dict, akaza->preedit->str,
+//                              akaza->preedit->len, &n_sug);
+//
+sugs = NULL;
   if (sugs == NULL || n_sug == 0) {
     ibus_engine_hide_lookup_table((IBusEngine *)akaza);
     return;
@@ -140,8 +138,9 @@ static void ibus_akaza_engine_update_preedit(IBusAkazaEngine *akaza) {
                                                 akaza->preedit->len));
 
   if (akaza->preedit->len > 0) {
-    retval =
-        enchant_dict_check(dict, akaza->preedit->str, akaza->preedit->len);
+  retval = 0;
+//    retval =
+//        enchant_dict_check(dict, akaza->preedit->str, akaza->preedit->len);
     if (retval != 0) {
       ibus_attr_list_append(
           text->attrs,
