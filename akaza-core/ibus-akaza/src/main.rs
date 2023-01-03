@@ -6,22 +6,23 @@ use std::ffi::{c_void, CString};
 use anyhow::Result;
 use log::{info, warn};
 
+use crate::commands::{Commands, IbusAkazaCommand};
 use ibus_sys::bindings::{
     gboolean, gchar, guint, ibus_attr_list_append, ibus_attr_list_new, ibus_attribute_new,
-    ibus_engine_commit_text, ibus_engine_hide_auxiliary_text, ibus_engine_hide_lookup_table,
-    ibus_engine_hide_preedit_text, ibus_engine_update_preedit_text, ibus_lookup_table_clear,
+    ibus_engine_commit_text, ibus_engine_hide_lookup_table, ibus_engine_hide_preedit_text,
+    ibus_engine_update_preedit_text, ibus_lookup_table_clear,
     ibus_lookup_table_get_number_of_candidates, ibus_lookup_table_new, ibus_main,
     ibus_text_new_from_string, ibus_text_set_attributes, IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE,
     IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE, IBusEngine, IBusLookupTable,
     IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_MOD1_MASK,
     IBusModifierType_IBUS_RELEASE_MASK,
 };
-use ibus_sys::ibus_key::{IBUS_KEY_BackSpace, IBUS_KEY_KP_Enter, IBUS_KEY_Return};
 use libakaza::romkan::RomKanConverter;
 
 use crate::keymap::KeyMap;
 use crate::wrapper_bindings::{ibus_akaza_init, ibus_akaza_set_callback};
 
+mod commands;
 mod keymap;
 mod wrapper_bindings;
 
@@ -159,8 +160,7 @@ unsafe fn _make_preedit_word(context: &mut AkazaContext) -> (String, String) {
         return (preedit.clone(), preedit.clone());
     }
 
-    // TODO cache RomKanConverter instance
-    let yomi = RomKanConverter::new().to_hiragana(preedit.as_str());
+    let yomi = context.romkan.to_hiragana(preedit.as_str());
     (yomi.clone(), yomi)
 
     /*
@@ -240,69 +240,6 @@ enum InputMode {
 }
 
 #[repr(C)]
-#[derive(Default)]
-struct Commands {}
-
-impl Commands {
-    // Use macro for preventing copy & paste.
-    fn get_map() -> HashMap<&'static str, ibus_akaza_command> {
-        HashMap::from([
-            (
-                "commit_preedit",
-                Commands::commit_preedit as ibus_akaza_command,
-            ),
-            (
-                "erase_character_before_cursor",
-                Commands::erase_character_before_cursor as ibus_akaza_command,
-            ),
-        ])
-    }
-
-    fn commit_preedit(context: &mut AkazaContext, engine: *mut IBusEngine) {
-        /*
-        # 無変換状態では、ひらがなに変換してコミットします。
-        yomi, word = self._make_preedit_word()
-        self.commit_string(word)
-         */
-        unsafe {
-            let (_, surface) = _make_preedit_word(context);
-            context.commit_string(engine, surface.as_str());
-        }
-    }
-
-    fn erase_character_before_cursor(context: &mut AkazaContext, engine: *mut IBusEngine) {
-        info!("erase_character_before_cursor: {}", context.preedit);
-        unsafe {
-            if context.in_henkan_mode() {
-                // 変換中の場合、無変換モードにもどす。
-                ibus_lookup_table_clear(context.lookup_table);
-                ibus_engine_hide_auxiliary_text(engine);
-                ibus_engine_hide_lookup_table(engine);
-            } else {
-                // サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
-                context.preedit = context.romkan.remove_last_char(&context.preedit)
-            }
-            // 変換していないときのレンダリングをする。
-            update_preedit_text_before_henkan(context, engine);
-        }
-    }
-
-    /*
-       self.logger.info(f"erase_character_before_cursor: {self.preedit_string}")
-       if self.in_henkan_mode():
-           # 変換中の場合、無変換モードにもどす。
-           self.lookup_table.clear()
-           self.hide_auxiliary_text()
-           self.hide_lookup_table()
-       else:
-           # サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
-           self.preedit_string = self.romkan.remove_last_char(self.preedit_string)
-       # 変換していないときのレンダリングをする。
-       self.update_preedit_text_before_henkan()
-    */
-}
-
-#[repr(C)]
 struct AkazaContext {
     input_mode: InputMode,
     cursor_pos: i32,
@@ -311,7 +248,7 @@ struct AkazaContext {
     // TODO: rename to lookup_table
     commands: Commands,
     romkan: RomKanConverter,
-    command_map: HashMap<&'static str, ibus_akaza_command>,
+    command_map: HashMap<&'static str, IbusAkazaCommand>,
 }
 
 impl Default for AkazaContext {
@@ -336,8 +273,6 @@ impl Drop for AkazaContext {
         warn!("Dropping AkazaContext");
     }
 }
-
-type ibus_akaza_command = fn(&mut AkazaContext, *mut IBusEngine);
 
 impl AkazaContext {
     fn run_callback_by_name(&mut self, engine: *mut IBusEngine, function_name: &str) -> bool {
