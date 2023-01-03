@@ -87,11 +87,7 @@ impl GString {
 
     pub fn as_string(&mut self) -> String {
         unsafe {
-            return String::from_raw_parts(
-                self.str_ as *mut u8,
-                self.len as usize,
-                self.len as usize,
-            );
+            String::from_raw_parts(self.str_ as *mut u8, self.len as usize, self.len as usize)
         }
     }
 }
