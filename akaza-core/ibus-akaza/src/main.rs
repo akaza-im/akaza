@@ -240,7 +240,7 @@ enum InputMode {
 }
 
 #[repr(C)]
-struct AkazaContext {
+pub struct AkazaContext {
     input_mode: InputMode,
     cursor_pos: i32,
     preedit: String,
