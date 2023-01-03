@@ -244,7 +244,21 @@ enum InputMode {
 struct Commands {}
 
 impl Commands {
-    fn commit_preedit(&self, context: &mut AkazaContext, engine: *mut IBusEngine) {
+    // Use macro for preventing copy & paste.
+    fn get_map() -> HashMap<&'static str, ibus_akaza_command> {
+        HashMap::from([
+            (
+                "commit_preedit",
+                Commands::commit_preedit as ibus_akaza_command,
+            ),
+            (
+                "erase_character_before_cursor",
+                Commands::erase_character_before_cursor as ibus_akaza_command,
+            ),
+        ])
+    }
+
+    fn commit_preedit(context: &mut AkazaContext, engine: *mut IBusEngine) {
         /*
         # 無変換状態では、ひらがなに変換してコミットします。
         yomi, word = self._make_preedit_word()
@@ -297,6 +311,7 @@ struct AkazaContext {
     // TODO: rename to lookup_table
     commands: Commands,
     romkan: RomKanConverter,
+    command_map: HashMap<&'static str, ibus_akaza_command>,
 }
 
 impl Default for AkazaContext {
@@ -310,6 +325,7 @@ impl Default for AkazaContext {
                 lookup_table: ibus_lookup_table_new(10, 0, 1, 1),
                 commands: Commands::default(),
                 romkan: RomKanConverter::default(), // TODO make it configurable.
+                command_map: Commands::get_map(),
             }
         }
     }
@@ -321,18 +337,16 @@ impl Drop for AkazaContext {
     }
 }
 
+type ibus_akaza_command = fn(&mut AkazaContext, *mut IBusEngine);
+
 impl AkazaContext {
     fn run_callback_by_name(&mut self, engine: *mut IBusEngine, function_name: &str) -> bool {
-        match function_name {
-            "erase_character_before_cursor" => {
-                Commands::erase_character_before_cursor(self, engine);
-            }
-            _ => {
-                warn!("Unknown command: {}", function_name);
-                return false;
-            }
-        };
-        return true;
+        if let Some(function) = self.command_map.get(function_name) {
+            function(self, engine);
+            true
+        } else {
+            false
+        }
     }
 
     fn get_key_state(&self) -> KeyState {
