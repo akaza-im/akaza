@@ -143,4 +143,6 @@ extern "C" {
         cursor_pos: guint,
         visible: gboolean,
     );
+    #[doc = " ibus_engine_hide_preedit_text:\n @engine: An IBusEngine.\n\n Hide the pre-edit buffer."]
+    pub fn ibus_engine_hide_preedit_text(engine: *mut IBusEngine);
 }

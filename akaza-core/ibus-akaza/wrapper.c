@@ -25,8 +25,8 @@ void akaza_log(const char*format, ...) {
 }
 
 // Callback for key typed.
-static void* global_context;
-static ibus_akaza_callback_key_event global_key_event_cb;
+static void* global_context = NULL;
+static ibus_akaza_callback_key_event global_key_event_cb = NULL;
 
 #define IBUS_TYPE_AKAZA_ENGINE        \
         (ibus_akaza_engine_get_type ())
@@ -184,10 +184,9 @@ static gboolean ibus_akaza_engine_process_key_event(IBusEngine *engine,
                                                       guint keyval,
                                                       guint keycode,
                                                       guint modifiers) {
-  IBusAkazaEngine *akaza = (IBusAkazaEngine *)engine;
+  akaza_log("<3 process_key_event(%04x, %04x, %04x)\n", keyval, keycode, modifiers);
 
-  akaza_log("process_key_event(%04x, %04x, %04x)\n", keyval, keycode, modifiers);
-
+/*
   // ignore key release event.
   if (modifiers & IBUS_RELEASE_MASK) return FALSE;
 
@@ -271,8 +270,9 @@ static gboolean ibus_akaza_engine_process_key_event(IBusEngine *engine,
       }
       return TRUE;
   }
+  */
 
-  return global_key_event_cb(global_context, akaza, keyval, keycode, modifiers);
+  return global_key_event_cb(global_context, engine, keyval, keycode, modifiers);
 
 /*
   if ('!' <= keyval && keyval <= '~') {
