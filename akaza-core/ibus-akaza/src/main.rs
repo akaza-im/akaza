@@ -142,7 +142,7 @@ unsafe extern "C" fn process_key_event(
             }
 
             if ('!' as u32) <= keyval && keyval <= ('~' as u32) {
-                if ibus_lookup_table_get_number_of_candidates(context_ref.table) > 0 {
+                if ibus_lookup_table_get_number_of_candidates(context_ref.lookup_table) > 0 {
                     // 変換の途中に別の文字が入力された。よって、現在の preedit 文字列は確定させる。
                     // TODO commit_candidate();
                 }
@@ -285,7 +285,7 @@ impl Commands {
         unsafe {
             if context.in_henkan_mode() {
                 // 変換中の場合、無変換モードにもどす。
-                ibus_lookup_table_clear(context.table);
+                ibus_lookup_table_clear(context.lookup_table);
                 ibus_engine_hide_auxiliary_text(engine);
                 ibus_engine_hide_lookup_table(engine);
             } else {
@@ -317,7 +317,7 @@ struct AkazaContext {
     input_mode: InputMode,
     cursor_pos: i32,
     preedit: String,
-    table: *mut IBusLookupTable,
+    lookup_table: *mut IBusLookupTable,
     // TODO: rename to lookup_table
     commands: Commands,
     romkan: RomKanConverter,
@@ -331,7 +331,7 @@ impl Default for AkazaContext {
                 cursor_pos: 0,
                 preedit: String::new(),
                 //         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
-                table: ibus_lookup_table_new(10, 0, 1, 1),
+                lookup_table: ibus_lookup_table_new(10, 0, 1, 1),
                 commands: Commands::default(),
                 romkan: RomKanConverter::default(), // TODO make it configurable.
             }
@@ -363,7 +363,7 @@ impl AkazaContext {
         def in_henkan_mode(self):
             return self.lookup_table.get_number_of_candidates() > 0
          */
-        unsafe { ibus_lookup_table_get_number_of_candidates(self.table) > 0 }
+        unsafe { ibus_lookup_table_get_number_of_candidates(self.lookup_table) > 0 }
     }
     /*
        def _get_key_state(self):
@@ -393,7 +393,7 @@ impl AkazaContext {
                 ibus_text_new_from_string(text_c_str.as_ptr() as *const gchar),
             );
             self.preedit.clear();
-            ibus_lookup_table_clear(self.table);
+            ibus_lookup_table_clear(self.lookup_table);
             ibus_engine_hide_preedit_text(engine);
         }
 
