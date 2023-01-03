@@ -21,8 +21,17 @@ use crate::wrapper_bindings::{ibus_akaza_init, ibus_akaza_set_callback};
 mod bindings;
 mod wrapper_bindings;
 
+enum KeyState {
+    // 何も入力されていない状態。
+    PreComposition,
+    // 変換処理に入る前。ひらがなを入力している段階。
+    Composition,
+    // 変換中
+    Conversion,
+}
+
 unsafe extern "C" fn process_key_event(
-    context: *mut AkazaContext,
+    context: *mut c_void,
     engine: *mut IBusEngine,
     keyval: guint,
     keycode: guint,
@@ -35,9 +44,9 @@ unsafe extern "C" fn process_key_event(
     if modifiers & IBusModifierType_IBUS_RELEASE_MASK != 0 {
         return false;
     }
-    let mut context = &mut *context;
+    let context = &mut *(context as *mut AkazaContext);
 
-    match &context.inputMode {
+    match &context.input_mode {
         InputMode::Hiragana => {
             if modifiers & (IBusModifierType_IBUS_CONTROL_MASK | IBusModifierType_IBUS_MOD1_MASK)
                 != 0
@@ -52,7 +61,7 @@ unsafe extern "C" fn process_key_event(
                 }
 
                 // Append the character to preedit string.
-                let mut preedit = &mut context.preedit;
+                let preedit = &mut context.preedit;
                 context.preedit.push(char::from_u32(keyval).unwrap());
                 context.cursor_pos += 1;
 
@@ -61,7 +70,7 @@ unsafe extern "C" fn process_key_event(
                 return true;
             }
         }
-        InputMode_ALNUM => return false,
+        InputMode::Alnum => return false,
         _ => return false,
     }
     false // not proceeded by rust code.
@@ -164,13 +173,15 @@ unsafe fn update_preedit_text_before_henkan(context: &mut AkazaContext, engine: 
     */
 }
 
+#[repr(C)]
 enum InputMode {
     Hiragana,
     Alnum,
 }
 
+#[repr(C)]
 struct AkazaContext {
-    inputMode: InputMode,
+    input_mode: InputMode,
     cursor_pos: i32,
     preedit: String,
     table: *mut IBusLookupTable,
@@ -180,7 +191,7 @@ impl Default for AkazaContext {
     fn default() -> Self {
         unsafe {
             AkazaContext {
-                inputMode: InputMode::Hiragana,
+                input_mode: InputMode::Hiragana,
                 cursor_pos: 0,
                 preedit: String::new(),
                 //         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
