@@ -76,6 +76,7 @@ static void ibus_akaza_engine_init(IBusAkazaEngine *akaza) {
 
   akaza->preedit = g_string_new("");
   akaza->cursor_pos = 0;
+  akaza->input_mode = HIRAGANA;
 
   akaza->table = ibus_lookup_table_new(9, 0, TRUE, TRUE);
   g_object_ref_sink(akaza->table);
@@ -272,8 +273,9 @@ static gboolean ibus_akaza_engine_process_key_event(IBusEngine *engine,
       return TRUE;
   }
 
-  global_key_event_cb(akaza, keyval, keycode, modifiers);
+  return global_key_event_cb(akaza, keyval, keycode, modifiers);
 
+/*
   if ('!' <= keyval && keyval <= '~') {
     g_string_insert_c(akaza->preedit, akaza->cursor_pos, keyval);
 
@@ -284,6 +286,7 @@ static gboolean ibus_akaza_engine_process_key_event(IBusEngine *engine,
   }
 
   return FALSE;
+  */
 }
 
 static void ibus_disconnected_cb(IBusBus *bus, gpointer user_data) {

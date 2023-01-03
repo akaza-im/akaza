@@ -19,6 +19,7 @@ fn pkgconfig(module: &str, flag: &str) -> Vec<String> {
 fn main() {
     println!("cargo:rustc-link-lib=ibus-1.0");
     println!("cargo:rerun-if-changed=wrapper.c");
+    println!("cargo:rerun-if-changed=wrapper.h");
 
     let mut p = cc::Build::new();
     let mut c = p.file("wrapper.c");
