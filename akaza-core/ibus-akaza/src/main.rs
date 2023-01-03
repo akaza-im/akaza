@@ -7,8 +7,8 @@ use log::{info, warn};
 
 use ibus_sys::bindings::{
     gboolean, gchar, guint, ibus_attr_list_append, ibus_attr_list_new, ibus_attribute_new,
-    ibus_engine_commit_text, ibus_engine_hide_lookup_table, ibus_engine_hide_preedit_text,
-    ibus_engine_update_preedit_text, ibus_lookup_table_clear,
+    ibus_engine_commit_text, ibus_engine_hide_auxiliary_text, ibus_engine_hide_lookup_table,
+    ibus_engine_hide_preedit_text, ibus_engine_update_preedit_text, ibus_lookup_table_clear,
     ibus_lookup_table_get_number_of_candidates, ibus_lookup_table_new, ibus_main,
     ibus_text_new_from_string, ibus_text_set_attributes, IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE,
     IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE, IBusEngine, IBusLookupTable,
@@ -63,10 +63,28 @@ unsafe extern "C" fn process_key_event(
                         .commit_preedit(&mut *(context as *mut AkazaContext), engine);
                     return true;
                 }
+                IBUS_KEY_Backspace => {
+                    context_ref.commands.erase_character_before_cursor(
+                        &mut *(context as *mut AkazaContext),
+                        engine,
+                    );
+                    return true;
+                }
                 _ => { /* do nothing. fallback to default process. */ }
             }
         }
-        KeyState::Conversion => {}
+        KeyState::Conversion => {
+            match keyval {
+                IBUS_KEY_Backspace => {
+                    context_ref.commands.erase_character_before_cursor(
+                        &mut *(context as *mut AkazaContext),
+                        engine,
+                    );
+                    return true;
+                }
+                _ => { /* do nothing. fallback to default process. */ }
+            }
+        }
     }
 
     /*
@@ -98,8 +116,6 @@ unsafe extern "C" fn process_key_event(
 
     keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['Escape'], 'escape')
 
-    keymap.register([KEY_STATE_CONVERSION], ['BackSpace'], 'erase_character_before_cursor')
-    keymap.register([KEY_STATE_COMPOSITION], ['BackSpace'], 'erase_character_before_cursor')
 
     for n in range(0, 10):
         keymap.register([KEY_STATE_CONVERSION], [str(n), f"KP_{n}"], f"press_number_{n}")
@@ -263,6 +279,37 @@ impl Commands {
             context.commit_string(engine, surface.as_str());
         }
     }
+
+    fn erase_character_before_cursor(&self, context: &mut AkazaContext, engine: *mut IBusEngine) {
+        info!("erase_character_before_cursor: {}", context.preedit);
+        unsafe {
+            if context.in_henkan_mode() {
+                // 変換中の場合、無変換モードにもどす。
+                ibus_lookup_table_clear(context.table);
+                ibus_engine_hide_auxiliary_text(engine);
+                ibus_engine_hide_lookup_table(engine);
+            } else {
+                // サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
+                context.preedit = context.romkan.remove_last_char(&context.preedit)
+            }
+            // 変換していないときのレンダリングをする。
+            update_preedit_text_before_henkan(context, engine);
+        }
+    }
+
+    /*
+       self.logger.info(f"erase_character_before_cursor: {self.preedit_string}")
+       if self.in_henkan_mode():
+           # 変換中の場合、無変換モードにもどす。
+           self.lookup_table.clear()
+           self.hide_auxiliary_text()
+           self.hide_lookup_table()
+       else:
+           # サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
+           self.preedit_string = self.romkan.remove_last_char(self.preedit_string)
+       # 変換していないときのレンダリングをする。
+       self.update_preedit_text_before_henkan()
+    */
 }
 
 #[repr(C)]
@@ -273,6 +320,7 @@ struct AkazaContext {
     table: *mut IBusLookupTable,
     // TODO: rename to lookup_table
     commands: Commands,
+    romkan: RomKanConverter,
 }
 
 impl Default for AkazaContext {
@@ -285,6 +333,7 @@ impl Default for AkazaContext {
                 //         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
                 table: ibus_lookup_table_new(10, 0, 1, 1),
                 commands: Commands::default(),
+                romkan: RomKanConverter::default(), // TODO make it configurable.
             }
         }
     }

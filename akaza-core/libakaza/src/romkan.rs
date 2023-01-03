@@ -344,6 +344,18 @@ impl RomKanConverter {
         });
         retval.into_owned()
     }
+
+    // TODO https://github.com/tokuhirom/akaza/blob/kanakanji/libakaza/src/romkan.cc#L79-L95
+    // TODO https://github.com/tokuhirom/akaza/blob/kanakanji/libakaza/t/07_romkan.cc
+    pub fn remove_last_char(&self, src: &String) -> String {
+        return if src.is_empty() {
+            String::new()
+        } else {
+            let (i, _) = src.char_indices().last().unwrap();
+            let p = &src[0..i];
+            String::from(p)
+        };
+    }
 }
 
 #[cfg(test)]

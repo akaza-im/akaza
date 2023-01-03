@@ -145,4 +145,6 @@ extern "C" {
     );
     #[doc = " ibus_engine_hide_preedit_text:\n @engine: An IBusEngine.\n\n Hide the pre-edit buffer."]
     pub fn ibus_engine_hide_preedit_text(engine: *mut IBusEngine);
+    #[doc = " ibus_engine_hide_auxiliary_text:\n @engine: An IBusEngine.\n\n Hide the auxiliary bar."]
+    pub fn ibus_engine_hide_auxiliary_text(engine: *mut IBusEngine);
 }
