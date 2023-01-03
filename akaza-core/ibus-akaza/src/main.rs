@@ -1,5 +1,6 @@
 #![allow(non_upper_case_globals)]
 
+use std::collections::HashMap;
 use std::ffi::{c_void, CString};
 
 use anyhow::Result;
@@ -15,15 +16,17 @@ use ibus_sys::bindings::{
     IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_MOD1_MASK,
     IBusModifierType_IBUS_RELEASE_MASK,
 };
-use ibus_sys::ibus_key::{IBUS_KEY_KP_Enter, IBUS_KEY_Return};
+use ibus_sys::ibus_key::{IBUS_KEY_BackSpace, IBUS_KEY_KP_Enter, IBUS_KEY_Return};
 use libakaza::romkan::RomKanConverter;
 
+use crate::keymap::KeyMap;
 use crate::wrapper_bindings::{ibus_akaza_init, ibus_akaza_set_callback};
 
+mod keymap;
 mod wrapper_bindings;
 
-#[derive(Debug)]
-enum KeyState {
+#[derive(Debug, Hash, PartialEq, Copy, Clone)]
+pub enum KeyState {
     // 何も入力されていない状態。
     PreComposition,
     // 変換処理に入る前。ひらがなを入力している段階。
@@ -52,40 +55,13 @@ unsafe extern "C" fn process_key_event(
 
     // TODO configurable.
     info!("KeyState={:?}", key_state);
-    match key_state {
-        KeyState::PreComposition => {}
-        KeyState::Composition => {
-            match keyval {
-                IBUS_KEY_Return | IBUS_KEY_KP_Enter => {
-                    info!("commit_preedit");
-                    context_ref
-                        .commands
-                        .commit_preedit(&mut *(context as *mut AkazaContext), engine);
-                    return true;
-                }
-                IBUS_KEY_Backspace => {
-                    context_ref.commands.erase_character_before_cursor(
-                        &mut *(context as *mut AkazaContext),
-                        engine,
-                    );
-                    return true;
-                }
-                _ => { /* do nothing. fallback to default process. */ }
-            }
-        }
-        KeyState::Conversion => {
-            match keyval {
-                IBUS_KEY_Backspace => {
-                    context_ref.commands.erase_character_before_cursor(
-                        &mut *(context as *mut AkazaContext),
-                        engine,
-                    );
-                    return true;
-                }
-                _ => { /* do nothing. fallback to default process. */ }
-            }
-        }
+    let keymap = KeyMap::new();
+
+    if let Some(cb) = keymap.get(&key_state, keyval) {
+        return context_ref.run_callback_by_name(engine, cb);
     }
+
+    let key_state = context_ref.get_key_state();
 
     /*
         # 入力モードの切り替え
@@ -142,13 +118,13 @@ unsafe extern "C" fn process_key_event(
             }
 
             if ('!' as u32) <= keyval && keyval <= ('~' as u32) {
+                info!("Insert new character to preedit: '{}'", context_ref.preedit);
                 if ibus_lookup_table_get_number_of_candidates(context_ref.lookup_table) > 0 {
                     // 変換の途中に別の文字が入力された。よって、現在の preedit 文字列は確定させる。
                     // TODO commit_candidate();
                 }
 
                 // Append the character to preedit string.
-                let preedit = &mut context_ref.preedit;
                 context_ref.preedit.push(char::from_u32(keyval).unwrap());
                 context_ref.cursor_pos += 1;
 
@@ -280,7 +256,7 @@ impl Commands {
         }
     }
 
-    fn erase_character_before_cursor(&self, context: &mut AkazaContext, engine: *mut IBusEngine) {
+    fn erase_character_before_cursor(context: &mut AkazaContext, engine: *mut IBusEngine) {
         info!("erase_character_before_cursor: {}", context.preedit);
         unsafe {
             if context.in_henkan_mode() {
@@ -346,6 +322,19 @@ impl Drop for AkazaContext {
 }
 
 impl AkazaContext {
+    fn run_callback_by_name(&mut self, engine: *mut IBusEngine, function_name: &str) -> bool {
+        match function_name {
+            "erase_character_before_cursor" => {
+                Commands::erase_character_before_cursor(self, engine);
+            }
+            _ => {
+                warn!("Unknown command: {}", function_name);
+                return false;
+            }
+        };
+        return true;
+    }
+
     fn get_key_state(&self) -> KeyState {
         // キー入力状態を返す。
         if self.preedit.is_empty() {
@@ -442,4 +431,12 @@ fn main() -> Result<()> {
         warn!("Should not reach here.");
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test() {}
 }
