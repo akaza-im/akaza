@@ -6,8 +6,6 @@
 
 // ibus wrapper functions.
 
-use crate::wrapper_bindings::InputMode;
-
 pub type gchar = ::std::os::raw::c_char;
 pub type guint = ::std::os::raw::c_uint;
 pub type gboolean = ::std::os::raw::c_int;
@@ -62,16 +60,6 @@ pub type IBusLookupTable = [u64; 11usize];
 pub type IBusAttrList = [u64; 7usize];
 #[doc = " IBusAttribute:\n @type: IBusAttributeType\n @value: Value for the type.\n @start_index: The starting index, inclusive.\n @end_index: The ending index, exclusive.\n\n Signify the type, value and scope of the attribute.\n The scope starts from @start_index till the @end_index-1."]
 pub type IBusAttribute = [u64; 8usize];
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct IBusAkazaEngine {
-    pub parent: IBusEngine,
-    pub preedit: *mut GString,
-    pub cursor_pos: gint,
-    pub table: *mut IBusLookupTable,
-    pub input_mode: InputMode,
-}
 
 pub type IBusEngine = [u64; 11usize];
 
@@ -134,16 +122,23 @@ extern "C" {
     pub fn ibus_text_set_attributes(text: *mut IBusText, attrs: *mut IBusAttrList);
 
     // lookup
+    #[doc = " ibus_lookup_table_new:\n @page_size: number of candidate shown per page, the max value is 16.\n @cursor_pos: position index of cursor.\n @cursor_visible: whether the cursor is visible.\n @round: TRUE for lookup table wrap around.\n\n Craetes a new #IBusLookupTable.\n\n Returns: A newly allocated #IBusLookupTable."]
+    pub fn ibus_lookup_table_new(
+        page_size: guint,
+        cursor_pos: guint,
+        cursor_visible: gboolean,
+        round: gboolean,
+    ) -> *mut IBusLookupTable;
     pub fn ibus_lookup_table_clear(table: *mut IBusLookupTable);
     #[doc = " ibus_lookup_table_get_number_of_candidates:\n @table: An IBusLookupTable.\n\n Return the number of candidate in the table.\n\n Returns: The number of candidates in the table"]
     pub fn ibus_lookup_table_get_number_of_candidates(table: *mut IBusLookupTable) -> guint;
 
     // engine
     pub fn ibus_engine_commit_text(engine: *mut IBusEngine, text: *mut IBusText);
-    pub fn ibus_engine_hide_lookup_table(engine: *mut IBusAkazaEngine);
+    pub fn ibus_engine_hide_lookup_table(engine: *mut IBusEngine);
     #[doc = " ibus_engine_update_preedit_text:\n @engine: An IBusEngine.\n @text: Update content.\n @cursor_pos: Current position of cursor\n @visible: Whether the pre-edit buffer is visible.\n\n Update the pre-edit buffer.\n\n (Note: The text object will be released, if it is floating.\n  If caller want to keep the object, caller should make the object\n  sink by g_object_ref_sink.)"]
     pub fn ibus_engine_update_preedit_text(
-        engine: *mut IBusAkazaEngine,
+        engine: *mut IBusEngine,
         text: *mut IBusText,
         cursor_pos: guint,
         visible: gboolean,

@@ -1,28 +1,29 @@
 #![allow(non_upper_case_globals)]
 
+use std::ffi::{c_void, CString};
+
 use anyhow::Result;
-use flexi_logger::{FileSpec, Logger};
+use log::{info, warn};
+
 use libakaza::romkan::RomKanConverter;
-use log::info;
-use std::ffi::CString;
 
 use crate::bindings::{
     gboolean, gchar, gssize, guint, ibus_attr_list_append, ibus_attr_list_new, ibus_attribute_new,
     ibus_engine_hide_lookup_table, ibus_engine_update_preedit_text, ibus_lookup_table_clear,
-    ibus_lookup_table_get_number_of_candidates, ibus_main, ibus_text_new_from_string,
-    ibus_text_set_attributes, IBusAkazaEngine, IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE,
-    IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE, IBusModifierType_IBUS_CONTROL_MASK,
-    IBusModifierType_IBUS_MOD1_MASK, IBusModifierType_IBUS_RELEASE_MASK,
+    ibus_lookup_table_get_number_of_candidates, ibus_lookup_table_new, ibus_main,
+    ibus_text_new_from_string, ibus_text_set_attributes, IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE,
+    IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE, IBusEngine, IBusLookupTable,
+    IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_MOD1_MASK,
+    IBusModifierType_IBUS_RELEASE_MASK,
 };
-use crate::wrapper_bindings::{
-    ibus_akaza_init, ibus_akaza_set_callback, InputMode_ALNUM, InputMode_HIRAGANA,
-};
+use crate::wrapper_bindings::{ibus_akaza_init, ibus_akaza_set_callback};
 
 mod bindings;
 mod wrapper_bindings;
 
 unsafe extern "C" fn process_key_event(
-    engine: *mut IBusAkazaEngine,
+    context: *mut AkazaContext,
+    engine: *mut IBusEngine,
     keyval: guint,
     keycode: guint,
     modifiers: guint,
@@ -34,9 +35,10 @@ unsafe extern "C" fn process_key_event(
     if modifiers & IBusModifierType_IBUS_RELEASE_MASK != 0 {
         return false;
     }
+    let mut context = &mut *context;
 
-    match (*engine).input_mode {
-        InputMode_HIRAGANA => {
+    match &context.inputMode {
+        InputMode::Hiragana => {
             if modifiers & (IBusModifierType_IBUS_CONTROL_MASK | IBusModifierType_IBUS_MOD1_MASK)
                 != 0
             {
@@ -44,18 +46,18 @@ unsafe extern "C" fn process_key_event(
             }
 
             if ('!' as u32) <= keyval && keyval <= ('~' as u32) {
-                if ibus_lookup_table_get_number_of_candidates((*engine).table) > 0 {
+                if ibus_lookup_table_get_number_of_candidates(context.table) > 0 {
                     // 変換の途中に別の文字が入力された。よって、現在の preedit 文字列は確定させる。
                     // TODO commit_candidate();
                 }
 
                 // Append the character to preedit string.
-                let preedit = (*engine).preedit;
-                (*preedit).insert_c((*engine).cursor_pos as gssize, keyval as gchar);
-                (*engine).cursor_pos += 1;
+                let mut preedit = &mut context.preedit;
+                context.preedit.push(char::from_u32(keyval).unwrap());
+                context.cursor_pos += 1;
 
                 // And update the display status.
-                update_preedit_text_before_henkan(engine);
+                update_preedit_text_before_henkan(context, engine);
                 return true;
             }
         }
@@ -77,17 +79,20 @@ unsafe extern "C" fn process_key_event(
        */
 }
 
-unsafe fn _make_preedit_word(engine: *mut IBusAkazaEngine) -> (String, String) {
-    let preedit = (*(*engine).preedit).as_string();
+unsafe fn _make_preedit_word(
+    context: &mut AkazaContext,
+    engine: *mut IBusEngine,
+) -> (String, String) {
+    let preedit = &context.preedit;
     // If the first character is upper case, return preedit string itself.
-    if preedit.len() > 0 && preedit.chars().nth(0).unwrap().is_ascii_uppercase() {
+    if !preedit.is_empty() && preedit.chars().next().unwrap().is_ascii_uppercase() {
         // TODO: meaningless clone process.
-        return (preedit.clone(), preedit);
+        return (preedit.clone(), preedit.clone());
     }
 
     // TODO cache RomKanConverter instance
     let yomi = RomKanConverter::new().to_hiragana(preedit.as_str());
-    return (yomi.clone(), yomi);
+    (yomi.clone(), yomi)
 
     /*
         # 先頭が大文字だと、
@@ -105,16 +110,16 @@ unsafe fn _make_preedit_word(engine: *mut IBusAkazaEngine) -> (String, String) {
     */
 }
 
-unsafe fn update_preedit_text_before_henkan(engine: *mut IBusAkazaEngine) {
+unsafe fn update_preedit_text_before_henkan(context: &mut AkazaContext, engine: *mut IBusEngine) {
     info!("update_preedit_text_before_henkan");
-    if (*(*engine).preedit).len == 0 {
+    if context.preedit.is_empty() {
         ibus_engine_hide_lookup_table(engine);
         return;
     }
 
     // Convert to Hiragana.
     info!("Convert to Hiragana");
-    let (_yomi, word) = _make_preedit_word(engine);
+    let (_yomi, word) = _make_preedit_word(context, engine);
 
     let preedit_attrs = ibus_attr_list_new();
     ibus_attr_list_append(
@@ -159,65 +164,52 @@ unsafe fn update_preedit_text_before_henkan(engine: *mut IBusAkazaEngine) {
     */
 }
 
-// TODO deprecate this?
-unsafe fn ibus_akaza_engine_update(engine: *mut IBusAkazaEngine) {
-    info!("ibus_akaza_engine_update: {}", (*(*engine).preedit).len);
+enum InputMode {
+    Hiragana,
+    Alnum,
+}
 
-    if (*(*engine).preedit).len == 0 {
-        ibus_engine_hide_lookup_table(engine);
-        return;
+struct AkazaContext {
+    inputMode: InputMode,
+    cursor_pos: i32,
+    preedit: String,
+    table: *mut IBusLookupTable,
+}
+
+impl Default for AkazaContext {
+    fn default() -> Self {
+        unsafe {
+            AkazaContext {
+                inputMode: InputMode::Hiragana,
+                cursor_pos: 0,
+                preedit: String::new(),
+                //         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
+                table: ibus_lookup_table_new(10, 0, 1, 1),
+            }
+        }
     }
+}
 
-    ibus_lookup_table_clear((*engine).table);
-
-    // TODO ここで変換処理を行う。
-    let sugs: Vec<String> = vec![];
-
-    if sugs.is_empty() {
-        // There's no candidates... is this possible?
-        ibus_engine_hide_lookup_table(engine);
+impl Drop for AkazaContext {
+    fn drop(&mut self) {
+        warn!("Dropping AkazaContext");
     }
-
-    /*
-
-    if (akaza->preedit->len == 0) {
-      ibus_engine_hide_lookup_table((IBusEngine *)akaza);
-      return;
-    }
-
-    ibus_lookup_table_clear(akaza->table);
-
-    // XXX i need to implement kana-kanji conversion here.
-    sugs = enchant_dict_suggest(dict, akaza->preedit->str,
-                                akaza->preedit->len, &n_sug);
-
-    if (sugs == NULL || n_sug == 0) {
-      ibus_engine_hide_lookup_table((IBusEngine *)akaza);
-      return;
-    }
-
-    for (i = 0; i < n_sug; i++) {
-      ibus_lookup_table_append_candidate(akaza->table,
-                                         ibus_text_new_from_string(sugs[i]));
-    }
-
-    ibus_engine_update_lookup_table((IBusEngine *)akaza, akaza->table, TRUE);
-
-       */
 }
 
 fn main() -> Result<()> {
-    Logger::try_with_str("info")?
-        .print_message() //
-        .start()?;
+    env_logger::init();
 
     unsafe {
-        ibus_akaza_set_callback(process_key_event);
+        let mut ac = AkazaContext::default();
+
+        ibus_akaza_set_callback(&mut ac as *mut _ as *mut c_void, process_key_event);
 
         ibus_akaza_init(true);
 
         // run main loop
         ibus_main();
+
+        warn!("Should not reach here.");
     }
     Ok(())
 }

@@ -25,6 +25,7 @@ void akaza_log(const char*format, ...) {
 }
 
 // Callback for key typed.
+static void* global_context;
 static ibus_akaza_callback_key_event global_key_event_cb;
 
 #define IBUS_TYPE_AKAZA_ENGINE        \
@@ -73,7 +74,6 @@ static void ibus_akaza_engine_init(IBusAkazaEngine *akaza) {
 
   akaza->preedit = g_string_new("");
   akaza->cursor_pos = 0;
-  akaza->input_mode = HIRAGANA;
 
   akaza->table = ibus_lookup_table_new(9, 0, TRUE, TRUE);
   g_object_ref_sink(akaza->table);
@@ -272,7 +272,7 @@ static gboolean ibus_akaza_engine_process_key_event(IBusEngine *engine,
       return TRUE;
   }
 
-  return global_key_event_cb(akaza, keyval, keycode, modifiers);
+  return global_key_event_cb(global_context, akaza, keyval, keycode, modifiers);
 
 /*
   if ('!' <= keyval && keyval <= '~') {
@@ -293,7 +293,8 @@ static void ibus_disconnected_cb(IBusBus *bus, gpointer user_data) {
 }
 
 
-void ibus_akaza_set_callback(ibus_akaza_callback_key_event* cb) {
+void ibus_akaza_set_callback(void* context, ibus_akaza_callback_key_event* cb) {
+    global_context = context;
     global_key_event_cb = cb;
 }
 

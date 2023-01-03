@@ -2,15 +2,10 @@
 
 #pragma once
 
-typedef gboolean (*ibus_akaza_callback_key_event)(IBusEngine* engine, guint keyval, guint keycode, guint modifiers);
-void ibus_akaza_set_callback(ibus_akaza_callback_key_event* cb);
+typedef gboolean (*ibus_akaza_callback_key_event)(void* ctx, IBusEngine* engine, guint keyval, guint keycode, guint modifiers);
+void ibus_akaza_set_callback(void* ctx, ibus_akaza_callback_key_event* cb);
 
-typedef enum {
-    ALNUM,
-    HIRAGANA,
-    // TODO support more input modes.
-} InputMode;
-
+// TODO deprecate this
 typedef struct {
   IBusEngine parent;
 
@@ -19,6 +14,4 @@ typedef struct {
   gint cursor_pos;
 
   IBusLookupTable *table;
-
-  InputMode input_mode;
 } IBusAkazaEngine;
