@@ -305,10 +305,15 @@ dependencies = [
  "anyhow",
  "cc",
  "env_logger",
+ "ibus-sys",
  "libakaza",
  "log",
  "tempfile",
 ]
+
+[[package]]
+name = "ibus-sys"
+version = "0.1.0"
 
 [[package]]
 name = "instant"

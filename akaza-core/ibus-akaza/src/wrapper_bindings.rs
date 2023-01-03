@@ -2,7 +2,7 @@
 #![allow(non_upper_case_globals)]
 #![allow(dead_code)]
 
-use crate::bindings::{guint, IBusEngine};
+use ibus_sys::bindings::{guint, IBusEngine};
 
 use std::ffi::c_void;
 

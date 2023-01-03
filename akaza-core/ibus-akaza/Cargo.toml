@@ -10,6 +10,7 @@ tempfile = "3"
 anyhow = "1.0.68"
 log = "0.4.17"
 libakaza = { path = "../libakaza" }
+ibus-sys = { path = "../ibus-sys" }
 env_logger = "0.10.0"
 
 

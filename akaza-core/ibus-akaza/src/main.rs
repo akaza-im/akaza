@@ -5,9 +5,7 @@ use std::ffi::{c_void, CString};
 use anyhow::Result;
 use log::{info, warn};
 
-use libakaza::romkan::RomKanConverter;
-
-use crate::bindings::{
+use ibus_sys::bindings::{
     gboolean, gchar, guint, ibus_attr_list_append, ibus_attr_list_new, ibus_attribute_new,
     ibus_engine_commit_text, ibus_engine_hide_lookup_table, ibus_engine_hide_preedit_text,
     ibus_engine_update_preedit_text, ibus_lookup_table_clear,
@@ -17,11 +15,11 @@ use crate::bindings::{
     IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_MOD1_MASK,
     IBusModifierType_IBUS_RELEASE_MASK,
 };
-use crate::ibus_key::{IBUS_KEY_KP_Enter, IBUS_KEY_Return};
+use ibus_sys::ibus_key::{IBUS_KEY_KP_Enter, IBUS_KEY_Return};
+use libakaza::romkan::RomKanConverter;
+
 use crate::wrapper_bindings::{ibus_akaza_init, ibus_akaza_set_callback};
 
-mod bindings;
-mod ibus_key;
 mod wrapper_bindings;
 
 #[derive(Debug)]
@@ -272,7 +270,8 @@ struct AkazaContext {
     input_mode: InputMode,
     cursor_pos: i32,
     preedit: String,
-    table: *mut IBusLookupTable, // TODO: rename to lookup_table
+    table: *mut IBusLookupTable,
+    // TODO: rename to lookup_table
     commands: Commands,
 }
 
