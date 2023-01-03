@@ -1,28 +1,35 @@
 #![allow(non_upper_case_globals)]
 
-use std::collections::HashMap;
 use std::ffi::{c_void, CString};
 
 use anyhow::Result;
 use log::{info, warn};
 
-use crate::commands::{Commands, IbusAkazaCommand};
-use ibus_sys::bindings::{
-    gboolean, gchar, guint, ibus_attr_list_append, ibus_attr_list_new, ibus_attribute_new,
-    ibus_engine_commit_text, ibus_engine_hide_lookup_table, ibus_engine_hide_preedit_text,
-    ibus_engine_update_preedit_text, ibus_lookup_table_clear,
-    ibus_lookup_table_get_number_of_candidates, ibus_lookup_table_new, ibus_main,
-    ibus_text_new_from_string, ibus_text_set_attributes, IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE,
-    IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE, IBusEngine, IBusLookupTable,
-    IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_MOD1_MASK,
-    IBusModifierType_IBUS_RELEASE_MASK,
-};
-use libakaza::romkan::RomKanConverter;
+use crate::context::AkazaContext;
+use ibus_sys::bindings::gboolean;
+use ibus_sys::bindings::gchar;
+use ibus_sys::bindings::guint;
+use ibus_sys::bindings::ibus_attr_list_append;
+use ibus_sys::bindings::ibus_attr_list_new;
+use ibus_sys::bindings::ibus_attribute_new;
+use ibus_sys::bindings::ibus_engine_hide_lookup_table;
+use ibus_sys::bindings::ibus_engine_update_preedit_text;
+use ibus_sys::bindings::ibus_lookup_table_get_number_of_candidates;
+use ibus_sys::bindings::ibus_main;
+use ibus_sys::bindings::ibus_text_new_from_string;
+use ibus_sys::bindings::ibus_text_set_attributes;
+use ibus_sys::bindings::IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE;
+use ibus_sys::bindings::IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE;
+use ibus_sys::bindings::IBusEngine;
+use ibus_sys::bindings::IBusModifierType_IBUS_CONTROL_MASK;
+use ibus_sys::bindings::IBusModifierType_IBUS_MOD1_MASK;
+use ibus_sys::bindings::IBusModifierType_IBUS_RELEASE_MASK;
 
 use crate::keymap::KeyMap;
 use crate::wrapper_bindings::{ibus_akaza_init, ibus_akaza_set_callback};
 
 mod commands;
+mod context;
 mod keymap;
 mod wrapper_bindings;
 
@@ -189,131 +196,6 @@ unsafe fn update_preedit_text_before_henkan(context: &mut AkazaContext, engine: 
 enum InputMode {
     Hiragana,
     Alnum,
-}
-
-#[repr(C)]
-pub struct AkazaContext {
-    input_mode: InputMode,
-    cursor_pos: i32,
-    preedit: String,
-    lookup_table: *mut IBusLookupTable,
-    // TODO: rename to lookup_table
-    commands: Commands,
-    romkan: RomKanConverter,
-    command_map: HashMap<&'static str, IbusAkazaCommand>,
-}
-
-impl Default for AkazaContext {
-    fn default() -> Self {
-        unsafe {
-            AkazaContext {
-                input_mode: InputMode::Hiragana,
-                cursor_pos: 0,
-                preedit: String::new(),
-                //         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
-                lookup_table: ibus_lookup_table_new(10, 0, 1, 1),
-                commands: Commands::default(),
-                romkan: RomKanConverter::default(), // TODO make it configurable.
-                command_map: Commands::get_map(),
-            }
-        }
-    }
-}
-
-impl Drop for AkazaContext {
-    fn drop(&mut self) {
-        warn!("Dropping AkazaContext");
-    }
-}
-
-impl AkazaContext {
-    fn run_callback_by_name(&mut self, engine: *mut IBusEngine, function_name: &str) -> bool {
-        if let Some(function) = self.command_map.get(function_name) {
-            function(self, engine);
-            true
-        } else {
-            false
-        }
-    }
-
-    fn get_key_state(&self) -> KeyState {
-        // キー入力状態を返す。
-        if self.preedit.is_empty() {
-            // 未入力状態。
-            KeyState::PreComposition
-        } else if self.in_henkan_mode() {
-            KeyState::Conversion
-        } else {
-            KeyState::Composition
-        }
-    }
-
-    fn in_henkan_mode(&self) -> bool {
-        /*
-        def in_henkan_mode(self):
-            return self.lookup_table.get_number_of_candidates() > 0
-         */
-        unsafe { ibus_lookup_table_get_number_of_candidates(self.lookup_table) > 0 }
-    }
-    /*
-       def _get_key_state(self):
-       """
-       キー入力状態を返す。
-       """
-       if len(self.preedit_string) == 0:
-           # 未入力
-           self.logger.debug("key_state: KEY_STATE_PRECOMPOSITION")
-           return KEY_STATE_PRECOMPOSITION
-       else:
-           if self.in_henkan_mode():
-               # 変換中
-               self.logger.debug("key_state: KEY_STATE_CONVERSION")
-               return KEY_STATE_CONVERSION
-           else:
-               # 入力されているがまだ変換されていない
-               self.logger.debug("key_state: KEY_STATE_COMPOSITION")
-               return KEY_STATE_COMPOSITION
-    */
-
-    fn commit_string(&mut self, engine: *mut IBusEngine, text: &str) {
-        unsafe {
-            let text_c_str = CString::new(text.clone()).unwrap();
-            ibus_engine_commit_text(
-                engine,
-                ibus_text_new_from_string(text_c_str.as_ptr() as *const gchar),
-            );
-            self.preedit.clear();
-            ibus_lookup_table_clear(self.lookup_table);
-            ibus_engine_hide_preedit_text(engine);
-        }
-
-        /*
-            def commit_string(self, text):
-        self.logger.info("commit_string.")
-        self.cursor_moved = False
-
-        if self.in_henkan_mode():
-            # 変換モードのときのみ学習を実施する。
-            candidate_nodes = []
-            for clauseid, nodes in enumerate(self.clauses):
-                candidate_nodes.append(nodes[self.node_selected.get(clauseid, 0)])
-            self.user_language_model.add_entry(candidate_nodes)
-
-        self.commit_text(IBus.Text.new_from_string(text))
-
-        self.preedit_string = ''
-        self.clauses = []
-        self.current_clause = 0
-        self.node_selected = {}
-        self.force_selected_clause = None
-
-        self.lookup_table.clear()
-        self.update_lookup_table(self.lookup_table, False)
-
-        self.hide_auxiliary_text()
-        self.hide_preedit_text()
-         */
-    }
 }
 
 fn main() -> Result<()> {
