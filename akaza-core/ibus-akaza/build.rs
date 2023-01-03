@@ -27,7 +27,7 @@ fn main() {
 
     // Normally, I dislike following options.
     // But, it's a temporary code.
-    // TODO: I will remove following options.
+    // TODO: remove following options.
     c = c.flag("-Wno-unused-parameter");
     c = c.flag("-Wno-sign-compare");
     c = c.flag("-Wno-incompatible-pointer-types");
