@@ -4,7 +4,7 @@ use std::ffi::c_void;
 use std::time::SystemTime;
 
 use anyhow::Result;
-use log::{info, warn};
+use log::{info, trace, warn};
 
 use ibus_sys::bindings::guint;
 use ibus_sys::bindings::ibus_main;
@@ -31,9 +31,11 @@ unsafe extern "C" fn process_key_event(
     keycode: guint,
     modifiers: guint,
 ) -> bool {
-    info!(
+    trace!(
         "process_key_event: keyval={}, keycode={}, modifiers={}",
-        keyval, keycode, modifiers
+        keyval,
+        keycode,
+        modifiers
     );
 
     // ignore key release event
@@ -45,8 +47,8 @@ unsafe extern "C" fn process_key_event(
     // keymap.register([KEY_STATE_COMPOSITION], ['Return', 'KP_Enter'], 'commit_preedit')
     let key_state = context_ref.get_key_state();
 
-    // TODO configurable.
-    info!("KeyState={:?}", key_state);
+    // TODO configure keymap in ~/.config/akaza/keymap.yml?
+    trace!("KeyState={:?}", key_state);
     let keymap = KeyMap::new();
 
     if let Some(cb) = keymap.get(&key_state, keyval) {

@@ -78,14 +78,12 @@ impl AkazaContext {
     }
 
     pub(crate) unsafe fn update_preedit_text_before_henkan(&mut self, engine: *mut IBusEngine) {
-        info!("update_preedit_text_before_henkan");
         if self.preedit.is_empty() {
             ibus_engine_hide_lookup_table(engine);
             return;
         }
 
         // Convert to Hiragana.
-        info!("Convert to Hiragana");
         let (_yomi, word) = self.make_preedit_word();
 
         let preedit_attrs = ibus_attr_list_new();
@@ -99,10 +97,8 @@ impl AkazaContext {
             ),
         );
         let word_c_str = CString::new(word.clone()).unwrap();
-        info!("Calling ibus_text_new_from_string");
         let preedit_text = ibus_text_new_from_string(word_c_str.as_ptr() as *const gchar);
         ibus_text_set_attributes(preedit_text, preedit_attrs);
-        info!("Callihng ibus_engine_update_preedit_text");
         ibus_engine_update_preedit_text(
             engine,
             preedit_text,
@@ -288,11 +284,11 @@ impl AkazaContext {
 
     pub(crate) fn build_string(&self) -> String {
         let mut result = String::new();
-        for (clauseid, nodes) in self.clauses.iter().enumerate() {
+        for (_clauseid, nodes) in self.clauses.iter().enumerate() {
             // TODO lisp をひょうかする
             // TODO node_selected をひょうかする
             // result += nodes[self.node_selected.get(clauseid, 0)].surface(lisp_evaluator)
-            result += &nodes[clauseid].kanji;
+            result += &nodes[0].kanji;
         }
         result
     }

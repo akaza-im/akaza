@@ -1,6 +1,5 @@
 use crate::bindings::{gboolean, gint, gpointer, guint, GArray, IBusSerializable, IBusText};
 use crate::glib::g_object_ref_sink;
-use log::info;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -30,7 +29,7 @@ impl IBusLookupTable {
     }
 
     pub fn get_number_of_candidates(&mut self) -> guint {
-        info!("get_number_of_candidates: {:?}", self);
+        // info!("get_number_of_candidates: {:?}", self);
         unsafe { ibus_lookup_table_get_number_of_candidates(self as *mut Self) }
     }
 
