@@ -348,7 +348,7 @@ impl RomKanConverter {
     // TODO https://github.com/tokuhirom/akaza/blob/kanakanji/libakaza/src/romkan.cc#L79-L95
     // TODO https://github.com/tokuhirom/akaza/blob/kanakanji/libakaza/t/07_romkan.cc
     pub fn remove_last_char(&self, src: &String) -> String {
-        return if src.is_empty() {
+        return if src.is_empty() || src.char_indices().count() == 1 {
             String::new()
         } else {
             let (i, _) = src.char_indices().last().unwrap();

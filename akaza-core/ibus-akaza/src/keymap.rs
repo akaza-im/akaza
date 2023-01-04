@@ -1,6 +1,11 @@
-use crate::KeyState;
-use ibus_sys::ibus_key::{IBUS_KEY_BackSpace, IBUS_KEY_KP_Enter, IBUS_KEY_Return};
 use std::collections::HashMap;
+
+use ibus_sys::ibus_key::{
+    IBUS_KEY_BackSpace, IBUS_KEY_Hangul, IBUS_KEY_Hangul_Hanja, IBUS_KEY_Henkan, IBUS_KEY_KP_Enter,
+    IBUS_KEY_Muhenkan, IBUS_KEY_Return,
+};
+
+use crate::KeyState;
 
 #[derive(Hash, PartialEq)]
 struct KeyPattern {
@@ -19,6 +24,7 @@ impl KeyPattern {
 struct KeyMapBuilder {
     keymap: HashMap<KeyPattern, String>,
 }
+
 impl KeyMapBuilder {
     fn new() -> Self {
         KeyMapBuilder {
@@ -39,14 +45,12 @@ impl KeyMapBuilder {
 pub struct KeyMap {
     keymap: HashMap<KeyPattern, String>,
 }
+
 impl KeyMap {
     pub(crate) fn new() -> Self {
         let mut builder = KeyMapBuilder::new();
 
         /*
-            # 入力モードの切り替え
-        keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION], ['Henkan'],
-                        'set_input_mode_hiragana')
         keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION], ['C-S-J'],
                         'set_input_mode_hiragana')
         keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION], ['Muhenkan'],
@@ -89,6 +93,29 @@ impl KeyMap {
         keymap.register([KEY_STATE_CONVERSION], ['S-Left', 'S-KP_Left'], 'extend_clause_left')
          */
 
+        // TODO make this configurable.
+
+        // 入力モードの切り替え
+        builder.insert(
+            &[
+                KeyState::Composition,
+                KeyState::PreComposition,
+                KeyState::Conversion,
+            ],
+            &[IBUS_KEY_Henkan, IBUS_KEY_Hangul],
+            "set_input_mode_hiragana",
+        );
+        builder.insert(
+            &[
+                KeyState::Composition,
+                KeyState::PreComposition,
+                KeyState::Conversion,
+            ],
+            &[IBUS_KEY_Muhenkan, IBUS_KEY_Hangul_Hanja],
+            "set_input_mode_alnum",
+        );
+
+        // basic operations.
         builder.insert(
             &[KeyState::Conversion, KeyState::Composition],
             &[IBUS_KEY_BackSpace],

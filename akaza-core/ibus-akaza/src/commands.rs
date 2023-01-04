@@ -7,17 +7,26 @@ use ibus_sys::bindings::{
     IBusEngine,
 };
 
-use crate::{_make_preedit_word, update_preedit_text_before_henkan, AkazaContext};
+use crate::{_make_preedit_word, update_preedit_text_before_henkan, AkazaContext, InputMode};
 
 pub type IbusAkazaCommand = fn(&mut AkazaContext, *mut IBusEngine);
 
 // Use macro for preventing copy & paste.
+// TODO https://users.rust-lang.org/t/is-there-a-way-to-convert-given-identifier-to-a-string-in-a-macro/42907
 pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaCommand> {
     HashMap::from([
         ("commit_preedit", commit_preedit as IbusAkazaCommand),
         (
             "erase_character_before_cursor",
             erase_character_before_cursor as IbusAkazaCommand,
+        ),
+        (
+            "set_input_mode_hiragana",
+            set_input_mode_hiragana as IbusAkazaCommand,
+        ),
+        (
+            "set_input_mode_alnum",
+            set_input_mode_alnum as IbusAkazaCommand,
         ),
     ])
 }
@@ -32,6 +41,14 @@ fn commit_preedit(context: &mut AkazaContext, engine: *mut IBusEngine) {
         let (_, surface) = _make_preedit_word(context);
         context.commit_string(engine, surface.as_str());
     }
+}
+
+fn set_input_mode_hiragana(context: &mut AkazaContext, engine: *mut IBusEngine) {
+    context.set_input_mode(InputMode::Hiragana, engine)
+}
+
+fn set_input_mode_alnum(context: &mut AkazaContext, engine: *mut IBusEngine) {
+    context.set_input_mode(InputMode::Alnum, engine)
 }
 
 fn erase_character_before_cursor(context: &mut AkazaContext, engine: *mut IBusEngine) {

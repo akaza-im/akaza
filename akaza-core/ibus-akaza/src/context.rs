@@ -1,14 +1,17 @@
-use crate::commands::{ibus_akaza_commands_map, IbusAkazaCommand};
-use crate::{InputMode, KeyState};
+use std::collections::HashMap;
+use std::ffi::CString;
+
+use log::{error, info, warn};
+
 use ibus_sys::bindings::{
     gchar, ibus_engine_commit_text, ibus_engine_hide_preedit_text, ibus_lookup_table_clear,
     ibus_lookup_table_get_number_of_candidates, ibus_lookup_table_new, ibus_text_new_from_string,
     IBusEngine, IBusLookupTable,
 };
 use libakaza::romkan::RomKanConverter;
-use log::warn;
-use std::collections::HashMap;
-use std::ffi::CString;
+
+use crate::commands::{ibus_akaza_commands_map, IbusAkazaCommand};
+use crate::{InputMode, KeyState};
 
 #[repr(C)]
 pub struct AkazaContext {
@@ -43,15 +46,53 @@ impl Drop for AkazaContext {
 }
 
 impl AkazaContext {
+    /**
+     * 入力モードの変更
+     */
+    pub(crate) fn set_input_mode(&mut self, input_mode: InputMode, engine: *mut IBusEngine) {
+        info!("Changing input mode to : {:?}", input_mode);
+
+        // 変換候補をいったんコミットする。
+        self.commit_candidate(engine);
+
+        // TODO update menu prop
+
+        self.input_mode = input_mode;
+
+        /*
+        def _set_input_mode(self, mode: InputMode):
+            """
+
+            """
+            self.logger.info(f"input mode activate: {mode}")
+
+            # 変換候補をいったんコミットする。
+            self.commit_candidate()
+
+            label = _("Input mode (%s)") % mode.symbol
+            prop = self.input_mode_prop
+            prop.set_symbol(IBus.Text.new_from_string(mode.symbol))
+            prop.set_label(IBus.Text.new_from_string(label))
+            self.update_property(prop)
+
+            self.__prop_dict[mode.prop_name].set_state(IBus.PropState.CHECKED)
+            self.update_property(self.__prop_dict[mode.prop_name])
+
+            self.input_mode = mode
+             */
+    }
+
     pub(crate) fn run_callback_by_name(
         &mut self,
         engine: *mut IBusEngine,
         function_name: &str,
     ) -> bool {
         if let Some(function) = self.command_map.get(function_name) {
+            info!("Calling function '{}'", function_name);
             function(self, engine);
             true
         } else {
+            error!("Unknown function '{}'", function_name);
             false
         }
     }
@@ -133,5 +174,30 @@ impl AkazaContext {
         self.hide_auxiliary_text()
         self.hide_preedit_text()
          */
+    }
+
+    fn commit_candidate(&mut self, engine: *mut IBusEngine) {
+        let s = self.build_string();
+        self.commit_string(engine, s.as_str());
+        /*
+        def commit_candidate(self):
+            self.logger.info("commit_candidate")
+            s = self.build_string()
+            self.logger.info(f"Committing {s}")
+            self.commit_string(s)
+         */
+    }
+
+    fn build_string(&self) -> String {
+        // TODO build string from clauses.
+        self.preedit.clone()
+
+        /*
+        def build_string(self):
+            result = ''
+        for clauseid, nodes in enumerate(self.clauses):
+            result += nodes[self.node_selected.get(clauseid, 0)].surface(lisp_evaluator)
+        return result
+        */
     }
 }

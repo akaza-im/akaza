@@ -1,6 +1,7 @@
 #![allow(non_upper_case_globals)]
 
 use std::ffi::{c_void, CString};
+use std::time::SystemTime;
 
 use anyhow::Result;
 use log::{info, warn};
@@ -50,7 +51,10 @@ unsafe extern "C" fn process_key_event(
     keycode: guint,
     modifiers: guint,
 ) -> bool {
-    info!("process_key_event~~ {}, {}, {}", keyval, keycode, modifiers);
+    info!(
+        "process_key_event: keyval={}, keycode={}, modifiers={}",
+        keyval, keycode, modifiers
+    );
 
     // ignore key release event
     if modifiers & IBusModifierType_IBUS_RELEASE_MASK != 0 {
@@ -193,6 +197,7 @@ unsafe fn update_preedit_text_before_henkan(context: &mut AkazaContext, engine: 
 }
 
 #[repr(C)]
+#[derive(Debug)]
 enum InputMode {
     Hiragana,
     Alnum,
@@ -201,12 +206,23 @@ enum InputMode {
 fn main() -> Result<()> {
     env_logger::init();
 
+    info!("Starting ibus-akaza(rust version)");
+
     unsafe {
+        let sys_time = SystemTime::now();
         let mut ac = AkazaContext::default();
+        let new_sys_time = SystemTime::now();
+        let difference = new_sys_time.duration_since(sys_time)?;
+        info!(
+            "Initialized ibus-akaza engine in {} milliseconds.",
+            difference.as_millis()
+        );
 
         ibus_akaza_set_callback(&mut ac as *mut _ as *mut c_void, process_key_event);
 
         ibus_akaza_init(true);
+
+        info!("Enter the ibus_main()");
 
         // run main loop
         ibus_main();
