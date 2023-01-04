@@ -25,7 +25,6 @@ use libakaza::akaza_builder::Akaza;
 use libakaza::graph::graph_resolver::Candidate;
 use libakaza::romkan::RomKanConverter;
 
-use crate::_make_preedit_word;
 use crate::commands::{ibus_akaza_commands_map, IbusAkazaCommand};
 
 #[repr(C)]
@@ -86,7 +85,7 @@ impl AkazaContext {
 
         // Convert to Hiragana.
         info!("Convert to Hiragana");
-        let (_yomi, word) = _make_preedit_word(self);
+        let (_yomi, word) = self.make_preedit_word();
 
         let preedit_attrs = ibus_attr_list_new();
         ibus_attr_list_append(
@@ -413,5 +412,32 @@ impl AkazaContext {
             let visible = (*self.lookup_table).get_number_of_candidates() > 0;
             ibus_engine_update_lookup_table(engine, self.lookup_table, to_gboolean(visible));
         }
+    }
+
+    pub fn make_preedit_word(&self) -> (String, String) {
+        let preedit = &self.preedit;
+        // If the first character is upper case, return preedit string itself.
+        if !preedit.is_empty() && preedit.chars().next().unwrap().is_ascii_uppercase() {
+            // TODO: meaningless clone process.
+            return (preedit.clone(), preedit.clone());
+        }
+
+        let yomi = self.romkan.to_hiragana(preedit.as_str());
+        (yomi.clone(), yomi)
+
+        /*
+            # 先頭が大文字だと、
+            if len(self.preedit_string) > 0 and self.preedit_string[0].isupper() \
+                    and self.force_selected_clause is None:
+                return self.preedit_string, self.preedit_string
+
+            yomi = self.romkan.to_hiragana(self.preedit_string)
+            if self.input_mode == INPUT_MODE_KATAKANA:
+                return yomi, jaconv.hira2kata(yomi)
+            elif self.input_mode == INPUT_MODE_HALFWIDTH_KATAKANA:
+                return yomi, jaconv.z2h(jaconv.hira2kata(yomi))
+            else:
+                return yomi, yomi
+        */
     }
 }

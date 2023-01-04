@@ -95,33 +95,6 @@ unsafe extern "C" fn process_key_event(
        */
 }
 
-fn _make_preedit_word(context: &mut AkazaContext) -> (String, String) {
-    let preedit = &context.preedit;
-    // If the first character is upper case, return preedit string itself.
-    if !preedit.is_empty() && preedit.chars().next().unwrap().is_ascii_uppercase() {
-        // TODO: meaningless clone process.
-        return (preedit.clone(), preedit.clone());
-    }
-
-    let yomi = context.romkan.to_hiragana(preedit.as_str());
-    (yomi.clone(), yomi)
-
-    /*
-        # 先頭が大文字だと、
-        if len(self.preedit_string) > 0 and self.preedit_string[0].isupper() \
-                and self.force_selected_clause is None:
-            return self.preedit_string, self.preedit_string
-
-        yomi = self.romkan.to_hiragana(self.preedit_string)
-        if self.input_mode == INPUT_MODE_KATAKANA:
-            return yomi, jaconv.hira2kata(yomi)
-        elif self.input_mode == INPUT_MODE_HALFWIDTH_KATAKANA:
-            return yomi, jaconv.z2h(jaconv.hira2kata(yomi))
-        else:
-            return yomi, yomi
-    */
-}
-
 fn main() -> Result<()> {
     env_logger::init();
 

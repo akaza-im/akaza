@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use ibus_sys::bindings::IBusEngine;
 
 use crate::context::InputMode;
-use crate::{AkazaContext, _make_preedit_word};
+use crate::AkazaContext;
 
 pub type IbusAkazaCommand = fn(&mut AkazaContext, *mut IBusEngine);
 
@@ -18,7 +18,7 @@ pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaComman
     });
     // 無変換状態では、ひらがなに変換してコミットします
     register("commit_preedit", |context, engine| {
-        let (_, surface) = _make_preedit_word(context);
+        let (_, surface) = context.make_preedit_word();
         context.commit_string(engine, surface.as_str());
     });
     register("set_input_mode_hiragana", |context, engine| {
