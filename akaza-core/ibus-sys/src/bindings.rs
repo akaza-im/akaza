@@ -3,6 +3,7 @@
 #![allow(dead_code)]
 
 // See bindgen.sh's output to improvement this file.
+// TODO: maybe i can update this file as more rust native interface...
 
 // ibus wrapper functions.
 
@@ -130,6 +131,8 @@ extern "C" {
     pub fn ibus_lookup_table_clear(table: *mut IBusLookupTable);
     #[doc = " ibus_lookup_table_get_number_of_candidates:\n @table: An IBusLookupTable.\n\n Return the number of candidate in the table.\n\n Returns: The number of candidates in the table"]
     pub fn ibus_lookup_table_get_number_of_candidates(table: *mut IBusLookupTable) -> guint;
+    #[doc = " ibus_lookup_table_append_candidate:\n @table: An IBusLookupTable.\n @text: candidate word/phrase to be appended (in IBusText format).\n\n Append a candidate word/phrase to IBusLookupTable, and increase reference."]
+    pub fn ibus_lookup_table_append_candidate(table: *mut IBusLookupTable, text: *mut IBusText);
 
     // engine
     pub fn ibus_engine_commit_text(engine: *mut IBusEngine, text: *mut IBusText);
@@ -149,6 +152,12 @@ extern "C" {
     pub fn ibus_engine_update_auxiliary_text(
         engine: *mut IBusEngine,
         text: *mut IBusText,
+        visible: gboolean,
+    );
+    #[doc = " ibus_engine_update_lookup_table:\n @engine: An IBusEngine.\n @lookup_table: An lookup_table.\n @visible: Whether the lookup_table is visible.\n\n Update the lookup table.\n\n (Note: The table object will be released, if it is floating.\n  If caller want to keep the object, caller should make the object\n  sink by g_object_ref_sink.)"]
+    pub fn ibus_engine_update_lookup_table(
+        engine: *mut IBusEngine,
+        lookup_table: *mut IBusLookupTable,
         visible: gboolean,
     );
 }

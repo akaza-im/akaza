@@ -4,8 +4,6 @@ use std::ffi::CString;
 use anyhow::Result;
 use log::{error, info, warn};
 
-use ibus_sys::bindings::ibus_engine_update_auxiliary_text;
-use ibus_sys::bindings::ibus_lookup_table_clear;
 use ibus_sys::bindings::ibus_lookup_table_get_number_of_candidates;
 use ibus_sys::bindings::ibus_lookup_table_new;
 use ibus_sys::bindings::ibus_text_new_from_string;
@@ -22,6 +20,8 @@ use ibus_sys::bindings::{
 };
 use ibus_sys::bindings::{ibus_engine_hide_auxiliary_text, to_gboolean};
 use ibus_sys::bindings::{ibus_engine_hide_preedit_text, ibus_engine_update_preedit_text};
+use ibus_sys::bindings::{ibus_engine_update_auxiliary_text, ibus_engine_update_lookup_table};
+use ibus_sys::bindings::{ibus_lookup_table_append_candidate, ibus_lookup_table_clear};
 use libakaza::akaza_builder::Akaza;
 use libakaza::graph::graph_resolver::Candidate;
 use libakaza::romkan::RomKanConverter;
@@ -41,6 +41,7 @@ pub struct AkazaContext {
     clauses: Vec<VecDeque<Candidate>>,
     // げんざいせんたくされているぶんせつ。
     current_clause: usize,
+    is_invalidate: bool,
 }
 
 impl AkazaContext {
@@ -57,6 +58,7 @@ impl AkazaContext {
                 akaza,
                 clauses: vec![],
                 current_clause: 0,
+                is_invalidate: false,
             }
         }
     }
@@ -133,10 +135,6 @@ impl AkazaContext {
     }
 
     pub fn in_henkan_mode(&self) -> bool {
-        /*
-        def in_henkan_mode(self):
-            return self.lookup_table.get_number_of_candidates() > 0
-         */
         unsafe { ibus_lookup_table_get_number_of_candidates(self.lookup_table) > 0 }
     }
 
@@ -257,34 +255,23 @@ impl AkazaContext {
 
             // 現在の未変換情報を元に、候補を算出していく。
             if !self.clauses.is_empty() {
-                // TODO implement here.
-                /*
-                   # lookup table に候補を詰め込んでいく。
-                   for node in self.clauses[self.current_clause]:
-                       candidate = IBus.Text.new_from_string(node.surface(lisp_evaluator))
-                       self.lookup_table.append_candidate(candidate)
-                */
+                // lookup table に候補を詰め込んでいく。
+                for node in &self.clauses[self.current_clause] {
+                    // TODO lisp
+                    let candidate = &node.kanji;
+                    ibus_lookup_table_append_candidate(self.lookup_table, candidate.to_ibus_text());
+                }
             }
         }
-
-        /*
-        def create_lookup_table(self):
-            # 一旦、ルックアップテーブルをクリアする
-            self.lookup_table.clear()
-
-            # 現在の未変換情報を元に、候補を産出していく。
-            if len(self.clauses) > 0:
-         */
     }
 
-    fn refresh(&self, engine: *mut IBusEngine) {
+    fn refresh(&mut self, engine: *mut IBusEngine) {
         unsafe {
-            // preedit_len = len(self.preedit_string)
-
             if self.clauses.is_empty() {
                 ibus_engine_hide_auxiliary_text(engine);
                 ibus_engine_hide_lookup_table(engine);
                 ibus_engine_hide_preedit_text(engine);
+                return;
             }
 
             let current_clause = &self.clauses[self.current_clause];
@@ -312,7 +299,6 @@ impl AkazaContext {
                     text.len() as guint,
                 ),
             );
-            // bgstart = sum([len(self.clauses[i][0].surface(lisp_evaluator)) for i in 0..self.current_clause])
             let bgstart: u32 = self.clauses.iter().map(|c| (c[0].kanji).len() as u32).sum();
             // 背景色を設定する。
             ibus_attr_list_append(
@@ -333,10 +319,17 @@ impl AkazaContext {
                 to_gboolean(!text.is_empty()),
             );
 
-            // TODO following things.
-            // # 候補があれば、選択肢を表示させる。
-            // self._update_lookup_table()
-            // self.is_invalidate = False
+            // 候補があれば、選択肢を表示させる。
+            self._update_lookup_table(engine);
+            self.is_invalidate = false;
+        }
+    }
+
+    /// 候補があれば lookup table を表示。なければ非表示にする。
+    fn _update_lookup_table(&self, engine: *mut IBusEngine) {
+        unsafe {
+            let visible = ibus_lookup_table_get_number_of_candidates(self.lookup_table) > 0;
+            ibus_engine_update_lookup_table(engine, self.lookup_table, to_gboolean(visible));
         }
     }
 }

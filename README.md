@@ -87,6 +87,7 @@ XDG の設定ファイルディレクトリ以下、通常であれば `$HOME/.c
  * [Japanese-Company-Lexicon](https://github.com/chakki-works/Japanese-Company-Lexicon)
  * [Faster and smaller n-gram language models](https://www.aclweb.org/anthology/P11-1027.pdf)
  * https://qiita.com/nekoaddict/items/ba4cfb972da6886cf1be
+ * https://github.com/lv7777/ibus-levena/
 
 ## THANKS TO
 
