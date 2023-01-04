@@ -337,7 +337,7 @@ impl RomKanConverter {
 
     pub fn to_hiragana(&self, src: &str) -> String {
         let src = src.to_ascii_lowercase();
-        let src = src.replace("nn", "n");
+        let src = src.replace("nn", "n'"); // replace nn as n'.
         let retval = self.romkan_pattern.replace_all(&src, |caps: &Captures| {
             let rom = caps.get(1).unwrap().as_str();
             if let Some(e) = self.romkan_map.get(rom) {
@@ -400,6 +400,7 @@ mod tests {
             ("komitthi", "こみってぃ"),
             ("ddha", "っでゃ"),
             ("zzye", "っじぇ"),
+            ("tanni", "たんい"),
         ];
         let converter = RomKanConverter::new();
         for (rom, kana) in data {
