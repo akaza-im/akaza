@@ -15,7 +15,6 @@ use ibus_sys::bindings::ibus_attr_list_new;
 use ibus_sys::bindings::ibus_attribute_new;
 use ibus_sys::bindings::ibus_engine_hide_lookup_table;
 use ibus_sys::bindings::ibus_engine_update_preedit_text;
-use ibus_sys::bindings::ibus_lookup_table_get_number_of_candidates;
 use ibus_sys::bindings::ibus_main;
 use ibus_sys::bindings::ibus_text_new_from_string;
 use ibus_sys::bindings::ibus_text_set_attributes;
@@ -25,6 +24,7 @@ use ibus_sys::bindings::IBusEngine;
 use ibus_sys::bindings::IBusModifierType_IBUS_CONTROL_MASK;
 use ibus_sys::bindings::IBusModifierType_IBUS_MOD1_MASK;
 use ibus_sys::bindings::IBusModifierType_IBUS_RELEASE_MASK;
+use ibus_sys::lookup_table::ibus_lookup_table_get_number_of_candidates;
 use libakaza::akaza_builder::AkazaBuilder;
 
 use crate::keymap::KeyMap;

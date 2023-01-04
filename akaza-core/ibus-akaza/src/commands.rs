@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use log::info;
 
 use ibus_sys::bindings::{
-    ibus_engine_hide_auxiliary_text, ibus_engine_hide_lookup_table, ibus_lookup_table_clear,
-    IBusEngine,
+    ibus_engine_hide_auxiliary_text, ibus_engine_hide_lookup_table, IBusEngine,
 };
+use ibus_sys::lookup_table::ibus_lookup_table_clear;
 
 use crate::{_make_preedit_word, update_preedit_text_before_henkan, AkazaContext, InputMode};
 
@@ -52,6 +52,8 @@ fn update_candidates(context: &mut AkazaContext, engine: *mut IBusEngine) {
 
 fn erase_character_before_cursor(context: &mut AkazaContext, engine: *mut IBusEngine) {
     info!("erase_character_before_cursor: {}", context.preedit);
+
+    // TODO move this to context.rs
     unsafe {
         if context.in_henkan_mode() {
             // 変換中の場合、無変換モードにもどす。

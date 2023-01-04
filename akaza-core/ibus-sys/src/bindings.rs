@@ -7,6 +7,7 @@
 
 // ibus wrapper functions.
 
+use crate::lookup_table::IBusLookupTable;
 use std::ffi::CString;
 
 pub type gchar = ::std::os::raw::c_char;
@@ -15,6 +16,17 @@ pub type gboolean = ::std::os::raw::c_int;
 pub type gsize = ::std::os::raw::c_ulong;
 pub type gssize = ::std::os::raw::c_long;
 pub type gint = ::std::os::raw::c_int;
+pub type gpointer = *mut ::std::os::raw::c_void;
+
+pub type GArray = _GArray;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct _GArray {
+    pub data: *mut gchar,
+    pub len: guint,
+}
+
+pub type IBusSerializable = [u64; 6usize];
 
 pub const IBusModifierType_IBUS_SHIFT_MASK: IBusModifierType = 1;
 pub const IBusModifierType_IBUS_LOCK_MASK: IBusModifierType = 2;
@@ -59,7 +71,7 @@ pub type IBusAttrUnderline = ::std::os::raw::c_uint;
 
 pub type IBusBus = [u64; 6usize];
 pub type IBusText = [u64; 9usize];
-pub type IBusLookupTable = [u64; 11usize];
+
 pub type IBusAttrList = [u64; 7usize];
 #[doc = " IBusAttribute:\n @type: IBusAttributeType\n @value: Value for the type.\n @start_index: The starting index, inclusive.\n @end_index: The ending index, exclusive.\n\n Signify the type, value and scope of the attribute.\n The scope starts from @start_index till the @end_index-1."]
 pub type IBusAttribute = [u64; 8usize];
@@ -119,20 +131,6 @@ extern "C" {
     pub fn ibus_text_new_from_string(str_: *const gchar) -> *mut IBusText;
     #[doc = " ibus_text_set_attributes:\n @text: An IBusText.\n @attrs: An IBusAttrList"]
     pub fn ibus_text_set_attributes(text: *mut IBusText, attrs: *mut IBusAttrList);
-
-    // lookup
-    #[doc = " ibus_lookup_table_new:\n @page_size: number of candidate shown per page, the max value is 16.\n @cursor_pos: position index of cursor.\n @cursor_visible: whether the cursor is visible.\n @round: TRUE for lookup table wrap around.\n\n Craetes a new #IBusLookupTable.\n\n Returns: A newly allocated #IBusLookupTable."]
-    pub fn ibus_lookup_table_new(
-        page_size: guint,
-        cursor_pos: guint,
-        cursor_visible: gboolean,
-        round: gboolean,
-    ) -> *mut IBusLookupTable;
-    pub fn ibus_lookup_table_clear(table: *mut IBusLookupTable);
-    #[doc = " ibus_lookup_table_get_number_of_candidates:\n @table: An IBusLookupTable.\n\n Return the number of candidate in the table.\n\n Returns: The number of candidates in the table"]
-    pub fn ibus_lookup_table_get_number_of_candidates(table: *mut IBusLookupTable) -> guint;
-    #[doc = " ibus_lookup_table_append_candidate:\n @table: An IBusLookupTable.\n @text: candidate word/phrase to be appended (in IBusText format).\n\n Append a candidate word/phrase to IBusLookupTable, and increase reference."]
-    pub fn ibus_lookup_table_append_candidate(table: *mut IBusLookupTable, text: *mut IBusText);
 
     // engine
     pub fn ibus_engine_commit_text(engine: *mut IBusEngine, text: *mut IBusText);

@@ -4,11 +4,8 @@ use std::ffi::CString;
 use anyhow::Result;
 use log::{error, info, warn};
 
-use ibus_sys::bindings::ibus_lookup_table_get_number_of_candidates;
-use ibus_sys::bindings::ibus_lookup_table_new;
 use ibus_sys::bindings::ibus_text_new_from_string;
 use ibus_sys::bindings::IBusEngine;
-use ibus_sys::bindings::IBusLookupTable;
 use ibus_sys::bindings::{gchar, StringExt};
 use ibus_sys::bindings::{
     guint, ibus_attr_list_append, ibus_attribute_new, ibus_engine_commit_text,
@@ -21,7 +18,9 @@ use ibus_sys::bindings::{
 use ibus_sys::bindings::{ibus_engine_hide_auxiliary_text, to_gboolean};
 use ibus_sys::bindings::{ibus_engine_hide_preedit_text, ibus_engine_update_preedit_text};
 use ibus_sys::bindings::{ibus_engine_update_auxiliary_text, ibus_engine_update_lookup_table};
-use ibus_sys::bindings::{ibus_lookup_table_append_candidate, ibus_lookup_table_clear};
+use ibus_sys::lookup_table::{
+    ibus_lookup_table_append_candidate, ibus_lookup_table_clear, IBusLookupTable,
+};
 use libakaza::akaza_builder::Akaza;
 use libakaza::graph::graph_resolver::Candidate;
 use libakaza::romkan::RomKanConverter;
@@ -46,20 +45,18 @@ pub struct AkazaContext {
 
 impl AkazaContext {
     pub(crate) fn new(akaza: Akaza) -> Self {
-        unsafe {
-            AkazaContext {
-                input_mode: InputMode::Hiragana,
-                cursor_pos: 0,
-                preedit: String::new(),
-                //         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
-                lookup_table: ibus_lookup_table_new(10, 0, 1, 1),
-                romkan: RomKanConverter::default(), // TODO make it configurable.
-                command_map: ibus_akaza_commands_map(),
-                akaza,
-                clauses: vec![],
-                current_clause: 0,
-                is_invalidate: false,
-            }
+        AkazaContext {
+            input_mode: InputMode::Hiragana,
+            cursor_pos: 0,
+            preedit: String::new(),
+            //         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
+            lookup_table: IBusLookupTable::new(10, 0, 1, 1),
+            romkan: RomKanConverter::default(), // TODO make it configurable.
+            command_map: ibus_akaza_commands_map(),
+            akaza,
+            clauses: vec![],
+            current_clause: 0,
+            is_invalidate: false,
         }
     }
 }
@@ -122,7 +119,7 @@ impl AkazaContext {
         }
     }
 
-    pub(crate) fn get_key_state(&self) -> KeyState {
+    pub(crate) fn get_key_state(&mut self) -> KeyState {
         // キー入力状態を返す。
         if self.preedit.is_empty() {
             // 未入力状態。
@@ -134,8 +131,8 @@ impl AkazaContext {
         }
     }
 
-    pub fn in_henkan_mode(&self) -> bool {
-        unsafe { ibus_lookup_table_get_number_of_candidates(self.lookup_table) > 0 }
+    pub fn in_henkan_mode(&mut self) -> bool {
+        unsafe { (*self.lookup_table).get_number_of_candidates() > 0 }
     }
 
     pub fn commit_string(&mut self, engine: *mut IBusEngine, text: &str) {
@@ -328,7 +325,7 @@ impl AkazaContext {
     /// 候補があれば lookup table を表示。なければ非表示にする。
     fn _update_lookup_table(&self, engine: *mut IBusEngine) {
         unsafe {
-            let visible = ibus_lookup_table_get_number_of_candidates(self.lookup_table) > 0;
+            let visible = (*self.lookup_table).get_number_of_candidates() > 0;
             ibus_engine_update_lookup_table(engine, self.lookup_table, to_gboolean(visible));
         }
     }
