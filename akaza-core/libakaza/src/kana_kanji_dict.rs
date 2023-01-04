@@ -101,7 +101,7 @@ mod tests {
         builder.add("なまえ", "名前");
         let dict = builder.build();
 
-        let mut kanjis = dict.find(&"わたし".to_string()).unwrap();
+        let mut kanjis = dict.find("わたし").unwrap();
         kanjis.sort();
         assert_eq!(kanjis, vec!["渡し".to_string(), "私".to_string()]);
     }

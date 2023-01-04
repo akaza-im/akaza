@@ -13,7 +13,7 @@ use ibus_sys::bindings::IBusEngine;
 use ibus_sys::bindings::IBusLookupTable;
 use ibus_sys::bindings::{gchar, StringExt};
 use ibus_sys::bindings::{
-    gsize, guint, ibus_attr_list_append, ibus_attribute_new, ibus_engine_commit_text,
+    guint, ibus_attr_list_append, ibus_attribute_new, ibus_engine_commit_text,
     IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND, IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE,
     IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
 };
