@@ -95,7 +95,7 @@ unsafe extern "C" fn process_key_event(
        */
 }
 
-unsafe fn _make_preedit_word(context: &mut AkazaContext) -> (String, String) {
+fn _make_preedit_word(context: &mut AkazaContext) -> (String, String) {
     let preedit = &context.preedit;
     // If the first character is upper case, return preedit string itself.
     if !preedit.is_empty() && preedit.chars().next().unwrap().is_ascii_uppercase() {
