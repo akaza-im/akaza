@@ -226,11 +226,7 @@ impl AkazaContext {
 
     pub fn commit_string(&mut self, engine: *mut IBusEngine, text: &str) {
         unsafe {
-            let text_c_str = CString::new(text.clone()).unwrap();
-            ibus_engine_commit_text(
-                engine,
-                ibus_text_new_from_string(text_c_str.as_ptr() as *const gchar),
-            );
+            ibus_engine_commit_text(engine, text.to_ibus_text());
             self.preedit.clear();
             ibus_lookup_table_clear(self.lookup_table);
             ibus_engine_hide_preedit_text(engine);
