@@ -2,7 +2,8 @@ use std::collections::HashMap;
 
 use ibus_sys::bindings::IBusEngine;
 
-use crate::{AkazaContext, InputMode, _make_preedit_word};
+use crate::context::InputMode;
+use crate::{AkazaContext, _make_preedit_word};
 
 pub type IbusAkazaCommand = fn(&mut AkazaContext, *mut IBusEngine);
 

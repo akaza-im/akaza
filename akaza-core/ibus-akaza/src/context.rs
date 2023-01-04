@@ -25,8 +25,25 @@ use libakaza::akaza_builder::Akaza;
 use libakaza::graph::graph_resolver::Candidate;
 use libakaza::romkan::RomKanConverter;
 
+use crate::_make_preedit_word;
 use crate::commands::{ibus_akaza_commands_map, IbusAkazaCommand};
-use crate::{InputMode, KeyState, _make_preedit_word};
+
+#[repr(C)]
+#[derive(Debug)]
+pub(crate) enum InputMode {
+    Hiragana,
+    Alnum,
+}
+
+#[derive(Debug, Hash, PartialEq, Copy, Clone)]
+pub enum KeyState {
+    // 何も入力されていない状態。
+    PreComposition,
+    // 変換処理に入る前。ひらがなを入力している段階。
+    Composition,
+    // 変換中
+    Conversion,
+}
 
 #[repr(C)]
 pub struct AkazaContext {

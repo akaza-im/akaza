@@ -15,7 +15,7 @@ use ibus_sys::bindings::IBusModifierType_IBUS_RELEASE_MASK;
 use ibus_sys::lookup_table::ibus_lookup_table_get_number_of_candidates;
 use libakaza::akaza_builder::AkazaBuilder;
 
-use crate::context::AkazaContext;
+use crate::context::{AkazaContext, InputMode};
 use crate::keymap::KeyMap;
 use crate::wrapper_bindings::{ibus_akaza_init, ibus_akaza_set_callback};
 
@@ -23,16 +23,6 @@ mod commands;
 mod context;
 mod keymap;
 mod wrapper_bindings;
-
-#[derive(Debug, Hash, PartialEq, Copy, Clone)]
-pub enum KeyState {
-    // 何も入力されていない状態。
-    PreComposition,
-    // 変換処理に入る前。ひらがなを入力している段階。
-    Composition,
-    // 変換中
-    Conversion,
-}
 
 unsafe extern "C" fn process_key_event(
     context: *mut c_void,
@@ -130,13 +120,6 @@ unsafe fn _make_preedit_word(context: &mut AkazaContext) -> (String, String) {
         else:
             return yomi, yomi
     */
-}
-
-#[repr(C)]
-#[derive(Debug)]
-enum InputMode {
-    Hiragana,
-    Alnum,
 }
 
 fn main() -> Result<()> {

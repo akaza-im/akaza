@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 
+use crate::context::KeyState;
 use ibus_sys::ibus_key::{
     IBUS_KEY_BackSpace, IBUS_KEY_Hangul, IBUS_KEY_Hangul_Hanja, IBUS_KEY_Henkan, IBUS_KEY_KP_Enter,
     IBUS_KEY_Muhenkan, IBUS_KEY_Return, IBUS_KEY_space,
 };
-
-use crate::KeyState;
 
 #[derive(Hash, PartialEq)]
 struct KeyPattern {
