@@ -19,6 +19,7 @@ fn pkgconfig(module: &str, flag: &str) -> Vec<String> {
 fn main() {
     println!("cargo:rustc-link-lib=ibus-1.0");
     println!("cargo:rerun-if-changed=wrapper.c");
+    println!("cargo:rerun-if-changed=wrapper.h");
 
     let mut p = cc::Build::new();
     let mut c = p.file("wrapper.c");
@@ -26,12 +27,13 @@ fn main() {
 
     // Normally, I dislike following options.
     // But, it's a temporary code.
-    // TODO: I will remove following options.
+    // TODO: remove following options.
     c = c.flag("-Wno-unused-parameter");
     c = c.flag("-Wno-sign-compare");
     c = c.flag("-Wno-incompatible-pointer-types");
 
-    for module in &["ibus-1.0", "enchant-2"] {
+    {
+        let module = &"ibus-1.0";
         for flag in pkgconfig(module, "--cflags") {
             c = c.flag(flag.as_str());
         }

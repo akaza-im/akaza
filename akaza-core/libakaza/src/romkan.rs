@@ -306,8 +306,8 @@ pub struct RomKanConverter {
     romkan_map: HashMap<&'static str, &'static str>,
 }
 
-impl RomKanConverter {
-    pub fn new() -> RomKanConverter {
+impl Default for RomKanConverter {
+    fn default() -> RomKanConverter {
         let romkan_map = default_romkan_map().clone();
         let mut romas = Vec::from_iter(romkan_map.keys());
         romas.sort_by_key(|a| std::cmp::Reverse(a.len()));
@@ -324,6 +324,12 @@ impl RomKanConverter {
             romkan_map,
         }
     }
+}
+
+impl RomKanConverter {
+    pub fn new() -> RomKanConverter {
+        Self::default()
+    }
 
     pub fn to_hiragana(&self, src: &str) -> String {
         let src = src.to_ascii_lowercase();
@@ -337,6 +343,18 @@ impl RomKanConverter {
             }
         });
         retval.into_owned()
+    }
+
+    // TODO https://github.com/tokuhirom/akaza/blob/kanakanji/libakaza/src/romkan.cc#L79-L95
+    // TODO https://github.com/tokuhirom/akaza/blob/kanakanji/libakaza/t/07_romkan.cc
+    pub fn remove_last_char(&self, src: &String) -> String {
+        return if src.is_empty() {
+            String::new()
+        } else {
+            let (i, _) = src.char_indices().last().unwrap();
+            let p = &src[0..i];
+            String::from(p)
+        };
     }
 }
 
