@@ -1,25 +1,13 @@
 #![allow(non_upper_case_globals)]
 
-use std::ffi::{c_void, CString};
+use std::ffi::c_void;
 use std::time::SystemTime;
 
 use anyhow::Result;
 use log::{info, warn};
 
-use crate::context::AkazaContext;
-use ibus_sys::bindings::gboolean;
-use ibus_sys::bindings::gchar;
 use ibus_sys::bindings::guint;
-use ibus_sys::bindings::ibus_attr_list_append;
-use ibus_sys::bindings::ibus_attr_list_new;
-use ibus_sys::bindings::ibus_attribute_new;
-use ibus_sys::bindings::ibus_engine_hide_lookup_table;
-use ibus_sys::bindings::ibus_engine_update_preedit_text;
 use ibus_sys::bindings::ibus_main;
-use ibus_sys::bindings::ibus_text_new_from_string;
-use ibus_sys::bindings::ibus_text_set_attributes;
-use ibus_sys::bindings::IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE;
-use ibus_sys::bindings::IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE;
 use ibus_sys::bindings::IBusEngine;
 use ibus_sys::bindings::IBusModifierType_IBUS_CONTROL_MASK;
 use ibus_sys::bindings::IBusModifierType_IBUS_MOD1_MASK;
@@ -27,6 +15,7 @@ use ibus_sys::bindings::IBusModifierType_IBUS_RELEASE_MASK;
 use ibus_sys::lookup_table::ibus_lookup_table_get_number_of_candidates;
 use libakaza::akaza_builder::AkazaBuilder;
 
+use crate::context::AkazaContext;
 use crate::keymap::KeyMap;
 use crate::wrapper_bindings::{ibus_akaza_init, ibus_akaza_set_callback};
 
@@ -94,7 +83,7 @@ unsafe extern "C" fn process_key_event(
                 context_ref.cursor_pos += 1;
 
                 // And update the display status.
-                update_preedit_text_before_henkan(context_ref, engine);
+                context_ref.update_preedit_text_before_henkan(engine);
                 return true;
             }
         }
@@ -143,60 +132,6 @@ unsafe fn _make_preedit_word(context: &mut AkazaContext) -> (String, String) {
     */
 }
 
-unsafe fn update_preedit_text_before_henkan(context: &mut AkazaContext, engine: *mut IBusEngine) {
-    info!("update_preedit_text_before_henkan");
-    if context.preedit.is_empty() {
-        ibus_engine_hide_lookup_table(engine);
-        return;
-    }
-
-    // Convert to Hiragana.
-    info!("Convert to Hiragana");
-    let (_yomi, word) = _make_preedit_word(context);
-
-    let preedit_attrs = ibus_attr_list_new();
-    ibus_attr_list_append(
-        preedit_attrs,
-        ibus_attribute_new(
-            IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE,
-            IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
-            0,
-            word.len() as guint,
-        ),
-    );
-    let word_c_str = CString::new(word.clone()).unwrap();
-    info!("Calling ibus_text_new_from_string");
-    let preedit_text = ibus_text_new_from_string(word_c_str.as_ptr() as *const gchar);
-    ibus_text_set_attributes(preedit_text, preedit_attrs);
-    info!("Callihng ibus_engine_update_preedit_text");
-    ibus_engine_update_preedit_text(
-        engine,
-        preedit_text,
-        word.len() as guint,
-        !word.is_empty() as gboolean,
-    )
-
-    /*
-       if len(self.preedit_string) == 0:
-           self.hide_preedit_text()
-           return
-
-       # 平仮名にする。
-       yomi, word = self._make_preedit_word()
-       self.clauses = [
-           [create_node(system_unigram_lm, 0, yomi, word)]
-       ]
-       self.current_clause = 0
-
-       preedit_attrs = IBus.AttrList()
-       preedit_attrs.append(IBus.Attribute.new(IBus.AttrType.UNDERLINE,
-                                               IBus.AttrUnderline.SINGLE, 0, len(word)))
-       preedit_text = IBus.Text.new_from_string(word)
-       preedit_text.set_attributes(preedit_attrs)
-       self.update_preedit_text(text=preedit_text, cursor_pos=len(word), visible=(len(word) > 0))
-    */
-}
-
 #[repr(C)]
 #[derive(Debug)]
 enum InputMode {
@@ -239,7 +174,6 @@ fn main() -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-
     #[test]
     fn test() {}
 }
