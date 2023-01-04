@@ -315,17 +315,15 @@ impl AkazaContext {
             // bgstart = sum([len(self.clauses[i][0].surface(lisp_evaluator)) for i in 0..self.current_clause])
             let bgstart: u32 = self.clauses.iter().map(|c| (c[0].kanji).len() as u32).sum();
             // 背景色を設定する。
-            unsafe {
-                ibus_attr_list_append(
-                    preedit_attrs,
-                    ibus_attribute_new(
-                        IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND,
-                        0x00333333,
-                        bgstart,
-                        bgstart + (current_node.kanji.len() as u32),
-                    ),
-                );
-            }
+            ibus_attr_list_append(
+                preedit_attrs,
+                ibus_attribute_new(
+                    IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND,
+                    0x00333333,
+                    bgstart,
+                    bgstart + (current_node.kanji.len() as u32),
+                ),
+            );
             let preedit_text = text.to_ibus_text();
             ibus_text_set_attributes(preedit_text, preedit_attrs);
             ibus_engine_update_preedit_text(
