@@ -57,6 +57,7 @@ pub struct AkazaContext {
     // げんざいせんたくされているぶんせつ。
     current_clause: usize,
     is_invalidate: bool,
+    cursor_moved: bool,
 }
 
 impl AkazaContext {
@@ -145,6 +146,7 @@ impl AkazaContext {
             clauses: vec![],
             current_clause: 0,
             is_invalidate: false,
+            cursor_moved: false,
         }
     }
 }
@@ -225,38 +227,51 @@ impl AkazaContext {
 
     pub fn commit_string(&mut self, engine: *mut IBusEngine, text: &str) {
         unsafe {
+            self.cursor_moved = false;
+
+            if self.in_henkan_mode() {
+                // 変換モードのときのみ学習を実施する
+                /*
+                   candidate_nodes = []
+                   for clauseid, nodes in enumerate(self.clauses):
+                       candidate_nodes.append(nodes[self.node_selected.get(clauseid, 0)])
+                   self.user_language_model.add_entry(candidate_nodes)
+                */
+            }
+
             ibus_engine_commit_text(engine, text.to_ibus_text());
+
             self.preedit.clear();
-            ibus_lookup_table_clear(self.lookup_table);
+            self.clauses.clear();
+            self.current_clause = 0;
+            // TODO self.node_selected = {};
+            // TODO self.force_selected_clause = None
+
+            self.lookup_table.as_mut().unwrap().clear();
+            self._update_lookup_table(engine);
+
+            ibus_engine_hide_auxiliary_text(engine);
             ibus_engine_hide_preedit_text(engine);
         }
 
         /*
-            def commit_string(self, text):
-        self.logger.info("commit_string.")
-        self.cursor_moved = False
+        def commit_string(self, text):
+            self.logger.info("commit_string.")
 
-        if self.in_henkan_mode():
-            # 変換モードのときのみ学習を実施する。
-            candidate_nodes = []
-            for clauseid, nodes in enumerate(self.clauses):
-                candidate_nodes.append(nodes[self.node_selected.get(clauseid, 0)])
-            self.user_language_model.add_entry(candidate_nodes)
+            self.commit_text(IBus.Text.new_from_string(text))
 
-        self.commit_text(IBus.Text.new_from_string(text))
+            self.preedit_string = ''
+            self.clauses = []
+            self.current_clause = 0
+            self.node_selected = {}
+            self.force_selected_clause = None
 
-        self.preedit_string = ''
-        self.clauses = []
-        self.current_clause = 0
-        self.node_selected = {}
-        self.force_selected_clause = None
+            self.lookup_table.clear()
+            self.update_lookup_table(self.lookup_table, False)
 
-        self.lookup_table.clear()
-        self.update_lookup_table(self.lookup_table, False)
-
-        self.hide_auxiliary_text()
-        self.hide_preedit_text()
-         */
+            self.hide_auxiliary_text()
+            self.hide_preedit_text()
+             */
     }
 
     fn commit_candidate(&mut self, engine: *mut IBusEngine) {

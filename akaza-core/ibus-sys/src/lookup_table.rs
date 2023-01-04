@@ -14,6 +14,7 @@ pub struct IBusLookupTable {
     pub candidates: *mut GArray,
     pub labels: *mut GArray,
 }
+
 impl IBusLookupTable {
     pub fn new(
         page_size: guint,
@@ -31,6 +32,10 @@ impl IBusLookupTable {
     pub fn get_number_of_candidates(&mut self) -> guint {
         info!("get_number_of_candidates: {:?}", self);
         unsafe { ibus_lookup_table_get_number_of_candidates(self as *mut Self) }
+    }
+
+    pub fn clear(&mut self) {
+        unsafe { ibus_lookup_table_clear(self as *mut Self) }
     }
 }
 
