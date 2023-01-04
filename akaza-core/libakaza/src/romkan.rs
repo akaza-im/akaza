@@ -304,6 +304,7 @@ fn default_romkan_map() -> HashMap<&'static str, &'static str> {
 pub struct RomKanConverter {
     romkan_pattern: Regex,
     romkan_map: HashMap<&'static str, &'static str>,
+    last_char_pattern: Regex,
 }
 
 impl Default for RomKanConverter {
@@ -319,9 +320,12 @@ impl Default for RomKanConverter {
         pattern += ".)";
 
         let romkan_pattern = Regex::new(&pattern).unwrap();
+        let last_char_pattern = Regex::new(&(pattern + "$")).unwrap();
+
         RomKanConverter {
             romkan_pattern,
             romkan_map,
+            last_char_pattern,
         }
     }
 }
@@ -345,16 +349,8 @@ impl RomKanConverter {
         retval.into_owned()
     }
 
-    // TODO https://github.com/tokuhirom/akaza/blob/kanakanji/libakaza/src/romkan.cc#L79-L95
-    // TODO https://github.com/tokuhirom/akaza/blob/kanakanji/libakaza/t/07_romkan.cc
-    pub fn remove_last_char(&self, src: &String) -> String {
-        return if src.is_empty() || src.char_indices().count() == 1 {
-            String::new()
-        } else {
-            let (i, _) = src.char_indices().last().unwrap();
-            let p = &src[0..i];
-            String::from(p)
-        };
+    pub fn remove_last_char(&self, src: &str) -> String {
+        self.last_char_pattern.replace(src, "").to_string()
     }
 }
 
@@ -363,13 +359,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_romkan() {
+    fn test_to_hiragana_simple() {
         let converter = RomKanConverter::new();
         assert_eq!(converter.to_hiragana("aiu"), "あいう");
     }
 
     #[test]
-    fn test_all() {
+    fn test_to_hiragana() {
         let data = [
             ("a", "あ"),
             ("ba", "ば"),
@@ -408,6 +404,23 @@ mod tests {
         let converter = RomKanConverter::new();
         for (rom, kana) in data {
             assert_eq!(converter.to_hiragana(rom), kana);
+        }
+    }
+
+    #[test]
+    fn remove_last_char() {
+        let cases: Vec<(&str, &str)> = vec![
+            ("aka", "a"),
+            ("sona", "so"),
+            ("son", "so"),
+            ("sonn", "so"),
+            ("sonnna", "sonn"),
+            ("sozh", "so"),
+        ];
+        let romkan = RomKanConverter::new();
+        for (src, expected) in cases {
+            let got = romkan.remove_last_char(src);
+            assert_eq!(got, expected);
         }
     }
 }
