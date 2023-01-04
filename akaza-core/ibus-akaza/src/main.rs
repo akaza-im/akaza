@@ -25,6 +25,7 @@ use ibus_sys::bindings::IBusEngine;
 use ibus_sys::bindings::IBusModifierType_IBUS_CONTROL_MASK;
 use ibus_sys::bindings::IBusModifierType_IBUS_MOD1_MASK;
 use ibus_sys::bindings::IBusModifierType_IBUS_RELEASE_MASK;
+use libakaza::akaza_builder::AkazaBuilder;
 
 use crate::keymap::KeyMap;
 use crate::wrapper_bindings::{ibus_akaza_init, ibus_akaza_set_callback};
@@ -98,7 +99,7 @@ unsafe extern "C" fn process_key_event(
             }
         }
         InputMode::Alnum => return false,
-        _ => return false,
+        // _ => return false,
     }
     false // not proceeded by rust code.
 
@@ -210,7 +211,11 @@ fn main() -> Result<()> {
 
     unsafe {
         let sys_time = SystemTime::now();
-        let mut ac = AkazaContext::default();
+        let akaza = AkazaBuilder::default()
+            // TODO take dictionary path from command line option.
+            .system_data_dir("/home/tokuhirom/dev/akaza/akaza-data/data")
+            .build()?;
+        let mut ac = AkazaContext::new(akaza);
         let new_sys_time = SystemTime::now();
         let difference = new_sys_time.duration_since(sys_time)?;
         info!(

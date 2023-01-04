@@ -22,6 +22,7 @@ pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaComman
         command!(erase_character_before_cursor),
         command!(set_input_mode_hiragana),
         command!(set_input_mode_alnum),
+        command!(update_candidates),
     ])
 }
 
@@ -43,6 +44,10 @@ fn set_input_mode_hiragana(context: &mut AkazaContext, engine: *mut IBusEngine) 
 
 fn set_input_mode_alnum(context: &mut AkazaContext, engine: *mut IBusEngine) {
     context.set_input_mode(InputMode::Alnum, engine)
+}
+
+fn update_candidates(context: &mut AkazaContext, engine: *mut IBusEngine) {
+    context.update_candidates(engine)
 }
 
 fn erase_character_before_cursor(context: &mut AkazaContext, engine: *mut IBusEngine) {

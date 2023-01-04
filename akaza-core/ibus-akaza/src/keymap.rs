@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use ibus_sys::ibus_key::{
     IBUS_KEY_BackSpace, IBUS_KEY_Hangul, IBUS_KEY_Hangul_Hanja, IBUS_KEY_Henkan, IBUS_KEY_KP_Enter,
-    IBUS_KEY_Muhenkan, IBUS_KEY_Return,
+    IBUS_KEY_Muhenkan, IBUS_KEY_Return, IBUS_KEY_space,
 };
 
 use crate::KeyState;
@@ -70,7 +70,6 @@ impl KeyMap {
         keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F10'], 'convert_to_half_romaji')
 
         keymap.register([KEY_STATE_CONVERSION], ['space'], 'cursor_down')
-        keymap.register([KEY_STATE_COMPOSITION], ['space'], 'update_candidates')
 
         keymap.register([KEY_STATE_CONVERSION], ['Return', 'KP_Enter'], 'commit_candidate')
 
@@ -116,6 +115,11 @@ impl KeyMap {
         );
 
         // basic operations.
+        builder.insert(
+            &[KeyState::Composition],
+            &[IBUS_KEY_space],
+            "update_candidates",
+        );
         builder.insert(
             &[KeyState::Conversion, KeyState::Composition],
             &[IBUS_KEY_BackSpace],

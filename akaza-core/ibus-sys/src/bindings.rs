@@ -6,6 +6,8 @@
 
 // ibus wrapper functions.
 
+use std::ffi::CString;
+
 pub type gchar = ::std::os::raw::c_char;
 pub type guint = ::std::os::raw::c_uint;
 pub type gboolean = ::std::os::raw::c_int;
@@ -85,11 +87,11 @@ impl GString {
         }
     }
 
-    pub fn as_string(&mut self) -> String {
-        unsafe {
-            String::from_raw_parts(self.str_ as *mut u8, self.len as usize, self.len as usize)
-        }
-    }
+    // pub fn as_string(&mut self) -> String {
+    //     unsafe {
+    //         String::from_raw_parts(self.str_ as *mut u8, self.len as usize, self.len as usize)
+    //     }
+    // }
 }
 
 extern "C" {
@@ -143,4 +145,27 @@ extern "C" {
     pub fn ibus_engine_hide_preedit_text(engine: *mut IBusEngine);
     #[doc = " ibus_engine_hide_auxiliary_text:\n @engine: An IBusEngine.\n\n Hide the auxiliary bar."]
     pub fn ibus_engine_hide_auxiliary_text(engine: *mut IBusEngine);
+    #[doc = " ibus_engine_update_auxiliary_text:\n @engine: An IBusEngine.\n @text: Update content.\n @visible: Whether the auxiliary text bar is visible.\n\n Update the auxiliary bar.\n\n (Note: The text object will be released, if it is floating.\n  If caller want to keep the object, caller should make the object\n  sink by g_object_ref_sink.)"]
+    pub fn ibus_engine_update_auxiliary_text(
+        engine: *mut IBusEngine,
+        text: *mut IBusText,
+        visible: gboolean,
+    );
+}
+
+pub trait StringExt {
+    fn to_ibus_text(&self) -> *mut IBusText;
+}
+
+impl StringExt for str {
+    fn to_ibus_text(&self) -> *mut IBusText {
+        unsafe {
+            let text_c_str = CString::new(self).unwrap();
+            ibus_text_new_from_string(text_c_str.as_ptr() as *const gchar)
+        }
+    }
+}
+
+pub fn to_gboolean(b: bool) -> gboolean {
+    i32::from(b)
 }
