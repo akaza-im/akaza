@@ -272,7 +272,7 @@ impl AkazaContext {
          */
     }
 
-    fn build_string(&self) -> String {
+    pub(crate) fn build_string(&self) -> String {
         let mut result = String::new();
         for (clauseid, nodes) in self.clauses.iter().enumerate() {
             // TODO lisp をひょうかする

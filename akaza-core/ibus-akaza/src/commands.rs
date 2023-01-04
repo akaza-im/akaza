@@ -14,12 +14,18 @@ macro_rules! command {
 }
 pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaCommand> {
     HashMap::from([
+        command!(commit_candidate),
         command!(commit_preedit),
         command!(erase_character_before_cursor),
         command!(set_input_mode_hiragana),
         command!(set_input_mode_alnum),
         command!(update_candidates),
     ])
+}
+
+fn commit_candidate(context: &mut AkazaContext, engine: *mut IBusEngine) {
+    let s = context.build_string();
+    context.commit_string(engine, s.as_str());
 }
 
 fn commit_preedit(context: &mut AkazaContext, engine: *mut IBusEngine) {
