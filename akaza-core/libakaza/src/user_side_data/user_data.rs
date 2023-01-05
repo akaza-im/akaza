@@ -1,7 +1,9 @@
 use std::collections::HashMap;
+use std::path::Path;
+use std::sync::Mutex;
 
 use anyhow::Result;
-use log::warn;
+use log::{info, warn};
 
 use marisa_sys::Marisa;
 
@@ -16,7 +18,8 @@ use crate::user_side_data::user_stats_utils::{read_user_stats_file, write_user_s
 #[derive(Default)]
 pub struct UserData {
     /// 読み仮名のトライ。入力変換時に共通接頭辞検索するために使用。
-    kana_trie: KanaTrie,
+    kana_trie: Mutex<KanaTrie>,
+
     unigram_user_stats: UniGramUserStats,
     bigram_user_stats: BiGramUserStats,
 
@@ -28,7 +31,31 @@ pub struct UserData {
 }
 
 impl UserData {
-    pub fn load(unigram_path: &String, bigram_path: &String, kana_trie_path: &String) -> UserData {
+    pub fn load_from_default_path() -> Result<Self> {
+        let basedir = xdg::BaseDirectories::with_prefix("akaza")?;
+        let unigram_path = basedir
+            .place_data_file(Path::new("unigram.v1.txt"))?
+            .to_str()
+            .unwrap()
+            .to_string();
+        let bigram_path = basedir
+            .place_data_file(Path::new("unigram.v1.txt"))?
+            .to_str()
+            .unwrap()
+            .to_string();
+        let kana_trie_path = basedir
+            .place_data_file(Path::new("unigram.v1.txt"))?
+            .to_str()
+            .unwrap()
+            .to_string();
+        info!(
+            "Load user data from default path: unigram={}, bigram={}, kana_trie={}",
+            unigram_path, bigram_path, kana_trie_path
+        );
+        Ok(UserData::load(&unigram_path, &bigram_path, &kana_trie_path))
+    }
+
+    pub fn load(unigram_path: &String, bigram_path: &String, kana_trie_path: &String) -> Self {
         // ユーザーデータが読み込めないことは fatal エラーではない。
         // 初回起動時にはデータがないので。
         // データがなければ初期所状態から始める
@@ -81,7 +108,7 @@ impl UserData {
         UserData {
             unigram_user_stats,
             bigram_user_stats,
-            kana_trie,
+            kana_trie: Mutex::new(kana_trie),
             unigram_path: Some(unigram_path.clone()),
             bigram_path: Some(bigram_path.clone()),
             kana_trie_path: Some(kana_trie_path.clone()),
@@ -90,16 +117,13 @@ impl UserData {
     }
 
     /// 入力確定した漢字のリストをユーザー統計データとして記録する。
-    pub fn record_entries(&mut self, kanji_kanas: Vec<String>) {
-        self.unigram_user_stats.record_entries(&kanji_kanas);
-        self.bigram_user_stats.record_entries(&kanji_kanas);
-
-        // for kana in kanas {
-        // TODO: record kanas to trie.
-        // }
+    /// "Surface/Kana" のフォーマットで渡すこと。
+    pub fn record_entries(&mut self, kanji_kanas: &Vec<String>) {
+        self.unigram_user_stats.record_entries(kanji_kanas);
+        self.bigram_user_stats.record_entries(kanji_kanas);
     }
 
-    fn write_user_stats_file(&self) -> Result<()> {
+    pub fn write_user_stats_file(&self) -> Result<()> {
         if let Some(unigram_path) = &self.unigram_path {
             write_user_stats_file(unigram_path, &self.unigram_user_stats.word_count)?;
         }

@@ -15,5 +15,6 @@ tempfile = "3"
 anyhow = "1.0.68"
 half = "2.2.0"
 kelp = "0.3.0"
+xdg = "2.4.1"
 
 [build-dependencies]

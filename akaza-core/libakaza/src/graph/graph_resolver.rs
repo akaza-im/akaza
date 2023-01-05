@@ -130,6 +130,7 @@ mod tests {
     use std::fs::File;
     use std::io::Write;
     use std::rc::Rc;
+    use std::sync::{Arc, Mutex};
 
     use crate::graph::graph_builder::GraphBuilder;
     use crate::graph::segmenter::{SegmentationResult, Segmenter};
@@ -173,7 +174,7 @@ mod tests {
         let graph_builder = GraphBuilder::new(
             dict,
             Default::default(),
-            Rc::new(user_data),
+            Arc::new(Mutex::new(user_data)),
             Rc::new(system_unigram_lm),
             Rc::new(system_bigram_lm),
         );
@@ -218,11 +219,11 @@ mod tests {
         let system_bigram_lm = system_bigram_lm_builder.build();
         let mut user_data = UserData::default();
         // 私/わたし のスコアをガッと上げる。
-        user_data.record_entries(vec!["私/わたし".to_string()]);
+        user_data.record_entries(&vec!["私/わたし".to_string()]);
         let graph_builder = GraphBuilder::new(
             dict,
             KanaKanjiDict::default(),
-            Rc::new(user_data),
+            Arc::new(Mutex::new(user_data)),
             Rc::new(system_unigram_lm),
             Rc::new(system_bigram_lm),
         );

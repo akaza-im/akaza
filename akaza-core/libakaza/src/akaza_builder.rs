@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 use std::ops::Range;
 use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
 
@@ -19,9 +20,14 @@ pub struct Akaza {
     pub segmenter: Segmenter,
     pub graph_resolver: GraphResolver,
     romkan_converter: RomKanConverter,
+    pub user_data: Arc<Mutex<UserData>>,
 }
 
 impl Akaza {
+    pub fn learn(&mut self, surface_kanas: &Vec<String>) {
+        self.user_data.lock().unwrap().record_entries(surface_kanas);
+    }
+
     pub fn convert(
         &self,
         yomi: &str,
@@ -88,9 +94,15 @@ impl Akaza {
 #[derive(Default)]
 pub struct AkazaBuilder {
     system_data_dir: Option<String>,
+    user_data: Option<Arc<Mutex<UserData>>>,
 }
 
 impl AkazaBuilder {
+    pub fn user_data(&mut self, user_data: Arc<Mutex<UserData>>) -> &mut Self {
+        self.user_data = Some(user_data);
+        self
+    }
+
     pub fn system_data_dir(&mut self, system_data_dir: &str) -> &mut AkazaBuilder {
         self.system_data_dir = Some(system_data_dir.to_string());
         self
@@ -136,13 +148,16 @@ impl AkazaBuilder {
 
         let segmenter = Segmenter::new(vec![system_kana_trie]);
 
-        // TODO use real user data.
-        let user_data = UserData::default();
+        let user_data = if let Some(d) = &self.user_data {
+            d.clone()
+        } else {
+            Arc::new(Mutex::new(UserData::default()))
+        };
 
         let graph_builder = GraphBuilder::new(
             system_kana_kanji_dict,
             system_single_term_dict,
-            Rc::new(user_data),
+            user_data.clone(),
             Rc::new(system_unigram_lm),
             Rc::new(system_bigram_lm),
         );
@@ -156,6 +171,7 @@ impl AkazaBuilder {
             segmenter,
             graph_resolver,
             romkan_converter,
+            user_data: user_data.clone(),
         })
     }
 }

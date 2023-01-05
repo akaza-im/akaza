@@ -320,12 +320,13 @@ impl AkazaContext {
 
             if self.in_henkan_mode() {
                 // 変換モードのときのみ学習を実施する
-                /*
-                   candidate_nodes = []
-                   for clauseid, nodes in enumerate(self.clauses):
-                       candidate_nodes.append(nodes[self.node_selected.get(clauseid, 0)])
-                   self.user_language_model.add_entry(candidate_nodes)
-                */
+                let mut targets: Vec<String> = Vec::new();
+                for (i, nodes) in self.clauses.iter().enumerate() {
+                    let idx = self.node_selected.get(&i).unwrap_or(&0);
+                    let node = &nodes[*idx];
+                    targets.push((node.kanji.to_string()) + "/" + &node.yomi);
+                }
+                self.akaza.learn(&targets);
             }
 
             ibus_engine_commit_text(engine, text.to_ibus_text());

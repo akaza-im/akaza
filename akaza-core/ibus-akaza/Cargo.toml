@@ -13,6 +13,5 @@ libakaza = { path = "../libakaza" }
 ibus-sys = { path = "../ibus-sys" }
 env_logger = "0.10.0"
 
-
 [build-dependencies]
 cc = "1.0.78"

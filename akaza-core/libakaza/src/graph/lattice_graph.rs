@@ -1,6 +1,7 @@
 use std::collections::btree_map::BTreeMap;
 use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 use log::{error, trace};
 
@@ -15,7 +16,7 @@ const DEFAULT_SCORE: f32 = -20.0; // log10(1e-20)
 pub struct LatticeGraph {
     pub(crate) yomi: String,
     pub(crate) graph: BTreeMap<i32, Vec<WordNode>>,
-    pub(crate) user_data: Rc<UserData>,
+    pub(crate) user_data: Arc<Mutex<UserData>>,
     pub(crate) system_unigram_lm: Rc<SystemUnigramLM>,
     pub(crate) system_bigram_lm: Rc<SystemBigramLM>,
 }
@@ -113,7 +114,12 @@ impl LatticeGraph {
     pub(crate) fn get_node_cost(&self, node: &WordNode) -> f32 {
         let key = node.kanji.to_string() + "/" + &node.yomi;
 
-        if let Some(user_cost) = self.user_data.get_unigram_cost(&node.kanji, &node.yomi) {
+        if let Some(user_cost) = self
+            .user_data
+            .lock()
+            .unwrap()
+            .get_unigram_cost(&node.kanji, &node.yomi)
+        {
             // use user's score. if it's exists.
             return user_cost;
         }

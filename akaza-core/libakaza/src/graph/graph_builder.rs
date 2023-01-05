@@ -1,5 +1,6 @@
 use std::collections::btree_map::BTreeMap;
 use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 use kelp::{hira2kata, ConvOption};
 
@@ -14,7 +15,7 @@ use crate::user_side_data::user_data::UserData;
 pub struct GraphBuilder {
     system_kana_kanji_dict: KanaKanjiDict,
     system_single_term_dict: KanaKanjiDict,
-    user_data: Rc<UserData>,
+    user_data: Arc<Mutex<UserData>>,
     system_unigram_lm: Rc<SystemUnigramLM>,
     system_bigram_lm: Rc<SystemBigramLM>,
 }
@@ -23,7 +24,7 @@ impl GraphBuilder {
     pub fn new(
         system_kana_kanji_dict: KanaKanjiDict,
         system_single_term_dict: KanaKanjiDict,
-        user_data: Rc<UserData>,
+        user_data: Arc<Mutex<UserData>>,
         system_unigram_lm: Rc<SystemUnigramLM>,
         system_bigram_lm: Rc<SystemBigramLM>,
     ) -> GraphBuilder {
@@ -118,7 +119,7 @@ mod tests {
         let graph_builder = GraphBuilder::new(
             KanaKanjiDict::default(),
             KanaKanjiDictBuilder::default().add("すし", "🍣").build(),
-            Rc::new(UserData::default()),
+            Arc::new(Mutex::new(UserData::default())),
             Rc::new(SystemUnigramLMBuilder::default().build()),
             Rc::new(SystemBigramLMBuilder::default().build()),
         );
@@ -141,7 +142,7 @@ mod tests {
         let graph_builder = GraphBuilder::new(
             KanaKanjiDict::default(),
             KanaKanjiDictBuilder::default().build(),
-            Rc::new(UserData::default()),
+            Arc::new(Mutex::new(UserData::default())),
             Rc::new(SystemUnigramLMBuilder::default().build()),
             Rc::new(SystemBigramLMBuilder::default().build()),
         );

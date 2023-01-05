@@ -13,6 +13,9 @@ struct marisa_obj {
     trie: *mut c_void,
 }
 
+// ↓↓ It's unsafe operation. I'll remove this in the future.
+unsafe impl Send for marisa_obj {}
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 struct marisa_keyset {
