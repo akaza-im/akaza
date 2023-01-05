@@ -274,13 +274,6 @@ impl AkazaContext {
     pub fn commit_candidate(&mut self, engine: *mut IBusEngine) {
         let s = self.build_string();
         self.commit_string(engine, s.as_str());
-        /*
-        def commit_candidate(self):
-            self.logger.info("commit_candidate")
-            s = self.build_string()
-            self.logger.info(f"Committing {s}")
-            self.commit_string(s)
-         */
     }
 
     pub(crate) fn build_string(&self) -> String {
@@ -455,11 +448,11 @@ impl AkazaContext {
 
     /// 次の変換候補を選択する。
     pub fn cursor_down(&mut self, engine: *mut IBusEngine) {
-        self.node_selected.insert(
-            self.current_clause,
-            self.lookup_table.get_cursor_pos() as usize,
-        );
         if self.lookup_table.cursor_down() {
+            self.node_selected.insert(
+                self.current_clause,
+                self.lookup_table.get_cursor_pos() as usize,
+            );
             self.cursor_moved = true;
             self.refresh(engine);
         }
