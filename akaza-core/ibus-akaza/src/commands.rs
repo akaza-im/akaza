@@ -5,6 +5,9 @@ use ibus_sys::engine::IBusEngine;
 use crate::context::InputMode;
 use crate::AkazaContext;
 
+/**
+ * shortcut key を設定可能な機能。
+ */
 pub type IbusAkazaCommand = fn(&mut AkazaContext, *mut IBusEngine);
 
 pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaCommand> {
