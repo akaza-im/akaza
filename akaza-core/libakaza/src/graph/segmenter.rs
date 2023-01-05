@@ -98,7 +98,7 @@ impl Segmenter {
 
             let mut candidates: HashSet<String> = HashSet::new();
             for trie in &self.tries {
-                let got = trie.common_prefix_search(&yomi.to_string());
+                let got = trie.common_prefix_search(yomi);
                 'insert: for word in got {
                     let ends_at = start_pos + word.len();
 
