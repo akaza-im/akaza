@@ -2,14 +2,14 @@ use std::collections::{HashMap, VecDeque};
 use std::ffi::CString;
 
 use anyhow::Result;
+use ibus_sys::attr_list::{ibus_attr_list_append, ibus_attr_list_new};
 use log::{error, info, warn};
 
-use ibus_sys::core::ibus_attr_list_new;
-use ibus_sys::core::to_gboolean;
-use ibus_sys::core::{
-    ibus_attr_list_append, ibus_attribute_new, IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND,
+use ibus_sys::attribute::{
+    ibus_attribute_new, IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND,
     IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE, IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
 };
+use ibus_sys::core::to_gboolean;
 use ibus_sys::engine::{
     ibus_engine_commit_text, ibus_engine_hide_preedit_text, ibus_engine_update_auxiliary_text,
     ibus_engine_update_lookup_table, ibus_engine_update_preedit_text, IBusEngine,

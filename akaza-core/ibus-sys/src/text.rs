@@ -1,6 +1,7 @@
-use crate::core::IBusAttrList;
-use crate::glib::gchar;
 use std::ffi::CString;
+
+use crate::attr_list::IBusAttrList;
+use crate::glib::gchar;
 
 extern "C" {
     pub fn ibus_text_new_from_string(str_: *const gchar) -> *mut IBusText;
