@@ -334,7 +334,7 @@ impl AkazaContext {
             self.clauses.clear();
             self.current_clause = 0;
             self.node_selected.clear();
-            // TODO self.force_selected_clause = None
+            self.force_selected_clause.clear();
 
             self.lookup_table.clear();
             self._update_lookup_table(engine);
