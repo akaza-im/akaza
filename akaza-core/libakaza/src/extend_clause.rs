@@ -3,6 +3,17 @@ use std::ops::Range;
 
 use crate::graph::graph_resolver::Candidate;
 
+// 現状維持するための文節データを返します。
+fn keep_current(clauses: &Vec<VecDeque<Candidate>>) -> Vec<Range<usize>> {
+    let mut force_selected_clause: Vec<Range<usize>> = Vec::new();
+    let mut offset = 0;
+    for yomi_len in clauses.iter().map(|f| f[0].yomi.len()) {
+        force_selected_clause.push(offset..offset + yomi_len);
+        offset += yomi_len;
+    }
+    force_selected_clause
+}
+
 /// 文節の選択範囲を右に拡張する。
 /// current_clause は現在選択されている分節。左から 0 origin である。
 pub fn extend_right(
@@ -15,7 +26,7 @@ pub fn extend_right(
     }
     // 一番右の文節が選択されていたらなにもできない。
     if current_clause == clauses.len() - 1 {
-        return Vec::new();
+        return keep_current(clauses);
     }
 
     // Note: Rust の range は exclusive.
@@ -56,15 +67,15 @@ pub fn extend_right(
 /// current_clause は現在選択されている分節。左から 0 origin である。
 pub fn extend_left(clauses: &Vec<VecDeque<Candidate>>, current_clause: usize) -> Vec<Range<usize>> {
     if clauses.len() <= 1 {
-        return Vec::new();
+        return keep_current(clauses);
     }
 
     if current_clause == 0 {
         // 一番左の文節にフォーカスがあたっているので、一番左の分節を短くする。
 
         if clauses[0][0].yomi.chars().count() == 1 {
-            // 一番左の分節が1文字しかない。
-            return Vec::new();
+            // 一番左の分節が1文字しかないときは現状維持の形で返す。
+            return keep_current(clauses);
         }
 
         let mut force_selected_clause: Vec<Range<usize>> = Vec::new();
@@ -143,17 +154,14 @@ mod test_base {
 #[cfg(test)]
 mod tests_right {
     use super::test_base::mk;
+    use super::test_base::to_vec;
     use super::*;
 
     #[test]
     fn test_extend_right() {
-        let (_, clauses) = mk(&["わ"]);
+        let (yomi, clauses) = mk(&["わ"]);
         let got = extend_right(&clauses, 0);
-        assert_eq!(
-            got.len(),
-            0,
-            "一番左の文節が選択されているから、force 指定は必要ない"
-        );
+        assert_eq!(to_vec(yomi, got), vec!("わ"));
     }
 
     // 第1文節を拡張した結果、第2文節がなくなるケース
@@ -161,9 +169,7 @@ mod tests_right {
     fn test_extend_right2() {
         let (yomi, clauses) = mk(&["わ", "た"]);
         let got = extend_right(&clauses, 0);
-        assert_ne!(got, vec!(), "There's 2 clause");
-        assert_eq!(&(yomi[got[0].clone()]), "わた");
-        assert_eq!(got.len(), 1);
+        assert_eq!(to_vec(yomi, got), vec!("わた"));
     }
 
     // ちゃんと伸ばせるケース
@@ -171,10 +177,7 @@ mod tests_right {
     fn test_extend_right3() {
         let (yomi, clauses) = mk(&["わ", "たし"]);
         let got = extend_right(&clauses, 0);
-        assert_ne!(got, vec!(), "There's 2 clause");
-        assert_eq!(got.len(), 2);
-        assert_eq!(&(yomi[got[0].clone()]), "わた");
-        assert_eq!(&(yomi[got[1].clone()]), "し");
+        assert_eq!(to_vec(yomi, got), vec!("わた", "し"));
     }
 }
 
@@ -186,25 +189,17 @@ mod tests_left {
 
     #[test]
     fn test_extend_left() {
-        let (_, clauses) = mk(&["わ"]);
+        let (yomi, clauses) = mk(&["わ"]);
         let got = extend_left(&clauses, 0);
-        assert_eq!(
-            got.len(),
-            0,
-            "一番左の文節が選択されているから、force 指定は必要ない"
-        );
+        assert_eq!(to_vec(yomi, got), vec!("わ"));
     }
 
     // 第1文節が選択されていて、第1文節が1文字のケース
     #[test]
     fn test_extend_left2() {
-        let (_, clauses) = mk(&["わ", "た"]);
+        let (yomi, clauses) = mk(&["わ", "た"]);
         let got = extend_left(&clauses, 0);
-        assert_eq!(
-            got.len(),
-            0,
-            "一番左の文節が選択されているから、force 指定は必要ない"
-        );
+        assert_eq!(to_vec(yomi, got), vec!("わ", "た"));
     }
 
     // 第1文節が選択されていて、第1文節が2文字以上のケース
@@ -221,5 +216,12 @@ mod tests_left {
         let (yomi, clauses) = mk(&["わだ", "た", "そ"]);
         let got = extend_left(&clauses, 1);
         assert_eq!(to_vec(yomi, got), vec!("わ", "だた", "そ"));
+    }
+
+    #[test]
+    fn test_extend_left5() {
+        let (yomi, clauses) = mk(&["およよよよ"]);
+        let got = extend_left(&clauses, 0);
+        assert_eq!(to_vec(yomi, got), vec!("およよよよ"));
     }
 }
