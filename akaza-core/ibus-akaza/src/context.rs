@@ -552,4 +552,24 @@ impl AkazaContext {
 
         self.refresh(engine);
     }
+
+    /// 選択する分節を左にずらす。
+    pub(crate) fn cursor_left(&mut self, engine: *mut IBusEngine) {
+        // 分節がなければ何もしない
+        if self.clauses.is_empty() {
+            return;
+        }
+
+        // 既に一番左だった場合、一番右にいく
+        if self.current_clause == 0 {
+            self.current_clause = self.clauses.len() - 1
+        } else {
+            self.current_clause -= 1
+        }
+
+        self.cursor_moved = true;
+        self.create_lookup_table();
+
+        self.refresh(engine);
+    }
 }
