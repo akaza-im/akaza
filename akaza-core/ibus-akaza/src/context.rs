@@ -599,7 +599,7 @@ impl AkazaContext {
     pub fn extend_clause_right(&mut self, engine: *mut IBusEngine) -> Result<()> {
         self.force_selected_clause = extend_right(&self.clauses, self.current_clause);
         self._update_candidates(engine)?;
-        // TODO: もし、分節の長さをいじったら、self.node_selected も変更するべき。
+        self.node_selected.clear();
         Ok(())
     }
 
@@ -607,7 +607,7 @@ impl AkazaContext {
     pub fn extend_clause_left(&mut self, engine: *mut IBusEngine) -> Result<()> {
         self.force_selected_clause = extend_left(&self.clauses, self.current_clause);
         self._update_candidates(engine)?;
-        // TODO: もし、分節の長さをいじったら、self.node_selected も変更するべき。
+        self.node_selected.clear();
         Ok(())
     }
 }
