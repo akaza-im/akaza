@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use crate::context::KeyState;
 use ibus_sys::ibus_key::{
-    IBUS_KEY_BackSpace, IBUS_KEY_Hangul, IBUS_KEY_Hangul_Hanja, IBUS_KEY_Henkan, IBUS_KEY_KP_Enter,
-    IBUS_KEY_KP_Left, IBUS_KEY_KP_Right, IBUS_KEY_KP_Up, IBUS_KEY_Left, IBUS_KEY_Muhenkan,
-    IBUS_KEY_Return, IBUS_KEY_Right, IBUS_KEY_Up, IBUS_KEY_space,
+    IBUS_KEY_BackSpace, IBUS_KEY_Down, IBUS_KEY_Hangul, IBUS_KEY_Hangul_Hanja, IBUS_KEY_Henkan,
+    IBUS_KEY_KP_Down, IBUS_KEY_KP_Enter, IBUS_KEY_KP_Left, IBUS_KEY_KP_Right, IBUS_KEY_KP_Up,
+    IBUS_KEY_Left, IBUS_KEY_Muhenkan, IBUS_KEY_Return, IBUS_KEY_Right, IBUS_KEY_Up, IBUS_KEY_space,
 };
 
 #[derive(Hash, PartialEq)]
@@ -80,8 +80,6 @@ impl KeyMap {
         keymap.register([KEY_STATE_CONVERSION], ['Page_Up', 'KP_Page_Up'], 'page_up')
         keymap.register([KEY_STATE_CONVERSION], ['Page_Down', 'KP_Page_Down'], 'page_down')
 
-        keymap.register([KEY_STATE_CONVERSION], ['Down', 'KP_Down'], 'cursor_down')
-
         keymap.register([KEY_STATE_CONVERSION], ['S-Right', 'S-KP_Right'], 'extend_clause_right')
 
         keymap.register([KEY_STATE_CONVERSION], ['S-Left', 'S-KP_Left'], 'extend_clause_left')
@@ -137,6 +135,11 @@ impl KeyMap {
             &[KeyState::Conversion],
             &[IBUS_KEY_Up, IBUS_KEY_KP_Up],
             "cursor_up",
+        );
+        builder.insert(
+            &[KeyState::Conversion],
+            &[IBUS_KEY_Down, IBUS_KEY_KP_Down],
+            "cursor_down",
         );
         builder.insert(
             &[KeyState::Conversion],
