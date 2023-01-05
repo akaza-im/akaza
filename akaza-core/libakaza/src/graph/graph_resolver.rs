@@ -108,6 +108,9 @@ impl GraphResolver {
                         cost: *costmap.get(f).unwrap(),
                     })
                     .collect();
+                candidates
+                    .make_contiguous()
+                    .sort_by(|a, b| b.cost.partial_cmp(&a.cost).unwrap());
                 candidates.push_front(Candidate {
                     kanji: node.kanji.clone(),
                     yomi: node.yomi.clone(),

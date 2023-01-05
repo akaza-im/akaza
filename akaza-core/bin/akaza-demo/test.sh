@@ -6,3 +6,4 @@ set -ex
 cargo run "$DATADIR" わたし
 cargo run "$DATADIR" わたしのなまえはなかのです
 cargo run "$DATADIR" きょう
+cargo run "$DATADIR" あきた
