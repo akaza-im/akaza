@@ -2,8 +2,9 @@
 #![allow(non_upper_case_globals)]
 #![allow(dead_code)]
 
-use ibus_sys::bindings::{guint, IBusEngine};
+use ibus_sys::bindings::guint;
 
+use ibus_sys::engine::IBusEngine;
 use std::ffi::c_void;
 
 // ibus-akaza original function in wrapper.c

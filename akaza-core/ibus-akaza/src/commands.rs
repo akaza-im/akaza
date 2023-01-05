@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use ibus_sys::bindings::IBusEngine;
+use ibus_sys::engine::IBusEngine;
 
 use crate::context::InputMode;
 use crate::AkazaContext;

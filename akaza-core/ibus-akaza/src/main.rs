@@ -8,10 +8,10 @@ use log::{info, trace, warn};
 
 use ibus_sys::bindings::guint;
 use ibus_sys::bindings::ibus_main;
-use ibus_sys::bindings::IBusEngine;
 use ibus_sys::bindings::IBusModifierType_IBUS_CONTROL_MASK;
 use ibus_sys::bindings::IBusModifierType_IBUS_MOD1_MASK;
 use ibus_sys::bindings::IBusModifierType_IBUS_RELEASE_MASK;
+use ibus_sys::engine::IBusEngine;
 use libakaza::akaza_builder::AkazaBuilder;
 
 use crate::context::{AkazaContext, InputMode};

@@ -2,6 +2,7 @@
 #![allow(non_upper_case_globals)]
 
 pub mod bindings;
+pub mod engine;
 pub mod glib;
 pub mod ibus_key;
 pub mod lookup_table;
