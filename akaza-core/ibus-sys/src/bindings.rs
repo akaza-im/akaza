@@ -79,35 +79,6 @@ pub type IBusAttribute = [u64; 8usize];
 pub type IBusEngine = [u64; 11usize];
 
 extern "C" {
-    pub fn g_string_insert_c(string: *mut GString, pos: gssize, c: gchar) -> *mut GString;
-}
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct GString {
-    pub str_: *mut gchar,
-    pub len: gsize,
-    pub allocated_len: gsize,
-}
-
-impl GString {
-    /*
-       g_string_insert_c(akaza->preedit, akaza->cursor_pos, keyval);
-    */
-    pub fn insert_c(&mut self, pos: gssize, c: gchar) {
-        unsafe {
-            g_string_insert_c(self, pos, c);
-        }
-    }
-
-    // pub fn as_string(&mut self) -> String {
-    //     unsafe {
-    //         String::from_raw_parts(self.str_ as *mut u8, self.len as usize, self.len as usize)
-    //     }
-    // }
-}
-
-extern "C" {
     pub fn ibus_bus_new() -> *mut IBusBus;
     pub fn ibus_init();
     pub fn ibus_main();
