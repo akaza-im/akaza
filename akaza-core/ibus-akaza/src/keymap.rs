@@ -92,6 +92,7 @@ impl KeyMap {
          */
 
         // TODO make this configurable.
+        // TODO use IBus.Hotkey
 
         // 入力モードの切り替え
         builder.insert(

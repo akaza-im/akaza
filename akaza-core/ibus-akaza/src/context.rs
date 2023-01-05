@@ -268,7 +268,7 @@ impl AkazaContext {
              */
     }
 
-    fn commit_candidate(&mut self, engine: *mut IBusEngine) {
+    pub fn commit_candidate(&mut self, engine: *mut IBusEngine) {
         let s = self.build_string();
         self.commit_string(engine, s.as_str());
         /*
