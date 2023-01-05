@@ -425,7 +425,7 @@ impl AkazaContext {
         // If the first character is upper case, return preedit string itself.
         if !preedit.is_empty() && preedit.chars().next().unwrap().is_ascii_uppercase() {
             // TODO: meaningless clone process.
-            return (preedit.clone(), preedit.clone());
+            return (preedit.clone(), preedit);
         }
 
         // hogen と入力された場合、"ほげn" と表示する。
