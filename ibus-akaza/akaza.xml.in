@@ -7,7 +7,7 @@
     <license>GPL</license>
     <author>Tokuhiro Matsuno &lt;tokuhirom@gmail.com&gt;</author>
     <homepage>https://github.com/tokuhirom/ibus-akaza</homepage>
-    <exec>@DATADIR@/ --ibus</exec>
+    <exec>@BINARY@ --ibus</exec>
     <textdomain>ibus-akaza</textdomain>
     <engines>
         <engine>

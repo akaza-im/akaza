@@ -10,7 +10,7 @@ mod tests {
     }
 
     fn datadir() -> String {
-        basedir() + "/../../akaza-data/data/"
+        basedir() + "/../akaza-data/data/"
     }
 
     fn load_unigram() -> SystemUnigramLM {

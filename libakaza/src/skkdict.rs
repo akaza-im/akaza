@@ -64,7 +64,7 @@ mod tests {
     #[test]
     fn test_skkdict() -> anyhow::Result<()> {
         let dictpath =
-            env!("CARGO_MANIFEST_DIR").to_string() + "/../../akaza-data/dict/SKK-JISYO.akaza";
+            env!("CARGO_MANIFEST_DIR").to_string() + "/../akaza-data/dict/SKK-JISYO.akaza";
         let file = File::open(&dictpath).with_context(|| format!("path={}", &dictpath))?;
         let mut buf = String::new();
         BufReader::new(file).read_to_string(&mut buf)?;

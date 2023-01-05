@@ -13,16 +13,22 @@ all: akaza.xml
 
 akaza.xml: akaza.xml.in
 	sed \
-	    -e "s:@DATADIR@:$(DATADIR):g" $< > $@
+	    -e "s:@BINARY@:$(PREFIX)/bin/ibus-akaza:g" \
+	    -e "s:@DATADIR@:$(DATADIR)/ibus-akaza/:g" $< > $@
 
+akaza-debug.xml: akaza.xml.in
+	sed \
+	    -e "s:@BINARY@:${PWD}/ibus-akaza-debug.sh:g" \
+	    -e "s:@DATADIR@:$(DATADIR)/ibus-akaza/:g" $< > $@
 
-install: ibus_akaza/config.py akaza.xml po/ja.mo
-	cargo install
-	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-akaza/ibus_akaza $(DESTDIR)$(SYSCONFDIR)/xdg/akaza $(DESTDIR)$(DATADIR)/ibus/component
-	install -m 0755 -d $(DESTDIR)$(DATADIR)/locale
+install: akaza.xml
+	cargo install --path=. --root=$(PREFIX)
 
 	install -m 0644 akaza.svg $(DESTDIR)$(DATADIR)/ibus-akaza
 	install -m 0644 akaza.xml $(DESTDIR)$(DATADIR)/ibus/component
+
+install-debug: akaza-debug.xml
+	install -m 0644 akaza-debug.xml $(DESTDIR)$(DATADIR)/ibus/component/akaza.xml
 
 test:
 	cargo test
@@ -33,5 +39,5 @@ uninstall:
 clean:
 	rm -f akaza.xml
 
-.PHONY: all test install uninstall clean
+.PHONY: all test install uninstall clean install-debug
 

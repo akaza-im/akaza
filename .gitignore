@@ -11,3 +11,4 @@ dist/
 perf.data
 callgrind.*
 target/
+/.idea/

@@ -8,7 +8,7 @@ mod tests {
     use libakaza::graph::graph_resolver::Candidate;
 
     fn load_akaza() -> Result<Akaza> {
-        let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/../../akaza-data/data/";
+        let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/../akaza-data/data/";
         AkazaBuilder::default()
             .system_data_dir(datadir.as_str())
             .build()

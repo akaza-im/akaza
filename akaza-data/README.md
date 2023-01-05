@@ -6,8 +6,8 @@ System dictionary/language model package for Akaza.
 
 ## How to build this?
 
-    cargo install --path ../akaza-core/bin/akaza-make-binary-dict
-    cargo install --path ../akaza-core/bin/akaza-make-system-lm
+    cargo install --path ../bin/akaza-make-binary-dict
+    cargo install --path ../bin/akaza-make-system-lm
     make
 
 ## PyPI's size limit
