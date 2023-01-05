@@ -521,6 +521,18 @@ impl AkazaContext {
         */
     }
 
+    /// 前の変換候補を選択する。
+    pub(crate) fn cursor_up(&mut self, engine: *mut IBusEngine) {
+        if self.lookup_table.cursor_up() {
+            self.node_selected.insert(
+                self.current_clause,
+                self.lookup_table.get_cursor_pos() as usize,
+            );
+            self.cursor_moved = true;
+            self.refresh(engine);
+        }
+    }
+
     /// 次の変換候補を選択する。
     pub fn cursor_down(&mut self, engine: *mut IBusEngine) {
         if self.lookup_table.cursor_down() {

@@ -45,6 +45,9 @@ pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaComman
     register("cursor_left", |context, engine| {
         context.cursor_left(engine);
     });
+    register("cursor_up", |context, engine| {
+        context.cursor_up(engine);
+    });
 
     function_map
 }
