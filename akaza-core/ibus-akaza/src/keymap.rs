@@ -1,5 +1,5 @@
-use ibus_sys::core::{IBusModifierType_IBUS_MODIFIER_MASK, IBusModifierType_IBUS_SHIFT_MASK};
-use log::{info, trace};
+use ibus_sys::core::IBusModifierType_IBUS_SHIFT_MASK;
+use log::trace;
 use std::collections::HashMap;
 
 use crate::context::KeyState;
