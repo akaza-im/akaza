@@ -1,4 +1,4 @@
-use crate::bindings::gpointer;
+use crate::core::gpointer;
 
 extern "C" {
     // This method retain the object's reference count.n

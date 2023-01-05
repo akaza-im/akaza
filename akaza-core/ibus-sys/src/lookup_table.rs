@@ -1,4 +1,4 @@
-use crate::bindings::{gboolean, gint, gpointer, guint, GArray, IBusSerializable};
+use crate::core::{gboolean, gint, gpointer, guint, GArray, IBusSerializable};
 use crate::glib::g_object_ref_sink;
 use crate::text::IBusText;
 

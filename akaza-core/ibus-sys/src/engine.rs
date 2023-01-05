@@ -1,4 +1,4 @@
-use crate::bindings::{gboolean, guint};
+use crate::core::{gboolean, guint};
 use crate::lookup_table::IBusLookupTable;
 use crate::text::IBusText;
 

@@ -4,11 +4,11 @@ use std::ffi::CString;
 use anyhow::Result;
 use log::{error, info, warn};
 
-use ibus_sys::bindings::gboolean;
-use ibus_sys::bindings::gchar;
-use ibus_sys::bindings::ibus_attr_list_new;
-use ibus_sys::bindings::to_gboolean;
-use ibus_sys::bindings::{
+use ibus_sys::core::gboolean;
+use ibus_sys::core::gchar;
+use ibus_sys::core::ibus_attr_list_new;
+use ibus_sys::core::to_gboolean;
+use ibus_sys::core::{
     guint, ibus_attr_list_append, ibus_attribute_new, IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND,
     IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE, IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
 };
