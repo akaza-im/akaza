@@ -27,7 +27,7 @@ unsafe extern "C" fn process_key_event(
     modifiers: guint,
 ) -> bool {
     let context_ref = &mut *(context as *mut AkazaContext);
-    return context_ref.process_key_event(engine, keyval, keycode, modifiers);
+    context_ref.process_key_event(engine, keyval, keycode, modifiers)
 }
 
 fn main() -> Result<()> {
