@@ -1,4 +1,4 @@
-use ibus_sys::core::IBusModifierType_IBUS_SHIFT_MASK;
+use ibus_sys::core::{IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_SHIFT_MASK};
 use log::trace;
 use std::collections::HashMap;
 
@@ -6,7 +6,8 @@ use crate::context::KeyState;
 use ibus_sys::ibus_key::{
     IBUS_KEY_BackSpace, IBUS_KEY_Down, IBUS_KEY_Hangul, IBUS_KEY_Hangul_Hanja, IBUS_KEY_Henkan,
     IBUS_KEY_KP_Down, IBUS_KEY_KP_Enter, IBUS_KEY_KP_Left, IBUS_KEY_KP_Right, IBUS_KEY_KP_Up,
-    IBUS_KEY_Left, IBUS_KEY_Muhenkan, IBUS_KEY_Return, IBUS_KEY_Right, IBUS_KEY_Up, IBUS_KEY_space,
+    IBUS_KEY_Left, IBUS_KEY_Muhenkan, IBUS_KEY_Return, IBUS_KEY_Right, IBUS_KEY_Up, IBUS_KEY_h,
+    IBUS_KEY_space,
 };
 
 #[derive(Hash, PartialEq)]
@@ -128,6 +129,12 @@ impl KeyMap {
             &[KeyState::Conversion, KeyState::Composition],
             &[IBUS_KEY_BackSpace],
             0,
+            "erase_character_before_cursor",
+        );
+        builder.insert(
+            &[KeyState::Conversion, KeyState::Composition],
+            &[IBUS_KEY_h],
+            IBusModifierType_IBUS_CONTROL_MASK,
             "erase_character_before_cursor",
         );
         builder.insert(
