@@ -2,9 +2,9 @@ use std::collections::{HashMap, VecDeque};
 use std::ffi::CString;
 
 use anyhow::Result;
-use ibus_sys::attr_list::{ibus_attr_list_append, ibus_attr_list_new};
 use log::{error, info, warn};
 
+use ibus_sys::attr_list::{ibus_attr_list_append, ibus_attr_list_new};
 use ibus_sys::attribute::{
     ibus_attribute_new, IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND,
     IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE, IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
@@ -104,7 +104,7 @@ impl AkazaContext {
         }
 
         // Convert to Hiragana.
-        let (_yomi, word) = self.make_preedit_word();
+        let (_yomi, surface) = self.make_preedit_word();
 
         let preedit_attrs = ibus_attr_list_new();
         ibus_attr_list_append(
@@ -113,17 +113,17 @@ impl AkazaContext {
                 IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE,
                 IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
                 0,
-                word.len() as guint,
+                surface.len() as guint,
             ),
         );
-        let word_c_str = CString::new(word.clone()).unwrap();
+        let word_c_str = CString::new(surface.clone()).unwrap();
         let preedit_text = ibus_text_new_from_string(word_c_str.as_ptr() as *const gchar);
         ibus_text_set_attributes(preedit_text, preedit_attrs);
         ibus_engine_update_preedit_text(
             engine,
             preedit_text,
-            word.len() as guint,
-            !word.is_empty() as gboolean,
+            surface.len() as guint,
+            !surface.is_empty() as gboolean,
         )
 
         /*
@@ -419,16 +419,29 @@ impl AkazaContext {
         }
     }
 
+    /// (yomi, surface)
     pub fn make_preedit_word(&self) -> (String, String) {
-        let preedit = &self.preedit;
+        let mut preedit = self.preedit.clone();
         // If the first character is upper case, return preedit string itself.
         if !preedit.is_empty() && preedit.chars().next().unwrap().is_ascii_uppercase() {
             // TODO: meaningless clone process.
             return (preedit.clone(), preedit.clone());
         }
 
+        // hogen と入力された場合、"ほげn" と表示する。
+        // hogena となったら "ほげな"
+        // hogenn となったら "ほげん" と表示する必要があるため。
+        // 「ん」と一旦表示された後に「な」に変化したりすると気持ち悪く感じる。
+        let suffix = if preedit.ends_with('n') && !preedit.ends_with("nn") {
+            let (i, _) = preedit.char_indices().last().unwrap();
+            preedit = preedit[0..i].to_string();
+            "n"
+        } else {
+            ""
+        };
         let yomi = self.romkan.to_hiragana(preedit.as_str());
-        (yomi.clone(), yomi)
+        let surface = yomi.clone();
+        (yomi + suffix, surface + suffix)
 
         /*
             # 先頭が大文字だと、
