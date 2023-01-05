@@ -1,5 +1,6 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, LinkedList, VecDeque};
 use std::ffi::CString;
+use std::ops::Range;
 
 use anyhow::Result;
 use log::{error, info, trace, warn};
@@ -10,8 +11,11 @@ use ibus_sys::attribute::{
     IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE, IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
 };
 use ibus_sys::core::{
-    to_gboolean, IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_MOD1_MASK,
-    IBusModifierType_IBUS_RELEASE_MASK,
+    to_gboolean, IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_HYPER_MASK,
+    IBusModifierType_IBUS_META_MASK, IBusModifierType_IBUS_MOD1_MASK,
+    IBusModifierType_IBUS_MOD2_MASK, IBusModifierType_IBUS_MOD3_MASK,
+    IBusModifierType_IBUS_MOD4_MASK, IBusModifierType_IBUS_MOD5_MASK,
+    IBusModifierType_IBUS_RELEASE_MASK, IBusModifierType_IBUS_SHIFT_MASK,
 };
 use ibus_sys::engine::{
     ibus_engine_commit_text, ibus_engine_hide_preedit_text, ibus_engine_update_auxiliary_text,
@@ -23,6 +27,7 @@ use ibus_sys::glib::{gboolean, guint};
 use ibus_sys::lookup_table::{ibus_lookup_table_append_candidate, IBusLookupTable};
 use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, StringExt};
 use libakaza::akaza_builder::Akaza;
+use libakaza::extend_clause::extend_right;
 use libakaza::graph::graph_resolver::Candidate;
 use libakaza::romkan::RomKanConverter;
 
@@ -63,6 +68,8 @@ pub struct AkazaContext {
     // key は、clause 番号。value は、node の index。
     node_selected: HashMap<usize, usize>,
     keymap: KeyMap,
+    /// シフト+右 or シフト+左で
+    force_selected_clause: Vec<Range<usize>>,
 }
 
 impl AkazaContext {
@@ -82,6 +89,7 @@ impl AkazaContext {
             cursor_moved: false,
             node_selected: HashMap::new(),
             keymap: KeyMap::new(),
+            force_selected_clause: Vec::new(),
         }
     }
 }
@@ -110,7 +118,24 @@ impl AkazaContext {
 
         // TODO configure keymap in ~/.config/akaza/keymap.yml?
         trace!("KeyState={:?}", key_state);
-        if let Some(callback) = self.keymap.get(&key_state, keyval).cloned() {
+        if let Some(callback) = self
+            .keymap
+            .get(
+                &key_state,
+                keyval,
+                modifiers
+                    & (IBusModifierType_IBUS_CONTROL_MASK
+                        | IBusModifierType_IBUS_SHIFT_MASK
+                        | IBusModifierType_IBUS_META_MASK
+                        | IBusModifierType_IBUS_HYPER_MASK
+                        | IBusModifierType_IBUS_MOD1_MASK
+                        | IBusModifierType_IBUS_MOD2_MASK
+                        | IBusModifierType_IBUS_MOD3_MASK
+                        | IBusModifierType_IBUS_MOD4_MASK
+                        | IBusModifierType_IBUS_MOD5_MASK),
+            )
+            .cloned()
+        {
             return self.run_callback_by_name(engine, callback.as_str());
         }
 
@@ -367,28 +392,13 @@ impl AkazaContext {
         if self.preedit.is_empty() {
             self.clauses = vec![]
         } else {
-            // TODO support force selected.
-            self.clauses = self.akaza.convert(self.preedit.as_str(), &vec![])?;
+            self.clauses = self
+                .akaza
+                .convert(self.preedit.as_str(), &self.force_selected_clause)?;
         }
         self.create_lookup_table();
         self.refresh(engine);
         Ok(())
-        /*
-           def _update_candidates(self):
-               if len(self.preedit_string) > 0:
-                   # 変換をかける
-                   # print(f"-------{self.preedit_string}-----{self.force_selected_clause}----PPP")
-                   slices = None
-                   if self.force_selected_clause:
-                       slices = [Slice(s.start, s.stop-s.start) for s in self.force_selected_clause]
-                   # print(f"-------{self.preedit_string}-----{self.force_selected_clause}---{slices}----PPP")
-                   self.clauses = self.akaza.convert(self.preedit_string, slices)
-               else:
-                   self.clauses = []
-               self.create_lookup_table()
-
-               self.refresh()
-        */
     }
 
     /**
@@ -583,5 +593,13 @@ impl AkazaContext {
         self.create_lookup_table();
 
         self.refresh(engine);
+    }
+
+    /// 文節の選択範囲を右方向に広げる
+    pub fn extend_clause_right(&mut self, engine: *mut IBusEngine) -> Result<()> {
+        self.force_selected_clause = extend_right(&self.clauses, self.current_clause);
+        self._update_candidates(engine)?;
+        // TODO: もし、分節の長さをいじったら、self.node_selected も変更するべき。
+        Ok(())
     }
 }

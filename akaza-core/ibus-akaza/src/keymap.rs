@@ -1,3 +1,5 @@
+use ibus_sys::core::{IBusModifierType_IBUS_MODIFIER_MASK, IBusModifierType_IBUS_SHIFT_MASK};
+use log::{info, trace};
 use std::collections::HashMap;
 
 use crate::context::KeyState;
@@ -11,13 +13,18 @@ use ibus_sys::ibus_key::{
 struct KeyPattern {
     key_state: KeyState,
     keyval: u32,
+    modifier: u32,
 }
 
 impl Eq for KeyPattern {}
 
 impl KeyPattern {
-    fn new(key_state: KeyState, keyval: u32) -> Self {
-        KeyPattern { key_state, keyval }
+    fn new(key_state: KeyState, keyval: u32, modifier: u32) -> Self {
+        KeyPattern {
+            key_state,
+            keyval,
+            modifier,
+        }
     }
 }
 
@@ -32,11 +39,13 @@ impl KeyMapBuilder {
         }
     }
 
-    fn insert(&mut self, key_states: &[KeyState], keyvals: &[u32], func_name: &str) {
+    fn insert(&mut self, key_states: &[KeyState], keyvals: &[u32], modifier: u32, func_name: &str) {
         for key_state in key_states {
             for keyval in keyvals {
-                self.keymap
-                    .insert(KeyPattern::new(*key_state, *keyval), func_name.to_string());
+                self.keymap.insert(
+                    KeyPattern::new(*key_state, *keyval, modifier),
+                    func_name.to_string(),
+                );
             }
         }
     }
@@ -80,7 +89,6 @@ impl KeyMap {
         keymap.register([KEY_STATE_CONVERSION], ['Page_Up', 'KP_Page_Up'], 'page_up')
         keymap.register([KEY_STATE_CONVERSION], ['Page_Down', 'KP_Page_Down'], 'page_down')
 
-        keymap.register([KEY_STATE_CONVERSION], ['S-Right', 'S-KP_Right'], 'extend_clause_right')
 
         keymap.register([KEY_STATE_CONVERSION], ['S-Left', 'S-KP_Left'], 'extend_clause_left')
          */
@@ -96,6 +104,7 @@ impl KeyMap {
                 KeyState::Conversion,
             ],
             &[IBUS_KEY_Henkan, IBUS_KEY_Hangul],
+            0,
             "set_input_mode_hiragana",
         );
         builder.insert(
@@ -105,6 +114,7 @@ impl KeyMap {
                 KeyState::Conversion,
             ],
             &[IBUS_KEY_Muhenkan, IBUS_KEY_Hangul_Hanja],
+            0,
             "set_input_mode_alnum",
         );
 
@@ -112,44 +122,60 @@ impl KeyMap {
         builder.insert(
             &[KeyState::Composition],
             &[IBUS_KEY_space],
+            0,
             "update_candidates",
         );
-        builder.insert(&[KeyState::Conversion], &[IBUS_KEY_space], "cursor_down");
+        builder.insert(&[KeyState::Conversion], &[IBUS_KEY_space], 0, "cursor_down");
 
         builder.insert(
             &[KeyState::Conversion, KeyState::Composition],
             &[IBUS_KEY_BackSpace],
+            0,
             "erase_character_before_cursor",
         );
         builder.insert(
             &[KeyState::Conversion],
             &[IBUS_KEY_Return, IBUS_KEY_KP_Enter],
+            0,
             "commit_candidate",
         );
         builder.insert(
             &[KeyState::Composition],
             &[IBUS_KEY_Return, IBUS_KEY_KP_Enter],
+            0,
             "commit_preedit",
         );
         builder.insert(
             &[KeyState::Conversion],
             &[IBUS_KEY_Up, IBUS_KEY_KP_Up],
+            0,
             "cursor_up",
         );
         builder.insert(
             &[KeyState::Conversion],
             &[IBUS_KEY_Down, IBUS_KEY_KP_Down],
+            0,
             "cursor_down",
         );
         builder.insert(
             &[KeyState::Conversion],
             &[IBUS_KEY_Right, IBUS_KEY_KP_Right],
+            0,
             "cursor_right",
         );
         builder.insert(
             &[KeyState::Conversion],
             &[IBUS_KEY_Left, IBUS_KEY_KP_Left],
+            0,
             "cursor_left",
+        );
+
+        // keymap.register([KEY_STATE_CONVERSION], ['S-Right', 'S-KP_Right'], 'extend_clause_right')
+        builder.insert(
+            &[KeyState::Conversion],
+            &[IBUS_KEY_Right, IBUS_KEY_KP_Right],
+            IBusModifierType_IBUS_SHIFT_MASK,
+            "extend_clause_right",
         );
 
         KeyMap {
@@ -157,7 +183,9 @@ impl KeyMap {
         }
     }
 
-    pub fn get(&self, key_state: &KeyState, keyval: u32) -> Option<&String> {
-        self.keymap.get(&KeyPattern::new(*key_state, keyval))
+    pub fn get(&self, key_state: &KeyState, keyval: u32, modifier: u32) -> Option<&String> {
+        trace!("MODIFIER: {}", modifier);
+        self.keymap
+            .get(&KeyPattern::new(*key_state, keyval, modifier))
     }
 }
