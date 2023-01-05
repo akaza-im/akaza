@@ -88,9 +88,6 @@ impl KeyMap {
 
         keymap.register([KEY_STATE_CONVERSION], ['Page_Up', 'KP_Page_Up'], 'page_up')
         keymap.register([KEY_STATE_CONVERSION], ['Page_Down', 'KP_Page_Down'], 'page_down')
-
-
-        keymap.register([KEY_STATE_CONVERSION], ['S-Left', 'S-KP_Left'], 'extend_clause_left')
          */
 
         // TODO make this configurable.
@@ -170,12 +167,17 @@ impl KeyMap {
             "cursor_left",
         );
 
-        // keymap.register([KEY_STATE_CONVERSION], ['S-Right', 'S-KP_Right'], 'extend_clause_right')
         builder.insert(
             &[KeyState::Conversion],
             &[IBUS_KEY_Right, IBUS_KEY_KP_Right],
             IBusModifierType_IBUS_SHIFT_MASK,
             "extend_clause_right",
+        );
+        builder.insert(
+            &[KeyState::Conversion],
+            &[IBUS_KEY_Left, IBUS_KEY_KP_Left],
+            IBusModifierType_IBUS_SHIFT_MASK,
+            "extend_clause_left",
         );
 
         KeyMap {

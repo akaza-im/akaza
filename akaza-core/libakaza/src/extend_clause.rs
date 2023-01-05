@@ -52,42 +52,174 @@ pub fn extend_right(
     force_selected_clause
 }
 
+/// 文節の選択範囲を **左** に拡張する。
+/// current_clause は現在選択されている分節。左から 0 origin である。
+pub fn extend_left(clauses: &Vec<VecDeque<Candidate>>, current_clause: usize) -> Vec<Range<usize>> {
+    if clauses.len() <= 1 {
+        return Vec::new();
+    }
+
+    if current_clause == 0 {
+        // 一番左の文節にフォーカスがあたっているので、一番左の分節を短くする。
+
+        if clauses[0][0].yomi.chars().count() == 1 {
+            // 一番左の分節が1文字しかない。
+            return Vec::new();
+        }
+
+        let mut force_selected_clause: Vec<Range<usize>> = Vec::new();
+        let mut offset = 0;
+        for (i, clause) in clauses.iter().enumerate() {
+            // AS-IS: [ab][c]
+            //         ^^ <- focused
+            //
+            // TO-BE: [a][bc]
+            let yomi = &clause[0].yomi;
+            if i == current_clause {
+                let last_char = yomi.chars().last().unwrap();
+                force_selected_clause.push(offset..offset + yomi.len() - last_char.len_utf8());
+            } else if i == current_clause + 1 {
+                let prev_last_char = clauses[i - 1][0].yomi.chars().last().unwrap().len_utf8();
+                let start = offset - prev_last_char;
+                let end = start + (yomi.len() + prev_last_char);
+                // 消失するケースもある
+                if start < end {
+                    force_selected_clause.push(start..end);
+                }
+            } else {
+                force_selected_clause.push(offset..offset + yomi.len());
+            }
+            offset += yomi.len();
+        }
+        force_selected_clause
+    } else {
+        // ニ番目以後の分節にフォーカスがあたっているので、左隣の分節を短くし、フォーカスがあたっている分節を伸ばします。
+        let mut force_selected_clause: Vec<Range<usize>> = Vec::new();
+        let mut offset = 0;
+        for (i, clause) in clauses.iter().enumerate() {
+            let yomi = &clause[0].yomi;
+            if i == current_clause {
+                let prev_yomi = &clauses[i - 1][0].yomi;
+                let prev_last_char = prev_yomi.chars().last().unwrap().len_utf8();
+                let start = offset - prev_last_char;
+                let end = start + yomi.len() + prev_last_char;
+                force_selected_clause.push(start..end);
+            } else if i == current_clause - 1 {
+                // フォーカス文節の左の文節は、末尾の文字を対象から外す
+                let last_char = yomi.chars().last().unwrap().len_utf8();
+                let start = offset;
+                let end = offset + (yomi.len() - last_char);
+                // 消失するケースもある
+                if start <= end {
+                    force_selected_clause.push(start..end);
+                }
+            } else {
+                force_selected_clause.push(offset..offset + yomi.len());
+            }
+            offset += yomi.len();
+        }
+        force_selected_clause
+    }
+}
+
 #[cfg(test)]
-mod tests {
+mod test_base {
+    use super::*;
+
+    pub fn mk(src: &[&str]) -> (String, Vec<VecDeque<Candidate>>) {
+        let mut clauses: Vec<VecDeque<Candidate>> = Vec::new();
+        for x in src {
+            clauses.push(VecDeque::from([Candidate::new(x, x, 0_f32)]));
+        }
+        let yomi = src.join("");
+        (yomi, clauses)
+    }
+
+    pub fn to_vec(yomi: String, got: Vec<Range<usize>>) -> Vec<String> {
+        got.iter().map(|it| yomi[it.clone()].to_string()).collect()
+    }
+}
+
+#[cfg(test)]
+mod tests_right {
+    use super::test_base::mk;
     use super::*;
 
     #[test]
     fn test_extend_right() {
-        let clauses = vec![VecDeque::from([Candidate::new("わ", "わ", 0_f32)])];
-        assert_eq!(extend_right(clauses, 0), vec!(), "Only 1 clause");
+        let (_, clauses) = mk(&["わ"]);
+        let got = extend_right(&clauses, 0);
+        assert_eq!(
+            got.len(),
+            0,
+            "一番左の文節が選択されているから、force 指定は必要ない"
+        );
     }
 
     // 第1文節を拡張した結果、第2文節がなくなるケース
     #[test]
     fn test_extend_right2() {
-        let clauses = vec![
-            VecDeque::from([Candidate::new("わ", "わ", 0_f32)]),
-            VecDeque::from([Candidate::new("た", "た", 0_f32)]),
-        ];
-        let got = extend_right(clauses, 0);
+        let (yomi, clauses) = mk(&["わ", "た"]);
+        let got = extend_right(&clauses, 0);
         assert_ne!(got, vec!(), "There's 2 clause");
-        let g1 = got[0].clone();
-        let p = &("わた".to_string()[g1]);
-        assert_eq!(p, "わた");
+        assert_eq!(&(yomi[got[0].clone()]), "わた");
         assert_eq!(got.len(), 1);
     }
 
     // ちゃんと伸ばせるケース
     #[test]
     fn test_extend_right3() {
-        let clauses = vec![
-            VecDeque::from([Candidate::new("わ", "わ", 0_f32)]),
-            VecDeque::from([Candidate::new("たし", "たし", 0_f32)]),
-        ];
-        let got = extend_right(clauses, 0);
+        let (yomi, clauses) = mk(&["わ", "たし"]);
+        let got = extend_right(&clauses, 0);
         assert_ne!(got, vec!(), "There's 2 clause");
         assert_eq!(got.len(), 2);
-        assert_eq!(&("わたし".to_string()[got[0].clone()]), "わた");
-        assert_eq!(&("わたし".to_string()[got[1].clone()]), "し");
+        assert_eq!(&(yomi[got[0].clone()]), "わた");
+        assert_eq!(&(yomi[got[1].clone()]), "し");
+    }
+}
+
+#[cfg(test)]
+mod tests_left {
+    use super::test_base::mk;
+    use super::test_base::to_vec;
+    use super::*;
+
+    #[test]
+    fn test_extend_left() {
+        let (_, clauses) = mk(&["わ"]);
+        let got = extend_left(&clauses, 0);
+        assert_eq!(
+            got.len(),
+            0,
+            "一番左の文節が選択されているから、force 指定は必要ない"
+        );
+    }
+
+    // 第1文節が選択されていて、第1文節が1文字のケース
+    #[test]
+    fn test_extend_left2() {
+        let (_, clauses) = mk(&["わ", "た"]);
+        let got = extend_left(&clauses, 0);
+        assert_eq!(
+            got.len(),
+            0,
+            "一番左の文節が選択されているから、force 指定は必要ない"
+        );
+    }
+
+    // 第1文節が選択されていて、第1文節が2文字以上のケース
+    #[test]
+    fn test_extend_left3() {
+        let (yomi, clauses) = mk(&["わだ", "た", "そ"]);
+        let got = extend_left(&clauses, 0);
+        assert_eq!(to_vec(yomi, got), vec!("わ", "だた", "そ"));
+    }
+
+    // 第2文節が選択されている
+    #[test]
+    fn test_extend_left4() {
+        let (yomi, clauses) = mk(&["わだ", "た", "そ"]);
+        let got = extend_left(&clauses, 1);
+        assert_eq!(to_vec(yomi, got), vec!("わ", "だた", "そ"));
     }
 }

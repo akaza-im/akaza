@@ -27,7 +27,7 @@ use ibus_sys::glib::{gboolean, guint};
 use ibus_sys::lookup_table::{ibus_lookup_table_append_candidate, IBusLookupTable};
 use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, StringExt};
 use libakaza::akaza_builder::Akaza;
-use libakaza::extend_clause::extend_right;
+use libakaza::extend_clause::{extend_left, extend_right};
 use libakaza::graph::graph_resolver::Candidate;
 use libakaza::romkan::RomKanConverter;
 
@@ -598,6 +598,14 @@ impl AkazaContext {
     /// 文節の選択範囲を右方向に広げる
     pub fn extend_clause_right(&mut self, engine: *mut IBusEngine) -> Result<()> {
         self.force_selected_clause = extend_right(&self.clauses, self.current_clause);
+        self._update_candidates(engine)?;
+        // TODO: もし、分節の長さをいじったら、self.node_selected も変更するべき。
+        Ok(())
+    }
+
+    /// 文節の選択範囲を左方向に広げる
+    pub fn extend_clause_left(&mut self, engine: *mut IBusEngine) -> Result<()> {
+        self.force_selected_clause = extend_left(&self.clauses, self.current_clause);
         self._update_candidates(engine)?;
         // TODO: もし、分節の長さをいじったら、self.node_selected も変更するべき。
         Ok(())

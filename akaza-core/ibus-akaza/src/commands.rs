@@ -51,6 +51,9 @@ pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaComman
     register("extend_clause_right", |context, engine| {
         context.extend_clause_right(engine).unwrap();
     });
+    register("extend_clause_left", |context, engine| {
+        context.extend_clause_left(engine).unwrap();
+    });
 
     function_map
 }
