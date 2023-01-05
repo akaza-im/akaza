@@ -489,9 +489,9 @@ impl AkazaContext {
     /// (yomi, surface)
     pub fn make_preedit_word(&self) -> (String, String) {
         let mut preedit = self.preedit.clone();
-        // If the first character is upper case, return preedit string itself.
+        // 先頭文字が大文字な場合は、そのまま返す。
+        // "IME" などと入力された場合は、それをそのまま返すようにする。
         if !preedit.is_empty() && preedit.chars().next().unwrap().is_ascii_uppercase() {
-            // TODO: meaningless clone process.
             return (preedit.clone(), preedit);
         }
 
@@ -511,11 +511,6 @@ impl AkazaContext {
         (yomi + suffix, surface + suffix)
 
         /*
-            # 先頭が大文字だと、
-            if len(self.preedit_string) > 0 and self.preedit_string[0].isupper() \
-                    and self.force_selected_clause is None:
-                return self.preedit_string, self.preedit_string
-
             yomi = self.romkan.to_hiragana(self.preedit_string)
             if self.input_mode == INPUT_MODE_KATAKANA:
                 return yomi, jaconv.hira2kata(yomi)
