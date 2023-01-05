@@ -171,7 +171,7 @@ impl AkazaBuilder {
             segmenter,
             graph_resolver,
             romkan_converter,
-            user_data: user_data.clone(),
+            user_data,
         })
     }
 }
