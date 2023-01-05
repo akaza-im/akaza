@@ -2,14 +2,17 @@ use std::collections::{HashMap, VecDeque};
 use std::ffi::CString;
 
 use anyhow::Result;
-use log::{error, info, warn};
+use log::{error, info, trace, warn};
 
 use ibus_sys::attr_list::{ibus_attr_list_append, ibus_attr_list_new};
 use ibus_sys::attribute::{
     ibus_attribute_new, IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND,
     IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE, IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
 };
-use ibus_sys::core::to_gboolean;
+use ibus_sys::core::{
+    to_gboolean, IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_MOD1_MASK,
+    IBusModifierType_IBUS_RELEASE_MASK,
+};
 use ibus_sys::engine::{
     ibus_engine_commit_text, ibus_engine_hide_preedit_text, ibus_engine_update_auxiliary_text,
     ibus_engine_update_lookup_table, ibus_engine_update_preedit_text, IBusEngine,
@@ -24,6 +27,7 @@ use libakaza::graph::graph_resolver::Candidate;
 use libakaza::romkan::RomKanConverter;
 
 use crate::commands::{ibus_akaza_commands_map, IbusAkazaCommand};
+use crate::keymap::KeyMap;
 
 #[repr(C)]
 #[derive(Debug)]
@@ -58,6 +62,7 @@ pub struct AkazaContext {
     cursor_moved: bool,
     // key は、clause 番号。value は、node の index。
     node_selected: HashMap<usize, usize>,
+    keymap: KeyMap,
 }
 
 impl AkazaContext {
@@ -76,11 +81,71 @@ impl AkazaContext {
             is_invalidate: false,
             cursor_moved: false,
             node_selected: HashMap::new(),
+            keymap: KeyMap::new(),
         }
     }
 }
 
 impl AkazaContext {
+    pub fn process_key_event(
+        &mut self,
+        engine: *mut IBusEngine,
+        keyval: guint,
+        keycode: guint,
+        modifiers: guint,
+    ) -> bool {
+        trace!(
+            "process_key_event: keyval={}, keycode={}, modifiers={}",
+            keyval,
+            keycode,
+            modifiers
+        );
+
+        // ignore key release event
+        if modifiers & IBusModifierType_IBUS_RELEASE_MASK != 0 {
+            return false;
+        }
+        // keymap.register([KEY_STATE_COMPOSITION], ['Return', 'KP_Enter'], 'commit_preedit')
+        let key_state = self.get_key_state();
+
+        // TODO configure keymap in ~/.config/akaza/keymap.yml?
+        trace!("KeyState={:?}", key_state);
+        if let Some(callback) = self.keymap.get(&key_state, keyval).cloned() {
+            return self.run_callback_by_name(engine, callback.as_str());
+        }
+
+        match &self.input_mode {
+            InputMode::Hiragana => {
+                if modifiers
+                    & (IBusModifierType_IBUS_CONTROL_MASK | IBusModifierType_IBUS_MOD1_MASK)
+                    != 0
+                {
+                    return false;
+                }
+
+                if ('!' as u32) <= keyval && keyval <= ('~' as u32) {
+                    info!("Insert new character to preedit: '{}'", self.preedit);
+                    if self.lookup_table.get_number_of_candidates() > 0 {
+                        // 変換の途中に別の文字が入力された。よって、現在の preedit 文字列は確定させる。
+                        self.commit_candidate(engine);
+                    }
+
+                    // Append the character to preedit string.
+                    self.preedit.push(char::from_u32(keyval).unwrap());
+                    self.cursor_pos += 1;
+
+                    // And update the display status.
+                    self.update_preedit_text_before_henkan(engine);
+                    return true;
+                }
+            }
+            InputMode::Alnum => return false,
+            // _ => return false,
+        }
+
+        false // not proceeded
+    }
+
     pub(crate) fn erase_character_before_cursor(&mut self, engine: *mut IBusEngine) {
         unsafe {
             if self.in_henkan_mode() {
@@ -97,34 +162,36 @@ impl AkazaContext {
         }
     }
 
-    pub(crate) unsafe fn update_preedit_text_before_henkan(&mut self, engine: *mut IBusEngine) {
-        if self.preedit.is_empty() {
-            ibus_engine_hide_preedit_text(engine);
-            return;
-        }
+    pub(crate) fn update_preedit_text_before_henkan(&mut self, engine: *mut IBusEngine) {
+        unsafe {
+            if self.preedit.is_empty() {
+                ibus_engine_hide_preedit_text(engine);
+                return;
+            }
 
-        // Convert to Hiragana.
-        let (_yomi, surface) = self.make_preedit_word();
+            // Convert to Hiragana.
+            let (_yomi, surface) = self.make_preedit_word();
 
-        let preedit_attrs = ibus_attr_list_new();
-        ibus_attr_list_append(
-            preedit_attrs,
-            ibus_attribute_new(
-                IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE,
-                IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
-                0,
+            let preedit_attrs = ibus_attr_list_new();
+            ibus_attr_list_append(
+                preedit_attrs,
+                ibus_attribute_new(
+                    IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE,
+                    IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
+                    0,
+                    surface.len() as guint,
+                ),
+            );
+            let word_c_str = CString::new(surface.clone()).unwrap();
+            let preedit_text = ibus_text_new_from_string(word_c_str.as_ptr() as *const gchar);
+            ibus_text_set_attributes(preedit_text, preedit_attrs);
+            ibus_engine_update_preedit_text(
+                engine,
+                preedit_text,
                 surface.len() as guint,
-            ),
-        );
-        let word_c_str = CString::new(surface.clone()).unwrap();
-        let preedit_text = ibus_text_new_from_string(word_c_str.as_ptr() as *const gchar);
-        ibus_text_set_attributes(preedit_text, preedit_attrs);
-        ibus_engine_update_preedit_text(
-            engine,
-            preedit_text,
-            surface.len() as guint,
-            !surface.is_empty() as gboolean,
-        )
+                !surface.is_empty() as gboolean,
+            )
+        }
 
         /*
            if len(self.preedit_string) == 0:
@@ -206,7 +273,7 @@ impl AkazaContext {
         }
     }
 
-    pub(crate) fn get_key_state(&mut self) -> KeyState {
+    pub(crate) fn get_key_state(&self) -> KeyState {
         // キー入力状態を返す。
         if self.preedit.is_empty() {
             // 未入力状態。
@@ -218,7 +285,7 @@ impl AkazaContext {
         }
     }
 
-    pub fn in_henkan_mode(&mut self) -> bool {
+    pub fn in_henkan_mode(&self) -> bool {
         self.lookup_table.get_number_of_candidates() > 0
     }
 
