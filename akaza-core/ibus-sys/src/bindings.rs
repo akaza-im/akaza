@@ -1,5 +1,3 @@
-#![allow(non_camel_case_types)]
-#![allow(non_upper_case_globals)]
 #![allow(dead_code)]
 
 // See bindgen.sh's output to improvement this file.
@@ -8,7 +6,7 @@
 // ibus wrapper functions.
 
 use crate::lookup_table::IBusLookupTable;
-use std::ffi::CString;
+use crate::text::IBusText;
 
 pub type gchar = ::std::os::raw::c_char;
 pub type guint = ::std::os::raw::c_uint;
@@ -19,6 +17,7 @@ pub type gint = ::std::os::raw::c_int;
 pub type gpointer = *mut ::std::os::raw::c_void;
 
 pub type GArray = _GArray;
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct _GArray {
@@ -70,7 +69,6 @@ pub const IBusAttrUnderline_IBUS_ATTR_UNDERLINE_ERROR: IBusAttrUnderline = 4;
 pub type IBusAttrUnderline = ::std::os::raw::c_uint;
 
 pub type IBusBus = [u64; 6usize];
-pub type IBusText = [u64; 9usize];
 
 pub type IBusAttrList = [u64; 7usize];
 #[doc = " IBusAttribute:\n @type: IBusAttributeType\n @value: Value for the type.\n @start_index: The starting index, inclusive.\n @end_index: The ending index, exclusive.\n\n Signify the type, value and scope of the attribute.\n The scope starts from @start_index till the @end_index-1."]
@@ -98,11 +96,6 @@ extern "C" {
         end_index: guint,
     ) -> *mut IBusAttribute;
 
-    // text
-    pub fn ibus_text_new_from_string(str_: *const gchar) -> *mut IBusText;
-    #[doc = " ibus_text_set_attributes:\n @text: An IBusText.\n @attrs: An IBusAttrList"]
-    pub fn ibus_text_set_attributes(text: *mut IBusText, attrs: *mut IBusAttrList);
-
     // engine
     pub fn ibus_engine_commit_text(engine: *mut IBusEngine, text: *mut IBusText);
     pub fn ibus_engine_hide_lookup_table(engine: *mut IBusEngine);
@@ -129,19 +122,6 @@ extern "C" {
         lookup_table: *mut IBusLookupTable,
         visible: gboolean,
     );
-}
-
-pub trait StringExt {
-    fn to_ibus_text(&self) -> *mut IBusText;
-}
-
-impl StringExt for str {
-    fn to_ibus_text(&self) -> *mut IBusText {
-        unsafe {
-            let text_c_str = CString::new(self).unwrap();
-            ibus_text_new_from_string(text_c_str.as_ptr() as *const gchar)
-        }
-    }
 }
 
 pub fn to_gboolean(b: bool) -> gboolean {

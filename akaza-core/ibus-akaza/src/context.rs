@@ -4,21 +4,20 @@ use std::ffi::CString;
 use anyhow::Result;
 use log::{error, info, warn};
 
+use ibus_sys::bindings::gboolean;
+use ibus_sys::bindings::gchar;
 use ibus_sys::bindings::IBusEngine;
-use ibus_sys::bindings::{gboolean, ibus_text_new_from_string};
-use ibus_sys::bindings::{gchar, StringExt};
 use ibus_sys::bindings::{
     guint, ibus_attr_list_append, ibus_attribute_new, ibus_engine_commit_text,
     IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND, IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE,
     IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
 };
-use ibus_sys::bindings::{
-    ibus_attr_list_new, ibus_engine_hide_lookup_table, ibus_text_set_attributes,
-};
+use ibus_sys::bindings::{ibus_attr_list_new, ibus_engine_hide_lookup_table};
 use ibus_sys::bindings::{ibus_engine_hide_auxiliary_text, to_gboolean};
 use ibus_sys::bindings::{ibus_engine_hide_preedit_text, ibus_engine_update_preedit_text};
 use ibus_sys::bindings::{ibus_engine_update_auxiliary_text, ibus_engine_update_lookup_table};
 use ibus_sys::lookup_table::{ibus_lookup_table_append_candidate, IBusLookupTable};
+use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, StringExt};
 use libakaza::akaza_builder::Akaza;
 use libakaza::graph::graph_resolver::Candidate;
 use libakaza::romkan::RomKanConverter;
