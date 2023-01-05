@@ -16,6 +16,8 @@ use crate::user_side_data::user_stats_utils::{read_user_stats_file, write_user_s
 #[derive(Default)]
 pub struct UserData {
     /// 読み仮名のトライ。入力変換時に共通接頭辞検索するために使用。
+    // ここで MARISA ではなく Crawdad を採用しているのは、FFI していると std::marker::Send を実装できなくて
+    // スレッドをまたいだ処理が困難になるから、以上の理由はないです。
     kana_trie: Mutex<CrawdadKanaTrie>,
 
     unigram_user_stats: UniGramUserStats,
