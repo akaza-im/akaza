@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::context::KeyState;
 use ibus_sys::ibus_key::{
     IBUS_KEY_BackSpace, IBUS_KEY_Hangul, IBUS_KEY_Hangul_Hanja, IBUS_KEY_Henkan, IBUS_KEY_KP_Enter,
-    IBUS_KEY_Muhenkan, IBUS_KEY_Return, IBUS_KEY_space,
+    IBUS_KEY_KP_Right, IBUS_KEY_Muhenkan, IBUS_KEY_Return, IBUS_KEY_Right, IBUS_KEY_space,
 };
 
 #[derive(Hash, PartialEq)]
@@ -82,7 +82,6 @@ impl KeyMap {
         keymap.register([KEY_STATE_CONVERSION], ['Up', 'KP_Up'], 'cursor_up')
         keymap.register([KEY_STATE_CONVERSION], ['Down', 'KP_Down'], 'cursor_down')
 
-        keymap.register([KEY_STATE_CONVERSION], ['Right', 'KP_Right'], 'cursor_right')
         keymap.register([KEY_STATE_CONVERSION], ['S-Right', 'S-KP_Right'], 'extend_clause_right')
 
         keymap.register([KEY_STATE_CONVERSION], ['Left', 'KP_Left'], 'cursor_left')
@@ -134,6 +133,11 @@ impl KeyMap {
             &[KeyState::Composition],
             &[IBUS_KEY_Return, IBUS_KEY_KP_Enter],
             "commit_preedit",
+        );
+        builder.insert(
+            &[KeyState::Conversion],
+            &[IBUS_KEY_Right, IBUS_KEY_KP_Right],
+            "cursor_right",
         );
 
         KeyMap {
