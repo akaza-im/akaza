@@ -2,7 +2,7 @@
 #![allow(non_upper_case_globals)]
 #![allow(dead_code)]
 
-use ibus_sys::core::guint;
+use ibus_sys::glib::guint;
 
 use ibus_sys::engine::IBusEngine;
 use std::ffi::c_void;

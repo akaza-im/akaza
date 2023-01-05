@@ -1,5 +1,5 @@
-use crate::core::{gboolean, gint, gpointer, guint, GArray, IBusSerializable};
-use crate::glib::g_object_ref_sink;
+use crate::core::IBusSerializable;
+use crate::glib::{g_object_ref_sink, gboolean, gint, gpointer, guint, GArray};
 use crate::text::IBusText;
 
 #[repr(C)]

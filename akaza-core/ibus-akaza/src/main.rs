@@ -6,12 +6,12 @@ use std::time::SystemTime;
 use anyhow::Result;
 use log::{info, trace, warn};
 
-use ibus_sys::core::guint;
 use ibus_sys::core::ibus_main;
 use ibus_sys::core::IBusModifierType_IBUS_CONTROL_MASK;
 use ibus_sys::core::IBusModifierType_IBUS_MOD1_MASK;
 use ibus_sys::core::IBusModifierType_IBUS_RELEASE_MASK;
 use ibus_sys::engine::IBusEngine;
+use ibus_sys::glib::guint;
 use libakaza::akaza_builder::AkazaBuilder;
 
 use crate::context::{AkazaContext, InputMode};

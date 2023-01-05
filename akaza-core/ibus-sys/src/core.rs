@@ -5,22 +5,7 @@
 
 // ibus wrapper functions.
 
-pub type gchar = ::std::os::raw::c_char;
-pub type guint = ::std::os::raw::c_uint;
-pub type gboolean = ::std::os::raw::c_int;
-pub type gsize = ::std::os::raw::c_ulong;
-pub type gssize = ::std::os::raw::c_long;
-pub type gint = ::std::os::raw::c_int;
-pub type gpointer = *mut ::std::os::raw::c_void;
-
-pub type GArray = _GArray;
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct _GArray {
-    pub data: *mut gchar,
-    pub len: guint,
-}
+use crate::glib::{gboolean, guint};
 
 pub type IBusSerializable = [u64; 6usize];
 

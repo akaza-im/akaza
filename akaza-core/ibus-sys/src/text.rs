@@ -1,4 +1,5 @@
-use crate::core::{gchar, IBusAttrList};
+use crate::core::IBusAttrList;
+use crate::glib::gchar;
 use std::ffi::CString;
 
 extern "C" {
