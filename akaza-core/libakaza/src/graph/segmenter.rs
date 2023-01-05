@@ -2,9 +2,10 @@ use std::collections::btree_map::Iter;
 use std::collections::{BTreeMap, HashSet};
 use std::ops::Range;
 
+use crate::kana_trie::base::KanaTrie;
 use log::trace;
 
-use crate::kana_trie::KanaTrie;
+use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
 
 #[derive(PartialEq, Debug)]
 pub struct SegmentationResult {
@@ -36,16 +37,16 @@ impl SegmentationResult {
 }
 
 pub struct Segmenter {
-    tries: Vec<KanaTrie>,
+    tries: Vec<MarisaKanaTrie>,
 }
 
 impl Segmenter {
-    pub fn new(tries: Vec<KanaTrie>) -> Segmenter {
+    pub fn new(tries: Vec<MarisaKanaTrie>) -> Segmenter {
         Segmenter { tries }
     }
 
     /**
-     * 「読み」を受け取って Latttice を構築する。
+     * 「読み」を受け取って Lattice を構築する。
      *
      * force_ranges: 一般的な IME でシフトおしてから→をおして、ユーザーが明示的に範囲選択した場合
      *               の選択範囲。
@@ -151,17 +152,15 @@ impl Segmenter {
 
 #[cfg(test)]
 mod tests {
-    use crate::kana_trie::KanaTrieBuilder;
-
     use super::*;
 
     #[test]
     fn test_simple() {
-        let mut builder = KanaTrieBuilder::default();
-        builder.add(&"わたし".to_string());
-        builder.add(&"わた".to_string());
-        builder.add(&"し".to_string());
-        let kana_trie = builder.build();
+        let kana_trie = MarisaKanaTrie::build(vec![
+            "わたし".to_string(),
+            "わた".to_string(),
+            "し".to_string(),
+        ]);
 
         let segmenter = Segmenter::new(vec![kana_trie]);
         let graph = segmenter.build("わたし", &Vec::new());
@@ -176,8 +175,7 @@ mod tests {
 
     #[test]
     fn test_without_kanatrie() {
-        let builder = KanaTrieBuilder::default();
-        let kana_trie = builder.build();
+        let kana_trie = MarisaKanaTrie::build(vec![]);
 
         let segmenter = Segmenter::new(vec![kana_trie]);
         let graph = segmenter.build("わたし", &Vec::new());
@@ -196,12 +194,12 @@ mod tests {
         // env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "info");
         // env_logger::builder().is_test(true).try_init()?;
 
-        let mut builder = KanaTrieBuilder::default();
-        builder.add(&"わたし".to_string());
-        builder.add(&"わた".to_string());
-        builder.add(&"わ".to_string());
-        builder.add(&"し".to_string());
-        let kana_trie = builder.build();
+        let kana_trie = MarisaKanaTrie::build(Vec::from([
+            "わたし".to_string(),
+            "わた".to_string(),
+            "わ".to_string(),
+            "し".to_string(),
+        ]));
 
         let segmenter = Segmenter::new(vec![kana_trie]);
         let yomi = "わたし";

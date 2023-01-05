@@ -1,6 +1,6 @@
-use anyhow::Context;
 use std::collections::{HashMap, VecDeque};
 
+use anyhow::Context;
 use log::trace;
 
 use crate::graph::lattice_graph::LatticeGraph;
@@ -12,6 +12,7 @@ pub struct Candidate {
     pub yomi: String,
     pub cost: f32,
 }
+
 impl Candidate {
     pub fn new(yomi: &str, surface: &str, cost: f32) -> Candidate {
         Candidate {
@@ -125,17 +126,18 @@ impl GraphResolver {
 
 #[cfg(test)]
 mod tests {
-    use anyhow::Result;
     use std::collections::BTreeMap;
     use std::fs::File;
     use std::io::Write;
     use std::rc::Rc;
     use std::sync::{Arc, Mutex};
 
+    use anyhow::Result;
+
     use crate::graph::graph_builder::GraphBuilder;
     use crate::graph::segmenter::{SegmentationResult, Segmenter};
     use crate::kana_kanji_dict::{KanaKanjiDict, KanaKanjiDictBuilder};
-    use crate::kana_trie::KanaTrieBuilder;
+    use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
     use crate::lm::system_bigram::SystemBigramLMBuilder;
     use crate::lm::system_unigram_lm::SystemUnigramLMBuilder;
     use crate::user_side_data::user_data::UserData;
@@ -146,11 +148,11 @@ mod tests {
     fn test_resolver() -> Result<()> {
         let _ = env_logger::builder().is_test(true).try_init();
 
-        let mut builder = KanaTrieBuilder::default();
-        builder.add(&"abc".to_string());
-        builder.add(&"ab".to_string());
-        builder.add(&"c".to_string());
-        let kana_trie = builder.build();
+        let kana_trie = MarisaKanaTrie::build(Vec::from([
+            "abc".to_string(),
+            "ab".to_string(),
+            "c".to_string(),
+        ]));
 
         let graph_builder = Segmenter::new(vec![kana_trie]);
         let graph = graph_builder.build("abc", &Vec::new());
@@ -191,11 +193,11 @@ mod tests {
     fn test_kana_kanji() -> Result<()> {
         let _ = env_logger::builder().is_test(true).try_init();
 
-        let mut builder = KanaTrieBuilder::default();
-        builder.add(&"わたし".to_string());
-        builder.add(&"わた".to_string());
-        builder.add(&"し".to_string());
-        let kana_trie = builder.build();
+        let kana_trie = MarisaKanaTrie::build(Vec::from([
+            "わたし".to_string(),
+            "わた".to_string(),
+            "し".to_string(),
+        ]));
 
         let graph_builder = Segmenter::new(vec![kana_trie]);
         let graph = graph_builder.build("わたし", &Vec::new());

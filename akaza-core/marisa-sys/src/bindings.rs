@@ -162,7 +162,7 @@ impl Marisa {
         }
     }
 
-    pub fn common_prefix_search<F>(&self, query: &String, callback: F)
+    pub fn common_prefix_search<F>(&self, query: &str, callback: F)
     where
         F: FnMut(&[u8], usize) -> bool,
     {

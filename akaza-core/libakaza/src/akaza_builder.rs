@@ -9,7 +9,7 @@ use crate::graph::graph_builder::GraphBuilder;
 use crate::graph::graph_resolver::{Candidate, GraphResolver};
 use crate::graph::segmenter::Segmenter;
 use crate::kana_kanji_dict::{KanaKanjiDict, KanaKanjiDictBuilder};
-use crate::kana_trie::KanaTrieBuilder;
+use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
 use crate::lm::system_bigram::{SystemBigramLM, SystemBigramLMBuilder};
 use crate::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
 use crate::romkan::RomKanConverter;
@@ -139,12 +139,9 @@ impl AkazaBuilder {
             None => KanaKanjiDictBuilder::default().build(),
         };
 
-        // TODO キャッシュする余地
-        let mut system_dict_yomis_builder = KanaTrieBuilder::default();
-        for yomi in system_kana_kanji_dict.all_yomis().unwrap() {
-            system_dict_yomis_builder.add(&yomi);
-        }
-        let system_kana_trie = system_dict_yomis_builder.build();
+        // TODO 事前に静的生成可能。
+        let all_yomis = system_kana_kanji_dict.all_yomis().unwrap();
+        let system_kana_trie = MarisaKanaTrie::build(all_yomis);
 
         let segmenter = Segmenter::new(vec![system_kana_trie]);
 
