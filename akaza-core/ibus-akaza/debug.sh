@@ -1,6 +1,6 @@
 #!/bin/bash
 set -x
 cargo build
-pkill -f target/debug/ibus-akaza
+ibus restart
 ibus engine akaza
 tail -F ~/.ibus-akaza.log

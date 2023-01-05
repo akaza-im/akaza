@@ -99,7 +99,7 @@ impl AkazaContext {
 
     pub(crate) unsafe fn update_preedit_text_before_henkan(&mut self, engine: *mut IBusEngine) {
         if self.preedit.is_empty() {
-            ibus_engine_hide_lookup_table(engine);
+            ibus_engine_hide_preedit_text(engine);
             return;
         }
 
