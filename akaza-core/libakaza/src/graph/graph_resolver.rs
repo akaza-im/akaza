@@ -1,3 +1,4 @@
+use anyhow::Context;
 use std::collections::{HashMap, VecDeque};
 
 use log::trace;
@@ -45,12 +46,12 @@ impl GraphResolver {
                 trace!("kanji={}, Cost={}", node, node_cost);
                 let mut cost = f32::MIN;
                 let mut shortest_prev = None;
-                let prev_nodes = lattice.get_prev_nodes(node).unwrap_or_else(|| {
-                    panic!(
-                        "Cannot get prev nodes for '{}' start={}",
-                        node.kanji, node.start_pos
+                let prev_nodes = lattice.get_prev_nodes(node).with_context(|| {
+                    format!(
+                        "Cannot get prev nodes for '{}' start={} lattice={:?}",
+                        node.kanji, node.start_pos, lattice
                     )
-                });
+                })?;
                 for prev in prev_nodes {
                     let edge_cost = lattice.get_edge_cost(prev, node);
                     let prev_cost = costmap.get(prev).unwrap_or(&0_f32); // unwrap が必要なのは、 __BOS__ 用。

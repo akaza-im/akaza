@@ -1,6 +1,7 @@
 use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
 
+#[derive(Debug)]
 pub struct WordNode {
     pub start_pos: i32,
     /// 漢字

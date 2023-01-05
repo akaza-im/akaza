@@ -66,8 +66,23 @@ pub fn extend_right(
 /// 文節の選択範囲を **左** に拡張する。
 /// current_clause は現在選択されている分節。左から 0 origin である。
 pub fn extend_left(clauses: &Vec<VecDeque<Candidate>>, current_clause: usize) -> Vec<Range<usize>> {
-    if clauses.len() <= 1 {
-        return keep_current(clauses);
+    if clauses.is_empty() {
+        return Vec::new();
+    }
+    if clauses.len() == 1 {
+        // 分節が一個の場合
+        let yomi = &clauses[0][0].yomi;
+        return if yomi.chars().count() > 1 {
+            // 最後の文字を別分節に切り出す。
+            let mut force_selected_clause: Vec<Range<usize>> = Vec::new();
+            let last_char = yomi.chars().last().unwrap();
+            force_selected_clause.push(0..yomi.len() - last_char.len_utf8());
+            force_selected_clause.push(yomi.len() - last_char.len_utf8()..yomi.len());
+            force_selected_clause
+        } else {
+            // Only 1 character.
+            keep_current(clauses)
+        };
     }
 
     if current_clause == 0 {
@@ -109,23 +124,26 @@ pub fn extend_left(clauses: &Vec<VecDeque<Candidate>>, current_clause: usize) ->
         let mut offset = 0;
         for (i, clause) in clauses.iter().enumerate() {
             let yomi = &clause[0].yomi;
-            if i == current_clause {
+            let (start, end) = if i == current_clause {
                 let prev_yomi = &clauses[i - 1][0].yomi;
                 let prev_last_char = prev_yomi.chars().last().unwrap().len_utf8();
                 let start = offset - prev_last_char;
                 let end = start + yomi.len() + prev_last_char;
-                force_selected_clause.push(start..end);
+                (start, end)
             } else if i == current_clause - 1 {
                 // フォーカス文節の左の文節は、末尾の文字を対象から外す
                 let last_char = yomi.chars().last().unwrap().len_utf8();
                 let start = offset;
                 let end = offset + (yomi.len() - last_char);
                 // 消失するケースもある
-                if start <= end {
-                    force_selected_clause.push(start..end);
-                }
+                (start, end)
             } else {
-                force_selected_clause.push(offset..offset + yomi.len());
+                let start = offset;
+                let end = offset + yomi.len();
+                (start, end)
+            };
+            if start < end {
+                force_selected_clause.push(start..end);
             }
             offset += yomi.len();
         }
@@ -218,10 +236,19 @@ mod tests_left {
         assert_eq!(to_vec(yomi, got), vec!("わ", "だた", "そ"));
     }
 
+    // 文節が追加されるべき
     #[test]
     fn test_extend_left5() {
-        let (yomi, clauses) = mk(&["およよよよ"]);
+        let (yomi, clauses) = mk(&["およよよあ"]);
         let got = extend_left(&clauses, 0);
-        assert_eq!(to_vec(yomi, got), vec!("およよよよ"));
+        assert_eq!(to_vec(yomi, got), vec!("およよよ", "あ"));
+    }
+
+    // 文節がマージされるべき
+    #[test]
+    fn test_extend_left6() {
+        let (yomi, clauses) = mk(&["や", "まと"]);
+        let got = extend_left(&clauses, 1);
+        assert_eq!(to_vec(yomi, got), vec!("やまと"));
     }
 }

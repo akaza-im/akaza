@@ -395,6 +395,15 @@ impl AkazaContext {
             self.clauses = self
                 .akaza
                 .convert(self.preedit.as_str(), &self.force_selected_clause)?;
+
+            // [a][bc]
+            //    ^^^^
+            // 上記の様にフォーカスが当たっている時に extend_clause_left した場合
+            // 文節の数がもとより減ることがある。その場合は index error になってしまうので、
+            // current_clause を動かす。
+            if self.current_clause >= self.clauses.len() {
+                self.current_clause = self.clauses.len() - 1;
+            }
         }
         self.create_lookup_table();
         self.refresh(engine);
@@ -606,6 +615,7 @@ impl AkazaContext {
     /// 文節の選択範囲を左方向に広げる
     pub fn extend_clause_left(&mut self, engine: *mut IBusEngine) -> Result<()> {
         self.force_selected_clause = extend_left(&self.clauses, self.current_clause);
+
         self._update_candidates(engine)?;
         self.node_selected.clear();
         Ok(())

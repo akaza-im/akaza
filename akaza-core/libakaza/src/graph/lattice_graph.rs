@@ -1,4 +1,5 @@
 use std::collections::btree_map::BTreeMap;
+use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 
 use log::{error, trace};
@@ -17,6 +18,16 @@ pub struct LatticeGraph {
     pub(crate) user_data: Rc<UserData>,
     pub(crate) system_unigram_lm: Rc<SystemUnigramLM>,
     pub(crate) system_bigram_lm: Rc<SystemBigramLM>,
+}
+
+impl Debug for LatticeGraph {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "LatticeGraph(yomi={}, graph={:?})",
+            self.yomi, self.graph
+        )
+    }
 }
 
 impl LatticeGraph {
