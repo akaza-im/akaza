@@ -152,6 +152,7 @@ impl Segmenter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
 
     #[test]
     fn test_simple() {

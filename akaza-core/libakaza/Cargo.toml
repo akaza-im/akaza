@@ -16,5 +16,6 @@ anyhow = "1.0.68"
 half = "2.2.0"
 kelp = "0.3.0"
 xdg = "2.4.1"
+crawdad = "0.4.0"
 
 [build-dependencies]
