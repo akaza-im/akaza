@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+// 加算スムージング用の定数。
 const ALPHA: f32 = 0.00001;
 
 #[derive(Default)]
