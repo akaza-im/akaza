@@ -18,9 +18,7 @@ use ibus_sys::bindings::{
 use ibus_sys::bindings::{ibus_engine_hide_auxiliary_text, to_gboolean};
 use ibus_sys::bindings::{ibus_engine_hide_preedit_text, ibus_engine_update_preedit_text};
 use ibus_sys::bindings::{ibus_engine_update_auxiliary_text, ibus_engine_update_lookup_table};
-use ibus_sys::lookup_table::{
-    ibus_lookup_table_append_candidate, ibus_lookup_table_clear, IBusLookupTable,
-};
+use ibus_sys::lookup_table::{ibus_lookup_table_append_candidate, IBusLookupTable};
 use libakaza::akaza_builder::Akaza;
 use libakaza::graph::graph_resolver::Candidate;
 use libakaza::romkan::RomKanConverter;
@@ -49,7 +47,7 @@ pub struct AkazaContext {
     pub(crate) input_mode: InputMode,
     pub(crate) cursor_pos: i32,
     pub(crate) preedit: String,
-    pub(crate) lookup_table: *mut IBusLookupTable,
+    pub(crate) lookup_table: IBusLookupTable,
     pub(crate) romkan: RomKanConverter,
     command_map: HashMap<&'static str, IbusAkazaCommand>,
     akaza: Akaza,
@@ -61,11 +59,30 @@ pub struct AkazaContext {
 }
 
 impl AkazaContext {
+    pub(crate) fn new(akaza: Akaza) -> Self {
+        AkazaContext {
+            input_mode: InputMode::Hiragana,
+            cursor_pos: 0,
+            preedit: String::new(),
+            //         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
+            lookup_table: IBusLookupTable::new(10, 0, 1, 1),
+            romkan: RomKanConverter::default(), // TODO make it configurable.
+            command_map: ibus_akaza_commands_map(),
+            akaza,
+            clauses: vec![],
+            current_clause: 0,
+            is_invalidate: false,
+            cursor_moved: false,
+        }
+    }
+}
+
+impl AkazaContext {
     pub(crate) fn erase_character_before_cursor(&mut self, engine: *mut IBusEngine) {
         unsafe {
             if self.in_henkan_mode() {
                 // 変換中の場合、無変換モードにもどす。
-                ibus_lookup_table_clear(self.lookup_table);
+                self.lookup_table.clear();
                 ibus_engine_hide_auxiliary_text(engine);
                 ibus_engine_hide_lookup_table(engine);
             } else {
@@ -125,25 +142,6 @@ impl AkazaContext {
            preedit_text.set_attributes(preedit_attrs)
            self.update_preedit_text(text=preedit_text, cursor_pos=len(word), visible=(len(word) > 0))
         */
-    }
-}
-
-impl AkazaContext {
-    pub(crate) fn new(akaza: Akaza) -> Self {
-        AkazaContext {
-            input_mode: InputMode::Hiragana,
-            cursor_pos: 0,
-            preedit: String::new(),
-            //         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
-            lookup_table: IBusLookupTable::new(10, 0, 1, 1),
-            romkan: RomKanConverter::default(), // TODO make it configurable.
-            command_map: ibus_akaza_commands_map(),
-            akaza,
-            clauses: vec![],
-            current_clause: 0,
-            is_invalidate: false,
-            cursor_moved: false,
-        }
     }
 }
 
@@ -218,7 +216,7 @@ impl AkazaContext {
     }
 
     pub fn in_henkan_mode(&mut self) -> bool {
-        unsafe { (*self.lookup_table).get_number_of_candidates() > 0 }
+        self.lookup_table.get_number_of_candidates() > 0
     }
 
     pub fn commit_string(&mut self, engine: *mut IBusEngine, text: &str) {
@@ -243,7 +241,7 @@ impl AkazaContext {
             // TODO self.node_selected = {};
             // TODO self.force_selected_clause = None
 
-            self.lookup_table.as_mut().unwrap().clear();
+            self.lookup_table.clear();
             self._update_lookup_table(engine);
 
             ibus_engine_hide_auxiliary_text(engine);
@@ -343,7 +341,7 @@ impl AkazaContext {
     fn create_lookup_table(&mut self) {
         unsafe {
             // 一旦、ルックアップテーブルをクリアする
-            ibus_lookup_table_clear(self.lookup_table);
+            self.lookup_table.clear();
 
             // 現在の未変換情報を元に、候補を算出していく。
             if !self.clauses.is_empty() {
@@ -351,7 +349,10 @@ impl AkazaContext {
                 for node in &self.clauses[self.current_clause] {
                     // TODO lisp
                     let candidate = &node.kanji;
-                    ibus_lookup_table_append_candidate(self.lookup_table, candidate.to_ibus_text());
+                    ibus_lookup_table_append_candidate(
+                        &mut self.lookup_table as *mut _,
+                        candidate.to_ibus_text(),
+                    );
                 }
             }
         }
@@ -418,10 +419,14 @@ impl AkazaContext {
     }
 
     /// 候補があれば lookup table を表示。なければ非表示にする。
-    fn _update_lookup_table(&self, engine: *mut IBusEngine) {
+    fn _update_lookup_table(&mut self, engine: *mut IBusEngine) {
         unsafe {
-            let visible = (*self.lookup_table).get_number_of_candidates() > 0;
-            ibus_engine_update_lookup_table(engine, self.lookup_table, to_gboolean(visible));
+            let visible = self.lookup_table.get_number_of_candidates() > 0;
+            ibus_engine_update_lookup_table(
+                engine,
+                &mut self.lookup_table as *mut _,
+                to_gboolean(visible),
+            );
         }
     }
 

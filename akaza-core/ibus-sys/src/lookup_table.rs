@@ -20,11 +20,15 @@ impl IBusLookupTable {
         cursor_pos: guint,
         cursor_visible: gboolean,
         round: gboolean,
-    ) -> *mut IBusLookupTable {
+    ) -> Self {
         unsafe {
-            g_object_ref_sink(
-                ibus_lookup_table_new(page_size, cursor_pos, cursor_visible, round) as gpointer,
-            ) as *mut IBusLookupTable
+            let lookup_table = g_object_ref_sink(ibus_lookup_table_new(
+                page_size,
+                cursor_pos,
+                cursor_visible,
+                round,
+            ) as gpointer) as *mut IBusLookupTable;
+            *lookup_table
         }
     }
 

@@ -12,7 +12,6 @@ use ibus_sys::bindings::IBusEngine;
 use ibus_sys::bindings::IBusModifierType_IBUS_CONTROL_MASK;
 use ibus_sys::bindings::IBusModifierType_IBUS_MOD1_MASK;
 use ibus_sys::bindings::IBusModifierType_IBUS_RELEASE_MASK;
-use ibus_sys::lookup_table::ibus_lookup_table_get_number_of_candidates;
 use libakaza::akaza_builder::AkazaBuilder;
 
 use crate::context::{AkazaContext, InputMode};
@@ -65,7 +64,7 @@ unsafe extern "C" fn process_key_event(
 
             if ('!' as u32) <= keyval && keyval <= ('~' as u32) {
                 info!("Insert new character to preedit: '{}'", context_ref.preedit);
-                if ibus_lookup_table_get_number_of_candidates(context_ref.lookup_table) > 0 {
+                if context_ref.lookup_table.get_number_of_candidates() > 0 {
                     // 変換の途中に別の文字が入力された。よって、現在の preedit 文字列は確定させる。
                     // TODO commit_candidate();
                 }
