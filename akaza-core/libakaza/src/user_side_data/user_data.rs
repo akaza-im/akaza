@@ -5,7 +5,7 @@ use std::sync::Mutex;
 use anyhow::Result;
 use log::{info, warn};
 
-use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
+use crate::kana_trie::crawdad_kana_trie::CrawdadKanaTrie;
 use crate::user_side_data::bigram_user_stats::BiGramUserStats;
 use crate::user_side_data::unigram_user_stats::UniGramUserStats;
 use crate::user_side_data::user_stats_utils::{read_user_stats_file, write_user_stats_file};
@@ -16,7 +16,7 @@ use crate::user_side_data::user_stats_utils::{read_user_stats_file, write_user_s
 #[derive(Default)]
 pub struct UserData {
     /// 読み仮名のトライ。入力変換時に共通接頭辞検索するために使用。
-    kana_trie: Mutex<MarisaKanaTrie>,
+    kana_trie: Mutex<CrawdadKanaTrie>,
 
     unigram_user_stats: UniGramUserStats,
     bigram_user_stats: BiGramUserStats,
@@ -37,12 +37,12 @@ impl UserData {
             .unwrap()
             .to_string();
         let bigram_path = basedir
-            .place_data_file(Path::new("unigram.v1.txt"))?
+            .place_data_file(Path::new("bigram.v1.txt"))?
             .to_str()
             .unwrap()
             .to_string();
         let kana_trie_path = basedir
-            .place_data_file(Path::new("unigram.v1.txt"))?
+            .place_data_file(Path::new("kana_trie.v1.crawdad"))?
             .to_str()
             .unwrap()
             .to_string();
@@ -95,11 +95,11 @@ impl UserData {
             }
         };
 
-        let kana_trie = match MarisaKanaTrie::load(kana_trie_path) {
+        let kana_trie = match CrawdadKanaTrie::load(kana_trie_path) {
             Ok(trie) => trie,
             Err(err) => {
                 warn!("Cannot load kana trie: {} {}", kana_trie_path, err);
-                MarisaKanaTrie::default()
+                CrawdadKanaTrie::default()
             }
         };
 
@@ -122,6 +122,7 @@ impl UserData {
     }
 
     pub fn write_user_stats_file(&self) -> Result<()> {
+        info!("Saving user stats file");
         if let Some(unigram_path) = &self.unigram_path {
             write_user_stats_file(unigram_path, &self.unigram_user_stats.word_count)?;
         }

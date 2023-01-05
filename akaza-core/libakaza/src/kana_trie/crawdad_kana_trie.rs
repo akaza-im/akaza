@@ -1,12 +1,32 @@
+use std::fs::File;
+use std::io::{BufReader, Read};
+
 use crawdad::Trie;
 
 use crate::kana_trie::base::KanaTrie;
 
-struct CrawdadKanaTrie {
+pub struct CrawdadKanaTrie {
     trie: Trie,
 }
 
+impl Default for CrawdadKanaTrie {
+    fn default() -> Self {
+        let keys: Vec<String> = Vec::from(["DDDDDDDDDDDDDDDDDUMMY_FOR_TESTING".to_string()]);
+        let trie = Trie::from_keys(keys).unwrap();
+        CrawdadKanaTrie { trie }
+    }
+}
+
 impl CrawdadKanaTrie {
+    pub fn load(file_name: &str) -> anyhow::Result<CrawdadKanaTrie> {
+        let file = File::open(file_name)?;
+        let mut buf: Vec<u8> = Vec::new();
+        BufReader::new(file).read_to_end(&mut buf)?;
+
+        let (trie, _) = crawdad::Trie::deserialize_from_slice(buf.as_slice());
+        Ok(CrawdadKanaTrie { trie })
+    }
+
     pub fn build(keys: Vec<String>) -> anyhow::Result<CrawdadKanaTrie> {
         let trie = Trie::from_keys(keys).unwrap();
         Ok(CrawdadKanaTrie { trie })

@@ -3,6 +3,7 @@
 use std::ffi::c_void;
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
+use std::{thread, time};
 
 use anyhow::Result;
 use log::{error, info, warn};
@@ -51,7 +52,7 @@ fn main() -> Result<()> {
         let sys_time = SystemTime::now();
         let user_data = load_user_data();
         let akaza = AkazaBuilder::default()
-            .user_data(user_data)
+            .user_data(user_data.clone())
             .system_data_dir("/home/tokuhirom/dev/akaza/akaza-data/data")
             .build()?;
         let mut ac = AkazaContext::new(akaza);
@@ -61,6 +62,24 @@ fn main() -> Result<()> {
             "Initialized ibus-akaza engine in {} milliseconds.",
             difference.as_millis()
         );
+
+        thread::Builder::new()
+            .name("user-data-save-thread".to_string())
+            .spawn(move || {
+                let interval = time::Duration::from_secs(3);
+
+                // スレッド内で雑に例外投げるとスレッドとまっちゃうので丁寧めに処理する。
+                loop {
+                    if let Ok(data) = user_data.lock() {
+                        if let Err(e) = data.write_user_stats_file() {
+                            warn!("Cannot save user stats file: {}", e);
+                        }
+                    } else {
+                        warn!("Cannot get mutex for saving user data")
+                    };
+                    thread::sleep(interval);
+                }
+            })?;
 
         ibus_akaza_set_callback(&mut ac as *mut _ as *mut c_void, process_key_event);
 
