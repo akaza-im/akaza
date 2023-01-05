@@ -56,6 +56,8 @@ pub struct AkazaContext {
     current_clause: usize,
     is_invalidate: bool,
     cursor_moved: bool,
+    // key は、clause 番号。value は、node の index。
+    node_selected: HashMap<usize, usize>,
 }
 
 impl AkazaContext {
@@ -73,6 +75,7 @@ impl AkazaContext {
             current_clause: 0,
             is_invalidate: false,
             cursor_moved: false,
+            node_selected: HashMap::new(),
         }
     }
 }
@@ -238,7 +241,7 @@ impl AkazaContext {
             self.preedit.clear();
             self.clauses.clear();
             self.current_clause = 0;
-            // TODO self.node_selected = {};
+            self.node_selected.clear();
             // TODO self.force_selected_clause = None
 
             self.lookup_table.clear();
@@ -282,29 +285,22 @@ impl AkazaContext {
 
     pub(crate) fn build_string(&self) -> String {
         let mut result = String::new();
-        for (_clauseid, nodes) in self.clauses.iter().enumerate() {
+        for (clauseid, nodes) in self.clauses.iter().enumerate() {
             // TODO lisp をひょうかする
-            // TODO node_selected をひょうかする
-            // result += nodes[self.node_selected.get(clauseid, 0)].surface(lisp_evaluator)
-            result += &nodes[0].kanji;
+            let idex = if let Some(i) = self.node_selected.get(&clauseid) {
+                *i
+            } else {
+                0
+            };
+            result += &nodes[idex].kanji;
         }
         result
     }
 
     pub(crate) fn update_candidates(&mut self, engine: *mut IBusEngine) {
         self._update_candidates(engine).unwrap();
-        // TODO more processing
-
-        /*
-           def update_candidates(self):
-           self.logger.info("update_candidates")
-           try:
-               self._update_candidates()
-               self.current_clause = 0
-               self.node_selected = {}
-           except:
-               self.logger.error(f"cannot get kanji candidates {sys.exc_info()[0]}", exc_info=True)
-        */
+        self.current_clause = 0;
+        self.node_selected.clear();
     }
 
     fn _update_candidates(&mut self, engine: *mut IBusEngine) -> Result<()> {
@@ -455,5 +451,17 @@ impl AkazaContext {
             else:
                 return yomi, yomi
         */
+    }
+
+    /// 次の変換候補を選択する。
+    pub fn cursor_down(&mut self, engine: *mut IBusEngine) {
+        self.node_selected.insert(
+            self.current_clause,
+            self.lookup_table.get_cursor_pos() as usize,
+        );
+        if self.lookup_table.cursor_down() {
+            self.cursor_moved = true;
+            self.refresh(engine);
+        }
     }
 }

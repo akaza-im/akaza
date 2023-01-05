@@ -68,8 +68,6 @@ impl KeyMap {
         keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F9'], 'convert_to_full_romaji')
         keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F10'], 'convert_to_half_romaji')
 
-        keymap.register([KEY_STATE_CONVERSION], ['space'], 'cursor_down')
-
         keymap.register([KEY_STATE_CONVERSION], ['Return', 'KP_Enter'], 'commit_candidate')
 
         keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['Escape'], 'escape')
@@ -120,6 +118,8 @@ impl KeyMap {
             &[IBUS_KEY_space],
             "update_candidates",
         );
+        builder.insert(&[KeyState::Conversion], &[IBUS_KEY_space], "cursor_down");
+
         builder.insert(
             &[KeyState::Conversion, KeyState::Composition],
             &[IBUS_KEY_BackSpace],

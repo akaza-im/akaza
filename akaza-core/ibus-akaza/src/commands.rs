@@ -36,6 +36,9 @@ pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaComman
     register("erase_character_before_cursor", |context, engine| {
         context.erase_character_before_cursor(engine)
     });
+    register("cursor_down", |context, engine| {
+        context.cursor_down(engine);
+    });
 
     function_map
 }

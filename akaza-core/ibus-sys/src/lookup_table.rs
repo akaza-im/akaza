@@ -41,6 +41,16 @@ impl IBusLookupTable {
     pub fn clear(&mut self) {
         unsafe { ibus_lookup_table_clear(self as *mut Self) }
     }
+
+    pub fn cursor_down(&mut self) -> bool {
+        unsafe {
+            let b = ibus_lookup_table_cursor_down(self as *mut _);
+            b == 1
+        }
+    }
+    pub fn get_cursor_pos(&mut self) -> guint {
+        unsafe { ibus_lookup_table_get_cursor_pos(self as *mut _) }
+    }
 }
 
 extern "C" {
@@ -57,4 +67,6 @@ extern "C" {
     pub fn ibus_lookup_table_get_number_of_candidates(table: *mut IBusLookupTable) -> guint;
     #[doc = " ibus_lookup_table_append_candidate:\n @table: An IBusLookupTable.\n @text: candidate word/phrase to be appended (in IBusText format).\n\n Append a candidate word/phrase to IBusLookupTable, and increase reference."]
     pub fn ibus_lookup_table_append_candidate(table: *mut IBusLookupTable, text: *mut IBusText);
+    pub fn ibus_lookup_table_cursor_down(table: *mut IBusLookupTable) -> gboolean;
+    pub fn ibus_lookup_table_get_cursor_pos(table: *mut IBusLookupTable) -> guint;
 }
