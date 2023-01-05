@@ -2,10 +2,9 @@ use std::collections::btree_map::Iter;
 use std::collections::{BTreeMap, HashSet};
 use std::ops::Range;
 
-use crate::kana_trie::base::KanaTrie;
 use log::trace;
 
-use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
+use crate::kana_trie::base::KanaTrie;
 
 #[derive(PartialEq, Debug)]
 pub struct SegmentationResult {
@@ -37,11 +36,11 @@ impl SegmentationResult {
 }
 
 pub struct Segmenter {
-    tries: Vec<MarisaKanaTrie>,
+    tries: Vec<Box<dyn KanaTrie>>,
 }
 
 impl Segmenter {
-    pub fn new(tries: Vec<MarisaKanaTrie>) -> Segmenter {
+    pub fn new(tries: Vec<Box<dyn KanaTrie>>) -> Segmenter {
         Segmenter { tries }
     }
 
@@ -162,7 +161,7 @@ mod tests {
             "し".to_string(),
         ]);
 
-        let segmenter = Segmenter::new(vec![kana_trie]);
+        let segmenter = Segmenter::new(vec![Box::new(kana_trie)]);
         let graph = segmenter.build("わたし", &Vec::new());
         assert_eq!(
             graph,
@@ -177,7 +176,7 @@ mod tests {
     fn test_without_kanatrie() {
         let kana_trie = MarisaKanaTrie::build(vec![]);
 
-        let segmenter = Segmenter::new(vec![kana_trie]);
+        let segmenter = Segmenter::new(vec![Box::new(kana_trie)]);
         let graph = segmenter.build("わたし", &Vec::new());
         assert_eq!(
             graph,
@@ -201,7 +200,7 @@ mod tests {
             "し".to_string(),
         ]));
 
-        let segmenter = Segmenter::new(vec![kana_trie]);
+        let segmenter = Segmenter::new(vec![Box::new(kana_trie)]);
         let yomi = "わたし";
         // force_range に "たし" を指定する。
         let (i2, _) = yomi.char_indices().nth(1).unwrap();

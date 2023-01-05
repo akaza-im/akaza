@@ -143,7 +143,7 @@ impl AkazaBuilder {
         let all_yomis = system_kana_kanji_dict.all_yomis().unwrap();
         let system_kana_trie = MarisaKanaTrie::build(all_yomis);
 
-        let segmenter = Segmenter::new(vec![system_kana_trie]);
+        let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
 
         let user_data = if let Some(d) = &self.user_data {
             d.clone()
