@@ -4,7 +4,7 @@ use std::ops::Range;
 use crate::graph::graph_resolver::Candidate;
 
 // 現状維持するための文節データを返します。
-fn keep_current(clauses: &Vec<VecDeque<Candidate>>) -> Vec<Range<usize>> {
+fn keep_current(clauses: &[VecDeque<Candidate>]) -> Vec<Range<usize>> {
     let mut force_selected_clause: Vec<Range<usize>> = Vec::new();
     let mut offset = 0;
     for yomi_len in clauses.iter().map(|f| f[0].yomi.len()) {
