@@ -6,6 +6,7 @@ use std::time::SystemTime;
 use std::{thread, time};
 
 use anyhow::Result;
+use clap::Parser;
 use log::{error, info, warn};
 
 use ibus_sys::core::ibus_main;
@@ -43,7 +44,16 @@ fn load_user_data() -> Arc<Mutex<UserData>> {
     }
 }
 
+#[derive(clap::Parser)]
+#[command(author, version, about, long_about = None)]
+struct IBusAkazaArgs {
+    #[clap(long)]
+    ibus: bool,
+}
+
 fn main() -> Result<()> {
+    let arg: IBusAkazaArgs = IBusAkazaArgs::parse();
+
     env_logger::init();
 
     info!("Starting ibus-akaza(rust version)");
@@ -83,7 +93,7 @@ fn main() -> Result<()> {
 
         ibus_akaza_set_callback(&mut ac as *mut _ as *mut c_void, process_key_event);
 
-        ibus_akaza_init(true);
+        ibus_akaza_init(arg.ibus);
 
         info!("Enter the ibus_main()");
 
