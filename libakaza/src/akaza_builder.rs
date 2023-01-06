@@ -7,6 +7,7 @@ use anyhow::Result;
 
 use crate::graph::graph_builder::GraphBuilder;
 use crate::graph::graph_resolver::{Candidate, GraphResolver};
+use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::Segmenter;
 use crate::kana_kanji_dict::{KanaKanjiDict, KanaKanjiDictBuilder};
 use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
@@ -43,6 +44,11 @@ impl Akaza {
             return Ok(vec![VecDeque::from([Candidate::new(yomi, yomi, 0_f32)])]);
         }
 
+        let lattice = self.to_lattice(yomi, force_ranges)?;
+        self.graph_resolver.resolve(&lattice)
+    }
+
+    pub fn to_lattice(&self, yomi: &str, force_ranges: &Vec<Range<usize>>) -> Result<LatticeGraph> {
         // ローマ字からひらがなへの変換をする。
         let yomi = self.romkan_converter.to_hiragana(yomi);
 
@@ -87,7 +93,7 @@ impl Akaza {
         let lattice = self
             .graph_builder
             .construct(yomi.as_str(), segmentation_result);
-        self.graph_resolver.resolve(&lattice)
+        Ok(lattice)
     }
 }
 

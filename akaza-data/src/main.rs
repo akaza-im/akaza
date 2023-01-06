@@ -1,3 +1,4 @@
+use crate::subcmd::check::check;
 use crate::subcmd::evaluate::evaluate;
 use clap::{Parser, Subcommand};
 
@@ -30,6 +31,8 @@ enum Commands {
     MakeSystemLanguageModel(MakeSystemLanguageModelArgs),
     #[clap(arg_required_else_help = true)]
     Evaluate(EvaluateArgs),
+    #[clap(arg_required_else_help = true)]
+    Check(CheckArgs),
 }
 
 #[derive(Debug, clap::Args)]
@@ -68,6 +71,13 @@ struct EvaluateArgs {
     system_data_dir: String,
 }
 
+/// 動作確認する
+#[derive(Debug, clap::Args)]
+struct CheckArgs {
+    /// 変換したい読みがな
+    yomi: String,
+}
+
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
@@ -84,5 +94,6 @@ fn main() -> anyhow::Result<()> {
             &opt.bigram_dst,
         ),
         Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, &opt.system_data_dir),
+        Commands::Check(opt) => check(&opt.yomi),
     }
 }
