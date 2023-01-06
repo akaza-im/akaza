@@ -40,7 +40,7 @@ work/jawiki.single_term.txt: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.
 	python3 bin/070_make-system-dict.py
 
 data/lm_v2_2gram.trie: work/jawiki.merged-2gram.txt
-	akaza-make-system-lm work/jawiki.merged-1gram.txt data/lm_v2_1gram.trie \
+	cargo run -- make-system-language-model work/jawiki.merged-1gram.txt data/lm_v2_1gram.trie \
     	work/jawiki.merged-2gram.txt data/lm_v2_2gram.trie
 
 data/system_dict.trie: work/jawiki.single_term.txt

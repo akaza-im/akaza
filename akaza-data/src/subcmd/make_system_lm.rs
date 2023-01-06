@@ -1,4 +1,3 @@
-use std::env;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
@@ -87,19 +86,18 @@ fn process_2gram(unigram: &SystemUnigramLM, srcpath: &str, dstpath: &str) -> Res
     Ok(())
 }
 
-fn main() -> Result<()> {
+pub fn make_system_lm(
+    unigram_src: &String,
+    unigram_dst: &String,
+    bigram_src: &String,
+    bigram_dst: &String,
+) -> Result<()> {
     // 1gram ファイルから読む。
     // 1gram の map<string, int> の ID mapping を作成する
     // 1gram データを書いていく。
 
     // "work/jawiki.merged-1gram.txt" "akaza_data/data/lm_v2_1gram.trie"
     // "work/jawiki.merged-2gram.txt" "akaza_data/data/lm_v2_2gram.trie"
-
-    let args: Vec<String> = env::args().collect();
-    let unigram_src = &args[1];
-    let unigram_dst = &args[2];
-    let bigram_src = &args[3];
-    let bigram_dst = &args[4];
 
     // std::map<std::string, uint32_t> word2id;
     // "work/jawiki.merged-1gram.txt" -> "akaza_data/data/lm_v2_1gram.trie"
