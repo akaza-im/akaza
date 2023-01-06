@@ -44,17 +44,22 @@ fn load_user_data() -> Arc<Mutex<UserData>> {
     }
 }
 
-#[derive(clap::Parser)]
+#[derive(Debug, clap::Parser)]
 #[command(author, version, about, long_about = None)]
 struct IBusAkazaArgs {
     #[clap(long)]
     ibus: bool,
+
+    #[clap(flatten)]
+    verbose: clap_verbosity_flag::Verbosity,
 }
 
 fn main() -> Result<()> {
     let arg: IBusAkazaArgs = IBusAkazaArgs::parse();
 
-    env_logger::init();
+    env_logger::Builder::new()
+        .filter_level(arg.verbose.log_level_filter())
+        .init();
 
     info!("Starting ibus-akaza(rust version)");
 
