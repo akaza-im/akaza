@@ -38,7 +38,6 @@ work/jawiki.merged-2gram.txt: work/ngram/BE/wiki_13.1gram.txt work/jawiki.vocab 
 
 work/jawiki.single_term.txt: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza
 	python3 bin/070_make-system-dict.py
-	python3 bin/080_system_dump.py
 
 data/lm_v2_2gram.trie: work/jawiki.merged-2gram.txt
 	akaza-make-system-lm work/jawiki.merged-1gram.txt data/lm_v2_1gram.trie \
