@@ -16,7 +16,7 @@ work/jawiki-latest-pages-articles.xml: work/jawiki-latest-pages-articles.xml.bz2
 work/extracted/BE/wiki_13: work/jawiki-latest-pages-articles.xml
 	python3 -m wikiextractor.WikiExtractor --quiet --processes 8 --out work/extracted/ work/jawiki-latest-pages-articles.xml
 
-work/annotated/BE/wiki_13: work/extracted/BE/wiki_13 bin/010_wiki2annotated.py work/kytea/train.mod
+work/annotated/BE/wiki_13: work/extracted/BE/wiki_13 bin/010_wiki2annotated.py
 	python3 bin/010_wiki2annotated.py
 
 work/text/BE/wiki_13: work/annotated/BE/wiki_13 bin/020_annotated2text.py bin/akaza_data_utils/merge_terms.py
@@ -52,6 +52,7 @@ data/single_term.trie: work/jawiki.single_term.txt
 # -------------------------------------------------------------------------
 
 # http://www.phontron.com/kytea/train-ja.html
+# モでルをいじってつかおうとこころみたが、うまくいってないのでいったん、つかわないことにする。
 
 work/kytea/kytea-0.4.2.feat.gz:
 	mkdir -p work/kytea/
@@ -65,8 +66,13 @@ work/kytea/train.mod: work/kytea/kytea-0.4.2.feat corpus/kytea.txt
 
 # -------------------------------------------------------------------------
 
+evaluate:
+	cargo run --release evaluate anthy-corpus data -v
+
+# -------------------------------------------------------------------------
+
 install:
 	install -m 0755 -d $(DESTDIR)$(DATADIR)/akaza-data
 	install -m 0644 data/*.trie $(DESTDIR)$(DATADIR)/akaza-data
 
-.PHONY: all install
+.PHONY: all install evaluate

@@ -43,10 +43,10 @@ def build_model(pattern, cutoff, t0):
     print(f"Scoring phase: {pattern}. elapsed={time.time() - t0}")
     for word, cnt in tqdm(wordcnt.items()):
         if cnt > cutoff:
-            score = math.log10((wordcnt[word] + alpha) / (C + alpha * V))
+            score = -math.log10((wordcnt[word] + alpha) / (C + alpha * V))
             retval.append((word, (float(score),),))
 
-    default_score = math.log10((0 + alpha) / (C + alpha * V))
+    default_score = -math.log10((0 + alpha) / (C + alpha * V))
     print(f"{pattern} default score is `{default_score}`")
 
     return retval

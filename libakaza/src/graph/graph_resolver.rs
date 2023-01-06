@@ -45,7 +45,7 @@ impl GraphResolver {
             for node in *nodes {
                 let node_cost = lattice.get_node_cost(node);
                 trace!("kanji={}, Cost={}", node, node_cost);
-                let mut cost = f32::MIN;
+                let mut cost = f32::MAX;
                 let mut shortest_prev = None;
                 let prev_nodes = lattice.get_prev_nodes(node).with_context(|| {
                     format!(
@@ -64,9 +64,9 @@ impl GraphResolver {
                         cost,
                         prev
                     );
-                    // コストが最大な経路を選ぶようにする。
+                    // コストが最小な経路を選ぶようにする。
                     // そういうふうにコストを付与しているので。
-                    if cost < tmp_cost {
+                    if cost > tmp_cost {
                         if shortest_prev.is_none() {
                             trace!("Replace None by {}", prev);
                         } else {

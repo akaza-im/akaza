@@ -33,11 +33,11 @@ mod tests {
 
         let (id1, score1) = unigram.find("私/わたし").unwrap();
         assert!(id1 > 0);
-        assert!(score1 < 0.0_f32);
+        assert!(score1 > 0.0_f32);
 
         let (id2, score2) = unigram.find("から/から").unwrap();
         assert!(id2 > 0);
-        assert!(score2 < 0.0_f32);
+        assert!(score2 > 0.0_f32);
 
         println!("id1={}, id2={}", id1, id2);
 
@@ -52,7 +52,7 @@ mod tests {
                 )
             })
             .unwrap();
-        assert!(bigram_score < 0.0_f32);
+        assert!(bigram_score > 0.0_f32);
 
         println!("BigramScore={}", bigram_score)
     }

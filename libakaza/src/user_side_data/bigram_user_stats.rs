@@ -36,7 +36,7 @@ impl BiGramUserStats {
         let Some(count) = self.word_count.get(key.as_str()) else {
             return None;
         };
-        Some(f32::log10(
+        Some(-f32::log10(
             ((*count as f32) + ALPHA)
                 / ((self.unique_words as f32) + ALPHA + (self.total_words as f32)),
         ))

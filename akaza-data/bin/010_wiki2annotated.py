@@ -1,14 +1,16 @@
+import glob
 import logging
+import multiprocessing as mp
 import os
 import pathlib
-import sys
-from Mykytea import Mykytea
 import re
-import multiprocessing as mp
-import glob
+import sys
 import time
 
-kytea = Mykytea('-model work/kytea/train.mod')
+from Mykytea import Mykytea
+
+kytea = Mykytea('-model /usr/share/kytea/model.bin')
+# kytea = Mykytea('-model work/kytea/train.mod')
 
 HIRAGANA_BLOCK = r'\u3041-\u309F'
 HIRAGANA_PATTERN = re.compile(r'^[' + HIRAGANA_BLOCK + ']+$')

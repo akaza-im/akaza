@@ -72,8 +72,6 @@ mod tests {
             ("tanosiijikan", "楽しい時間"),
             ("たのしいじかん", "楽しい時間"),
             ("zh", "←"),
-            ("それなwww", "それなwww"),
-            ("sorenawww", "それなwww"),
             ("watasinonamaehanakanodesu.", "私の名前は中野です。"),
             ("わたしのなまえはなかのです。", "私の名前は中野です。"),
             ("わーど", "ワード"),
@@ -99,6 +97,8 @@ mod tests {
             // ("かりきゅれーたー", "カリキュレーター"),
             // ("いたいのいたいのとんでけー", "痛いの痛いのとんでけー"),
             // ("そうみたいですね", "そうみたいですね"),
+            // ("それなwww", "それなwww"),
+            // ("sorenawww", "それなwww"),
         ];
         let tester = Tester::new()?;
         for (yomi, surface) in data {

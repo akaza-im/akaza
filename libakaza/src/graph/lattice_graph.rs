@@ -10,7 +10,7 @@ use crate::lm::system_bigram::SystemBigramLM;
 use crate::lm::system_unigram_lm::SystemUnigramLM;
 use crate::user_side_data::user_data::UserData;
 
-const DEFAULT_SCORE: f32 = -20.0; // log10(1e-20)
+const DEFAULT_SCORE: f32 = 20.0; // -log10(1e-20)
 
 // 考えられる単語の列全てを含むようなグラフ構造
 pub struct LatticeGraph {
@@ -131,15 +131,17 @@ impl LatticeGraph {
             // 言語モデルには採録されていない場合,漢字候補を先頭に持ってくる。
             // つまり、変換後のほうが短くなるもののほうをコストを安くしておく。
 
-            // log10(1e-19)
-            -19.0
+            // -log10(1e-19)
+            19.0
         } else {
-            // log10(1e-20)
-            -20.0
+            // -log10(1e-20)
+            20.0
         };
     }
 
     pub(crate) fn get_edge_cost(&self, prev: &WordNode, node: &WordNode) -> f32 {
+        // TODO user bigram cost
+
         // TODO ID 引く処理のキャッシュ。
         let Some((prev_id, _)) = self.system_unigram_lm.find(prev.key().as_str()) else {
             return DEFAULT_SCORE;
