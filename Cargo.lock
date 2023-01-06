@@ -12,6 +12,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "akaza-data"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap 4.0.32",
+ "clap-verbosity-flag",
+ "env_logger",
+ "libakaza",
+ "log",
+ "tempfile",
+]
+
+[[package]]
 name = "akaza-demo"
 version = "0.1.0"
 dependencies = [
@@ -20,13 +33,6 @@ dependencies = [
  "libakaza",
  "log",
  "tempfile",
-]
-
-[[package]]
-name = "akaza-make-binary-dict"
-version = "0.1.0"
-dependencies = [
- "libakaza",
 ]
 
 [[package]]

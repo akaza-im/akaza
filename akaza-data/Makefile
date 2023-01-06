@@ -45,10 +45,10 @@ data/lm_v2_2gram.trie: work/jawiki.merged-2gram.txt
     	work/jawiki.merged-2gram.txt data/lm_v2_2gram.trie
 
 data/system_dict.trie: work/jawiki.single_term.txt
-	akaza-make-binary-dict work/jawiki.system_dict.txt data/system_dict.trie
+	cargo run -- make-system-dict work/jawiki.system_dict.txt data/system_dict.trie
 
 data/single_term.trie: work/jawiki.single_term.txt
-	akaza-make-binary-dict work/jawiki.single_term.txt data/single_term.trie
+	cargo run -- make-system-dict work/jawiki.single_term.txt data/single_term.trie
 
 # -------------------------------------------------------------------------
 
