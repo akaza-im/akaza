@@ -12,7 +12,7 @@ enum ParserState {
 /**
  * SKK 辞書をパースします。
  */
-fn parse_skkdict(src: &str) -> anyhow::Result<(SkkDictParsedData, SkkDictParsedData)> {
+pub fn parse_skkdict(src: &str) -> anyhow::Result<(SkkDictParsedData, SkkDictParsedData)> {
     let mut ari: SkkDictParsedData = HashMap::new();
     let mut nasi: SkkDictParsedData = HashMap::new();
     let mut target = &mut ari;
@@ -43,7 +43,10 @@ fn parse_skkdict(src: &str) -> anyhow::Result<(SkkDictParsedData, SkkDictParsedD
 
         // example:
         // とくひろ /徳宏/徳大/徳寛/督弘/
-        let surfaces: Vec<String> = surfaces[1..surfaces.len() - 1]
+        // 末尾の slash が抜けてる場合もあるエントリーが SKK-JISYO.L に入っていたりするので注意。
+        let surfaces: Vec<String> = surfaces
+            .trim_start_matches("/")
+            .trim_end_matches("/")
             .split('/')
             .map(|s| s.to_string())
             .collect();
@@ -55,9 +58,10 @@ fn parse_skkdict(src: &str) -> anyhow::Result<(SkkDictParsedData, SkkDictParsedD
 
 #[cfg(test)]
 mod tests {
-    use anyhow::Context;
     use std::fs::File;
     use std::io::{BufReader, Read};
+
+    use anyhow::Context;
 
     use super::*;
 
@@ -70,6 +74,24 @@ mod tests {
         BufReader::new(file).read_to_string(&mut buf)?;
         let (_, nasi) = parse_skkdict(buf.as_str())?;
         assert_eq!(*nasi.get("ぶかわ").unwrap(), vec!["武川".to_string()]);
+
+        Ok(())
+    }
+
+    /// 末尾のスラッシュが落ちていても許容する。
+    // sars-cov /severe acute respiratory syndrome coronavirus/SARSコロナウイルス
+    #[test]
+    fn missing_trailing_slash() -> anyhow::Result<()> {
+        let src = ";; okuri-nasi entries.\n\
+            sars-cov /severe acute respiratory syndrome coronavirus/SARSコロナウイルス";
+        let (_, nasi) = parse_skkdict(src)?;
+        assert_eq!(
+            *nasi.get("sars-cov").unwrap(),
+            vec![
+                "severe acute respiratory syndrome coronavirus".to_string(),
+                "SARSコロナウイルス".to_string(),
+            ]
+        );
 
         Ok(())
     }

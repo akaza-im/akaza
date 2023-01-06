@@ -1,0 +1,11 @@
+#
+# パラメータを更新する場合は次のコマンドを実行する
+# $ make update_params
+#
+# corpus.0.txt デバッグ用のファイル
+# corpus.1.txt メイン(候補割り当ても含む)
+# corpus.2.txt テストセットに対する入力
+# corpus.3.txt メイン(もらいもの)
+# corpus.4.txt 誤変換
+# corpus.5.txt 出どころ不明
+#

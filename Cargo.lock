@@ -18,20 +18,12 @@ dependencies = [
  "anyhow",
  "clap 4.0.32",
  "clap-verbosity-flag",
+ "encoding_rs",
  "env_logger",
+ "kelp",
  "libakaza",
  "log",
- "tempfile",
-]
-
-[[package]]
-name = "akaza-demo"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "env_logger",
- "libakaza",
- "log",
+ "regex",
  "tempfile",
 ]
 
@@ -267,6 +259,15 @@ dependencies = [
  "libc",
  "redox_users",
  "winapi",
+]
+
+[[package]]
+name = "encoding_rs"
+version = "0.8.31"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9852635589dc9f9ea1b6fe9f05b50ef208c85c834a562f0c6abb1c475736ec2b"
+dependencies = [
+ "cfg-if",
 ]
 
 [[package]]

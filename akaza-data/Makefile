@@ -16,7 +16,7 @@ work/jawiki-latest-pages-articles.xml: work/jawiki-latest-pages-articles.xml.bz2
 work/extracted/BE/wiki_13: work/jawiki-latest-pages-articles.xml
 	python3 -m wikiextractor.WikiExtractor --quiet --processes 8 --out work/extracted/ work/jawiki-latest-pages-articles.xml
 
-work/annotated/BE/wiki_13: work/extracted/BE/wiki_13 bin/010_wiki2annotated.py
+work/annotated/BE/wiki_13: work/extracted/BE/wiki_13 bin/010_wiki2annotated.py work/kytea/train.mod
 	python3 bin/010_wiki2annotated.py
 
 work/text/BE/wiki_13: work/annotated/BE/wiki_13 bin/020_annotated2text.py bin/akaza_data_utils/merge_terms.py
@@ -48,6 +48,20 @@ data/system_dict.trie: work/jawiki.single_term.txt
 
 data/single_term.trie: work/jawiki.single_term.txt
 	cargo run -- make-system-dict work/jawiki.single_term.txt data/single_term.trie
+
+# -------------------------------------------------------------------------
+
+# http://www.phontron.com/kytea/train-ja.html
+
+work/kytea/kytea-0.4.2.feat.gz:
+	mkdir -p work/kytea/
+	wget http://www.phontron.com/kytea/download/kytea-0.4.2.feat.gz -O work/kytea/kytea-0.4.2.feat.gz
+
+work/kytea/kytea-0.4.2.feat: work/kytea/kytea-0.4.2.feat.gz
+	gunzip --keep work/kytea/kytea-0.4.2.feat.gz
+
+work/kytea/train.mod: work/kytea/kytea-0.4.2.feat corpus/kytea.txt
+	train-kytea -feat work/kytea/kytea-0.4.2.feat -full corpus/kytea.txt -model work/kytea/train.mod
 
 # -------------------------------------------------------------------------
 

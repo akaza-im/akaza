@@ -1,2 +1,0 @@
-*.iso filter=lfs diff=lfs merge=lfs -text
-*.trie filter=lfs diff=lfs merge=lfs -text

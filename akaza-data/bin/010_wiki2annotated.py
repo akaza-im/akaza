@@ -8,7 +8,7 @@ import multiprocessing as mp
 import glob
 import time
 
-kytea = Mykytea('-model /usr/share/kytea/model.bin')
+kytea = Mykytea('-model work/kytea/train.mod')
 
 HIRAGANA_BLOCK = r'\u3041-\u309F'
 HIRAGANA_PATTERN = re.compile(r'^[' + HIRAGANA_BLOCK + ']+$')
