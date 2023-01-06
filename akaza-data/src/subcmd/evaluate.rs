@@ -7,6 +7,42 @@ use log::info;
 
 use libakaza::akaza_builder::AkazaBuilder;
 
+#[derive(Default)]
+struct SaigenRitsu {
+    /// total_lcs = N_{LCS}
+    /// LCS(最長共通部分列)の文字数の和。
+    /// https://www.anlp.jp/proceedings/annual_meeting/2011/pdf_dir/C4-6.pdf
+    total_lcs: usize,
+    /// 一括変換結果の文字数の和。
+    /// N_{sys}
+    total_sys: usize,
+}
+
+impl SaigenRitsu {
+    /// @param teacher コーパスにあるの変換結果
+    /// @param my_candidate 評価対象モデルにより出力された変換結果
+    fn add(&mut self, teacher: &str, my_candidate: &str) {
+        let teacher: Vec<char> = teacher.clone().chars().collect();
+        let my_candidate: Vec<char> = my_candidate.clone().chars().collect();
+        let lcs = lcs::LcsTable::new(&teacher, &my_candidate);
+        let lcs = lcs.longest_common_subsequence();
+        self.total_lcs += lcs.len();
+        self.total_sys += my_candidate.len();
+    }
+
+    fn rate(&self) -> f32 {
+        100.0 * (self.total_lcs as f32) / (self.total_sys as f32)
+    }
+}
+
+/// モデル/変換アルゴリズムを評価する。
+///
+/// 日本語かな漢字変換における識別モデルの適用とその考察
+/// https://www.anlp.jp/proceedings/annual_meeting/2011/pdf_dir/C4-6.pdf
+///
+/// にのっている評価方法を採用。
+///
+/// なぜこうしているかというと、mozc の論文にのっている BLEU を使用する方式より実装が楽だからです!
 pub fn evaluate(corpus_dir: &String, system_data_dir: &str) -> anyhow::Result<()> {
     /*
     # corpus.0.txt デバッグ用のファイル
@@ -35,6 +71,8 @@ pub fn evaluate(corpus_dir: &String, system_data_dir: &str) -> anyhow::Result<()
     let force_ranges = Vec::new();
     let total_t1 = SystemTime::now();
 
+    let mut saigen_ritsu = SaigenRitsu::default();
+
     for file in files {
         let fp = File::open(corpus_dir.to_string() + "/" + file)
             .with_context(|| format!("File: {}/{}", corpus_dir, file))?;
@@ -60,6 +98,9 @@ pub fn evaluate(corpus_dir: &String, system_data_dir: &str) -> anyhow::Result<()
             let terms: Vec<String> = result.iter().map(|f| f[0].kanji.clone()).collect();
             let got = terms.join("");
 
+            // 最長共通部分列を算出。
+            saigen_ritsu.add(&surface, &got);
+
             if surface == got {
                 info!("{} => (teacher={}, akaza={})", yomi, surface, got);
                 good_cnt += 1;
@@ -68,13 +109,14 @@ pub fn evaluate(corpus_dir: &String, system_data_dir: &str) -> anyhow::Result<()
                     "{} =>\n\
                    |  corpus={}\n\
                    |  akaza ={}\n\
-                   Good count={} bad count={} elapsed={}ms",
+                   Good count={} bad count={} elapsed={}ms saigen={}",
                     yomi,
                     surface,
                     got,
                     good_cnt,
                     bad_cnt,
-                    elapsed.as_millis()
+                    elapsed.as_millis(),
+                    saigen_ritsu.rate()
                 );
 
                 // 遅いなと思ったら cargo run --release になってるか確認すべし
@@ -89,10 +131,11 @@ pub fn evaluate(corpus_dir: &String, system_data_dir: &str) -> anyhow::Result<()
     let total_elapsed = total_t2.duration_since(total_t1)?;
 
     info!(
-        "Good count={} bad count={}, elapsed={}ms",
+        "Good count={} bad count={}, elapsed={}ms, 再現率={}",
         good_cnt,
         bad_cnt,
-        total_elapsed.as_millis()
+        total_elapsed.as_millis(),
+        saigen_ritsu.rate(),
     );
 
     Ok(())

@@ -16,5 +16,6 @@ clap-verbosity-flag = "2.0.0"
 encoding_rs = "0.8.31"
 regex = "1"
 kelp = "0.3.0"
+lcs = "0.2.0"
 
 [build-dependencies]

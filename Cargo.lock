@@ -21,6 +21,7 @@ dependencies = [
  "encoding_rs",
  "env_logger",
  "kelp",
+ "lcs",
  "libakaza",
  "log",
  "regex",
@@ -457,6 +458,12 @@ checksum = "be280887386c2323b96fba63e4246b89cc3c1ed8f1384378fcae46c707e587bf"
 dependencies = [
  "clap 2.34.0",
 ]
+
+[[package]]
+name = "lcs"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70048d97b51d107a6cf295d42210d298f0eb7d37f0518b88c816a74b8ce15f41"
 
 [[package]]
 name = "libakaza"
