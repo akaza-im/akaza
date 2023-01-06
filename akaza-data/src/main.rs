@@ -1,3 +1,4 @@
+use crate::subcmd::evaluate::evaluate;
 use clap::{Parser, Subcommand};
 
 use crate::subcmd::make_system_dict::make_system_dict;
@@ -14,6 +15,9 @@ about = env ! ("CARGO_PKG_DESCRIPTION"),
 arg_required_else_help = true,
 )]
 struct Args {
+    #[clap(flatten)]
+    verbose: clap_verbosity_flag::Verbosity,
+
     #[clap(subcommand)]
     command: Commands,
 }
@@ -24,6 +28,8 @@ enum Commands {
     MakeSystemDict(MakeSystemDictArgs),
     #[clap(arg_required_else_help = true)]
     MakeSystemLanguageModel(MakeSystemLanguageModelArgs),
+    #[clap(arg_required_else_help = true)]
+    Evaluate(EvaluateArgs),
 }
 
 #[derive(Debug, clap::Args)]
@@ -53,8 +59,22 @@ struct MakeSystemLanguageModelArgs {
     bigram_dst: String,
 }
 
+/// 変換精度を評価する
+#[derive(Debug, clap::Args)]
+struct EvaluateArgs {
+    /// コーパスが格納されているディレクトリ
+    corpus_dir: String,
+    /// 評価に利用するシステムデータのディレクトリ
+    system_data_dir: String,
+}
+
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
+
+    env_logger::Builder::new()
+        .filter_level(args.verbose.log_level_filter())
+        .init();
+
     match args.command {
         Commands::MakeSystemDict(opt) => make_system_dict(&opt.txtfile, &opt.triefile),
         Commands::MakeSystemLanguageModel(opt) => make_system_lm(
@@ -63,5 +83,6 @@ fn main() -> anyhow::Result<()> {
             &opt.bigram_src,
             &opt.bigram_dst,
         ),
+        Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, &opt.system_data_dir),
     }
 }
