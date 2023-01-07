@@ -19,13 +19,13 @@ use libakaza::user_side_data::user_data::UserData;
 /// 構造化パーセプトロンの学習を行います。
 /// 構造化パーセプトロンは、シンプルな実装で、そこそこのパフォーマンスがでる(予定)
 /// 構造化パーセプトロンでいい感じに動くようならば、構造化SVMなどに挑戦したい。
-pub fn learn_structured_perceptron() -> anyhow::Result<()> {
+pub fn learn_structured_perceptron(epochs: i32) -> anyhow::Result<()> {
     // ここでは内部クラスなどを触ってスコア調整をしていかないといけないので、AkazaBuilder は使えない。
 
     let corpuses = read_corpus_file(Path::new("corpus/must.txt"))?;
 
     let mut unigram_cost: HashMap<String, f32> = HashMap::new();
-    for _ in 1..10 {
+    for _ in 1..epochs {
         for teacher in corpuses.iter() {
             learn(teacher, &mut unigram_cost)?;
         }

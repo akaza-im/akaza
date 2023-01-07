@@ -84,7 +84,10 @@ struct CheckArgs {
 
 /// 動作確認する
 #[derive(Debug, clap::Args)]
-struct LearnStructuredPerceptronArgs {}
+struct LearnStructuredPerceptronArgs {
+    #[arg(short, long, default_value_t = 10)]
+    epochs: i32,
+}
 
 /// テキスト辞書を作る
 #[derive(Debug, clap::Args)]
@@ -107,7 +110,7 @@ fn main() -> anyhow::Result<()> {
         ),
         Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, &opt.system_data_dir),
         Commands::Check(opt) => check(&opt.yomi),
-        Commands::LearnStructuredPerceptron(_) => learn_structured_perceptron(),
+        Commands::LearnStructuredPerceptron(opts) => learn_structured_perceptron(opts.epochs),
         Commands::MakeTextDict(_) => make_text_dict(),
     }
 }
