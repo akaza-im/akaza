@@ -1,10 +1,8 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::ops::Range;
 use std::path::Path;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
-
-use log::{info, warn};
 
 use libakaza::corpus::{read_corpus_file, FullAnnotationCorpus};
 use libakaza::graph::graph_builder::GraphBuilder;
@@ -13,7 +11,7 @@ use libakaza::graph::segmenter::Segmenter;
 use libakaza::kana_kanji_dict::KanaKanjiDict;
 use libakaza::kana_trie::marisa_kana_trie::MarisaKanaTrie;
 use libakaza::lm::system_bigram::SystemBigramLMBuilder;
-use libakaza::lm::system_unigram_lm::SystemUnigramLMBuilder;
+use libakaza::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
 use libakaza::user_side_data::user_data::UserData;
 
 /// 構造化パーセプトロンの学習を行います。
@@ -30,6 +28,7 @@ pub fn learn_structured_perceptron(epochs: i32) -> anyhow::Result<()> {
     let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
     let system_single_term_dict = KanaKanjiDict::load("data/single_term.trie")?;
     let system_bigram_lm = SystemBigramLMBuilder::default().build();
+    let real_system_unigram_lm = SystemUnigramLM::load("data/lm_v2_1gram.trie")?;
     let mut graph_builder = GraphBuilder::new(
         system_kana_kanji_dict,
         system_single_term_dict,
@@ -41,9 +40,17 @@ pub fn learn_structured_perceptron(epochs: i32) -> anyhow::Result<()> {
     );
 
     let mut unigram_cost: HashMap<String, f32> = HashMap::new();
+    let mut bigram_cost: HashMap<(i32, i32), f32> = HashMap::new();
     for _ in 1..epochs {
         for teacher in corpuses.iter() {
-            learn(teacher, &mut unigram_cost, &segmenter, &mut graph_builder)?;
+            learn(
+                teacher,
+                &mut unigram_cost,
+                &mut bigram_cost,
+                &segmenter,
+                &mut graph_builder,
+                &real_system_unigram_lm,
+            )?;
         }
     }
 
@@ -53,8 +60,10 @@ pub fn learn_structured_perceptron(epochs: i32) -> anyhow::Result<()> {
 pub fn learn(
     teacher: &FullAnnotationCorpus,
     unigram_cost: &mut HashMap<String, f32>,
+    bigram_cost: &mut HashMap<(i32, i32), f32>,
     segmenter: &Segmenter,
     graph_builder: &mut GraphBuilder,
+    real_system_unigram_lm: &SystemUnigramLM,
 ) -> anyhow::Result<()> {
     // let system_kana_kanji_dict = KanaKanjiDictBuilder::default()
     //     .add("せんたくもの", "洗濯物")
@@ -68,12 +77,28 @@ pub fn learn(
 
     let mut unigram_lm_builder = SystemUnigramLMBuilder::default();
     for (key, cost) in unigram_cost.iter() {
-        warn!("SYSTEM UNIGRM LM: {} cost={}", key.as_str(), *cost);
+        // warn!("SYSTEM UNIGRM LM: {} cost={}", key.as_str(), *cost);
         unigram_lm_builder.add(key.as_str(), *cost);
     }
     let system_unigram_lm = unigram_lm_builder.build();
 
+    let mut bigram_lm_builder = SystemBigramLMBuilder::default();
+    for ((word_id1, word_id2), cost) in bigram_cost.iter() {
+        bigram_lm_builder.add(*word_id1, *word_id2, *cost);
+    }
+    let system_bigram_lm = bigram_lm_builder.build();
+
     graph_builder.set_system_unigram_lm(Rc::new(system_unigram_lm));
+    graph_builder.set_system_bigram_lm(Rc::new(system_bigram_lm));
+
+    let mut correct_edges: HashSet<String> = HashSet::new();
+    if teacher.nodes.len() > 1 {
+        for i in 1..teacher.nodes.len() {
+            let key1 = teacher.nodes[i].key();
+            let key2 = teacher.nodes[i].key();
+            correct_edges.insert(key1 + "\t" + key2.as_str());
+        }
+    }
 
     let correct_nodes = teacher.correct_node_set();
     let yomi = teacher.yomi();
@@ -94,7 +119,7 @@ pub fn learn(
             };
             for node in *nodes {
                 let modifier = if correct_nodes.contains(node) {
-                    info!("CORRECT: {:?}", node);
+                    // info!("CORRECT: {:?}", node);
                     -1_f32
                 } else {
                     1_f32
@@ -102,8 +127,32 @@ pub fn learn(
                 let v = unigram_cost.get(&node.key().to_string()).unwrap_or(&0_f32);
                 unigram_cost.insert(node.key(), *v + modifier);
             }
+            for j in 1..nodes.len() {
+                let word1 = &nodes[j - 1];
+                let word2 = &nodes[j];
+                let Some((word_id1, _)) = real_system_unigram_lm.find(&word1.key().to_string()) else {
+                    // info!("{} is not registered in the real system unigram LM.",word1);
+                    continue;
+                };
+                let Some((word_id2, _)) = real_system_unigram_lm.find(&word2.key().to_string()) else {
+                    // info!("{} is not registered in the real system unigram LM.",word1);
+                    continue;
+                };
 
-            // TODO エッジコストも考慮する
+                let modifier = if correct_edges
+                    .contains((word1.key().to_string() + "\t" + word2.key().as_str()).as_str())
+                {
+                    // info!("EDGE HIT {},{}", word1, word2);
+                    -1_f32
+                } else {
+                    // info!("EDGE MISS {},{}", word1, word2);
+                    1_f32
+                };
+
+                let v = bigram_cost.get(&(word_id1, word_id2)).unwrap_or(&0_f32);
+
+                bigram_cost.insert((word_id1, word_id2), *v + modifier);
+            }
         }
     }
     // let dot = lattice.dump_cost_dot();

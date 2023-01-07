@@ -27,6 +27,9 @@ impl GraphBuilder {
     pub fn set_system_unigram_lm(&mut self, system_unigram_lm: Rc<SystemUnigramLM>) {
         self.system_unigram_lm = system_unigram_lm;
     }
+    pub fn set_system_bigram_lm(&mut self, system_bigram_lm: Rc<SystemBigramLM>) {
+        self.system_bigram_lm = system_bigram_lm;
+    }
 
     pub fn new(
         system_kana_kanji_dict: KanaKanjiDict,
