@@ -37,18 +37,18 @@ work/jawiki.merged-2gram.txt: work/ngram/BE/wiki_13.1gram.txt work/jawiki.vocab 
 	python3 bin/060_create-system_language_model.py
 
 # システム辞書の構築
-work/jawiki.single_term.txt: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_text_dict.rs
+work/stats-kytea/jawiki.single_term.txt: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_text_dict.rs
 	cargo run --release -- make-text-dict -vvv
 
 data/lm_v2_2gram.trie: work/jawiki.merged-2gram.txt
 	cargo run -- make-system-language-model work/jawiki.merged-1gram.txt data/lm_v2_1gram.trie \
     	work/jawiki.merged-2gram.txt data/lm_v2_2gram.trie
 
-data/stats-kytea-system_dict.trie: work/jawiki.system_dict.txt src/subcmd/make_system_dict.rs
-	cargo run -- make-system-dict work/jawiki.system_dict.txt data/stats-kytea-system_dict.trie -vv
+data/stats-kytea-system_dict.trie: work/stats-kytea/jawiki.system_dict.txt src/subcmd/make_system_dict.rs
+	cargo run -- make-system-dict work/stats-kytea/jawiki.system_dict.txt data/stats-kytea-system_dict.trie -vv
 
-data/stats-kytea-single_term.trie: work/jawiki.single_term.txt
-	cargo run -- make-system-dict work/jawiki.single_term.txt data/stats-kytea-single_term.trie
+data/stats-kytea-single_term.trie: work/stats-kytea/jawiki.single_term.txt
+	cargo run -- make-system-dict work/stats-kytea/jawiki.single_term.txt data/stats-kytea-single_term.trie
 
 # -------------------------------------------------------------------------
 

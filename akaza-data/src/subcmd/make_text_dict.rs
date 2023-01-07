@@ -53,7 +53,7 @@ mod system_dict {
         dicts.push(
             validate_dict(make_corpus_dict()?).with_context(|| "make_corpus_dict".to_string())?,
         );
-        write_dict("work/jawiki.system_dict.txt", dicts)?;
+        write_dict("work/stats-kytea/jawiki.system_dict.txt", dicts)?;
         Ok(())
     }
 
@@ -150,7 +150,7 @@ mod single_term {
             dicts.push(ari2nasi.ari2nasi(&ari)?);
         }
         dicts.push(make_lisp_dict());
-        write_dict("work/jawiki.single_term.txt", dicts)?;
+        write_dict("work/stats-kytea/jawiki.single_term.txt", dicts)?;
         Ok(())
     }
 
@@ -260,7 +260,7 @@ mod tests {
         // 処理する
         make_text_dict()?;
 
-        let mut file = File::open("work/jawiki.system_dict.txt")?;
+        let mut file = File::open("work/stats-kytea/jawiki.system_dict.txt")?;
         let mut buf = String::new();
         file.read_to_string(&mut buf)?;
 
