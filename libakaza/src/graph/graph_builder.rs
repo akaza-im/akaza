@@ -24,6 +24,10 @@ pub struct GraphBuilder {
 }
 
 impl GraphBuilder {
+    pub fn set_system_unigram_lm(&mut self, system_unigram_lm: Rc<SystemUnigramLM>) {
+        self.system_unigram_lm = system_unigram_lm;
+    }
+
     pub fn new(
         system_kana_kanji_dict: KanaKanjiDict,
         system_single_term_dict: KanaKanjiDict,

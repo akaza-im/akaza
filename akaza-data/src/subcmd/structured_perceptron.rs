@@ -24,10 +24,26 @@ pub fn learn_structured_perceptron(epochs: i32) -> anyhow::Result<()> {
 
     let corpuses = read_corpus_file(Path::new("corpus/must.txt"))?;
 
+    let system_kana_kanji_dict = KanaKanjiDict::load("data/system_dict.trie")?;
+    let all_yomis = system_kana_kanji_dict.all_yomis().unwrap();
+    let system_kana_trie = MarisaKanaTrie::build(all_yomis);
+    let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
+    let system_single_term_dict = KanaKanjiDict::load("data/single_term.trie")?;
+    let system_bigram_lm = SystemBigramLMBuilder::default().build();
+    let mut graph_builder = GraphBuilder::new(
+        system_kana_kanji_dict,
+        system_single_term_dict,
+        Arc::new(Mutex::new(UserData::default())),
+        Rc::new(SystemUnigramLMBuilder::default().build()),
+        Rc::new(system_bigram_lm),
+        0_f32,
+        0_f32,
+    );
+
     let mut unigram_cost: HashMap<String, f32> = HashMap::new();
     for _ in 1..epochs {
         for teacher in corpuses.iter() {
-            learn(teacher, &mut unigram_cost)?;
+            learn(teacher, &mut unigram_cost, &segmenter, &mut graph_builder)?;
         }
     }
 
@@ -37,8 +53,9 @@ pub fn learn_structured_perceptron(epochs: i32) -> anyhow::Result<()> {
 pub fn learn(
     teacher: &FullAnnotationCorpus,
     unigram_cost: &mut HashMap<String, f32>,
+    segmenter: &Segmenter,
+    graph_builder: &mut GraphBuilder,
 ) -> anyhow::Result<()> {
-    let system_kana_kanji_dict = KanaKanjiDict::load("data/system_dict.trie")?;
     // let system_kana_kanji_dict = KanaKanjiDictBuilder::default()
     //     .add("せんたくもの", "洗濯物")
     //     .add("せんたく", "選択/洗濯")
@@ -46,11 +63,7 @@ pub fn learn(
     //     .add("ほす", "干す/HOS")
     //     .add("めんどう", "面倒")
     //     .build();
-    let system_single_term_dict = KanaKanjiDict::load("data/single_term.trie")?;
 
-    let all_yomis = system_kana_kanji_dict.all_yomis().unwrap();
-    let system_kana_trie = MarisaKanaTrie::build(all_yomis);
-    let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
     let force_ranges: Vec<Range<usize>> = Vec::new();
 
     let mut unigram_lm_builder = SystemUnigramLMBuilder::default();
@@ -58,22 +71,13 @@ pub fn learn(
         warn!("SYSTEM UNIGRM LM: {} cost={}", key.as_str(), *cost);
         unigram_lm_builder.add(key.as_str(), *cost);
     }
-
     let system_unigram_lm = unigram_lm_builder.build();
-    let system_bigram_lm = SystemBigramLMBuilder::default().build();
+
+    graph_builder.set_system_unigram_lm(Rc::new(system_unigram_lm));
 
     let correct_nodes = teacher.correct_node_set();
     let yomi = teacher.yomi();
     let segmentation_result = segmenter.build(&yomi, &force_ranges);
-    let graph_builder = GraphBuilder::new(
-        system_kana_kanji_dict,
-        system_single_term_dict,
-        Arc::new(Mutex::new(UserData::default())),
-        Rc::new(system_unigram_lm),
-        Rc::new(system_bigram_lm),
-        0_f32,
-        0_f32,
-    );
     let graph_resolver = GraphResolver::default();
 
     let lattice = graph_builder.construct(yomi.as_str(), segmentation_result);
