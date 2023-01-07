@@ -184,6 +184,9 @@ fn validate_dict(dict: HashMap<String, Vec<String>>) -> Result<HashMap<String, V
     for (kana, surfaces) in dict.iter() {
         let kana_cnt = kana.chars().count();
         for surface in surfaces {
+            if surface.is_empty() {
+                bail!("Empty surface: {:?}", kana);
+            }
             if kana_cnt == 1 && kana_cnt < surface.chars().count() {
                 // info!("Missing surface: {}<{}", kana, surface);
             }

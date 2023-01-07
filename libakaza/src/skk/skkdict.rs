@@ -68,6 +68,7 @@ pub fn parse_skkdict(src: &str) -> anyhow::Result<(SkkDictParsedData, SkkDictPar
             .trim_end_matches('/')
             .split('/')
             .map(|s| comment_regex.replace(s, "").to_string())
+            .filter(|it| !it.is_empty())
             .collect();
         target.insert(yomi.to_string(), surfaces);
     }
@@ -111,6 +112,19 @@ mod tests {
                 "SARSコロナウイルス".to_string(),
             ]
         );
+
+        Ok(())
+    }
+
+    /// パース結果が空になる場合は無視する
+    #[test]
+    fn empty() -> anyhow::Result<()> {
+        let src = ";; okuri-nasi entries.\n\
+            せみころん /; [Semicolon]/\n\
+            お /尾/\n";
+        let (_, nasi) = parse_skkdict(src)?;
+        assert_eq!(*nasi.get("せみころん").unwrap(), Vec::<String>::new());
+        assert_eq!(*nasi.get("お").unwrap(), vec!["尾".to_string(),]);
 
         Ok(())
     }
