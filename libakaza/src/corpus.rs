@@ -3,7 +3,8 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
+use log::info;
 
 use crate::graph::word_node::WordNode;
 
@@ -25,16 +26,22 @@ pub struct FullAnnotationCorpus {
 
 impl FullAnnotationCorpus {
     /// フルアノテーションコーパスをパースする。
-    pub fn new(src: &str) -> FullAnnotationCorpus {
+    pub fn new(src: &str) -> Result<FullAnnotationCorpus> {
+        let src = src
+            .trim_start_matches("__BOS__/__BOS__/__BOS__/__BOS__ ")
+            .trim_end_matches(" __EOS__/__EOS__/__EOS__/__EOS__");
         let p: Vec<&str> = src.split(' ').collect();
         let mut start_pos = 0;
         let mut nodes: Vec<WordNode> = Vec::new();
         for x in p {
             let (surface, yomi) = x.split_once('/').unwrap();
+            if surface.is_empty() {
+                bail!("Surface is empty: {}", src);
+            }
             nodes.push(WordNode::new(start_pos, surface, yomi));
             start_pos += yomi.len() as i32;
         }
-        FullAnnotationCorpus { nodes }
+        Ok(FullAnnotationCorpus { nodes })
     }
 
     /// コーパスの「よみ」を連結したものを返す。
@@ -66,7 +73,14 @@ pub fn read_corpus_file(src: &Path) -> Result<Vec<FullAnnotationCorpus>> {
             // 空行はスキップ
             continue;
         }
-        result.push(FullAnnotationCorpus::new(line.trim()));
+
+        match FullAnnotationCorpus::new(line.trim()) {
+            Ok(corpus) => result.push(corpus),
+            Err(err) => {
+                info!("Cannot parse corpus: {}", err);
+                continue;
+            }
+        }
     }
     Ok(result)
 }

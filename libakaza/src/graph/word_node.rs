@@ -57,7 +57,12 @@ impl WordNode {
         }
     }
     pub fn new(start_pos: i32, kanji: &str, yomi: &str) -> WordNode {
-        assert!(!kanji.is_empty());
+        assert!(
+            !kanji.is_empty(),
+            "Kanji shouldn't be empty: {}/{}",
+            kanji,
+            yomi
+        );
 
         WordNode {
             start_pos,

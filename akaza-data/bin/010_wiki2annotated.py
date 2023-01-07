@@ -39,7 +39,7 @@ def parse_line(line):
     yield '__BOS__', '__BOS__'
 
     for word in words:
-        kanji = word.surface
+        kanji = word.surface.strip()
         hinshi = word.tag[0][0][0]
         yomi = word.tag[1][0][0]
         if kanji == ' ':
