@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anyhow::bail;
 
 use crate::romkan::RomKanConverter;
@@ -13,10 +15,10 @@ impl Ari2Nasi {
         Ari2Nasi { romkan_converter }
     }
 
-    fn ari2nasi(
+    fn expand_okuri(
         &self,
         kana: &str,
-        kanjis: &Vec<&str>,
+        kanjis: &Vec<String>,
     ) -> anyhow::Result<Vec<(String, Vec<String>)>> {
         let Some(last_char) = kana.chars().last() else {
             bail!("kana is empty");
@@ -62,6 +64,19 @@ impl Ari2Nasi {
             )])
         }
     }
+
+    pub fn ari2nasi(
+        &self,
+        src: &HashMap<String, Vec<String>>,
+    ) -> anyhow::Result<HashMap<String, Vec<String>>> {
+        let mut retval: HashMap<String, Vec<String>> = HashMap::new();
+        for (kana, kanjis) in src.iter() {
+            for (kkk, vvv) in self.expand_okuri(kana, kanjis)? {
+                retval.insert(kkk, vvv);
+            }
+        }
+        Ok(retval)
+    }
 }
 
 #[cfg(test)]
@@ -69,9 +84,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn ari2nasi() -> anyhow::Result<()> {
+    fn test_expand_okuri() -> anyhow::Result<()> {
         let ari2nasi = Ari2Nasi::new(RomKanConverter::default());
-        let got = ari2nasi.ari2nasi("あいしあw", &vec!["愛し合"])?;
+        let got = ari2nasi.expand_okuri("あいしあw", &vec!["愛し合"])?;
         assert_eq!(
             got,
             vec!(

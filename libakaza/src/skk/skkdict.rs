@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use log::info;
+use regex::Regex;
 
 type SkkDictParsedData = HashMap<String, Vec<String>>;
 
@@ -16,6 +17,8 @@ pub fn parse_skkdict(src: &str) -> anyhow::Result<(SkkDictParsedData, SkkDictPar
     let mut ari: SkkDictParsedData = HashMap::new();
     let mut nasi: SkkDictParsedData = HashMap::new();
     let mut target = &mut ari;
+
+    let comment_regex = Regex::new(";.*")?;
 
     for line in src.lines() {
         let line: &str = line.trim();
@@ -48,7 +51,7 @@ pub fn parse_skkdict(src: &str) -> anyhow::Result<(SkkDictParsedData, SkkDictPar
             .trim_start_matches('/')
             .trim_end_matches('/')
             .split('/')
-            .map(|s| s.to_string())
+            .map(|s| comment_regex.replace(s, "").to_string())
             .collect();
         target.insert(yomi.to_string(), surfaces);
     }
