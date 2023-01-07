@@ -21,7 +21,7 @@ jobs:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
-          akaza-core/target          
+          target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     - name: Install dependencies
       run: |
@@ -34,13 +34,12 @@ jobs:
     - uses: actions-rs/cargo@v1
       with:
         command: fmt
-        args: --manifest-path akaza-core/Cargo.toml --all -- --check
+        args: --all -- --check
     - uses: actions-rs/cargo@v1
       with:
         command: clippy
-        args: --manifest-path akaza-core/Cargo.toml -- -D warnings
+        args: -- -D warnings
     - uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --manifest-path akaza-core/Cargo.toml
 
