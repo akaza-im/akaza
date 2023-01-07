@@ -123,14 +123,14 @@ impl AkazaBuilder {
     pub fn build(&self) -> Result<Akaza> {
         let system_unigram_lm = match &self.system_data_dir {
             Some(dir) => {
-                let path = dir.to_string() + "/lm_v2_1gram.trie";
+                let path = dir.to_string() + "/stats-kytea-lm_v2_1gram.trie";
                 SystemUnigramLM::load(path.as_str())?
             }
             None => SystemUnigramLMBuilder::default().build(),
         };
         let system_bigram_lm = match &self.system_data_dir {
             Some(dir) => {
-                let path = dir.to_string() + "/lm_v2_2gram.trie";
+                let path = dir.to_string() + "/stats-kytea-lm_v2_2gram.trie";
                 SystemBigramLM::load(path.as_str())?
             }
             None => SystemBigramLMBuilder::default().build(),

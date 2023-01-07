@@ -26,7 +26,7 @@ pub fn learn_structured_perceptron(epochs: i32) -> anyhow::Result<()> {
     let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
     let system_single_term_dict = KanaKanjiDict::load("data/stats-kytea-single_term.trie")?;
     let system_bigram_lm = SystemBigramLMBuilder::default().build();
-    let real_system_unigram_lm = SystemUnigramLM::load("data/lm_v2_1gram.trie")?;
+    let real_system_unigram_lm = SystemUnigramLM::load("data/stats-kytea-lm_v2_1gram.trie")?;
     let mut graph_builder = GraphBuilder::new(
         system_kana_kanji_dict,
         system_single_term_dict,

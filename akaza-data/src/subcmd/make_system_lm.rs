@@ -96,11 +96,11 @@ pub fn make_system_lm(
     // 1gram の map<string, int> の ID mapping を作成する
     // 1gram データを書いていく。
 
-    // "work/jawiki.merged-1gram.txt" "akaza_data/data/lm_v2_1gram.trie"
-    // "work/jawiki.merged-2gram.txt" "akaza_data/data/lm_v2_2gram.trie"
+    // "work/jawiki.merged-1gram.txt" "akaza_data/data/stats-kytea-lm_v2_1gram.trie"
+    // "work/jawiki.merged-2gram.txt" "akaza_data/data/stats-kytea-lm_v2_2gram.trie"
 
     // std::map<std::string, uint32_t> word2id;
-    // "work/jawiki.merged-1gram.txt" -> "akaza_data/data/lm_v2_1gram.trie"
+    // "work/jawiki.merged-1gram.txt" -> "akaza_data/data/stats-kytea-lm_v2_1gram.trie"
     println!("Unigram {} to {}", unigram_src, unigram_dst);
 
     process_unigram(unigram_src, unigram_dst);

@@ -3,7 +3,7 @@ DATADIR ?= $(PREFIX)/share
 DESTDIR ?=
 
 
-all: data/stats-kytea-system_dict.trie data/lm_v2_2gram.trie data/lm_v2_2gram.trie \
+all: data/stats-kytea-system_dict.trie data/stats-kytea-lm_v2_2gram.trie data/stats-kytea-lm_v2_2gram.trie \
 	data/stats-kytea-system_dict.trie data/stats-kytea-single_term.trie
 
 work/jawiki-latest-pages-articles.xml.bz2:
@@ -15,6 +15,10 @@ work/jawiki-latest-pages-articles.xml: work/jawiki-latest-pages-articles.xml.bz2
 
 work/extracted/BE/wiki_13: work/jawiki-latest-pages-articles.xml
 	python3 -m wikiextractor.WikiExtractor --quiet --processes 8 --out work/extracted/ work/jawiki-latest-pages-articles.xml
+
+# -------------------------------------------------------------------------
+
+# 以下は、「統計的かな漢字変換(Kyteaベース) 用の処理
 
 work/annotated/BE/wiki_13: work/extracted/BE/wiki_13 bin/010_wiki2annotated.py
 	python3 bin/010_wiki2annotated.py
@@ -40,9 +44,9 @@ work/jawiki.merged-2gram.txt: work/ngram/BE/wiki_13.1gram.txt work/jawiki.vocab 
 work/stats-kytea/jawiki.single_term.txt: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_text_dict.rs
 	cargo run --release -- make-text-dict -vvv
 
-data/lm_v2_2gram.trie: work/jawiki.merged-2gram.txt
-	cargo run -- make-system-language-model work/jawiki.merged-1gram.txt data/lm_v2_1gram.trie \
-    	work/jawiki.merged-2gram.txt data/lm_v2_2gram.trie
+data/stats-kytea-lm_v2_2gram.trie: work/jawiki.merged-2gram.txt
+	cargo run -- make-system-language-model work/jawiki.merged-1gram.txt data/stats-kytea-lm_v2_1gram.trie \
+    	work/jawiki.merged-2gram.txt data/stats-kytea-lm_v2_2gram.trie
 
 data/stats-kytea-system_dict.trie: work/stats-kytea/jawiki.system_dict.txt src/subcmd/make_system_dict.rs
 	cargo run -- make-system-dict work/stats-kytea/jawiki.system_dict.txt data/stats-kytea-system_dict.trie -vv

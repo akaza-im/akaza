@@ -24,9 +24,9 @@ graph TD
     ngram.txt --> jawiki.mergeed-1gram.txt
     ngram.txt --> jawiki.mergeed-2gram.txt
 
-    jawiki.mergeed-1gram.txt -- akaza-make-system-lm --> lm_v2_1gram.trie
-    jawiki.mergeed-2gram.txt -- akaza-make-system-lm --> lm_v2_2gram.trie
-    lm_v2_1gram.trie -- akaza-make-system-lm --> lm_v2_2gram.trie
+    jawiki.mergeed-1gram.txt -- akaza-make-system-lm --> stats-kytea-lm_v2_1gram.trie
+    jawiki.mergeed-2gram.txt -- akaza-make-system-lm --> stats-kytea-lm_v2_2gram.trie
+    stats-kytea-lm_v2_1gram.trie -- akaza-make-system-lm --> stats-kytea-lm_v2_2gram.trie
 ```
 
 ## システム辞書
