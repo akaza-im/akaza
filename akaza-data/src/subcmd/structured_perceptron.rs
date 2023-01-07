@@ -120,6 +120,6 @@ mod tests {
     #[test]
     #[ignore]
     fn d() -> anyhow::Result<()> {
-        learn_structured_perceptron()
+        learn_structured_perceptron(1)
     }
 }
