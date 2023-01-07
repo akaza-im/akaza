@@ -119,7 +119,7 @@ impl Teacher {
         let mut start_pos = 0;
         let mut nodes: Vec<WordNode> = Vec::new();
         for x in p {
-            let (surface, yomi) = x.split_once("/").unwrap();
+            let (surface, yomi) = x.split_once('/').unwrap();
             nodes.push(WordNode::new(start_pos, surface, yomi));
             start_pos += yomi.len() as i32;
         }
