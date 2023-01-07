@@ -35,7 +35,7 @@ impl Ari2Nasi {
                     .iter()
                     .map(|f| f.to_string() + okuri.as_str())
                     .collect();
-                Ok(vec![(yomi.to_string(), kanjis)])
+                Ok(vec![(yomi.to_string() + okuri.as_str(), kanjis)])
             } else {
                 // 子音の場合は母音の組み合わせによって全パターンつくって返す。
                 let mut result: Vec<(String, Vec<String>)> = Vec::new();
@@ -96,6 +96,14 @@ mod tests {
                 ("あいしあを".to_string(), vec!("愛し合を".to_string()))
             ),
         );
+        Ok(())
+    }
+
+    #[test]
+    fn test_expand_okuri_iu() -> anyhow::Result<()> {
+        let ari2nasi = Ari2Nasi::new(RomKanConverter::default());
+        let got = ari2nasi.expand_okuri("いu", &vec!["言".to_string()])?;
+        assert_eq!(got, vec!(("いう".to_string(), vec!("言う".to_string())),),);
         Ok(())
     }
 }

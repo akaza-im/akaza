@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use chrono::prelude::*;
 use encoding_rs::{EUC_JP, UTF_8};
 use log::info;
@@ -21,10 +21,11 @@ pub fn make_text_dict() -> Result<()> {
 }
 
 mod system_dict {
-    use anyhow::bail;
-    use libakaza::corpus::read_corpus_file;
     use std::io::BufReader;
 
+    use anyhow::{bail, Context};
+
+    use libakaza::corpus::read_corpus_file;
     use libakaza::skk::skkdict::read_skkdict;
 
     use super::*;
@@ -43,11 +44,15 @@ mod system_dict {
 
         for (path, encoding) in dictionary_sources {
             let (ari, nasi) = read_skkdict(Path::new(path), encoding)?;
-            dicts.push(nasi);
-            dicts.push(ari2nasi.ari2nasi(&ari)?);
+            dicts.push(validate_dict(nasi).with_context(|| path.to_string())?);
+            dicts.push(validate_dict(ari2nasi.ari2nasi(&ari)?).with_context(|| path.to_string())?);
         }
-        dicts.push(make_vocab_dict()?);
-        dicts.push(make_corpus_dict()?);
+        dicts.push(
+            validate_dict(make_vocab_dict()?).with_context(|| "make_vocab_dict".to_string())?,
+        );
+        dicts.push(
+            validate_dict(make_corpus_dict()?).with_context(|| "make_corpus_dict".to_string())?,
+        );
         write_dict("work/jawiki.system_dict.txt", dicts)?;
         Ok(())
     }
@@ -58,7 +63,7 @@ mod system_dict {
         let corpus_vec = read_corpus_file(Path::new("corpus/must.txt"))?;
         for corpus in corpus_vec {
             for node in corpus.nodes {
-                info!("Add {}/{}", node.yomi, node.kanji);
+                // info!("Add {}/{}", node.yomi, node.kanji);
                 words.push((node.yomi.to_string(), node.kanji.to_string()));
             }
         }
@@ -173,6 +178,24 @@ fn write_dict(ofname: &str, dicts: Vec<HashMap<String, Vec<String>>>) -> anyhow:
     }
     copy_snapshot(Path::new(ofname))?;
     Ok(())
+}
+
+fn validate_dict(dict: HashMap<String, Vec<String>>) -> Result<HashMap<String, Vec<String>>> {
+    for (kana, surfaces) in dict.iter() {
+        let kana_cnt = kana.chars().count();
+        for surface in surfaces {
+            if kana_cnt == 1 && kana_cnt < surface.chars().count() {
+                // info!("Missing surface: {}<{}", kana, surface);
+            }
+            if kana == "い" && kana_cnt < surface.chars().count() {
+                bail!("XXX Missing surface: {:?}<{:?}", kana, surface);
+            }
+            if kana == "い" && surface == "好い" {
+                bail!("Missing surface: {}<{}", kana, surface);
+            }
+        }
+    }
+    Ok(dict)
 }
 
 fn merge_skkdict(dicts: Vec<HashMap<String, Vec<String>>>) -> BTreeMap<String, Vec<String>> {
