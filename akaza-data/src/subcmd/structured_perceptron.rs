@@ -22,80 +22,88 @@ pub fn learn_structured_perceptron() -> anyhow::Result<()> {
     // ここでは内部クラスなどを触ってスコア調整をしていかないといけないので、AkazaBuilder は使えない。
 
     let mut unigram_cost: HashMap<String, f32> = HashMap::new();
-
     for _ in 1..20 {
-        let system_kana_kanji_dict = KanaKanjiDict::load("data/system_dict.trie")?;
-        // let system_kana_kanji_dict = KanaKanjiDictBuilder::default()
-        //     .add("せんたくもの", "洗濯物")
-        //     .add("せんたく", "選択/洗濯")
-        //     .add("もの", "Mono")
-        //     .add("ほす", "干す/HOS")
-        //     .add("めんどう", "面倒")
-        //     .build();
-        let system_single_term_dict = KanaKanjiDict::load("data/single_term.trie")?;
-
-        let all_yomis = system_kana_kanji_dict.all_yomis().unwrap();
-        let system_kana_trie = MarisaKanaTrie::build(all_yomis);
-        let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
-        let force_ranges: Vec<Range<usize>> = Vec::new();
-
-        let mut unigram_lm_builder = SystemUnigramLMBuilder::default();
-        for (key, cost) in &unigram_cost {
-            warn!("SYSTEM UNIGRM LM: {} cost={}", key.as_str(), *cost);
-            unigram_lm_builder.add(key.as_str(), *cost);
+        for teacher_src in &[
+            "洗濯物/せんたくもの を/を 干す/ほす の/の が/が 面倒/めんどう だ/だ",
+            "構造化/こうぞうか パーセプトロン/ぱーせぷとろん 面白い/おもしろい",
+        ] {
+            learn(teacher_src, &mut unigram_cost)?;
         }
-
-        let system_unigram_lm = unigram_lm_builder.build();
-        let system_bigram_lm = SystemBigramLMBuilder::default().build();
-
-        let teacher =
-            Teacher::new("洗濯物/せんたくもの を/を 干す/ほす の/の が/が 面倒/めんどう だ/だ");
-        let correct_nodes = teacher.correct_node_set();
-        let yomi = teacher.yomi();
-        let segmentation_result = segmenter.build(&yomi, &force_ranges);
-        let graph_builder = GraphBuilder::new(
-            system_kana_kanji_dict,
-            system_single_term_dict,
-            Arc::new(Mutex::new(UserData::default())),
-            Rc::new(system_unigram_lm),
-            Rc::new(system_bigram_lm),
-            0_f32,
-            0_f32,
-        );
-        let graph_resolver = GraphResolver::default();
-
-        let lattice = graph_builder.construct(yomi.as_str(), segmentation_result);
-        let got = graph_resolver.resolve(&lattice)?;
-        let terms: Vec<String> = got.iter().map(|f| f[0].kanji.clone()).collect();
-        let result = terms.join("");
-
-        if result != yomi {
-            // エポックのたびに作りなおさないといけないオブジェクトが多すぎてごちゃごちゃしている。
-            for i in 1..yomi.len() + 2 {
-                // いったん、全部のノードのコストを1ずつ下げる
-                let Some(nodes) = &lattice.node_list(i as i32) else {
-                    continue;
-                };
-                for node in *nodes {
-                    let modifier = if correct_nodes.contains(node) {
-                        info!("CORRECT: {:?}", node);
-                        -1_f32
-                    } else {
-                        1_f32
-                    };
-                    let v = unigram_cost.get(&node.key().to_string()).unwrap_or(&0_f32);
-                    unigram_cost.insert(node.key(), *v + modifier);
-                }
-
-                // TODO エッジコストも考慮する
-            }
-        }
-        // let dot = lattice.dump_cost_dot();
-        // BufWriter::new(File::create("/tmp/dump.dot")?).write_fmt(format_args!("{}", dot))?;
-        // println!("{:?}", unigram_cost);
-        println!("{}", result);
     }
 
+    Ok(())
+}
+
+pub fn learn(teacher_src: &str, unigram_cost: &mut HashMap<String, f32>) -> anyhow::Result<()> {
+    let system_kana_kanji_dict = KanaKanjiDict::load("data/system_dict.trie")?;
+    // let system_kana_kanji_dict = KanaKanjiDictBuilder::default()
+    //     .add("せんたくもの", "洗濯物")
+    //     .add("せんたく", "選択/洗濯")
+    //     .add("もの", "Mono")
+    //     .add("ほす", "干す/HOS")
+    //     .add("めんどう", "面倒")
+    //     .build();
+    let system_single_term_dict = KanaKanjiDict::load("data/single_term.trie")?;
+
+    let all_yomis = system_kana_kanji_dict.all_yomis().unwrap();
+    let system_kana_trie = MarisaKanaTrie::build(all_yomis);
+    let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
+    let force_ranges: Vec<Range<usize>> = Vec::new();
+
+    let mut unigram_lm_builder = SystemUnigramLMBuilder::default();
+    for (key, cost) in unigram_cost.iter() {
+        warn!("SYSTEM UNIGRM LM: {} cost={}", key.as_str(), *cost);
+        unigram_lm_builder.add(key.as_str(), *cost);
+    }
+
+    let system_unigram_lm = unigram_lm_builder.build();
+    let system_bigram_lm = SystemBigramLMBuilder::default().build();
+
+    let teacher = Teacher::new(teacher_src);
+    let correct_nodes = teacher.correct_node_set();
+    let yomi = teacher.yomi();
+    let segmentation_result = segmenter.build(&yomi, &force_ranges);
+    let graph_builder = GraphBuilder::new(
+        system_kana_kanji_dict,
+        system_single_term_dict,
+        Arc::new(Mutex::new(UserData::default())),
+        Rc::new(system_unigram_lm),
+        Rc::new(system_bigram_lm),
+        0_f32,
+        0_f32,
+    );
+    let graph_resolver = GraphResolver::default();
+
+    let lattice = graph_builder.construct(yomi.as_str(), segmentation_result);
+    let got = graph_resolver.resolve(&lattice)?;
+    let terms: Vec<String> = got.iter().map(|f| f[0].kanji.clone()).collect();
+    let result = terms.join("");
+
+    if result != yomi {
+        // エポックのたびに作りなおさないといけないオブジェクトが多すぎてごちゃごちゃしている。
+        for i in 1..yomi.len() + 2 {
+            // いったん、全部のノードのコストを1ずつ下げる
+            let Some(nodes) = &lattice.node_list(i as i32) else {
+                continue;
+            };
+            for node in *nodes {
+                let modifier = if correct_nodes.contains(node) {
+                    info!("CORRECT: {:?}", node);
+                    -1_f32
+                } else {
+                    1_f32
+                };
+                let v = unigram_cost.get(&node.key().to_string()).unwrap_or(&0_f32);
+                unigram_cost.insert(node.key(), *v + modifier);
+            }
+
+            // TODO エッジコストも考慮する
+        }
+    }
+    // let dot = lattice.dump_cost_dot();
+    // BufWriter::new(File::create("/tmp/dump.dot")?).write_fmt(format_args!("{}", dot))?;
+    // println!("{:?}", unigram_cost);
+    println!("{}", result);
     Ok(())
 }
 
