@@ -1,48 +1,88 @@
-use chrono::prelude::*;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
 use std::fs::File;
-use std::io::{prelude::*, BufReader};
+use std::io::prelude::*;
 use std::path::Path;
 
 use anyhow::Result;
+use chrono::prelude::*;
 use encoding_rs::{EUC_JP, UTF_8};
 use log::info;
 
 use libakaza::romkan::RomKanConverter;
 use libakaza::skk::ari2nasi::Ari2Nasi;
-use libakaza::skk::skkdict::parse_skkdict;
 
 /// テキスト形式での辞書を作成する。
 // 070_make-system-dict.py を移植した。
 pub fn make_text_dict() -> Result<()> {
-    make_single_term_dict()?;
+    single_term::make_single_term_dict()?;
+    system_dict::make_system_dict()?;
     Ok(())
 }
 
-/// 郵便番号や絵文字など、それを狙って変換したときにだけ反応して欲しいものを入れた辞書です。
-/// 通常の長文を変換している時に発動するとじゃまくさいけど、なきゃないで不便なのでこういう処理にしています。
-fn make_single_term_dict() -> Result<()> {
-    let dictionary_sources = [
-        // 先の方が優先される
-        ("skk-dev-dict/SKK-JISYO.emoji", UTF_8),
-        ("skk-dev-dict/zipcode/SKK-JISYO.zipcode", EUC_JP),
-    ];
-    let mut dicts = Vec::new();
-    let ari2nasi = Ari2Nasi::new(RomKanConverter::default());
-    for (path, encoding) in dictionary_sources {
-        let file = File::open(path)?;
-        let mut buf: Vec<u8> = Vec::new();
-        BufReader::new(file).read_to_end(&mut buf)?;
-        let (decoded, _, _) = encoding.decode(buf.as_slice());
-        let decoded = decoded.to_string();
-        let (ari, nasi) = parse_skkdict(decoded.as_str())?;
-        dicts.push(nasi);
-        dicts.push(ari2nasi.ari2nasi(&ari)?);
+mod system_dict {
+    use libakaza::skk::skkdict::read_skkdict;
+
+    use super::*;
+
+    pub fn make_system_dict() -> anyhow::Result<()> {
+        let dictionary_sources = [
+            // 先の方が優先される
+            ("skk-dev-dict/SKK-JISYO.L", EUC_JP),
+            ("skk-dev-dict/SKK-JISYO.jinmei", EUC_JP),
+            ("skk-dev-dict/SKK-JISYO.station", EUC_JP),
+            ("jawiki-kana-kanji-dict/SKK-JISYO.jawiki", UTF_8),
+            ("dict/SKK-JISYO.akaza", UTF_8),
+        ];
+        let mut dicts = Vec::new();
+        let ari2nasi = Ari2Nasi::new(RomKanConverter::default());
+
+        for (path, encoding) in dictionary_sources {
+            let (ari, nasi) = read_skkdict(Path::new(path), encoding)?;
+            dicts.push(nasi);
+            dicts.push(ari2nasi.ari2nasi(&ari)?);
+        }
+        // TODO dicts.push(make_vocab_dict());
+        write_dict("work/jawiki.system_dict.txt", dicts)?;
+        Ok(())
     }
-    dicts.push(make_lisp_dict());
-    write_dict("work/jawiki.single_term.txt", dicts)?;
-    Ok(())
+}
+
+mod single_term {
+    use libakaza::skk::skkdict::read_skkdict;
+
+    use super::*;
+
+    /// 郵便番号や絵文字など、それを狙って変換したときにだけ反応して欲しいものを入れた辞書です。
+    /// 通常の長文を変換している時に発動するとじゃまくさいけど、なきゃないで不便なのでこういう処理にしています。
+    pub(crate) fn make_single_term_dict() -> Result<()> {
+        let dictionary_sources = [
+            // 先の方が優先される
+            ("skk-dev-dict/SKK-JISYO.emoji", UTF_8),
+            ("skk-dev-dict/zipcode/SKK-JISYO.zipcode", EUC_JP),
+        ];
+        let mut dicts = Vec::new();
+        let ari2nasi = Ari2Nasi::new(RomKanConverter::default());
+        for (path, encoding) in dictionary_sources {
+            let (ari, nasi) = read_skkdict(Path::new(path), encoding)?;
+            dicts.push(nasi);
+            dicts.push(ari2nasi.ari2nasi(&ari)?);
+        }
+        dicts.push(make_lisp_dict());
+        write_dict("work/jawiki.single_term.txt", dicts)?;
+        Ok(())
+    }
+
+    fn make_lisp_dict() -> HashMap<String, Vec<String>> {
+        HashMap::from([(
+            "きょう".to_string(),
+            vec![
+                "(strftime (current-datetime) \"%Y-%m-%d\")".to_string(),
+                "(strftime (current-datetime) \"%Y年%m月%d日\")".to_string(),
+                "(strftime (current-datetime) \"%Y年%m月%d日(%a)\")".to_string(),
+            ],
+        )])
+    }
 }
 
 fn write_dict(ofname: &str, dicts: Vec<HashMap<String, Vec<String>>>) -> anyhow::Result<()> {
@@ -104,15 +144,4 @@ fn copy_snapshot(path: &Path) -> Result<()> {
         ),
     )?;
     Ok(())
-}
-
-fn make_lisp_dict() -> HashMap<String, Vec<String>> {
-    HashMap::from([(
-        "きょう".to_string(),
-        vec![
-            "(strftime (current-datetime) \"%Y-%m-%d\")".to_string(),
-            "(strftime (current-datetime) \"%Y年%m月%d日\")".to_string(),
-            "(strftime (current-datetime) \"%Y年%m月%d日(%a)\")".to_string(),
-        ],
-    )])
 }

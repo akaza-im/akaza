@@ -1,4 +1,8 @@
+use encoding_rs::Encoding;
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::{BufReader, Read};
+use std::path::Path;
 
 use log::info;
 use regex::Regex;
@@ -8,6 +12,18 @@ type SkkDictParsedData = HashMap<String, Vec<String>>;
 enum ParserState {
     OkuriAri,
     OkuriNasi,
+}
+
+pub fn read_skkdict(
+    path: &Path,
+    encoding: &'static Encoding,
+) -> anyhow::Result<(SkkDictParsedData, SkkDictParsedData)> {
+    let file = File::open(path)?;
+    let mut buf: Vec<u8> = Vec::new();
+    BufReader::new(file).read_to_end(&mut buf)?;
+    let (decoded, _, _) = encoding.decode(buf.as_slice());
+    let decoded = decoded.to_string();
+    parse_skkdict(decoded.as_str())
 }
 
 /**

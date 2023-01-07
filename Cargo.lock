@@ -473,6 +473,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "crawdad",
+ "encoding_rs",
  "env_logger",
  "half",
  "kelp",
