@@ -110,7 +110,7 @@ impl GraphResolver {
                     .collect();
                 candidates
                     .make_contiguous()
-                    .sort_by(|a, b| b.cost.partial_cmp(&a.cost).unwrap());
+                    .sort_by(|a, b| a.cost.partial_cmp(&b.cost).unwrap());
                 candidates.push_front(Candidate {
                     kanji: node.kanji.clone(),
                     yomi: node.yomi.clone(),
