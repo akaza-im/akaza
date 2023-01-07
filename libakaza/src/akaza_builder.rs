@@ -24,6 +24,8 @@ pub struct Akaza {
     pub user_data: Arc<Mutex<UserData>>,
 }
 
+impl Akaza {}
+
 impl Akaza {
     pub fn learn(&mut self, surface_kanas: &Vec<String>) {
         self.user_data.lock().unwrap().record_entries(surface_kanas);
@@ -46,6 +48,10 @@ impl Akaza {
 
         let lattice = self.to_lattice(yomi, force_ranges)?;
         self.graph_resolver.resolve(&lattice)
+    }
+
+    pub fn resolve(&self, lattice: &LatticeGraph) -> Result<Vec<VecDeque<Candidate>>> {
+        self.graph_resolver.resolve(lattice)
     }
 
     pub fn to_lattice(&self, yomi: &str, force_ranges: &Vec<Range<usize>>) -> Result<LatticeGraph> {
@@ -157,7 +163,7 @@ impl AkazaBuilder {
             Arc::new(Mutex::new(UserData::default()))
         };
 
-        let graph_builder = GraphBuilder::new(
+        let graph_builder = GraphBuilder::new_with_default_score(
             system_kana_kanji_dict,
             system_single_term_dict,
             user_data.clone(),

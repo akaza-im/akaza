@@ -19,6 +19,8 @@ pub struct GraphBuilder {
     user_data: Arc<Mutex<UserData>>,
     system_unigram_lm: Rc<SystemUnigramLM>,
     system_bigram_lm: Rc<SystemBigramLM>,
+    default_unigram_score_for_long: f32,
+    default_unigram_score_for_short: f32,
 }
 
 impl GraphBuilder {
@@ -28,6 +30,8 @@ impl GraphBuilder {
         user_data: Arc<Mutex<UserData>>,
         system_unigram_lm: Rc<SystemUnigramLM>,
         system_bigram_lm: Rc<SystemBigramLM>,
+        default_unigram_score_for_short: f32,
+        default_unigram_score_for_long: f32,
     ) -> GraphBuilder {
         GraphBuilder {
             system_kana_kanji_dict,
@@ -35,7 +39,27 @@ impl GraphBuilder {
             user_data,
             system_unigram_lm,
             system_bigram_lm,
+            default_unigram_score_for_short,
+            default_unigram_score_for_long,
         }
+    }
+
+    pub fn new_with_default_score(
+        system_kana_kanji_dict: KanaKanjiDict,
+        system_single_term_dict: KanaKanjiDict,
+        user_data: Arc<Mutex<UserData>>,
+        system_unigram_lm: Rc<SystemUnigramLM>,
+        system_bigram_lm: Rc<SystemBigramLM>,
+    ) -> GraphBuilder {
+        Self::new(
+            system_kana_kanji_dict,
+            system_single_term_dict,
+            user_data,
+            system_unigram_lm,
+            system_bigram_lm,
+            19_f32,
+            20_f32,
+        )
     }
 
     pub fn construct(&self, yomi: &str, words_ends_at: SegmentationResult) -> LatticeGraph {
@@ -102,6 +126,8 @@ impl GraphBuilder {
             user_data: self.user_data.clone(),
             system_unigram_lm: self.system_unigram_lm.clone(),
             system_bigram_lm: self.system_bigram_lm.clone(),
+            default_unigram_score_for_long: 20.0_f32,
+            default_unigram_score_for_short: 19.0_f32,
         }
     }
 }
@@ -116,7 +142,7 @@ mod tests {
 
     #[test]
     fn test_single_term() {
-        let graph_builder = GraphBuilder::new(
+        let graph_builder = GraphBuilder::new_with_default_score(
             KanaKanjiDict::default(),
             KanaKanjiDictBuilder::default().add("すし", "🍣").build(),
             Arc::new(Mutex::new(UserData::default())),
@@ -139,7 +165,7 @@ mod tests {
     // ひらがな、カタカナのエントリーが自動的に入るようにする。
     #[test]
     fn test_default_terms() {
-        let graph_builder = GraphBuilder::new(
+        let graph_builder = GraphBuilder::new_with_default_score(
             KanaKanjiDict::default(),
             KanaKanjiDictBuilder::default().build(),
             Arc::new(Mutex::new(UserData::default())),
@@ -159,7 +185,7 @@ mod tests {
     // ひらがな、カタカナがすでにかな漢字辞書から提供されている場合でも、重複させない。
     #[test]
     fn test_default_terms_duplicated() {
-        let graph_builder = GraphBuilder::new(
+        let graph_builder = GraphBuilder::new_with_default_score(
             KanaKanjiDictBuilder::default().add("す", "す/ス").build(),
             KanaKanjiDictBuilder::default().build(),
             Arc::new(Mutex::new(UserData::default())),

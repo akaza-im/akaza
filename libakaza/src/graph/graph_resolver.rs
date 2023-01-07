@@ -176,7 +176,7 @@ mod tests {
         let system_bigram_lm_builder = SystemBigramLMBuilder::default();
         let system_bigram_lm = system_bigram_lm_builder.build();
         let user_data = UserData::default();
-        let graph_builder = GraphBuilder::new(
+        let graph_builder = GraphBuilder::new_with_default_score(
             dict,
             Default::default(),
             Arc::new(Mutex::new(user_data)),
@@ -225,7 +225,7 @@ mod tests {
         let mut user_data = UserData::default();
         // 私/わたし のスコアをガッと上げる。
         user_data.record_entries(&vec!["私/わたし".to_string()]);
-        let graph_builder = GraphBuilder::new(
+        let graph_builder = GraphBuilder::new_with_default_score(
             dict,
             KanaKanjiDict::default(),
             Arc::new(Mutex::new(user_data)),

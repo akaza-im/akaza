@@ -3,7 +3,7 @@ use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
-use log::{error, trace};
+use log::{error, trace, warn};
 
 use crate::graph::word_node::WordNode;
 use crate::lm::system_bigram::SystemBigramLM;
@@ -19,6 +19,10 @@ pub struct LatticeGraph {
     pub(crate) user_data: Arc<Mutex<UserData>>,
     pub(crate) system_unigram_lm: Rc<SystemUnigramLM>,
     pub(crate) system_bigram_lm: Rc<SystemBigramLM>,
+    /// -log10(1e-19)=19.0
+    pub(crate) default_unigram_score_for_short: f32,
+    /// -log10(1e-20)=20.0
+    pub(crate) default_unigram_score_for_long: f32,
 }
 
 impl Debug for LatticeGraph {
@@ -33,7 +37,7 @@ impl Debug for LatticeGraph {
 
 impl LatticeGraph {
     /// i文字目で終わるノードを探す
-    pub(crate) fn node_list(&self, end_pos: i32) -> Option<&Vec<WordNode>> {
+    pub fn node_list(&self, end_pos: i32) -> Option<&Vec<WordNode>> {
         self.graph.get(&end_pos)
     }
 
@@ -125,17 +129,16 @@ impl LatticeGraph {
         }
 
         return if let Some((_, system_unigram_cost)) = self.system_unigram_lm.find(key.as_str()) {
+            warn!("HIT!: {}, {}", node.key(), system_unigram_cost);
             system_unigram_cost
         } else if node.kanji.len() < node.yomi.len() {
             // 労働者災害補償保険法 のように、システム辞書には wikipedia から採録されているが,
             // 言語モデルには採録されていない場合,漢字候補を先頭に持ってくる。
             // つまり、変換後のほうが短くなるもののほうをコストを安くしておく。
-
+            self.default_unigram_score_for_short
             // -log10(1e-19)
-            19.0
         } else {
-            // -log10(1e-20)
-            20.0
+            self.default_unigram_score_for_long
         };
     }
 

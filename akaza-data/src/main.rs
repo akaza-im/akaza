@@ -1,9 +1,10 @@
-use crate::subcmd::check::check;
-use crate::subcmd::evaluate::evaluate;
 use clap::{Parser, Subcommand};
 
+use crate::subcmd::check::check;
+use crate::subcmd::evaluate::evaluate;
 use crate::subcmd::make_system_dict::make_system_dict;
 use crate::subcmd::make_system_lm::make_system_lm;
+use crate::subcmd::structured_perceptron::learn_structured_perceptron;
 
 mod subcmd;
 
@@ -33,6 +34,7 @@ enum Commands {
     Evaluate(EvaluateArgs),
     #[clap(arg_required_else_help = true)]
     Check(CheckArgs),
+    LearnStructuredPerceptron(LearnStructuredPerceptronArgs),
 }
 
 #[derive(Debug, clap::Args)]
@@ -78,6 +80,10 @@ struct CheckArgs {
     yomi: String,
 }
 
+/// 動作確認する
+#[derive(Debug, clap::Args)]
+struct LearnStructuredPerceptronArgs {}
+
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
@@ -95,5 +101,6 @@ fn main() -> anyhow::Result<()> {
         ),
         Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, &opt.system_data_dir),
         Commands::Check(opt) => check(&opt.yomi),
+        Commands::LearnStructuredPerceptron(_) => learn_structured_perceptron(),
     }
 }
