@@ -21,6 +21,9 @@ pub fn make_text_dict() -> Result<()> {
 }
 
 mod system_dict {
+    use anyhow::bail;
+    use std::io::BufReader;
+
     use libakaza::skk::skkdict::read_skkdict;
 
     use super::*;
@@ -42,10 +45,64 @@ mod system_dict {
             dicts.push(nasi);
             dicts.push(ari2nasi.ari2nasi(&ari)?);
         }
-        // TODO dicts.push(make_vocab_dict());
+        dicts.push(make_vocab_dict()?);
         write_dict("work/jawiki.system_dict.txt", dicts)?;
         Ok(())
     }
+
+    fn make_vocab_dict() -> Result<HashMap<String, Vec<String>>> {
+        let rfp = File::open("work/jawiki.vocab")?;
+        let mut words: Vec<(String, String)> = Vec::new();
+        for line in BufReader::new(rfp).lines() {
+            let line = line?;
+            let Some((surface, yomi)) = line.split_once('/') else {
+                bail!("Cannot parse vocab file: {}", line);
+            };
+            if yomi == "UNK" {
+                // なんのときに発生するかはわからないが、なにか意味がありそうな処理。
+                // Python 版にあったので残してある。たぶんいらない処理。
+                continue;
+            }
+            words.push((surface.to_string(), yomi.to_string()));
+        }
+        let result = words.iter().fold(
+            HashMap::new(),
+            |mut acc: HashMap<String, Vec<String>>, t: &(String, String)| {
+                let (p, q) = t;
+                acc.entry(p.to_string())
+                    .or_insert_with(Vec::new)
+                    .push(q.to_string());
+                acc
+            },
+        );
+        Ok(result)
+    }
+
+    /*
+    def scan_vocab():
+        with open('work/jawiki.vocab', 'r') as rfp:
+            for line in rfp:
+                word = line.rstrip()
+                m = word.split('/')
+                if len(m) != 2:
+                    continue
+
+                word, kana = m
+                if kana == 'UNK':
+                    continue
+                yield word, kana
+
+
+    def make_vocab_dict():
+        okuri_nasi = {}
+
+        for word, kana in scan_vocab():
+            if kana not in okuri_nasi:
+                okuri_nasi[kana] = []
+            okuri_nasi[kana].append(word)
+
+        return okuri_nasi
+         */
 }
 
 mod single_term {
