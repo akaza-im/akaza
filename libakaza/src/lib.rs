@@ -3,6 +3,7 @@
 extern crate core;
 
 pub mod akaza_builder;
+pub mod corpus;
 pub mod extend_clause;
 pub mod graph;
 pub mod kana;

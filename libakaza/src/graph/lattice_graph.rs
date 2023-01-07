@@ -3,7 +3,7 @@ use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
-use log::{error, trace, warn};
+use log::{error, trace};
 
 use crate::graph::word_node::WordNode;
 use crate::lm::system_bigram::SystemBigramLM;

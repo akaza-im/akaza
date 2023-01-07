@@ -1,14 +1,15 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::ops::Range;
+use std::path::Path;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 use log::{info, warn};
 
+use libakaza::corpus::{read_corpus_file, FullAnnotationCorpus};
 use libakaza::graph::graph_builder::GraphBuilder;
 use libakaza::graph::graph_resolver::GraphResolver;
 use libakaza::graph::segmenter::Segmenter;
-use libakaza::graph::word_node::WordNode;
 use libakaza::kana_kanji_dict::KanaKanjiDict;
 use libakaza::kana_trie::marisa_kana_trie::MarisaKanaTrie;
 use libakaza::lm::system_bigram::SystemBigramLMBuilder;
@@ -21,20 +22,22 @@ use libakaza::user_side_data::user_data::UserData;
 pub fn learn_structured_perceptron() -> anyhow::Result<()> {
     // ここでは内部クラスなどを触ってスコア調整をしていかないといけないので、AkazaBuilder は使えない。
 
+    let corpuses = read_corpus_file(Path::new("corpus/must.txt"))?;
+
     let mut unigram_cost: HashMap<String, f32> = HashMap::new();
-    for _ in 1..20 {
-        for teacher_src in &[
-            "洗濯物/せんたくもの を/を 干す/ほす の/の が/が 面倒/めんどう だ/だ",
-            "構造化/こうぞうか パーセプトロン/ぱーせぷとろん 面白い/おもしろい",
-        ] {
-            learn(teacher_src, &mut unigram_cost)?;
+    for _ in 1..10 {
+        for teacher in corpuses.iter() {
+            learn(teacher, &mut unigram_cost)?;
         }
     }
 
     Ok(())
 }
 
-pub fn learn(teacher_src: &str, unigram_cost: &mut HashMap<String, f32>) -> anyhow::Result<()> {
+pub fn learn(
+    teacher: &FullAnnotationCorpus,
+    unigram_cost: &mut HashMap<String, f32>,
+) -> anyhow::Result<()> {
     let system_kana_kanji_dict = KanaKanjiDict::load("data/system_dict.trie")?;
     // let system_kana_kanji_dict = KanaKanjiDictBuilder::default()
     //     .add("せんたくもの", "洗濯物")
@@ -59,7 +62,6 @@ pub fn learn(teacher_src: &str, unigram_cost: &mut HashMap<String, f32>) -> anyh
     let system_unigram_lm = unigram_lm_builder.build();
     let system_bigram_lm = SystemBigramLMBuilder::default().build();
 
-    let teacher = Teacher::new(teacher_src);
     let correct_nodes = teacher.correct_node_set();
     let yomi = teacher.yomi();
     let segmentation_result = segmenter.build(&yomi, &force_ranges);
@@ -105,40 +107,6 @@ pub fn learn(teacher_src: &str, unigram_cost: &mut HashMap<String, f32>) -> anyh
     // println!("{:?}", unigram_cost);
     println!("{}", result);
     Ok(())
-}
-
-/// 教師データ
-pub struct Teacher {
-    pub nodes: Vec<WordNode>,
-}
-
-impl Teacher {
-    /// 教師データをパースする。
-    pub fn new(src: &str) -> Teacher {
-        let p: Vec<&str> = src.split(' ').collect();
-        let mut start_pos = 0;
-        let mut nodes: Vec<WordNode> = Vec::new();
-        for x in p {
-            let (surface, yomi) = x.split_once('/').unwrap();
-            nodes.push(WordNode::new(start_pos, surface, yomi));
-            start_pos += yomi.len() as i32;
-        }
-        Teacher { nodes }
-    }
-
-    /// 教師データの「よみ」を返す。
-    pub fn yomi(&self) -> String {
-        let mut buf = String::new();
-        for yomi in self.nodes.iter().map(|f| f.yomi.as_str()) {
-            buf += yomi;
-        }
-        buf
-    }
-
-    /// 正解ノードを返す
-    pub fn correct_node_set(&self) -> HashSet<WordNode> {
-        HashSet::from_iter(self.nodes.iter().cloned())
-    }
 }
 
 #[cfg(test)]
