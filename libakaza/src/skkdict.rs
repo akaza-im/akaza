@@ -45,8 +45,8 @@ pub fn parse_skkdict(src: &str) -> anyhow::Result<(SkkDictParsedData, SkkDictPar
         // とくひろ /徳宏/徳大/徳寛/督弘/
         // 末尾の slash が抜けてる場合もあるエントリーが SKK-JISYO.L に入っていたりするので注意。
         let surfaces: Vec<String> = surfaces
-            .trim_start_matches("/")
-            .trim_end_matches("/")
+            .trim_start_matches('/')
+            .trim_end_matches('/')
             .split('/')
             .map(|s| s.to_string())
             .collect();

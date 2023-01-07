@@ -22,8 +22,8 @@ impl SaigenRitsu {
     /// @param teacher コーパスにあるの変換結果
     /// @param my_candidate 評価対象モデルにより出力された変換結果
     fn add(&mut self, teacher: &str, my_candidate: &str) {
-        let teacher: Vec<char> = teacher.clone().chars().collect();
-        let my_candidate: Vec<char> = my_candidate.clone().chars().collect();
+        let teacher: Vec<char> = teacher.chars().collect();
+        let my_candidate: Vec<char> = my_candidate.chars().collect();
         let lcs = lcs::LcsTable::new(&teacher, &my_candidate);
         let lcs = lcs.longest_common_subsequence();
         self.total_lcs += lcs.len();

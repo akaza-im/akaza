@@ -1,6 +1,6 @@
 use libakaza::akaza_builder::AkazaBuilder;
 
-pub fn check(yomi: &String) -> anyhow::Result<()> {
+pub fn check(yomi: &str) -> anyhow::Result<()> {
     let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/data/";
 
     let akaza = AkazaBuilder::default().system_data_dir(&datadir).build()?;
