@@ -44,8 +44,8 @@ data/lm_v2_2gram.trie: work/jawiki.merged-2gram.txt
 	cargo run -- make-system-language-model work/jawiki.merged-1gram.txt data/lm_v2_1gram.trie \
     	work/jawiki.merged-2gram.txt data/lm_v2_2gram.trie
 
-data/system_dict.trie: work/jawiki.single_term.txt
-	cargo run -- make-system-dict work/jawiki.system_dict.txt data/system_dict.trie
+data/system_dict.trie: work/jawiki.system_dict.txt src/subcmd/make_system_dict.rs
+	cargo run -- make-system-dict work/jawiki.system_dict.txt data/system_dict.trie -vv
 
 data/single_term.trie: work/jawiki.single_term.txt
 	cargo run -- make-system-dict work/jawiki.single_term.txt data/single_term.trie

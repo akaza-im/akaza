@@ -2,6 +2,7 @@ use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
 use anyhow::Result;
+use log::trace;
 
 use libakaza::kana_kanji_dict::KanaKanjiDictBuilder;
 
@@ -19,7 +20,7 @@ pub fn make_system_dict(txtfile: &String, triefile: &String) -> Result<()> {
         }
         let yomi = v[0];
         let kanjis = v[1];
-        println!("word={} kanjis={}", yomi, kanjis);
+        trace!("word={} kanjis={}", yomi, kanjis);
         kana_kanji_dict.add(yomi, kanjis);
     }
     kana_kanji_dict.save(triefile)?;

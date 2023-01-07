@@ -63,7 +63,8 @@ mod system_dict {
                 // Python 版にあったので残してある。たぶんいらない処理。
                 continue;
             }
-            words.push((surface.to_string(), yomi.to_string()));
+            info!("Add {}/{}", yomi, surface);
+            words.push((yomi.to_string(), surface.to_string()));
         }
         let result = words.iter().fold(
             HashMap::new(),
@@ -148,7 +149,9 @@ fn write_dict(ofname: &str, dicts: Vec<HashMap<String, Vec<String>>>) -> anyhow:
     let mut wfp = File::create(ofname)?;
     for (yomi, kanjis) in merged_dict.iter() {
         let kanjis = kanjis.join("/");
-        wfp.write_fmt(format_args!("{} /{}/\n", yomi, kanjis))?;
+        // この出力先ファイルは、「SKK 風」だが、SKK 辞書ではない。
+        // 前後に slash は入れなくて良い。
+        wfp.write_fmt(format_args!("{} {}\n", yomi, kanjis))?;
     }
     copy_snapshot(Path::new(ofname))?;
     Ok(())

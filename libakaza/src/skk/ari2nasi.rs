@@ -86,7 +86,7 @@ mod tests {
     #[test]
     fn test_expand_okuri() -> anyhow::Result<()> {
         let ari2nasi = Ari2Nasi::new(RomKanConverter::default());
-        let got = ari2nasi.expand_okuri("あいしあw", &vec!["愛し合"])?;
+        let got = ari2nasi.expand_okuri("あいしあw", &vec!["愛し合".to_string()])?;
         assert_eq!(
             got,
             vec!(
