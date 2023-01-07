@@ -129,7 +129,7 @@ impl LatticeGraph {
         }
 
         return if let Some((_, system_unigram_cost)) = self.system_unigram_lm.find(key.as_str()) {
-            warn!("HIT!: {}, {}", node.key(), system_unigram_cost);
+            trace!("HIT!: {}, {}", node.key(), system_unigram_cost);
             system_unigram_cost
         } else if node.kanji.len() < node.yomi.len() {
             // 労働者災害補償保険法 のように、システム辞書には wikipedia から採録されているが,
