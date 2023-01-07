@@ -65,19 +65,19 @@ def write_model():
     mkdir_p('work')
 
     print(f'[{sys.argv[0]}] # 1gram')
-    unigram = build_model('work/ngram/*/wiki*.1gram.txt', cutoff=0, t0=t0)
+    unigram = build_model('work/stats-kytea/ngram/*/wiki*.1gram.txt', cutoff=0, t0=t0)
     write_ngram('work/jawiki.merged-1gram.txt', unigram)
     copy_snapshot('work/jawiki.merged-1gram.txt')
 
     print(f"1gram. size={len(unigram)}")
 
     print(f'[{sys.argv[0]}] # 2gram')
-    bigram = build_model('work/ngram/*/wiki*.2gram.txt', cutoff=3, t0=t0)
+    bigram = build_model('work/stats-kytea/ngram/*/wiki*.2gram.txt', cutoff=3, t0=t0)
     write_ngram('work/jawiki.merged-2gram.txt', bigram)
     copy_snapshot('work/jawiki.merged-2gram.txt')
 
     # print(f'[{sys.argv[0]}] # 3gram')
-    # trigram_dict, trigram = build_model('work/ngram/*/wiki*.3gram.txt', cutoff=100, t0=t0,
+    # trigram_dict, trigram = build_model('work/stats-kytea/ngram/*/wiki*.3gram.txt', cutoff=100, t0=t0,
     #                                     prev_dict=bigram_dict)
     # write_trie('akaza_data/data/system_language_model.3gram.trie', trigram)
 

@@ -20,13 +20,13 @@ use libakaza::user_side_data::user_data::UserData;
 pub fn learn_structured_perceptron(epochs: i32) -> anyhow::Result<()> {
     // ここでは内部クラスなどを触ってスコア調整をしていかないといけないので、AkazaBuilder は使えない。
 
-    let system_kana_kanji_dict = KanaKanjiDict::load("data/system_dict.trie")?;
+    let system_kana_kanji_dict = KanaKanjiDict::load("data/stats-kytea-system_dict.trie")?;
     let all_yomis = system_kana_kanji_dict.all_yomis().unwrap();
     let system_kana_trie = MarisaKanaTrie::build(all_yomis);
     let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
-    let system_single_term_dict = KanaKanjiDict::load("data/single_term.trie")?;
+    let system_single_term_dict = KanaKanjiDict::load("data/stats-kytea-single_term.trie")?;
     let system_bigram_lm = SystemBigramLMBuilder::default().build();
-    let real_system_unigram_lm = SystemUnigramLM::load("data/lm_v2_1gram.trie")?;
+    let real_system_unigram_lm = SystemUnigramLM::load("data/stats-kytea-lm_v2_1gram.trie")?;
     let mut graph_builder = GraphBuilder::new(
         system_kana_kanji_dict,
         system_single_term_dict,
@@ -41,7 +41,7 @@ pub fn learn_structured_perceptron(epochs: i32) -> anyhow::Result<()> {
     let mut bigram_cost: HashMap<(i32, i32), f32> = HashMap::new();
 
     // let corpuses = read_corpus_file(Path::new("corpus/must.txt"))?;
-    let corpuses = read_corpus_file(Path::new("work/text/BA/wiki_05"))?;
+    let corpuses = read_corpus_file(Path::new("work/stats-kytea/text/BA/wiki_05"))?;
 
     for _ in 1..epochs {
         for teacher in corpuses.iter() {

@@ -5,8 +5,8 @@ from akaza_data_utils import get_sig
 
 
 def main():
-    with open('work/jawiki.wfreq', 'r') as rfp, \
-            open('work/jawiki.vocab', 'w') as wfp:
+    with open('work/stats-kytea/jawiki.wfreq', 'r') as rfp, \
+            open('work/stats-kytea/jawiki.vocab', 'w') as wfp:
         vocab = []
         for line in rfp:
             m = line.rstrip().split(' ')
@@ -26,7 +26,7 @@ def main():
         for word in sorted(vocab):
             wfp.write(word + "\n")
 
-    copy_snapshot('work/jawiki.vocab')
+    copy_snapshot('work/stats-kytea/jawiki.vocab')
 
 
 if __name__ == '__main__':

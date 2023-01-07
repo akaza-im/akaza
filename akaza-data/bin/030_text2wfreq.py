@@ -35,7 +35,7 @@ def split(a, n):
 def main():
     numprocs = mp.cpu_count()
 
-    files = glob.glob('work/text/*/wiki_*')
+    files = glob.glob('work/stats-kytea/text/*/wiki_*')
     chunks = split(files, numprocs)
 
     result_pool = []
@@ -55,7 +55,7 @@ def main():
                 result_pool.remove(r)
         time.sleep(0.1)
 
-    with open('work/jawiki.wfreq', 'w') as wfp:
+    with open('work/stats-kytea/jawiki.wfreq', 'w') as wfp:
         for key in sorted(merged_wfreq.keys()):
             count = merged_wfreq[key]
             if key != '__EOS__/__EOS__':
@@ -75,7 +75,7 @@ def main():
                     continue
             wfp.write(f"{key} {count}\n")
 
-    copy_snapshot('work/jawiki.wfreq')
+    copy_snapshot('work/stats-kytea/jawiki.wfreq')
 
 
 if __name__ == '__main__':

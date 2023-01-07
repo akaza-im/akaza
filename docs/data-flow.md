@@ -24,9 +24,9 @@ graph TD
     ngram.txt --> jawiki.mergeed-1gram.txt
     ngram.txt --> jawiki.mergeed-2gram.txt
 
-    jawiki.mergeed-1gram.txt -- akaza-make-system-lm --> lm_v2_1gram.trie
-    jawiki.mergeed-2gram.txt -- akaza-make-system-lm --> lm_v2_2gram.trie
-    lm_v2_1gram.trie -- akaza-make-system-lm --> lm_v2_2gram.trie
+    jawiki.mergeed-1gram.txt -- akaza-make-system-lm --> stats-kytea-lm_v2_1gram.trie
+    jawiki.mergeed-2gram.txt -- akaza-make-system-lm --> stats-kytea-lm_v2_2gram.trie
+    stats-kytea-lm_v2_1gram.trie -- akaza-make-system-lm --> stats-kytea-lm_v2_2gram.trie
 ```
 
 ## システム辞書
@@ -43,11 +43,11 @@ graph TD
     SKK-JISYO.station --> system-dict
     jawiki-kana-kanji-dict --> SKK-JISYO.jawiki --> system-dict
     SKK-JISYO.akaza --> system-dict
-    system-dict -- akaza-make-binary-dict--> system_dict.trie
+    system-dict -- akaza-make-binary-dict--> stats-kytea-system_dict.trie
 
     SKK-JISYO.emoji --> single-term-dict
     SKK-JISYO.zipcode --> single-term-dict
-    single-term-dict -- akaza-make-binary-dict--> single_term.trie
+    single-term-dict -- akaza-make-binary-dict--> stats-kytea-single_term.trie
 ```
 
 ## ユーザー言語モデル

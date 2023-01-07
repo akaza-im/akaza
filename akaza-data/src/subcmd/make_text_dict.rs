@@ -53,7 +53,7 @@ mod system_dict {
         dicts.push(
             validate_dict(make_corpus_dict()?).with_context(|| "make_corpus_dict".to_string())?,
         );
-        write_dict("work/jawiki.system_dict.txt", dicts)?;
+        write_dict("work/stats-kytea/jawiki.system_dict.txt", dicts)?;
         Ok(())
     }
 
@@ -85,7 +85,7 @@ mod system_dict {
     }
 
     fn make_vocab_dict() -> Result<HashMap<String, Vec<String>>> {
-        let rfp = File::open("work/jawiki.vocab")?;
+        let rfp = File::open("work/stats-kytea/jawiki.vocab")?;
         let mut words: Vec<(String, String)> = Vec::new();
         for line in BufReader::new(rfp).lines() {
             let line = line?;
@@ -104,7 +104,7 @@ mod system_dict {
 
     /*
     def scan_vocab():
-        with open('work/jawiki.vocab', 'r') as rfp:
+        with open('work/stats-kytea/jawiki.vocab', 'r') as rfp:
             for line in rfp:
                 word = line.rstrip()
                 m = word.split('/')
@@ -150,7 +150,7 @@ mod single_term {
             dicts.push(ari2nasi.ari2nasi(&ari)?);
         }
         dicts.push(make_lisp_dict());
-        write_dict("work/jawiki.single_term.txt", dicts)?;
+        write_dict("work/stats-kytea/jawiki.single_term.txt", dicts)?;
         Ok(())
     }
 
@@ -260,7 +260,7 @@ mod tests {
         // 処理する
         make_text_dict()?;
 
-        let mut file = File::open("work/jawiki.system_dict.txt")?;
+        let mut file = File::open("work/stats-kytea/jawiki.system_dict.txt")?;
         let mut buf = String::new();
         file.read_to_string(&mut buf)?;
 

@@ -123,14 +123,14 @@ impl AkazaBuilder {
     pub fn build(&self) -> Result<Akaza> {
         let system_unigram_lm = match &self.system_data_dir {
             Some(dir) => {
-                let path = dir.to_string() + "/lm_v2_1gram.trie";
+                let path = dir.to_string() + "/stats-kytea-lm_v2_1gram.trie";
                 SystemUnigramLM::load(path.as_str())?
             }
             None => SystemUnigramLMBuilder::default().build(),
         };
         let system_bigram_lm = match &self.system_data_dir {
             Some(dir) => {
-                let path = dir.to_string() + "/lm_v2_2gram.trie";
+                let path = dir.to_string() + "/stats-kytea-lm_v2_2gram.trie";
                 SystemBigramLM::load(path.as_str())?
             }
             None => SystemBigramLMBuilder::default().build(),
@@ -138,14 +138,14 @@ impl AkazaBuilder {
 
         let system_kana_kanji_dict = match &self.system_data_dir {
             Some(dir) => {
-                let path = dir.to_string() + "/system_dict.trie";
+                let path = dir.to_string() + "/stats-kytea-system_dict.trie";
                 KanaKanjiDict::load(path.as_str())?
             }
             None => KanaKanjiDictBuilder::default().build(),
         };
         let system_single_term_dict = match &self.system_data_dir {
             Some(dir) => {
-                let path = dir.to_string() + "/single_term.trie";
+                let path = dir.to_string() + "/stats-kytea-single_term.trie";
                 KanaKanjiDict::load(path.as_str())?
             }
             None => KanaKanjiDictBuilder::default().build(),
