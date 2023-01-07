@@ -230,7 +230,7 @@ mod tests {
 
     /// コーパスファイルをちゃんと処理できているか
     #[test]
-    fn test_corpus() -> anyhow::Result<()> {
+    fn test_corpus() -> Result<()> {
         // 処理する
         make_text_dict()?;
 
