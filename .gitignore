@@ -12,3 +12,5 @@ perf.data
 callgrind.*
 target/
 /.idea/
+perf.data
+perf.data.old
