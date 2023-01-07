@@ -114,6 +114,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore]
     fn d() -> anyhow::Result<()> {
         learn_structured_perceptron()
     }

@@ -22,6 +22,7 @@ pub fn make_text_dict() -> Result<()> {
 
 mod system_dict {
     use anyhow::bail;
+    use libakaza::corpus::read_corpus_file;
     use std::io::BufReader;
 
     use libakaza::skk::skkdict::read_skkdict;
@@ -46,8 +47,36 @@ mod system_dict {
             dicts.push(ari2nasi.ari2nasi(&ari)?);
         }
         dicts.push(make_vocab_dict()?);
+        dicts.push(make_corpus_dict()?);
         write_dict("work/jawiki.system_dict.txt", dicts)?;
         Ok(())
+    }
+
+    fn make_corpus_dict() -> Result<HashMap<String, Vec<String>>> {
+        let mut words: Vec<(String, String)> = Vec::new();
+
+        let corpus_vec = read_corpus_file(Path::new("corpus/must.txt"))?;
+        for corpus in corpus_vec {
+            for node in corpus.nodes {
+                info!("Add {}/{}", node.yomi, node.kanji);
+                words.push((node.yomi.to_string(), node.kanji.to_string()));
+            }
+        }
+
+        Ok(grouping_words(words))
+    }
+
+    fn grouping_words(words: Vec<(String, String)>) -> HashMap<String, Vec<String>> {
+        words.iter().fold(
+            HashMap::new(),
+            |mut acc: HashMap<String, Vec<String>>, t: &(String, String)| {
+                let (p, q) = t;
+                acc.entry(p.to_string())
+                    .or_insert_with(Vec::new)
+                    .push(q.to_string());
+                acc
+            },
+        )
     }
 
     fn make_vocab_dict() -> Result<HashMap<String, Vec<String>>> {
@@ -63,20 +92,9 @@ mod system_dict {
                 // Python 版にあったので残してある。たぶんいらない処理。
                 continue;
             }
-            info!("Add {}/{}", yomi, surface);
             words.push((yomi.to_string(), surface.to_string()));
         }
-        let result = words.iter().fold(
-            HashMap::new(),
-            |mut acc: HashMap<String, Vec<String>>, t: &(String, String)| {
-                let (p, q) = t;
-                acc.entry(p.to_string())
-                    .or_insert_with(Vec::new)
-                    .push(q.to_string());
-                acc
-            },
-        );
-        Ok(result)
+        Ok(grouping_words(words))
     }
 
     /*
@@ -204,4 +222,24 @@ fn copy_snapshot(path: &Path) -> Result<()> {
         ),
     )?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// コーパスファイルをちゃんと処理できているか
+    #[test]
+    fn test_corpus() -> anyhow::Result<()> {
+        // 処理する
+        make_text_dict()?;
+
+        let mut file = File::open("work/jawiki.system_dict.txt")?;
+        let mut buf = String::new();
+        file.read_to_string(&mut buf)?;
+
+        assert!(buf.contains("ぱーせぷとろん パーセプトロン"));
+
+        Ok(())
+    }
 }
