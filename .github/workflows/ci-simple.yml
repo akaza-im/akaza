@@ -26,7 +26,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install ibus libgirepository1.0-dev libmarisa-dev cmake clang
+        sudo apt-get install ibus libgirepository1.0-dev libmarisa-dev cmake clang libibus-1.0-dev
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
