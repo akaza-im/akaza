@@ -10,11 +10,11 @@ from typing import Set
 import psutil
 
 
-# jawiki.vocab と work/text/*/* を元に、work/ngram/ を構築する。
+# jawiki.vocab と work/stats-kytea/text/*/* を元に、work/stats-kytea/ngram/ を構築する。
 
 
 def read_vocab():
-    with open('work/jawiki.vocab', 'r') as fp:
+    with open('work/stats-kytea/jawiki.vocab', 'r') as fp:
         return [line.rstrip() for line in fp.readlines()]
 
 
@@ -52,7 +52,7 @@ def worker(chunk):
     for fname in chunk:
         elapsed = time.time() - t0
         process = psutil.Process(os.getpid())
-        dest = fname.replace('work/text/', 'work/ngram/')
+        dest = fname.replace('work/stats-kytea/text/', 'work/stats-kytea/ngram/')
 
         print(f"[{sys.argv[0]}] {fname} -> {dest} {file_count}/{len(chunk)} "
               f"({process.memory_info().rss / 1024 / 1024} MB) "
@@ -92,7 +92,7 @@ def split(a, n):
 def main():
     numprocs = mp.cpu_count()
 
-    files = glob.glob('work/text/*/*')
+    files = glob.glob('work/stats-kytea/text/*/*')
     chunks = split(files, numprocs)
 
     result_pool = []

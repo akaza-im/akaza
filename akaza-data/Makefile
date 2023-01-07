@@ -20,29 +20,31 @@ work/extracted/BE/wiki_13: work/jawiki-latest-pages-articles.xml
 
 # 以下は、「統計的かな漢字変換(Kyteaベース) 用の処理
 
-work/annotated/BE/wiki_13: work/extracted/BE/wiki_13 bin/010_wiki2annotated.py
+work/stats-kytea/annotated/BE/wiki_13: work/extracted/BE/wiki_13 bin/010_wiki2annotated.py
 	python3 bin/010_wiki2annotated.py
 
-work/text/BE/wiki_13: work/annotated/BE/wiki_13 bin/020_annotated2text.py bin/akaza_data_utils/merge_terms.py
+work/stats-kytea/text/BE/wiki_13: work/stats-kytea/annotated/BE/wiki_13 bin/020_annotated2text.py bin/akaza_data_utils/merge_terms.py
 	python3 bin/020_annotated2text.py
 
-work/jawiki.wfreq: work/text/BE/wiki_13 bin/030_text2wfreq.py
+work/stats-kytea/jawiki.wfreq: work/stats-kytea/text/BE/wiki_13 bin/030_text2wfreq.py
 	python3 bin/030_text2wfreq.py
 
 # 118,334=entry count of libkkc-data.
-work/jawiki.vocab: work/jawiki.wfreq bin/040_wfreq2vocab.py
+work/stats-kytea/jawiki.vocab: work/stats-kytea/jawiki.wfreq bin/040_wfreq2vocab.py
 	python3 bin/040_wfreq2vocab.py
 
 # very slow
-work/ngram/BE/wiki_13.1gram.txt: work/jawiki.vocab  bin/050_dumpngram.py
-	python3 bin/050_dumpngram.py work/jawiki.vocab
+work/stats-kytea/ngram/BE/wiki_13.1gram.txt: work/stats-kytea/jawiki.vocab  bin/050_dumpngram.py
+	python3 bin/050_dumpngram.py work/stats-kytea/jawiki.vocab
 
-work/stats-kytea/jawiki.merged-2gram.txt: work/ngram/BE/wiki_13.1gram.txt work/jawiki.vocab bin/060_create-system_language_model.py
+work/stats-kytea/jawiki.merged-2gram.txt: work/stats-kytea/ngram/BE/wiki_13.1gram.txt work/stats-kytea/jawiki.vocab bin/060_create-system_language_model.py
 	python3 bin/060_create-system_language_model.py
 
 # システム辞書の構築
-work/stats-kytea/jawiki.single_term.txt: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_text_dict.rs
+work/stats-kytea/jawiki.single_term.txt: work/stats-kytea/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_text_dict.rs
 	cargo run --release -- make-text-dict -vvv
+
+work/stats-kytea/jawiki.system_dict.txt: work/stats-kytea/jawiki.single_term.txt
 
 data/stats-kytea-lm_v2_2gram.trie: work/stats-kytea/jawiki.merged-2gram.txt
 	cargo run -- make-system-language-model work/stats-kytea/jawiki.merged-1gram.txt data/stats-kytea-lm_v2_1gram.trie \

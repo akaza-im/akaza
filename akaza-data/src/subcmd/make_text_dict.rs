@@ -85,7 +85,7 @@ mod system_dict {
     }
 
     fn make_vocab_dict() -> Result<HashMap<String, Vec<String>>> {
-        let rfp = File::open("work/jawiki.vocab")?;
+        let rfp = File::open("work/stats-kytea/jawiki.vocab")?;
         let mut words: Vec<(String, String)> = Vec::new();
         for line in BufReader::new(rfp).lines() {
             let line = line?;
@@ -104,7 +104,7 @@ mod system_dict {
 
     /*
     def scan_vocab():
-        with open('work/jawiki.vocab', 'r') as rfp:
+        with open('work/stats-kytea/jawiki.vocab', 'r') as rfp:
             for line in rfp:
                 word = line.rstrip()
                 m = word.split('/')

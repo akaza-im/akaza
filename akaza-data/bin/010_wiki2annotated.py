@@ -55,7 +55,7 @@ def process_files(files):
     total = len(files)
     t0 = time.time()
     for ifile in files:
-        ofile = ifile.replace('work/extracted/', 'work/annotated/')
+        ofile = ifile.replace('work/extracted/', 'work/stats-kytea/annotated/')
 
         pathlib.Path(ofile).parent.mkdir(parents=True, exist_ok=True)
 

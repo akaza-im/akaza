@@ -35,7 +35,7 @@ def worker(chunk, skkdict):
     merged = set()
     t0 = time.time()
     for fname in chunk:
-        dest = fname.replace('work/annotated/', 'work/text/')
+        dest = fname.replace('work/stats-kytea/annotated/', 'work/stats-kytea/text/')
         pathlib.Path(dest).parent.mkdir(parents=True, exist_ok=True)
         print(
             f"[{os.getpid()}] [{sys.argv[0]}] {fname} -> {dest} ({finished}/{len(chunk)})"
@@ -53,7 +53,7 @@ def split(a, n):
 def main():
     numprocs = mp.cpu_count()
 
-    files = glob.glob('work/annotated/*/wiki_*')
+    files = glob.glob('work/stats-kytea/annotated/*/wiki_*')
     chunks = split(files, numprocs)
 
     result_pool = []

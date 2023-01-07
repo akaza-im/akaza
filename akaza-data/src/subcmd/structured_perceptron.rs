@@ -41,7 +41,7 @@ pub fn learn_structured_perceptron(epochs: i32) -> anyhow::Result<()> {
     let mut bigram_cost: HashMap<(i32, i32), f32> = HashMap::new();
 
     // let corpuses = read_corpus_file(Path::new("corpus/must.txt"))?;
-    let corpuses = read_corpus_file(Path::new("work/text/BA/wiki_05"))?;
+    let corpuses = read_corpus_file(Path::new("work/stats-kytea/text/BA/wiki_05"))?;
 
     for _ in 1..epochs {
         for teacher in corpuses.iter() {
