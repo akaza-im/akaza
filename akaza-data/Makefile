@@ -36,6 +36,7 @@ work/ngram/BE/wiki_13.1gram.txt: work/jawiki.vocab  bin/050_dumpngram.py
 work/jawiki.merged-2gram.txt: work/ngram/BE/wiki_13.1gram.txt work/jawiki.vocab bin/060_create-system_language_model.py
 	python3 bin/060_create-system_language_model.py
 
+# システム辞書の構築
 work/jawiki.single_term.txt: work/jawiki.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza
 	python3 bin/070_make-system-dict.py
 

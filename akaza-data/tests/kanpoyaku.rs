@@ -9,7 +9,7 @@ mod tests {
     use regex::Regex;
 
     use libakaza::kana_kanji_dict::KanaKanjiDict;
-    use libakaza::skkdict::parse_skkdict;
+    use libakaza::skk::skkdict::parse_skkdict;
 
     /// そうは読まないでしょ、というような読み方のものをいくつか登録しておく。
     /// (このテストは kytea が読み間違えなくなったら通る)

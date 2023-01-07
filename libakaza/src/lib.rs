@@ -10,7 +10,7 @@ pub mod kana_kanji_dict;
 pub mod kana_trie;
 pub mod lm;
 pub mod romkan;
-pub mod skkdict;
+pub mod skk;
 mod tinylisp;
 pub mod trie;
 pub mod user_side_data;
