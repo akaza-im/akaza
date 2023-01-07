@@ -1,7 +1,7 @@
-use crate::subcmd::check::check;
-use crate::subcmd::evaluate::evaluate;
 use clap::{Parser, Subcommand};
 
+use crate::subcmd::check::check;
+use crate::subcmd::evaluate::evaluate;
 use crate::subcmd::make_system_dict::make_system_dict;
 use crate::subcmd::make_system_lm::make_system_lm;
 use crate::subcmd::structured_perceptron::learn_structured_perceptron;
@@ -34,7 +34,6 @@ enum Commands {
     Evaluate(EvaluateArgs),
     #[clap(arg_required_else_help = true)]
     Check(CheckArgs),
-    #[clap(arg_required_else_help = true)]
     LearnStructuredPerceptron(LearnStructuredPerceptronArgs),
 }
 

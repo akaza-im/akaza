@@ -163,7 +163,7 @@ impl AkazaBuilder {
             Arc::new(Mutex::new(UserData::default()))
         };
 
-        let graph_builder = GraphBuilder::new(
+        let graph_builder = GraphBuilder::new_with_default_score(
             system_kana_kanji_dict,
             system_single_term_dict,
             user_data.clone(),

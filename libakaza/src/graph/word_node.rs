@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct WordNode {
     pub start_pos: i32,
     /// 漢字
@@ -56,7 +56,7 @@ impl WordNode {
             cost: 0_f32,
         }
     }
-    pub(crate) fn new(start_pos: i32, kanji: &str, yomi: &str) -> WordNode {
+    pub fn new(start_pos: i32, kanji: &str, yomi: &str) -> WordNode {
         WordNode {
             start_pos,
             kanji: kanji.to_string(),
