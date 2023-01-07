@@ -43,11 +43,11 @@ graph TD
     SKK-JISYO.station --> system-dict
     jawiki-kana-kanji-dict --> SKK-JISYO.jawiki --> system-dict
     SKK-JISYO.akaza --> system-dict
-    system-dict -- akaza-make-binary-dict--> system_dict.trie
+    system-dict -- akaza-make-binary-dict--> stats-kytea-system_dict.trie
 
     SKK-JISYO.emoji --> single-term-dict
     SKK-JISYO.zipcode --> single-term-dict
-    single-term-dict -- akaza-make-binary-dict--> single_term.trie
+    single-term-dict -- akaza-make-binary-dict--> stats-kytea-single_term.trie
 ```
 
 ## ユーザー言語モデル

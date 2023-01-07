@@ -3,8 +3,8 @@ DATADIR ?= $(PREFIX)/share
 DESTDIR ?=
 
 
-all: data/system_dict.trie data/lm_v2_2gram.trie data/lm_v2_2gram.trie \
-	data/system_dict.trie data/single_term.trie
+all: data/stats-kytea-system_dict.trie data/lm_v2_2gram.trie data/lm_v2_2gram.trie \
+	data/stats-kytea-system_dict.trie data/stats-kytea-single_term.trie
 
 work/jawiki-latest-pages-articles.xml.bz2:
 	mkdir -p work/
@@ -44,11 +44,11 @@ data/lm_v2_2gram.trie: work/jawiki.merged-2gram.txt
 	cargo run -- make-system-language-model work/jawiki.merged-1gram.txt data/lm_v2_1gram.trie \
     	work/jawiki.merged-2gram.txt data/lm_v2_2gram.trie
 
-data/system_dict.trie: work/jawiki.system_dict.txt src/subcmd/make_system_dict.rs
-	cargo run -- make-system-dict work/jawiki.system_dict.txt data/system_dict.trie -vv
+data/stats-kytea-system_dict.trie: work/jawiki.system_dict.txt src/subcmd/make_system_dict.rs
+	cargo run -- make-system-dict work/jawiki.system_dict.txt data/stats-kytea-system_dict.trie -vv
 
-data/single_term.trie: work/jawiki.single_term.txt
-	cargo run -- make-system-dict work/jawiki.single_term.txt data/single_term.trie
+data/stats-kytea-single_term.trie: work/jawiki.single_term.txt
+	cargo run -- make-system-dict work/jawiki.single_term.txt data/stats-kytea-single_term.trie
 
 # -------------------------------------------------------------------------
 
