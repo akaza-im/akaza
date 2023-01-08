@@ -24,10 +24,11 @@ work/mecab/ipadic-mecab-2_7_0.tar.gz:
 	wget --no-verbose --no-clobber -O work/mecab/ipadic-mecab-2_7_0.tar.gz https://github.com/daac-tools/vibrato/releases/download/v0.3.1/ipadic-mecab-2_7_0.tar.gz
 
 work/mecab/ipadic-mecab-2_7_0/system.dic: work/mecab/ipadic-mecab-2_7_0.tar.gz
-	tar -xzf work/mecab/ipadic-mecab-2_7_1.tar.gz -C work/mecab/
+	tar -xzf work/mecab/ipadic-mecab-2_7_0.tar.gz -C work/mecab/
 
- work/mecab/wikipedia-annotated/BE/wiki_02: src/subcmd/vibrato_annotate.rs work/mecab/ipadic-mecab-2_7_0/system.dic jawiki-kana-kanji-dict/mecab-userdic.csv
-	cargo run -- vibrato-annotate
+ work/mecab/wikipedia-tokenized/_SUCCESS: src/subcmd/vibrato_annotate.rs work/mecab/ipadic-mecab-2_7_0/system.dic jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs
+	cargo run -- vibrato-annotate work/extracted work/mecab/wikipedia-tokenized/
+
 
 # -------------------------------------------------------------------------
 

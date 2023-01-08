@@ -99,7 +99,10 @@ struct MakeTextDictArgs {}
 
 /// Wikipedia を Vibrato でアノテーションする
 #[derive(Debug, clap::Args)]
-struct VibratoAnnotateArgs {}
+struct VibratoAnnotateArgs {
+    src_dir: String,
+    dst_dir: String,
+}
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
@@ -120,6 +123,8 @@ fn main() -> anyhow::Result<()> {
         Commands::Check(opt) => check(&opt.yomi),
         Commands::LearnStructuredPerceptron(opts) => learn_structured_perceptron(opts.epochs),
         Commands::MakeTextDict(_) => make_text_dict(),
-        Commands::VibratoAnnotate(_) => annotate_wikipedia(),
+        Commands::VibratoAnnotate(opt) => {
+            annotate_wikipedia(opt.src_dir.as_str(), opt.dst_dir.as_str())
+        }
     }
 }

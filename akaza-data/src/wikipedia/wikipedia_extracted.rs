@@ -99,6 +99,12 @@ impl ExtractedWikipediaProcessor {
             );
             self.process_file(src_file.path(), &output_file, &mut annotate)?;
         }
+
+        // _SUCCESS ファイルを書く
+        {
+            let mut success = File::create(dst_dir.join("_SUCCESS"))?;
+            success.write_all("DONE".as_bytes())?;
+        }
         Ok(())
     }
 }

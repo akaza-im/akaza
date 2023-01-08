@@ -3,15 +3,13 @@ use std::path::Path;
 
 use crate::wikipedia::wikipedia_extracted::ExtractedWikipediaProcessor;
 
-pub fn annotate_wikipedia() -> anyhow::Result<()> {
+pub fn annotate_wikipedia(src_dir: &str, dst_dir: &str) -> anyhow::Result<()> {
     let runner = VibratoTokenizer::new()?;
 
     let processor = ExtractedWikipediaProcessor::new()?;
-    processor.process_files(
-        Path::new("work/extracted"),
-        Path::new("work/mecab/wikipedia-annotated/"),
-        |line| runner.annotate(line),
-    )?;
+    processor.process_files(Path::new(src_dir), Path::new(dst_dir), |line| {
+        runner.annotate(line)
+    })?;
     Ok(())
 }
 
