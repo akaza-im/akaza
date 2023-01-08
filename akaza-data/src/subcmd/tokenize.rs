@@ -1,19 +1,27 @@
 use std::path::Path;
 
+use anyhow::bail;
+use lindera::DictionaryKind;
 use log::info;
 
-use crate::tokenizer::vibrato::VibratoTokenizer;
+use crate::tokenizer::base::AkazaTokenizer;
+use crate::tokenizer::lindera::LinderaTokenizer;
 use crate::wikipedia::wikipedia_extracted::ExtractedWikipediaProcessor;
 
-pub fn annotate_wikipedia(src_dir: &str, dst_dir: &str) -> anyhow::Result<()> {
-    info!("annotate_wikipedia: {} => {}", src_dir, dst_dir);
-    let runner = VibratoTokenizer::new()?;
-    info!("Initialized tokenizer");
-
+pub fn tokenize(tokenizer_type: &str, src_dir: &str, dst_dir: &str) -> anyhow::Result<()> {
+    info!("tokenize({}): {} => {}", tokenizer_type, src_dir, dst_dir);
     let processor = ExtractedWikipediaProcessor::new()?;
-    processor.process_files(Path::new(src_dir), Path::new(dst_dir), |line| {
-        runner.tokenize(line)
-    })?;
+
+    match tokenizer_type {
+        "lindera-ipadic" => {
+            let tokenizer = LinderaTokenizer::new(DictionaryKind::IPADIC)?;
+            processor.process_files(Path::new(src_dir), Path::new(dst_dir), |line| {
+                tokenizer.tokenize(line)
+            })?;
+        }
+        _ => bail!("Unknown tokenizer type: {}", tokenizer_type),
+    };
+
     Ok(())
 }
 
@@ -21,12 +29,14 @@ pub fn annotate_wikipedia(src_dir: &str, dst_dir: &str) -> anyhow::Result<()> {
 mod tests {
     use std::fs;
 
+    use crate::tokenizer::base::AkazaTokenizer;
+
     use super::*;
 
     #[test]
     #[ignore]
     fn test_wikipedia() -> anyhow::Result<()> {
-        let runner = VibratoTokenizer::new()?;
+        let runner = LinderaTokenizer::new()?;
         let processor = ExtractedWikipediaProcessor::new()?;
 
         let fname = "work/extracted/BE/wiki_02";

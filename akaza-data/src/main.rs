@@ -6,7 +6,7 @@ use crate::subcmd::make_system_dict::make_system_dict;
 use crate::subcmd::make_system_lm::make_system_lm;
 use crate::subcmd::make_text_dict::make_text_dict;
 use crate::subcmd::structured_perceptron::learn_structured_perceptron;
-use crate::subcmd::vibrato_annotate::annotate_wikipedia;
+use crate::subcmd::tokenize::tokenize;
 
 mod subcmd;
 mod tokenizer;
@@ -40,7 +40,7 @@ enum Commands {
     Check(CheckArgs),
     LearnStructuredPerceptron(LearnStructuredPerceptronArgs),
     MakeTextDict(MakeTextDictArgs),
-    VibratoAnnotate(VibratoAnnotateArgs),
+    Tokenize(TokenizeArgs),
 }
 
 #[derive(Debug, clap::Args)]
@@ -97,9 +97,11 @@ struct LearnStructuredPerceptronArgs {
 #[derive(Debug, clap::Args)]
 struct MakeTextDictArgs {}
 
-/// Wikipedia を Vibrato でアノテーションする
+/// コーパスを形態素解析機でトーカナイズする
 #[derive(Debug, clap::Args)]
-struct VibratoAnnotateArgs {
+struct TokenizeArgs {
+    #[arg(short, long)]
+    tokenizer: String,
     src_dir: String,
     dst_dir: String,
 }
@@ -123,8 +125,10 @@ fn main() -> anyhow::Result<()> {
         Commands::Check(opt) => check(&opt.yomi),
         Commands::LearnStructuredPerceptron(opts) => learn_structured_perceptron(opts.epochs),
         Commands::MakeTextDict(_) => make_text_dict(),
-        Commands::VibratoAnnotate(opt) => {
-            annotate_wikipedia(opt.src_dir.as_str(), opt.dst_dir.as_str())
-        }
+        Commands::Tokenize(opt) => tokenize(
+            opt.tokenizer.as_str(),
+            opt.src_dir.as_str(),
+            opt.dst_dir.as_str(),
+        ),
     }
 }

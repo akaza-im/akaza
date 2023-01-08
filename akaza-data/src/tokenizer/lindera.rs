@@ -3,14 +3,16 @@ use lindera::mode::Mode;
 use lindera::tokenizer::{DictionaryConfig, Tokenizer, TokenizerConfig};
 use lindera::DictionaryKind;
 
+use crate::tokenizer::base::AkazaTokenizer;
+
 pub struct LinderaTokenizer {
     tokenizer: Tokenizer,
 }
 
 impl LinderaTokenizer {
-    fn new() -> anyhow::Result<LinderaTokenizer> {
+    pub(crate) fn new(dictionary_kind: DictionaryKind) -> anyhow::Result<LinderaTokenizer> {
         let dictionary = DictionaryConfig {
-            kind: Some(DictionaryKind::IPADIC),
+            kind: Some(dictionary_kind),
             path: None,
         };
 
@@ -25,7 +27,9 @@ impl LinderaTokenizer {
         let tokenizer = Tokenizer::from_config(config)?;
         Ok(LinderaTokenizer { tokenizer })
     }
+}
 
+impl AkazaTokenizer for LinderaTokenizer {
     fn tokenize(&self, src: &str) -> anyhow::Result<String> {
         // tokenize the text
         let tokens = self.tokenizer.tokenize(src)?;

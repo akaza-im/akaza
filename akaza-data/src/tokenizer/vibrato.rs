@@ -5,6 +5,8 @@ use anyhow::Context;
 use kelp::{kata2hira, ConvOption};
 use vibrato::{Dictionary, Tokenizer};
 
+use crate::tokenizer::base::AkazaTokenizer;
+
 pub struct VibratoTokenizer {
     tokenizer: Tokenizer,
 }
@@ -30,9 +32,11 @@ impl VibratoTokenizer {
 
         Ok(VibratoTokenizer { tokenizer })
     }
+}
 
+impl AkazaTokenizer for VibratoTokenizer {
     /// Vibrato を利用してファイルをアノテーションします。
-    pub fn tokenize(&self, src: &str) -> anyhow::Result<String> {
+    fn tokenize(&self, src: &str) -> anyhow::Result<String> {
         let mut worker = self.tokenizer.new_worker();
 
         worker.reset_sentence(src);

@@ -18,16 +18,20 @@ work/extracted/BE/wiki_13: work/jawiki-latest-pages-articles.xml
 
 # -------------------------------------------------------------------------
 
-# 以下は、「構造化パーセプトロンかな漢字変換(Mecabで処理したコーパス使用) 用の処理
+# Vibrato 用辞書ダウンロード処理
 
-work/mecab/ipadic-mecab-2_7_0.tar.gz:
-	wget --no-verbose --no-clobber -O work/mecab/ipadic-mecab-2_7_0.tar.gz https://github.com/daac-tools/vibrato/releases/download/v0.3.1/ipadic-mecab-2_7_0.tar.gz
+work/vibrato/ipadic-mecab-2_7_0.tar.gz:
+	wget --no-verbose --no-clobber -O work/vibrato/ipadic-mecab-2_7_0.tar.gz https://github.com/daac-tools/vibrato/releases/download/v0.3.1/ipadic-mecab-2_7_0.tar.gz
 
-work/mecab/ipadic-mecab-2_7_0/system.dic: work/mecab/ipadic-mecab-2_7_0.tar.gz
-	tar -xzf work/mecab/ipadic-mecab-2_7_0.tar.gz -C work/mecab/
+work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.gz
+	tar -xzf work/vibrato/ipadic-mecab-2_7_0.tar.gz -C work/vibrato/
 
- work/mecab/wikipedia-tokenized/_SUCCESS: src/subcmd/vibrato_annotate.rs work/mecab/ipadic-mecab-2_7_0/system.dic jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs
-	cargo run -- vibrato-annotate work/extracted work/mecab/wikipedia-tokenized/ -vvv
+# -------------------------------------------------------------------------
+
+# Lindera の処理
+
+ work/lindera-ipadic/wikipedia-tokenized/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs
+	cargo run -- tokenize -t lindera-ipadic work/extracted work/lindera-ipadic/wikipedia-tokenized/ -vvv
 
 
 # -------------------------------------------------------------------------
