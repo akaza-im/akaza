@@ -19,5 +19,6 @@ kelp = "0.3.0"
 lcs = "0.2.0"
 chrono = "0.4.23"
 vibrato = "0.3.3"
+walkdir = "2"
 
 [build-dependencies]

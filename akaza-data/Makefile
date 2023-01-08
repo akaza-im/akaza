@@ -18,7 +18,20 @@ work/extracted/BE/wiki_13: work/jawiki-latest-pages-articles.xml
 
 # -------------------------------------------------------------------------
 
-# 以下は、「統計的かな漢字変換(Kyteaベース) 用の処理
+# 以下は、「構造化パーセプトロンかな漢字変換(Mecabで処理したコーパス使用) 用の処理
+
+work/mecab/ipadic-mecab-2_7_0.tar.gz:
+	wget --no-verbose --no-clobber -O work/mecab/ipadic-mecab-2_7_0.tar.gz https://github.com/daac-tools/vibrato/releases/download/v0.3.1/ipadic-mecab-2_7_0.tar.gz
+
+work/mecab/ipadic-mecab-2_7_0/system.dic: work/mecab/ipadic-mecab-2_7_0.tar.gz
+	tar -xzf work/mecab/ipadic-mecab-2_7_1.tar.gz -C work/mecab/
+
+ work/mecab/wikipedia-annotated/BE/wiki_02: src/subcmd/vibrato_annotate.rs work/mecab/ipadic-mecab-2_7_0/system.dic jawiki-kana-kanji-dict/mecab-userdic.csv
+	cargo run -- vibrato-annotate
+
+# -------------------------------------------------------------------------
+
+# 以下は、「統計的かな漢字変換(Kyteaで処理したコーパス使用) 用の処理
 
 work/stats-kytea/annotated/BE/wiki_13: work/extracted/BE/wiki_13 bin/010_wiki2annotated.py
 	python3 bin/010_wiki2annotated.py

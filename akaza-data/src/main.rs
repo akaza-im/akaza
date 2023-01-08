@@ -6,6 +6,7 @@ use crate::subcmd::make_system_dict::make_system_dict;
 use crate::subcmd::make_system_lm::make_system_lm;
 use crate::subcmd::make_text_dict::make_text_dict;
 use crate::subcmd::structured_perceptron::learn_structured_perceptron;
+use crate::subcmd::vibrato_annotate::annotate_wikipedia;
 
 mod subcmd;
 
@@ -37,6 +38,7 @@ enum Commands {
     Check(CheckArgs),
     LearnStructuredPerceptron(LearnStructuredPerceptronArgs),
     MakeTextDict(MakeTextDictArgs),
+    VibratoAnnotate(VibratoAnnotateArgs),
 }
 
 #[derive(Debug, clap::Args)]
@@ -93,6 +95,10 @@ struct LearnStructuredPerceptronArgs {
 #[derive(Debug, clap::Args)]
 struct MakeTextDictArgs {}
 
+/// Wikipedia を Vibrato でアノテーションする
+#[derive(Debug, clap::Args)]
+struct VibratoAnnotate {}
+
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
@@ -112,5 +118,6 @@ fn main() -> anyhow::Result<()> {
         Commands::Check(opt) => check(&opt.yomi),
         Commands::LearnStructuredPerceptron(opts) => learn_structured_perceptron(opts.epochs),
         Commands::MakeTextDict(_) => make_text_dict(),
+        Commands::VibratoAnnotate(_) => annotate_wikipedia(),
     }
 }
