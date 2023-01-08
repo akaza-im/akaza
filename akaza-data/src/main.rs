@@ -9,6 +9,8 @@ use crate::subcmd::structured_perceptron::learn_structured_perceptron;
 use crate::subcmd::vibrato_annotate::annotate_wikipedia;
 
 mod subcmd;
+mod tokenizer;
+mod wikipedia;
 
 #[derive(Debug, Parser)]
 #[clap(
