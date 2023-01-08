@@ -97,7 +97,7 @@ struct MakeTextDictArgs {}
 
 /// Wikipedia を Vibrato でアノテーションする
 #[derive(Debug, clap::Args)]
-struct VibratoAnnotate {}
+struct VibratoAnnotateArgs {}
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();

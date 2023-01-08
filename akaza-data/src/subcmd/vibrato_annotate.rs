@@ -1,9 +1,9 @@
-use anyhow::Context;
 use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 
+use anyhow::Context;
 use kelp::{kata2hira, ConvOption};
 use log::info;
 use regex::Regex;
@@ -13,6 +13,7 @@ use walkdir::WalkDir;
 pub struct VibtaroRunner {
     tokenizer: Tokenizer,
     pub alnum_pattern: Regex,
+    pub yomigana_pattern: Regex,
 }
 
 impl VibtaroRunner {
@@ -30,9 +31,14 @@ impl VibtaroRunner {
         // 75||19||colspan=2|-||1||0||76||19
         let alnum_pattern = Regex::new("^[a-zA-Z0-9|=-]+")?;
 
+        // 上級個人情報保護士（じょうきゅうこじんじょうほうほごし）は、財団法人全日本情報学習振興協会が設けている民間資格の称号。
+        // → 上級個人情報保護士は、財団法人全日本情報学習振興協会が設けている民間資格の称号。
+        let yomigana_pattern = Regex::new(r#"[（\(][\u3041-\u309F、]+[）)]"#)?;
+
         Ok(VibtaroRunner {
             tokenizer,
             alnum_pattern,
+            yomigana_pattern,
         })
     }
 
@@ -42,7 +48,7 @@ impl VibtaroRunner {
         for line in BufReader::new(file).lines() {
             let line = line?;
             let line = line.trim();
-            if line.starts_with("<") {
+            if line.starts_with('<') {
                 // <doc id="3697757" url="https://ja.wikipedia.org/wiki?curid=3697757"
                 //  title="New Sunrise">
                 // のような、タグから始まる行を無視する。
@@ -56,12 +62,17 @@ impl VibtaroRunner {
                 // 英数字のみの行は無視する
                 continue;
             }
+            let line = self.remove_yomigana(line);
 
-            buf += self.annotate(line)?.as_str();
+            buf += self.annotate(line.as_str())?.as_str();
         }
         let mut ofile = File::create(ofname)?;
         ofile.write_all(buf.as_bytes())?;
         Ok(())
+    }
+
+    fn remove_yomigana(&self, src: &str) -> String {
+        self.yomigana_pattern.replace_all(src, "").to_string()
     }
 
     /// Vibrato を利用してファイルをアノテーションします。
@@ -155,6 +166,17 @@ mod tests {
     fn test_all() -> anyhow::Result<()> {
         let _ = env_logger::builder().is_test(true).try_init();
         annotate_wikipedia()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_remove_yomigana() -> anyhow::Result<()> {
+        // 上級個人情報保護士（じょうきゅうこじんじょうほうほごし）は、財団法人全日本情報学習振興協会が設けている民間資格の称号。
+        // → 上級個人情報保護士は、財団法人全日本情報学習振興協会が設けている民間資格の称号。
+        let runner = VibtaroRunner::new()?;
+        let got =
+            runner.remove_yomigana("上級個人情報保護士（じょうきゅうこじんじょうほうほごし）は");
+        assert_eq!(got, "上級個人情報保護士は");
         Ok(())
     }
 }
