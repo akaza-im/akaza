@@ -18,7 +18,7 @@ impl Ari2Nasi {
     fn expand_okuri(
         &self,
         kana: &str,
-        kanjis: &Vec<String>,
+        kanjis: &[String],
     ) -> anyhow::Result<Vec<(String, Vec<String>)>> {
         let Some(last_char) = kana.chars().last() else {
             bail!("kana is empty");
