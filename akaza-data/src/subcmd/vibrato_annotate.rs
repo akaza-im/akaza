@@ -39,11 +39,11 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    #[ignore]
-    fn test_all() -> anyhow::Result<()> {
-        let _ = env_logger::builder().is_test(true).try_init();
-        annotate_wikipedia()?;
-        Ok(())
-    }
+    // #[test]
+    // #[ignore]
+    // fn test_all() -> anyhow::Result<()> {
+    //     let _ = env_logger::builder().is_test(true).try_init();
+    //     annotate_wikipedia()?;
+    //     Ok(())
+    // }
 }
