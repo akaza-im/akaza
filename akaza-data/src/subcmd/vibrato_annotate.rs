@@ -12,7 +12,7 @@ pub fn annotate_wikipedia(src_dir: &str, dst_dir: &str) -> anyhow::Result<()> {
 
     let processor = ExtractedWikipediaProcessor::new()?;
     processor.process_files(Path::new(src_dir), Path::new(dst_dir), |line| {
-        runner.annotate(line)
+        runner.tokenize(line)
     })?;
     Ok(())
 }
@@ -34,7 +34,7 @@ mod tests {
         processor.process_file(
             Path::new(fname),
             Path::new("work/mecab/wikipedia-annotated/BE/wiki_02"),
-            &mut (|line| runner.annotate(line)),
+            &mut (|line| runner.tokenize(line)),
         )?;
         Ok(())
     }

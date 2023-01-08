@@ -25,7 +25,7 @@ impl VibratoTokenizer {
     }
 
     /// Vibrato を利用してファイルをアノテーションします。
-    pub fn annotate(&self, src: &str) -> anyhow::Result<String> {
+    pub fn tokenize(&self, src: &str) -> anyhow::Result<String> {
         let mut worker = self.tokenizer.new_worker();
 
         worker.reset_sentence(src);
@@ -67,7 +67,7 @@ mod tests {
     #[test]
     fn test() -> anyhow::Result<()> {
         let runner = VibratoTokenizer::new()?;
-        runner.annotate("私の名前は中野です。")?;
+        runner.tokenize("私の名前は中野です。")?;
         Ok(())
     }
 }
