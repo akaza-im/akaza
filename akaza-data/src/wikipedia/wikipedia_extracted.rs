@@ -82,6 +82,7 @@ impl ExtractedWikipediaProcessor {
     where
         F: FnMut(&str) -> anyhow::Result<String>,
     {
+        info!("TODO: Parallel processing");
         // TODO parallel processing
         for src_file in WalkDir::new(src_dir)
             .into_iter()

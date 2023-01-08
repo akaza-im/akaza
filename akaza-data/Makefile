@@ -27,7 +27,7 @@ work/mecab/ipadic-mecab-2_7_0/system.dic: work/mecab/ipadic-mecab-2_7_0.tar.gz
 	tar -xzf work/mecab/ipadic-mecab-2_7_0.tar.gz -C work/mecab/
 
  work/mecab/wikipedia-tokenized/_SUCCESS: src/subcmd/vibrato_annotate.rs work/mecab/ipadic-mecab-2_7_0/system.dic jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs
-	cargo run -- vibrato-annotate work/extracted work/mecab/wikipedia-tokenized/
+	cargo run -- vibrato-annotate work/extracted work/mecab/wikipedia-tokenized/ -vvv
 
 
 # -------------------------------------------------------------------------

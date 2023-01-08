@@ -1,5 +1,6 @@
 use anyhow::Context;
 use kelp::{kata2hira, ConvOption};
+use log::info;
 use std::fs::File;
 use vibrato::{Dictionary, Tokenizer};
 
@@ -9,7 +10,9 @@ pub struct VibratoTokenizer {
 
 impl VibratoTokenizer {
     pub fn new() -> anyhow::Result<VibratoTokenizer> {
-        let dict = Dictionary::read(File::open("work/mecab/ipadic-mecab-2_7_0/system.dic")?)?;
+        let dictpath = "work/mecab/ipadic-mecab-2_7_0/system.dic";
+        let dict = Dictionary::read(File::open(dictpath)?)?;
+        info!("Loaded {}", dictpath);
         let dict = dict
             .reset_user_lexicon_from_reader(Some(File::open(
                 "jawiki-kana-kanji-dict/mecab-userdic.csv",

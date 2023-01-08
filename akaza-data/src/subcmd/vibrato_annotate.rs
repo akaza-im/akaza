@@ -1,10 +1,14 @@
-use crate::tokenizer::vibrato::VibratoTokenizer;
 use std::path::Path;
 
+use log::info;
+
+use crate::tokenizer::vibrato::VibratoTokenizer;
 use crate::wikipedia::wikipedia_extracted::ExtractedWikipediaProcessor;
 
 pub fn annotate_wikipedia(src_dir: &str, dst_dir: &str) -> anyhow::Result<()> {
+    info!("annotate_wikipedia: {} => {}", src_dir, dst_dir);
     let runner = VibratoTokenizer::new()?;
+    info!("Initialized tokenizer");
 
     let processor = ExtractedWikipediaProcessor::new()?;
     processor.process_files(Path::new(src_dir), Path::new(dst_dir), |line| {
