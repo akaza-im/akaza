@@ -3,7 +3,6 @@ use std::time::SystemTime;
 
 use anyhow::Context;
 use kelp::{kata2hira, ConvOption};
-use log::info;
 use vibrato::{Dictionary, Tokenizer};
 
 pub struct VibratoTokenizer {
