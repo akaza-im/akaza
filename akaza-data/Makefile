@@ -18,13 +18,17 @@ work/extracted/BE/wiki_13: work/jawiki-latest-pages-articles.xml
 
 # -------------------------------------------------------------------------
 
-# Vibrato 用辞書ダウンロード処理
+# Vibrato トーカナイズ
 
 work/vibrato/ipadic-mecab-2_7_0.tar.gz:
 	wget --no-verbose --no-clobber -O work/vibrato/ipadic-mecab-2_7_0.tar.gz https://github.com/daac-tools/vibrato/releases/download/v0.3.1/ipadic-mecab-2_7_0.tar.gz
 
 work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.gz
 	tar -xzf work/vibrato/ipadic-mecab-2_7_0.tar.gz -C work/vibrato/
+
+ work/wikipedia-tokenized/vibrato-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs
+	cargo run -- tokenize -dict/lindera-userdic.bin -t lindera-ipadic work/extracted work/wikipedia-tokenized/vibrato-ipadic/ -vvv
+
 
 # -------------------------------------------------------------------------
 
