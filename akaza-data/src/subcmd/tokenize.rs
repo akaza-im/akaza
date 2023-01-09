@@ -36,7 +36,9 @@ pub fn tokenize(
                     )
                 })
                 .collect::<Vec<_>>();
-            info!("{:?}", result);
+            for r in result {
+                r.unwrap();
+            }
         }
         _ => bail!("Unknown tokenizer type: {}", tokenizer_type),
     };
