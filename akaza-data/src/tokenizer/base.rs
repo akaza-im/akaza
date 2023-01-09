@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 pub trait AkazaTokenizer {
     fn tokenize(&self, src: &str) -> anyhow::Result<String>;
 }
@@ -11,6 +9,7 @@ pub(crate) struct IntermediateToken {
     hinshi: String,
     subhinshi: String,
 }
+
 impl IntermediateToken {
     pub(crate) fn new(
         surface: String,
@@ -28,17 +27,15 @@ impl IntermediateToken {
 }
 
 /// 特定の品詞をマージする
-pub(crate) fn merge_terms(
-    intermediates: Vec<IntermediateToken>,
-    mergeable_hinshi: &HashSet<&str>,
-    mergeable_subhinshi: &HashSet<&str>,
-) -> String {
+/// ipadic の品詞体系を対象とする。
+pub(crate) fn merge_terms_ipadic(intermediates: Vec<IntermediateToken>) -> String {
     let mut buf = String::new();
     let mut i = 0;
     while i < intermediates.len() {
         let token = &intermediates[i];
         let mut surface = token.surface.clone();
         let mut yomi = token.yomi.clone();
+        let mut prev_token = token;
 
         let mut j = i + 1;
         while j < intermediates.len() {
@@ -59,14 +56,27 @@ pub(crate) fn merge_terms(
                 ある/助動詞/_/ある
 
                 を、"書いて、いた、ものである" ぐらいまで連結する。
+
+                助動詞とその前のトークンを単純に接続すると以下の様なケースで困る。
+
+                鈴鹿医療科学技術大学/名詞/固有名詞/すずかいりょうかがくぎじゅつだいがく
+                で/助動詞/_/で
+                あっ/助動詞/_/あっ
+                た/助動詞/_/た
+                が/助詞/接続助詞/が
             */
             let token = &intermediates[j];
-            if mergeable_hinshi.contains(token.hinshi.as_str())
-                || mergeable_subhinshi.contains(token.subhinshi.as_str())
+
+            if (token.hinshi == "助動詞"
+                && (prev_token.hinshi == "動詞" || prev_token.hinshi == "助動詞"))
+                || token.subhinshi == "接続助詞"
+                || token.subhinshi == "接尾"
             {
                 surface += token.surface.as_str();
                 yomi += token.yomi.as_str();
+
                 j += 1;
+                prev_token = token;
             } else {
                 break;
             }

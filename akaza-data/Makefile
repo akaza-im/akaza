@@ -30,8 +30,8 @@ work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.
 
 # Lindera の処理
 
- work/lindera-ipadic/wikipedia-tokenized/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs
-	cargo run -- tokenize -t lindera-ipadic work/extracted work/lindera-ipadic/wikipedia-tokenized/ -vvv
+ work/wikipedia-tokenized/lindera-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs
+	cargo run -- tokenize -t lindera-ipadic work/extracted work/wikipedia-tokenized/lindera-ipadic/ -vvv
 
 
 # -------------------------------------------------------------------------

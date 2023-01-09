@@ -1,17 +1,13 @@
-use std::collections::HashSet;
-
 use kelp::{kata2hira, ConvOption};
 use lindera::mode::Mode;
 use lindera::tokenizer::{DictionaryConfig, Tokenizer, TokenizerConfig};
 use lindera::DictionaryKind;
 use log::trace;
 
-use crate::tokenizer::base::{merge_terms, AkazaTokenizer, IntermediateToken};
+use crate::tokenizer::base::{merge_terms_ipadic, AkazaTokenizer, IntermediateToken};
 
 pub struct LinderaTokenizer {
     tokenizer: Tokenizer,
-    pub mergeable_hinshi: HashSet<&'static str>,
-    pub mergeable_subhinshi: HashSet<&'static str>,
 }
 
 impl LinderaTokenizer {
@@ -31,14 +27,7 @@ impl LinderaTokenizer {
         // create tokenizer
         let tokenizer = Tokenizer::from_config(config)?;
 
-        let mergeable_hinshi = HashSet::from(["助動詞"]);
-        let mergeable_subhinshi = HashSet::from(["接続助詞", "接尾"]);
-
-        Ok(LinderaTokenizer {
-            tokenizer,
-            mergeable_hinshi,
-            mergeable_subhinshi,
-        })
+        Ok(LinderaTokenizer { tokenizer })
     }
 }
 
@@ -77,11 +66,7 @@ impl AkazaTokenizer for LinderaTokenizer {
             ));
         }
 
-        Ok(merge_terms(
-            intermediates,
-            &self.mergeable_hinshi,
-            &self.mergeable_subhinshi,
-        ))
+        Ok(merge_terms_ipadic(intermediates))
     }
 }
 
@@ -155,6 +140,23 @@ mod tests {
             let tokenizer = LinderaTokenizer::new(IPADIC)?;
             let tokens = tokenizer.tokenize("書いていたものである")?;
             assert_eq!(tokens, "書いて/かいて いた/いた ものである/ものである");
+
+            Ok(())
+        }
+
+        #[test]
+        fn lindera_merge4() -> anyhow::Result<()> {
+            let _ = env_logger::builder()
+                .filter_level(LevelFilter::Trace)
+                .is_test(true)
+                .try_init();
+
+            let tokenizer = LinderaTokenizer::new(IPADIC)?;
+            let tokens = tokenizer.tokenize("鈴鹿医療科学技術大学であったが")?;
+            assert_eq!(
+                tokens,
+                "鈴鹿医療科学技術大学/すずかいりょうかがくぎじゅつだいがく であったが/であったが"
+            );
 
             Ok(())
         }
