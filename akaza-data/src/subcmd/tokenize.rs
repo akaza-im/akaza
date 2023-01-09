@@ -16,6 +16,7 @@ pub fn tokenize(
     src_dir: &str,
     dst_dir: &str,
 ) -> anyhow::Result<()> {
+    // ここのコピー&ペーストは rust 力が高ければなんとかなりそう。
     info!("tokenize({}): {} => {}", tokenizer_type, src_dir, dst_dir);
     let processor = ExtractedWikipediaProcessor::new()?;
 
