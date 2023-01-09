@@ -63,6 +63,8 @@ pub fn tokenize(
         _ => bail!("Unknown tokenizer type: {}", tokenizer_type),
     };
 
+    processor.write_success_file(Path::new(dst_dir))?;
+
     Ok(())
 }
 
