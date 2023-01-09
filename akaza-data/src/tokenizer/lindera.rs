@@ -139,7 +139,7 @@ mod tests {
 
             let tokenizer = LinderaTokenizer::new(IPADIC)?;
             let tokens = tokenizer.tokenize("書いていたものである")?;
-            assert_eq!(tokens, "書いて/かいて いた/いた ものである/ものである");
+            assert_eq!(tokens, "書いて/かいて いた/いた もの/もの である/である");
 
             Ok(())
         }
