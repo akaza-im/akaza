@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 
-use log::info;
+use log::{info, warn};
 use rayon::prelude::*;
 
 use crate::utils::get_file_list;
@@ -26,6 +26,13 @@ pub fn wfreq(src_dir: &str, dst_file: &str) -> anyhow::Result<()> {
                 let line = line.trim();
                 let words = line.split(' ').collect::<Vec<_>>();
                 for word in words {
+                    if word.is_empty() {
+                        continue;
+                    }
+                    if word.contains('\u{200f}') {
+                        warn!("The document contains RTL character");
+                        continue;
+                    }
                     *stats.entry(word.to_string()).or_insert(0) += 1;
                 }
             }

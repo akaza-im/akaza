@@ -32,6 +32,10 @@ work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.
  work/wikipedia-tokenized/vibrato-ipadic.wfreq: work/wikipedia-tokenized/vibrato-ipadic/_SUCCESS src/subcmd/wfreq.rs
 	cargo run -- wfreq work/wikipedia-tokenized/vibrato-ipadic/ work/wikipedia-tokenized/vibrato-ipadic.wfreq -vvv
 
+# threshold が 16 なのはヒューリスティックなパラメータ設定による。
+ work/wikipedia-tokenized/vibrato-ipadic.vocab: work/wikipedia-tokenized/vibrato-ipadic.wfreq src/subcmd/vocab.rs
+	cargo run -- vocab --threshold 16 work/wikipedia-tokenized/vibrato-ipadic.wfreq work/wikipedia-tokenized/vibrato-ipadic.vocab -vvv
+
 
 # -------------------------------------------------------------------------
 

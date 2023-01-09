@@ -8,6 +8,7 @@ use crate::subcmd::make_system_lm::make_system_lm;
 use crate::subcmd::make_text_dict::make_text_dict;
 use crate::subcmd::structured_perceptron::learn_structured_perceptron;
 use crate::subcmd::tokenize::tokenize;
+use crate::subcmd::vocab::vocab;
 use crate::subcmd::wfreq::wfreq;
 
 mod subcmd;
@@ -45,6 +46,7 @@ enum Commands {
     MakeTextDict(MakeTextDictArgs),
     Tokenize(TokenizeArgs),
     Wfreq(WfreqArgs),
+    Vocab(VocabArgs),
 }
 
 #[derive(Debug, clap::Args)]
@@ -117,6 +119,17 @@ struct WfreqArgs {
     dst_file: String,
 }
 
+#[derive(Debug, clap::Args)]
+struct VocabArgs {
+    /// 語彙ファイルに収録する単語数のあしきりライン。
+    /// 増やすと辞書ファイルサイズが大きくなり、実行時のメモリ使用量も増大する。
+    /// 増やすと変換可能な語彙が増える。
+    #[arg(short, long)]
+    threshold: u32,
+    src_file: String,
+    dst_file: String,
+}
+
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
@@ -156,5 +169,6 @@ fn main() -> anyhow::Result<()> {
             opt.dst_dir.as_str(),
         ),
         Commands::Wfreq(opt) => wfreq(opt.src_dir.as_str(), opt.dst_file.as_str()),
+        Commands::Vocab(opt) => vocab(opt.src_file.as_str(), opt.dst_file.as_str(), opt.threshold),
     }
 }
