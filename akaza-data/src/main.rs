@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use std::io::Write;
 
 use crate::subcmd::check::check;
 use crate::subcmd::evaluate::evaluate;
@@ -60,7 +61,6 @@ struct MakeSystemDictArgs {
     /// 出力先のトライが格納されるファイル
     triefile: String,
 }
-
 /// システム言語モデルを生成する。
 #[derive(Debug, clap::Args)]
 struct MakeSystemLanguageModelArgs {
@@ -113,6 +113,19 @@ fn main() -> anyhow::Result<()> {
 
     env_logger::Builder::new()
         .filter_level(args.verbose.log_level_filter())
+        .format(|buf, record| {
+            let ts = buf.timestamp_micros();
+            // show thread id
+            writeln!(
+                buf,
+                "{}: {:?}: {}: {}",
+                ts,
+                std::thread::current().id(),
+                buf.default_level_style(record.level())
+                    .value(record.level()),
+                record.args()
+            )
+        })
         .init();
 
     match args.command {

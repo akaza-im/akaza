@@ -1,10 +1,12 @@
-use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
+use std::{fs, thread};
 
 use anyhow::Context;
 use log::info;
+use rayon::prelude::IntoParallelRefIterator;
+use rayon::prelude::*;
 use regex::Regex;
 use walkdir::WalkDir;
 
@@ -75,8 +77,8 @@ impl ExtractedWikipediaProcessor {
         &self,
         src_dir: &Path,
         dst_dir: &Path,
-    ) -> anyhow::Result<Vec<(PathBuf, PathBuf)>> {
-        let mut result: Vec<(PathBuf, PathBuf)> = Vec::new();
+    ) -> anyhow::Result<Vec<(String, String)>> {
+        let mut result: Vec<(String, String)> = Vec::new();
 
         for src_file in WalkDir::new(src_dir)
             .into_iter()
@@ -88,7 +90,10 @@ impl ExtractedWikipediaProcessor {
             fs::create_dir_all(dst_dir.join(dirname))?;
             let output_file = dst_dir.join(dirname).join(src_path.file_name().unwrap());
 
-            result.push((src_file.path().to_path_buf(), output_file));
+            result.push((
+                src_file.path().to_string_lossy().to_string(),
+                output_file.as_path().to_string_lossy().to_string(),
+            ));
         }
         Ok(result)
     }
@@ -105,16 +110,14 @@ impl ExtractedWikipediaProcessor {
         F: FnMut(&str) -> anyhow::Result<String>,
     {
         info!("TODO: Parallel processing");
-        for (src_file, dst_file) in self.get_file_list(src_dir, dst_dir)? {
-            info!("{} => {}", src_file.display(), dst_file.display());
-            self.process_file(src_file.as_path(), &dst_file, &mut annotate)?;
-        }
 
-        // _SUCCESS ファイルを書く
-        {
-            let mut success = File::create(dst_dir.join("_SUCCESS"))?;
-            success.write_all("DONE".as_bytes())?;
-        }
+        Ok(())
+    }
+
+    /// _SUCCESS ファイルを書く
+    pub fn write_success_file(&self, dst_dir: &Path) -> anyhow::Result<()> {
+        let mut success = File::create(dst_dir.join("_SUCCESS"))?;
+        success.write_all("DONE".as_bytes())?;
         Ok(())
     }
 }

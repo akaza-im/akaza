@@ -1,8 +1,10 @@
 use std::path::{Path, PathBuf};
+use std::thread;
 
 use anyhow::bail;
 use lindera::DictionaryKind;
 use log::info;
+use rayon::prelude::*;
 
 use crate::tokenizer::base::AkazaTokenizer;
 use crate::tokenizer::lindera::LinderaTokenizer;
@@ -21,9 +23,20 @@ pub fn tokenize(
         "lindera-ipadic" => {
             let tokenizer =
                 LinderaTokenizer::new(DictionaryKind::IPADIC, user_dict.map(|f| PathBuf::from(f)))?;
-            processor.process_files(Path::new(src_dir), Path::new(dst_dir), |line| {
-                tokenizer.tokenize(line)
-            })?;
+            let file_list = processor.get_file_list(Path::new(src_dir), Path::new(dst_dir))?;
+
+            let result = file_list
+                .par_iter()
+                .map(|(src, dst)| {
+                    info!("GOT: {:?} {:?}", src, dst);
+                    processor.process_file(
+                        Path::new(src),
+                        Path::new(dst),
+                        &mut (|f| tokenizer.tokenize(f)),
+                    )
+                })
+                .collect::<Vec<_>>();
+            info!("{:?}", result);
         }
         _ => bail!("Unknown tokenizer type: {}", tokenizer_type),
     };
