@@ -60,7 +60,7 @@ impl ExtractedWikipediaProcessor {
             }
             let line = self.remove_yomigana(line);
 
-            buf += annotate(line.as_str()).with_context(|| line)?.as_str();
+            buf += (annotate(line.as_str()).with_context(|| line)? + "\n").as_str();
         }
         let mut ofile = File::create(ofname)?;
         ofile.write_all(buf.as_bytes())?;
