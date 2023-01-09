@@ -1,12 +1,10 @@
+use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
-use std::path::{Path, PathBuf};
-use std::{fs, thread};
+use std::path::Path;
 
 use anyhow::Context;
 use log::info;
-use rayon::prelude::IntoParallelRefIterator;
-use rayon::prelude::*;
 use regex::Regex;
 use walkdir::WalkDir;
 
@@ -96,22 +94,6 @@ impl ExtractedWikipediaProcessor {
             ));
         }
         Ok(result)
-    }
-
-    /// ファイルを処理します。
-    /// シリアルに処理すると遅いので、パラレルに処理します(する予定)
-    pub fn process_files<F>(
-        &self,
-        src_dir: &Path,
-        dst_dir: &Path,
-        mut annotate: F,
-    ) -> anyhow::Result<()>
-    where
-        F: FnMut(&str) -> anyhow::Result<String>,
-    {
-        info!("TODO: Parallel processing");
-
-        Ok(())
     }
 
     /// _SUCCESS ファイルを書く

@@ -1,5 +1,4 @@
 use std::path::{Path, PathBuf};
-use std::thread;
 
 use anyhow::bail;
 use lindera::DictionaryKind;
@@ -8,6 +7,7 @@ use rayon::prelude::*;
 
 use crate::tokenizer::base::AkazaTokenizer;
 use crate::tokenizer::lindera::LinderaTokenizer;
+use crate::tokenizer::vibrato::VibratoTokenizer;
 use crate::wikipedia::wikipedia_extracted::ExtractedWikipediaProcessor;
 
 pub fn tokenize(
@@ -23,6 +23,25 @@ pub fn tokenize(
         "lindera-ipadic" => {
             let tokenizer =
                 LinderaTokenizer::new(DictionaryKind::IPADIC, user_dict.map(|f| PathBuf::from(f)))?;
+            let file_list = processor.get_file_list(Path::new(src_dir), Path::new(dst_dir))?;
+
+            let result = file_list
+                .par_iter()
+                .map(|(src, dst)| {
+                    info!("GOT: {:?} {:?}", src, dst);
+                    processor.process_file(
+                        Path::new(src),
+                        Path::new(dst),
+                        &mut (|f| tokenizer.tokenize(f)),
+                    )
+                })
+                .collect::<Vec<_>>();
+            for r in result {
+                r.unwrap();
+            }
+        }
+        "vibrato-ipadic" => {
+            let tokenizer = VibratoTokenizer::new()?;
             let file_list = processor.get_file_list(Path::new(src_dir), Path::new(dst_dir))?;
 
             let result = file_list
@@ -59,7 +78,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_wikipedia() -> anyhow::Result<()> {
-        let runner = LinderaTokenizer::new(IPADIC)?;
+        let runner = LinderaTokenizer::new(IPADIC, None)?;
         let processor = ExtractedWikipediaProcessor::new()?;
 
         let fname = "work/extracted/BE/wiki_02";
