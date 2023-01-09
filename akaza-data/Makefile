@@ -4,17 +4,22 @@ DESTDIR ?=
 
 
 all: data/stats-kytea-system_dict.trie data/stats-kytea-lm_v2_2gram.trie data/stats-kytea-lm_v2_2gram.trie \
-	data/stats-kytea-system_dict.trie data/stats-kytea-single_term.trie
+	data/stats-kytea-system_dict.trie data/stats-kytea-single_term.trie work/wikipedia-tokenized/vibrato-ipadic.vocab
 
-work/jawiki-latest-pages-articles.xml.bz2:
+# -------------------------------------------------------------------------
+
+# wikipedia の前処理
+
+work/jawiki/jawiki-latest-pages-articles.xml.bz2:
 	mkdir -p work/
-	wget --no-verbose --no-clobber -O work/jawiki-latest-pages-articles.xml.bz2 https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-pages-articles.xml.bz2
+	wget --no-verbose --no-clobber -O work/jawiki/jawiki-latest-pages-articles.xml.bz2 https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-pages-articles.xml.bz2
 
-work/jawiki-latest-pages-articles.xml: work/jawiki-latest-pages-articles.xml.bz2
-	bunzip2 --keep work/jawiki-latest-pages-articles.xml.bz2
+work/jawiki/jawiki-latest-pages-articles.xml: work/jawiki/jawiki-latest-pages-articles.xml.bz2
+	bunzip2 --keep work/jawiki/jawiki-latest-pages-articles.xml.bz2
 
-work/extracted/BE/wiki_13: work/jawiki-latest-pages-articles.xml
-	python3 -m wikiextractor.WikiExtractor --quiet --processes 8 --out work/extracted/ work/jawiki-latest-pages-articles.xml
+work/jawiki/extracted/_SUCCESS: work/jawiki/jawiki-latest-pages-articles.xml
+	python3 -m wikiextractor.WikiExtractor --quiet --processes 8 --out work/jawiki/extracted/ work/jawiki/jawiki-latest-pages-articles.xml
+	touch work/jawiki/extracted/_SUCCESS
 
 # -------------------------------------------------------------------------
 
@@ -26,10 +31,10 @@ work/vibrato/ipadic-mecab-2_7_0.tar.gz:
 work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.gz
 	tar -xzf work/vibrato/ipadic-mecab-2_7_0.tar.gz -C work/vibrato/
 
- work/wikipedia-tokenized/vibrato-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs
-	cargo run -- tokenize -t lindera-ipadic work/extracted work/wikipedia-tokenized/vibrato-ipadic/ -vvv
+ work/jawiki/vibrato-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS
+	cargo run -- tokenize -t vibrato-ipadic work/jawiki/extracted work/jawiki/vibrato-ipadic/ -vvv
 
- work/wikipedia-tokenized/vibrato-ipadic.wfreq: work/wikipedia-tokenized/vibrato-ipadic/_SUCCESS src/subcmd/wfreq.rs
+ work/wikipedia-tokenized/vibrato-ipadic.wfreq: work/jawiki/vibrato-ipadic/_SUCCESS src/subcmd/wfreq.rs
 	cargo run -- wfreq work/wikipedia-tokenized/vibrato-ipadic/ work/wikipedia-tokenized/vibrato-ipadic.wfreq -vvv
 
 # threshold が 16 なのはヒューリスティックなパラメータ設定による。
@@ -41,8 +46,15 @@ work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.
 
 # Lindera の処理
 
- work/wikipedia-tokenized/lindera-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs
-	cargo run -- tokenize -u jawiki-kana-kanji-dict/lindera-userdic.bin -t lindera-ipadic work/extracted work/wikipedia-tokenized/lindera-ipadic/ -vvv
+ work/jawiki/lindera-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS
+	cargo run -- tokenize -u jawiki-kana-kanji-dict/lindera-userdic.bin -t lindera-ipadic work/jawiki/extracted/ work/jawiki/lindera-ipadic/ -vvv
+
+ work/wikipedia-tokenized/lindera-ipadic.wfreq: work/jawiki/lindera-ipadic/_SUCCESS src/subcmd/wfreq.rs
+	cargo run -- wfreq work/wikipedia-tokenized/lindera-ipadic/ work/wikipedia-tokenized/lindera-ipadic.wfreq -vvv
+
+# threshold が 16 なのはヒューリスティックなパラメータ設定による。
+ work/wikipedia-tokenized/lindera-ipadic.vocab: work/wikipedia-tokenized/lindera-ipadic.wfreq src/subcmd/vocab.rs
+	cargo run -- vocab --threshold 16 work/wikipedia-tokenized/lindera-ipadic.wfreq work/wikipedia-tokenized/lindera-ipadic.vocab -vvv
 
 
 # -------------------------------------------------------------------------
@@ -84,21 +96,6 @@ data/stats-kytea-system_dict.trie: work/stats-kytea/jawiki.system_dict.txt src/s
 
 data/stats-kytea-single_term.trie: work/stats-kytea/jawiki.single_term.txt
 	cargo run -- make-system-dict work/stats-kytea/jawiki.single_term.txt data/stats-kytea-single_term.trie
-
-# -------------------------------------------------------------------------
-
-# http://www.phontron.com/kytea/train-ja.html
-# モでルをいじってつかおうとこころみたが、うまくいってないのでいったん、つかわないことにする。
-
-work/kytea/kytea-0.4.2.feat.gz:
-	mkdir -p work/kytea/
-	wget http://www.phontron.com/kytea/download/kytea-0.4.2.feat.gz -O work/kytea/kytea-0.4.2.feat.gz
-
-work/kytea/kytea-0.4.2.feat: work/kytea/kytea-0.4.2.feat.gz
-	gunzip --keep work/kytea/kytea-0.4.2.feat.gz
-
-work/kytea/train.mod: work/kytea/kytea-0.4.2.feat corpus/kytea.txt
-	train-kytea -feat work/kytea/kytea-0.4.2.feat -full corpus/kytea.txt -model work/kytea/train.mod
 
 # -------------------------------------------------------------------------
 
