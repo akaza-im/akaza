@@ -3,8 +3,9 @@ use std::time::SystemTime;
 
 use anyhow::Context;
 use kelp::{kata2hira, ConvOption};
-use log::info;
 use vibrato::{Dictionary, Tokenizer};
+
+use crate::tokenizer::base::{merge_terms_ipadic, AkazaTokenizer, IntermediateToken};
 
 pub struct VibratoTokenizer {
     tokenizer: Tokenizer,
@@ -12,6 +13,7 @@ pub struct VibratoTokenizer {
 
 impl VibratoTokenizer {
     pub fn new() -> anyhow::Result<VibratoTokenizer> {
+        // システム辞書のロードには14秒ぐらいかかります。
         let dictpath = "work/mecab/ipadic-mecab-2_7_0/system.dic";
         let t1 = SystemTime::now();
         let dict = Dictionary::read(File::open(dictpath)?)?;
@@ -21,6 +23,7 @@ impl VibratoTokenizer {
             dictpath,
             t2.duration_since(t1)?.as_millis()
         );
+
         let dict = dict
             .reset_user_lexicon_from_reader(Some(File::open(
                 "jawiki-kana-kanji-dict/mecab-userdic.csv",
@@ -31,17 +34,18 @@ impl VibratoTokenizer {
 
         Ok(VibratoTokenizer { tokenizer })
     }
+}
 
+impl AkazaTokenizer for VibratoTokenizer {
     /// Vibrato を利用してファイルをアノテーションします。
-    pub fn tokenize(&self, src: &str) -> anyhow::Result<String> {
+    fn tokenize(&self, src: &str) -> anyhow::Result<String> {
         let mut worker = self.tokenizer.new_worker();
 
         worker.reset_sentence(src);
         worker.tokenize();
 
-        let mut buf = String::new();
+        let mut intermediates: Vec<IntermediateToken> = Vec::new();
 
-        // TODO 連結処理的なことが必要ならする。
         // Vibrato/mecab の場合、接尾辞などが細かく分かれることは少ないが、
         // 一方で、助詞/助動詞などが細かくわかれがち。
         for i in 0..worker.num_tokens() {
@@ -51,7 +55,8 @@ impl VibratoTokenizer {
             //     println!("Too few features: {}/{}", token.surface(), token.feature())
             // }
 
-            // let hinshi = feature[0];
+            let hinshi = feature[0];
+            let subhinshi = if feature.len() > 2 { feature[1] } else { "UNK" };
             let yomi = if feature.len() > 7 {
                 feature[7]
             } else {
@@ -60,11 +65,17 @@ impl VibratoTokenizer {
                 token.surface()
             };
             let yomi = kata2hira(yomi, ConvOption::default());
-            buf += format!("{}/{} ", token.surface(), yomi).as_str();
+            let intermediate = IntermediateToken::new(
+                token.surface().to_string(),
+                yomi.to_string(),
+                hinshi.to_string(),
+                subhinshi.to_string(),
+            );
+            intermediates.push(intermediate);
             // println!("{}/{}/{}", token.surface(), hinshi, yomi);
         }
 
-        Ok(buf.trim().to_string() + "\n")
+        Ok(merge_terms_ipadic(intermediates))
     }
 }
 
@@ -100,7 +111,10 @@ mod tests {
             .try_init();
 
         let runner = VibratoTokenizer::new()?;
-        println!("{:?}", runner.tokenize("書いていたものである")?);
+        assert_eq!(
+            runner.tokenize("書いていたものである")?,
+            "書いて/かいて いた/いた もの/もの である/である"
+        );
         Ok(())
     }
 }

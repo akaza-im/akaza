@@ -1,15 +1,18 @@
 use clap::{Parser, Subcommand};
+use std::io::Write;
 
 use crate::subcmd::check::check;
 use crate::subcmd::evaluate::evaluate;
-use crate::subcmd::make_system_dict::make_system_dict;
 use crate::subcmd::make_system_lm::make_system_lm;
-use crate::subcmd::make_text_dict::make_text_dict;
+use crate::subcmd::make_text_dict::{make_single_term, make_system_dict};
 use crate::subcmd::structured_perceptron::learn_structured_perceptron;
-use crate::subcmd::vibrato_annotate::annotate_wikipedia;
+use crate::subcmd::tokenize::tokenize;
+use crate::subcmd::vocab::vocab;
+use crate::subcmd::wfreq::wfreq;
 
 mod subcmd;
 mod tokenizer;
+mod utils;
 mod wikipedia;
 
 #[derive(Debug, Parser)]
@@ -32,6 +35,7 @@ struct Args {
 enum Commands {
     #[clap(arg_required_else_help = true)]
     MakeSystemDict(MakeSystemDictArgs),
+    MakeSingleTerm(MakeSingleTermArgs),
     #[clap(arg_required_else_help = true)]
     MakeSystemLanguageModel(MakeSystemLanguageModelArgs),
     #[clap(arg_required_else_help = true)]
@@ -39,26 +43,27 @@ enum Commands {
     #[clap(arg_required_else_help = true)]
     Check(CheckArgs),
     LearnStructuredPerceptron(LearnStructuredPerceptronArgs),
-    MakeTextDict(MakeTextDictArgs),
-    VibratoAnnotate(VibratoAnnotateArgs),
+    Tokenize(TokenizeArgs),
+    Wfreq(WfreqArgs),
+    Vocab(VocabArgs),
 }
 
 #[derive(Debug, clap::Args)]
-/// text のファイルからシステム辞書ファイルを作成する。
-/// 入力元となるファイルは以下のような形式である。
-/// UTF-8 でエンコードされたプレインテキストで、各行によみがなと漢字が半角空白区切りでおさめられている。
-/// 漢字は slash でくぎられて複数格納されている。
-///
-/// ```
-///     みやがく 宮学
-///     みやがた 宮方/宮形/宮型
-/// ```
-///
+/// システム辞書ファイルを作成する。
 struct MakeSystemDictArgs {
-    /// 生成元のテキストファイル
-    txtfile: String,
+    #[arg(short, long)]
+    vocab_file: String,
+    /// デバッグのための中間テキストファイル
+    txt_file: String,
     /// 出力先のトライが格納されるファイル
-    triefile: String,
+    trie_file: String,
+}
+
+/// 単項辞書を作成する
+#[derive(Debug, clap::Args)]
+struct MakeSingleTermArgs {
+    txt_file: String,
+    trie_file: String,
 }
 
 /// システム言語モデルを生成する。
@@ -91,17 +96,35 @@ struct CheckArgs {
 struct LearnStructuredPerceptronArgs {
     #[arg(short, long, default_value_t = 10)]
     epochs: i32,
+    src_dir: String,
 }
 
-/// テキスト辞書を作る
+/// コーパスを形態素解析機でトーカナイズする
 #[derive(Debug, clap::Args)]
-struct MakeTextDictArgs {}
-
-/// Wikipedia を Vibrato でアノテーションする
-#[derive(Debug, clap::Args)]
-struct VibratoAnnotateArgs {
+struct TokenizeArgs {
+    #[arg(short, long)]
+    tokenizer: String,
+    #[arg(short, long)]
+    user_dict: Option<String>,
     src_dir: String,
     dst_dir: String,
+}
+
+#[derive(Debug, clap::Args)]
+struct WfreqArgs {
+    src_dir: String,
+    dst_file: String,
+}
+
+#[derive(Debug, clap::Args)]
+struct VocabArgs {
+    /// 語彙ファイルに収録する単語数のあしきりライン。
+    /// 増やすと辞書ファイルサイズが大きくなり、実行時のメモリ使用量も増大する。
+    /// 増やすと変換可能な語彙が増える。
+    #[arg(short, long)]
+    threshold: u32,
+    src_file: String,
+    dst_file: String,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -109,10 +132,26 @@ fn main() -> anyhow::Result<()> {
 
     env_logger::Builder::new()
         .filter_level(args.verbose.log_level_filter())
+        .format(|buf, record| {
+            let ts = buf.timestamp_micros();
+            // show thread id
+            writeln!(
+                buf,
+                "{}: {:?}: {}: {}",
+                ts,
+                std::thread::current().id(),
+                buf.default_level_style(record.level())
+                    .value(record.level()),
+                record.args()
+            )
+        })
         .init();
 
     match args.command {
-        Commands::MakeSystemDict(opt) => make_system_dict(&opt.txtfile, &opt.triefile),
+        Commands::MakeSystemDict(opt) => {
+            make_system_dict(&opt.txt_file, &opt.trie_file, Some(opt.vocab_file.as_str()))
+        }
+        Commands::MakeSingleTerm(opt) => make_single_term(&opt.txt_file, &opt.trie_file),
         Commands::MakeSystemLanguageModel(opt) => make_system_lm(
             &opt.unigram_src,
             &opt.unigram_dst,
@@ -121,10 +160,16 @@ fn main() -> anyhow::Result<()> {
         ),
         Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, &opt.system_data_dir),
         Commands::Check(opt) => check(&opt.yomi),
-        Commands::LearnStructuredPerceptron(opts) => learn_structured_perceptron(opts.epochs),
-        Commands::MakeTextDict(_) => make_text_dict(),
-        Commands::VibratoAnnotate(opt) => {
-            annotate_wikipedia(opt.src_dir.as_str(), opt.dst_dir.as_str())
+        Commands::LearnStructuredPerceptron(opts) => {
+            learn_structured_perceptron(&opts.src_dir, opts.epochs)
         }
+        Commands::Tokenize(opt) => tokenize(
+            opt.tokenizer.as_str(),
+            opt.user_dict,
+            opt.src_dir.as_str(),
+            opt.dst_dir.as_str(),
+        ),
+        Commands::Wfreq(opt) => wfreq(opt.src_dir.as_str(), opt.dst_file.as_str()),
+        Commands::Vocab(opt) => vocab(opt.src_file.as_str(), opt.dst_file.as_str(), opt.threshold),
     }
 }

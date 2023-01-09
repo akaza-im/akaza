@@ -20,5 +20,7 @@ lcs = "0.2.0"
 chrono = "0.4.23"
 vibrato = "0.3.3"
 walkdir = "2"
+lindera = { version = "0.19.0", features = ["ipadic"] }
+rayon = "1.6.1"
 
 [build-dependencies]

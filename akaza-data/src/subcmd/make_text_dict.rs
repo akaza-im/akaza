@@ -1,22 +1,32 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
-use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
+use std::io::BufReader;
 use std::path::Path;
 
 use anyhow::{bail, Result};
-use chrono::prelude::*;
 use encoding_rs::{EUC_JP, UTF_8};
 use log::info;
+use log::trace;
 
+use libakaza::kana_kanji_dict::KanaKanjiDictBuilder;
 use libakaza::romkan::RomKanConverter;
 use libakaza::skk::ari2nasi::Ari2Nasi;
 
+use crate::utils::copy_snapshot;
+
 /// テキスト形式での辞書を作成する。
-// 070_make-system-dict.py を移植した。
-pub fn make_text_dict() -> Result<()> {
-    single_term::make_single_term_dict()?;
-    system_dict::make_system_dict()?;
+pub fn make_system_dict(
+    txt_file: &str,
+    trie_file: &str,
+    vocab_file_path: Option<&str>,
+) -> Result<()> {
+    system_dict::make_system_dict(txt_file, trie_file, vocab_file_path)?;
+    Ok(())
+}
+
+pub fn make_single_term(txt_file: &str, trie_file: &str) -> Result<()> {
+    single_term::make_single_term_dict(txt_file, trie_file)?;
     Ok(())
 }
 
@@ -30,7 +40,11 @@ mod system_dict {
 
     use super::*;
 
-    pub fn make_system_dict() -> anyhow::Result<()> {
+    pub fn make_system_dict(
+        txt_file: &str,
+        trie_file: &str,
+        vocab_file_path: Option<&str>,
+    ) -> anyhow::Result<()> {
         let dictionary_sources = [
             // 先の方が優先される
             ("skk-dev-dict/SKK-JISYO.L", EUC_JP),
@@ -47,13 +61,18 @@ mod system_dict {
             dicts.push(validate_dict(nasi).with_context(|| path.to_string())?);
             dicts.push(validate_dict(ari2nasi.ari2nasi(&ari)?).with_context(|| path.to_string())?);
         }
-        dicts.push(
-            validate_dict(make_vocab_dict()?).with_context(|| "make_vocab_dict".to_string())?,
-        );
+        if let Some(vocab_file_path) = vocab_file_path {
+            info!("Using vocab file: {}", vocab_file_path);
+            dicts.push(
+                validate_dict(make_vocab_dict(vocab_file_path)?)
+                    .with_context(|| "make_vocab_dict".to_string())?,
+            );
+        }
         dicts.push(
             validate_dict(make_corpus_dict()?).with_context(|| "make_corpus_dict".to_string())?,
         );
-        write_dict("work/stats-kytea/jawiki.system_dict.txt", dicts)?;
+        write_dict(txt_file, dicts)?;
+        make_trie_dict(&txt_file.to_string(), &trie_file.to_string())?;
         Ok(())
     }
 
@@ -84,8 +103,8 @@ mod system_dict {
         )
     }
 
-    fn make_vocab_dict() -> Result<HashMap<String, Vec<String>>> {
-        let rfp = File::open("work/stats-kytea/jawiki.vocab")?;
+    fn make_vocab_dict(vocab_file_path: &str) -> Result<HashMap<String, Vec<String>>> {
+        let rfp = File::open(vocab_file_path)?;
         let mut words: Vec<(String, String)> = Vec::new();
         for line in BufReader::new(rfp).lines() {
             let line = line?;
@@ -136,7 +155,7 @@ mod single_term {
 
     /// 郵便番号や絵文字など、それを狙って変換したときにだけ反応して欲しいものを入れた辞書です。
     /// 通常の長文を変換している時に発動するとじゃまくさいけど、なきゃないで不便なのでこういう処理にしています。
-    pub(crate) fn make_single_term_dict() -> Result<()> {
+    pub(crate) fn make_single_term_dict(txt_file: &str, trie_file: &str) -> Result<()> {
         let dictionary_sources = [
             // 先の方が優先される
             ("skk-dev-dict/SKK-JISYO.emoji", UTF_8),
@@ -150,7 +169,8 @@ mod single_term {
             dicts.push(ari2nasi.ari2nasi(&ari)?);
         }
         dicts.push(make_lisp_dict());
-        write_dict("work/stats-kytea/jawiki.single_term.txt", dicts)?;
+        write_dict(txt_file, dicts)?;
+        make_trie_dict(&txt_file.to_string(), &trie_file.to_string())?;
         Ok(())
     }
 
@@ -232,21 +252,24 @@ fn merge_skkdict(dicts: Vec<HashMap<String, Vec<String>>>) -> BTreeMap<String, V
     result
 }
 
-fn copy_snapshot(path: &Path) -> Result<()> {
-    fs::create_dir_all("work/dump/")?;
-    fs::copy(
-        path,
-        Path::new("work/dump/").join(
-            Local::now().format("%Y%m%d-%H%M%S").to_string()
-                + path
-                    .file_name()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-                    .to_string()
-                    .as_str(),
-        ),
-    )?;
+fn make_trie_dict(txtfile: &String, triefile: &String) -> Result<()> {
+    println!("Generating {} from {}", triefile, txtfile);
+
+    let mut kana_kanji_dict = KanaKanjiDictBuilder::default();
+
+    let file = File::open(txtfile).expect("Open {txtfile} correctly.");
+    for line in BufReader::new(file).lines() {
+        let line = line?;
+        let v: Vec<&str> = line.trim().split(' ').collect();
+        if v.len() != 2 {
+            continue;
+        }
+        let yomi = v[0];
+        let kanjis = v[1];
+        trace!("word={} kanjis={}", yomi, kanjis);
+        kana_kanji_dict.add(yomi, kanjis);
+    }
+    kana_kanji_dict.save(triefile)?;
     Ok(())
 }
 
@@ -258,7 +281,7 @@ mod tests {
     #[test]
     fn test_corpus() -> Result<()> {
         // 処理する
-        make_text_dict()?;
+        make_text_dict(None)?;
 
         let mut file = File::open("work/stats-kytea/jawiki.system_dict.txt")?;
         let mut buf = String::new();

@@ -4,7 +4,7 @@ use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 
 use anyhow::Context;
-use log::info;
+
 use regex::Regex;
 use walkdir::WalkDir;
 
@@ -60,7 +60,7 @@ impl ExtractedWikipediaProcessor {
             }
             let line = self.remove_yomigana(line);
 
-            buf += annotate(line.as_str()).with_context(|| line)?.as_str();
+            buf += (annotate(line.as_str()).with_context(|| line)? + "\n").as_str();
         }
         let mut ofile = File::create(ofname)?;
         ofile.write_all(buf.as_bytes())?;
@@ -71,19 +71,13 @@ impl ExtractedWikipediaProcessor {
         self.yomigana_pattern.replace_all(src, "").to_string()
     }
 
-    /// ファイルを処理します。
-    /// シリアルに処理すると遅いので、パラレルに処理します(する予定)
-    pub fn process_files<F>(
+    pub fn get_file_list(
         &self,
         src_dir: &Path,
         dst_dir: &Path,
-        mut annotate: F,
-    ) -> anyhow::Result<()>
-    where
-        F: FnMut(&str) -> anyhow::Result<String>,
-    {
-        info!("TODO: Parallel processing");
-        // TODO parallel processing
+    ) -> anyhow::Result<Vec<(String, String)>> {
+        let mut result: Vec<(String, String)> = Vec::new();
+
         for src_file in WalkDir::new(src_dir)
             .into_iter()
             .filter_map(|file| file.ok())
@@ -93,19 +87,19 @@ impl ExtractedWikipediaProcessor {
             let dirname = src_path.parent().unwrap().file_name().unwrap();
             fs::create_dir_all(dst_dir.join(dirname))?;
             let output_file = dst_dir.join(dirname).join(src_path.file_name().unwrap());
-            info!(
-                "{} => {}",
-                src_file.path().display(),
-                output_file.as_path().display()
-            );
-            self.process_file(src_file.path(), &output_file, &mut annotate)?;
-        }
 
-        // _SUCCESS ファイルを書く
-        {
-            let mut success = File::create(dst_dir.join("_SUCCESS"))?;
-            success.write_all("DONE".as_bytes())?;
+            result.push((
+                src_file.path().to_string_lossy().to_string(),
+                output_file.as_path().to_string_lossy().to_string(),
+            ));
         }
+        Ok(result)
+    }
+
+    /// _SUCCESS ファイルを書く
+    pub fn write_success_file(&self, dst_dir: &Path) -> anyhow::Result<()> {
+        let mut success = File::create(dst_dir.join("_SUCCESS"))?;
+        success.write_all("DONE".as_bytes())?;
         Ok(())
     }
 }
