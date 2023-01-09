@@ -1,8 +1,10 @@
+use std::path::PathBuf;
+
 use kelp::{kata2hira, ConvOption};
 use lindera::mode::Mode;
-use lindera::tokenizer::{DictionaryConfig, Tokenizer, TokenizerConfig};
+use lindera::tokenizer::{DictionaryConfig, Tokenizer, TokenizerConfig, UserDictionaryConfig};
 use lindera::DictionaryKind;
-use log::trace;
+use log::{info, trace};
 
 use crate::tokenizer::base::{merge_terms_ipadic, AkazaTokenizer, IntermediateToken};
 
@@ -11,21 +13,32 @@ pub struct LinderaTokenizer {
 }
 
 impl LinderaTokenizer {
-    pub(crate) fn new(dictionary_kind: DictionaryKind) -> anyhow::Result<LinderaTokenizer> {
+    pub(crate) fn new(
+        dictionary_kind: DictionaryKind,
+        user_dictionary_path: Option<PathBuf>,
+    ) -> anyhow::Result<LinderaTokenizer> {
+        info!("Building tokenizer... with {:?}", user_dictionary_path);
+
         let dictionary = DictionaryConfig {
-            kind: Some(dictionary_kind),
+            kind: Some(dictionary_kind.clone()),
             path: None,
         };
 
+        let user_dictionary = user_dictionary_path.map(|path| UserDictionaryConfig {
+            kind: Some(dictionary_kind),
+            path,
+        });
+
         let config = TokenizerConfig {
             dictionary,
-            user_dictionary: None,
+            user_dictionary,
             mode: Mode::Normal,
             with_details: true,
         };
 
         // create tokenizer
         let tokenizer = Tokenizer::from_config(config)?;
+        info!("Built tokenizer ");
 
         Ok(LinderaTokenizer { tokenizer })
     }
@@ -79,7 +92,7 @@ mod tests {
 
     #[test]
     fn lindera_test() -> anyhow::Result<()> {
-        let tokenizer = LinderaTokenizer::new(IPADIC)?;
+        let tokenizer = LinderaTokenizer::new(IPADIC, None)?;
         let tokens = tokenizer.tokenize("関西国際空港限定トートバッグ")?;
         assert_eq!(
             tokens,
@@ -108,7 +121,7 @@ mod tests {
                 .is_test(true)
                 .try_init();
 
-            let tokenizer = LinderaTokenizer::new(IPADIC)?;
+            let tokenizer = LinderaTokenizer::new(IPADIC, None)?;
             let tokens = tokenizer.tokenize("実施された")?;
             assert_eq!(tokens, "実施/じっし された/された");
 
@@ -123,7 +136,7 @@ mod tests {
                 .is_test(true)
                 .try_init();
 
-            let tokenizer = LinderaTokenizer::new(IPADIC)?;
+            let tokenizer = LinderaTokenizer::new(IPADIC, None)?;
             let tokens = tokenizer.tokenize("小学校")?;
             assert_eq!(tokens, "小学校/しょうがっこう");
 
@@ -137,7 +150,7 @@ mod tests {
                 .is_test(true)
                 .try_init();
 
-            let tokenizer = LinderaTokenizer::new(IPADIC)?;
+            let tokenizer = LinderaTokenizer::new(IPADIC, None)?;
             let tokens = tokenizer.tokenize("書いていたものである")?;
             assert_eq!(tokens, "書いて/かいて いた/いた もの/もの である/である");
 
@@ -151,7 +164,7 @@ mod tests {
                 .is_test(true)
                 .try_init();
 
-            let tokenizer = LinderaTokenizer::new(IPADIC)?;
+            let tokenizer = LinderaTokenizer::new(IPADIC, None)?;
             let tokens = tokenizer.tokenize("鈴鹿医療科学技術大学であったが")?;
             assert_eq!(
                 tokens,

@@ -102,6 +102,8 @@ struct MakeTextDictArgs {}
 struct TokenizeArgs {
     #[arg(short, long)]
     tokenizer: String,
+    #[arg(short, long)]
+    user_dict: Option<String>,
     src_dir: String,
     dst_dir: String,
 }
@@ -127,6 +129,7 @@ fn main() -> anyhow::Result<()> {
         Commands::MakeTextDict(_) => make_text_dict(),
         Commands::Tokenize(opt) => tokenize(
             opt.tokenizer.as_str(),
+            opt.user_dict,
             opt.src_dir.as_str(),
             opt.dst_dir.as_str(),
         ),

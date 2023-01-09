@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::bail;
 use lindera::DictionaryKind;
@@ -8,13 +8,19 @@ use crate::tokenizer::base::AkazaTokenizer;
 use crate::tokenizer::lindera::LinderaTokenizer;
 use crate::wikipedia::wikipedia_extracted::ExtractedWikipediaProcessor;
 
-pub fn tokenize(tokenizer_type: &str, src_dir: &str, dst_dir: &str) -> anyhow::Result<()> {
+pub fn tokenize(
+    tokenizer_type: &str,
+    user_dict: Option<String>,
+    src_dir: &str,
+    dst_dir: &str,
+) -> anyhow::Result<()> {
     info!("tokenize({}): {} => {}", tokenizer_type, src_dir, dst_dir);
     let processor = ExtractedWikipediaProcessor::new()?;
 
     match tokenizer_type {
         "lindera-ipadic" => {
-            let tokenizer = LinderaTokenizer::new(DictionaryKind::IPADIC)?;
+            let tokenizer =
+                LinderaTokenizer::new(DictionaryKind::IPADIC, user_dict.map(|f| PathBuf::from(f)))?;
             processor.process_files(Path::new(src_dir), Path::new(dst_dir), |line| {
                 tokenizer.tokenize(line)
             })?;
@@ -27,8 +33,9 @@ pub fn tokenize(tokenizer_type: &str, src_dir: &str, dst_dir: &str) -> anyhow::R
 
 #[cfg(test)]
 mod tests {
-    use lindera::DictionaryKind::IPADIC;
     use std::fs;
+
+    use lindera::DictionaryKind::IPADIC;
 
     use crate::tokenizer::base::AkazaTokenizer;
 
