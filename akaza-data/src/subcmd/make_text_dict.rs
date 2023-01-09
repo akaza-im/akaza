@@ -1,22 +1,22 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
-use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 
 use anyhow::{bail, Result};
-use chrono::prelude::*;
 use encoding_rs::{EUC_JP, UTF_8};
 use log::info;
 
 use libakaza::romkan::RomKanConverter;
 use libakaza::skk::ari2nasi::Ari2Nasi;
 
+use crate::utils::copy_snapshot;
+
 /// テキスト形式での辞書を作成する。
 // 070_make-system-dict.py を移植した。
-pub fn make_text_dict() -> Result<()> {
+pub fn make_text_dict(vocab_file_path: Option<&str>) -> Result<()> {
     single_term::make_single_term_dict()?;
-    system_dict::make_system_dict()?;
+    system_dict::make_system_dict(vocab_file_path)?;
     Ok(())
 }
 
@@ -30,7 +30,7 @@ mod system_dict {
 
     use super::*;
 
-    pub fn make_system_dict() -> anyhow::Result<()> {
+    pub fn make_system_dict(vocab_file_path: Option<&str>) -> anyhow::Result<()> {
         let dictionary_sources = [
             // 先の方が優先される
             ("skk-dev-dict/SKK-JISYO.L", EUC_JP),
@@ -47,9 +47,13 @@ mod system_dict {
             dicts.push(validate_dict(nasi).with_context(|| path.to_string())?);
             dicts.push(validate_dict(ari2nasi.ari2nasi(&ari)?).with_context(|| path.to_string())?);
         }
-        dicts.push(
-            validate_dict(make_vocab_dict()?).with_context(|| "make_vocab_dict".to_string())?,
-        );
+        if let Some(vocab_file_path) = vocab_file_path {
+            info!("Using vocab file: {}", vocab_file_path);
+            dicts.push(
+                validate_dict(make_vocab_dict(vocab_file_path)?)
+                    .with_context(|| "make_vocab_dict".to_string())?,
+            );
+        }
         dicts.push(
             validate_dict(make_corpus_dict()?).with_context(|| "make_corpus_dict".to_string())?,
         );
@@ -84,8 +88,8 @@ mod system_dict {
         )
     }
 
-    fn make_vocab_dict() -> Result<HashMap<String, Vec<String>>> {
-        let rfp = File::open("work/stats-kytea/jawiki.vocab")?;
+    fn make_vocab_dict(vocab_file_path: &str) -> Result<HashMap<String, Vec<String>>> {
+        let rfp = File::open(vocab_file_path)?;
         let mut words: Vec<(String, String)> = Vec::new();
         for line in BufReader::new(rfp).lines() {
             let line = line?;
@@ -232,24 +236,6 @@ fn merge_skkdict(dicts: Vec<HashMap<String, Vec<String>>>) -> BTreeMap<String, V
     result
 }
 
-fn copy_snapshot(path: &Path) -> Result<()> {
-    fs::create_dir_all("work/dump/")?;
-    fs::copy(
-        path,
-        Path::new("work/dump/").join(
-            Local::now().format("%Y%m%d-%H%M%S").to_string()
-                + path
-                    .file_name()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-                    .to_string()
-                    .as_str(),
-        ),
-    )?;
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -258,7 +244,7 @@ mod tests {
     #[test]
     fn test_corpus() -> Result<()> {
         // 処理する
-        make_text_dict()?;
+        make_text_dict(None)?;
 
         let mut file = File::open("work/stats-kytea/jawiki.system_dict.txt")?;
         let mut buf = String::new();

@@ -100,7 +100,10 @@ struct LearnStructuredPerceptronArgs {
 
 /// テキスト辞書を作る
 #[derive(Debug, clap::Args)]
-struct MakeTextDictArgs {}
+struct MakeTextDictArgs {
+    #[arg(short, long)]
+    vocab_file: String,
+}
 
 /// コーパスを形態素解析機でトーカナイズする
 #[derive(Debug, clap::Args)]
@@ -161,7 +164,7 @@ fn main() -> anyhow::Result<()> {
         Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, &opt.system_data_dir),
         Commands::Check(opt) => check(&opt.yomi),
         Commands::LearnStructuredPerceptron(opts) => learn_structured_perceptron(opts.epochs),
-        Commands::MakeTextDict(_) => make_text_dict(),
+        Commands::MakeTextDict(opts) => make_text_dict(Some(opts.vocab_file.as_str())),
         Commands::Tokenize(opt) => tokenize(
             opt.tokenizer.as_str(),
             opt.user_dict,
