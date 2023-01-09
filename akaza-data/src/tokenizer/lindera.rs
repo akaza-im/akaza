@@ -1,12 +1,17 @@
+use std::collections::HashSet;
+
 use kelp::{kata2hira, ConvOption};
 use lindera::mode::Mode;
 use lindera::tokenizer::{DictionaryConfig, Tokenizer, TokenizerConfig};
 use lindera::DictionaryKind;
+use log::trace;
 
-use crate::tokenizer::base::AkazaTokenizer;
+use crate::tokenizer::base::{merge_terms, AkazaTokenizer, IntermediateToken};
 
 pub struct LinderaTokenizer {
     tokenizer: Tokenizer,
+    pub mergeable_hinshi: HashSet<&'static str>,
+    pub mergeable_subhinshi: HashSet<&'static str>,
 }
 
 impl LinderaTokenizer {
@@ -25,7 +30,15 @@ impl LinderaTokenizer {
 
         // create tokenizer
         let tokenizer = Tokenizer::from_config(config)?;
-        Ok(LinderaTokenizer { tokenizer })
+
+        let mergeable_hinshi = HashSet::from(["助動詞"]);
+        let mergeable_subhinshi = HashSet::from(["接続助詞", "接尾"]);
+
+        Ok(LinderaTokenizer {
+            tokenizer,
+            mergeable_hinshi,
+            mergeable_subhinshi,
+        })
     }
 }
 
@@ -33,34 +46,117 @@ impl AkazaTokenizer for LinderaTokenizer {
     fn tokenize(&self, src: &str) -> anyhow::Result<String> {
         // tokenize the text
         let tokens = self.tokenizer.tokenize(src)?;
-        let mut buf = String::new();
+
+        // 取り扱いやすい中間表現に変更する
+        let mut intermediates: Vec<IntermediateToken> = Vec::new();
         for token in tokens {
             let details = token.details.unwrap();
             let surface = token.text;
+
             let yomi = if details.len() > 7 {
                 details[7].to_string()
             } else {
                 surface.to_string()
             };
             let yomi = kata2hira(yomi.as_str(), ConvOption::default());
-            buf += format!("{}/{} ", surface, yomi).as_str();
+
+            let hinshi = details[0].to_string();
+            let subhinshi = if details.len() > 1 {
+                details[1].to_string()
+            } else {
+                "UNK".to_string()
+            };
+
+            trace!("{}/{}/{}/{}", surface, hinshi, subhinshi, yomi);
+
+            intermediates.push(IntermediateToken::new(
+                surface.to_string(),
+                yomi,
+                hinshi,
+                subhinshi,
+            ));
         }
-        Ok(buf)
+
+        Ok(merge_terms(
+            intermediates,
+            &self.mergeable_hinshi,
+            &self.mergeable_subhinshi,
+        ))
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use lindera::DictionaryKind::IPADIC;
+    use log::LevelFilter;
+
     use super::*;
 
     #[test]
     fn lindera_test() -> anyhow::Result<()> {
-        let tokenizer = LinderaTokenizer::new()?;
-        let tokens = tokenizer.tokenize(
-            "関西国際空港/かんさいこくさいくうこう 限定/げんてい トートバッグ/とーとばっぐ",
-        )?;
-        assert_eq!(tokens, "");
+        let tokenizer = LinderaTokenizer::new(IPADIC)?;
+        let tokens = tokenizer.tokenize("関西国際空港限定トートバッグ")?;
+        assert_eq!(
+            tokens,
+            "関西国際空港/かんさいこくさいくうこう 限定/げんてい トートバッグ/とーとばっぐ"
+        );
 
         Ok(())
+    }
+
+    #[cfg(test)]
+    mod merger {
+        use super::*;
+
+        /// かな漢字変換で使うには分割がこまかすぎるので、連結していく。
+        #[test]
+        fn lindera_merge() -> anyhow::Result<()> {
+            /*
+               実施/名詞/サ変接続/じっし
+               さ/動詞/自立/さ
+               れ/動詞/接尾/れ
+               た/助動詞/_/た
+            */
+
+            let _ = env_logger::builder()
+                .filter_level(LevelFilter::Trace)
+                .is_test(true)
+                .try_init();
+
+            let tokenizer = LinderaTokenizer::new(IPADIC)?;
+            let tokens = tokenizer.tokenize("実施された")?;
+            assert_eq!(tokens, "実施/じっし された/された");
+
+            Ok(())
+        }
+
+        /// かな漢字変換で使うには分割がこまかすぎるので、連結していく。
+        #[test]
+        fn lindera_merge2() -> anyhow::Result<()> {
+            let _ = env_logger::builder()
+                .filter_level(LevelFilter::Trace)
+                .is_test(true)
+                .try_init();
+
+            let tokenizer = LinderaTokenizer::new(IPADIC)?;
+            let tokens = tokenizer.tokenize("小学校")?;
+            assert_eq!(tokens, "小学校/しょうがっこう");
+
+            Ok(())
+        }
+
+        #[test]
+        fn lindera_merge3() -> anyhow::Result<()> {
+            let _ = env_logger::builder()
+                .filter_level(LevelFilter::Trace)
+                .is_test(true)
+                .try_init();
+
+            let tokenizer = LinderaTokenizer::new(IPADIC)?;
+            let tokens = tokenizer.tokenize("書いていたものである")?;
+            assert_eq!(tokens, "書いて/かいて いた/いた ものである/ものである");
+
+            Ok(())
+        }
     }
 }

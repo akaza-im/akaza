@@ -27,6 +27,7 @@ pub fn tokenize(tokenizer_type: &str, src_dir: &str, dst_dir: &str) -> anyhow::R
 
 #[cfg(test)]
 mod tests {
+    use lindera::DictionaryKind::IPADIC;
     use std::fs;
 
     use crate::tokenizer::base::AkazaTokenizer;
@@ -36,7 +37,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_wikipedia() -> anyhow::Result<()> {
-        let runner = LinderaTokenizer::new()?;
+        let runner = LinderaTokenizer::new(IPADIC)?;
         let processor = ExtractedWikipediaProcessor::new()?;
 
         let fname = "work/extracted/BE/wiki_02";
