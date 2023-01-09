@@ -1,7 +1,7 @@
 use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use log::info;
@@ -71,6 +71,28 @@ impl ExtractedWikipediaProcessor {
         self.yomigana_pattern.replace_all(src, "").to_string()
     }
 
+    pub fn get_file_list(
+        &self,
+        src_dir: &Path,
+        dst_dir: &Path,
+    ) -> anyhow::Result<Vec<(PathBuf, PathBuf)>> {
+        let mut result: Vec<(PathBuf, PathBuf)> = Vec::new();
+
+        for src_file in WalkDir::new(src_dir)
+            .into_iter()
+            .filter_map(|file| file.ok())
+            .filter(|file| file.metadata().unwrap().is_file())
+        {
+            let src_path = src_file.path();
+            let dirname = src_path.parent().unwrap().file_name().unwrap();
+            fs::create_dir_all(dst_dir.join(dirname))?;
+            let output_file = dst_dir.join(dirname).join(src_path.file_name().unwrap());
+
+            result.push((src_file.path().to_path_buf(), output_file));
+        }
+        Ok(result)
+    }
+
     /// ファイルを処理します。
     /// シリアルに処理すると遅いので、パラレルに処理します(する予定)
     pub fn process_files<F>(
@@ -83,22 +105,9 @@ impl ExtractedWikipediaProcessor {
         F: FnMut(&str) -> anyhow::Result<String>,
     {
         info!("TODO: Parallel processing");
-        // TODO parallel processing
-        for src_file in WalkDir::new(src_dir)
-            .into_iter()
-            .filter_map(|file| file.ok())
-            .filter(|file| file.metadata().unwrap().is_file())
-        {
-            let src_path = src_file.path();
-            let dirname = src_path.parent().unwrap().file_name().unwrap();
-            fs::create_dir_all(dst_dir.join(dirname))?;
-            let output_file = dst_dir.join(dirname).join(src_path.file_name().unwrap());
-            info!(
-                "{} => {}",
-                src_file.path().display(),
-                output_file.as_path().display()
-            );
-            self.process_file(src_file.path(), &output_file, &mut annotate)?;
+        for (src_file, dst_file) in self.get_file_list(src_dir, dst_dir)? {
+            info!("{} => {}", src_file.display(), dst_file.display());
+            self.process_file(src_file.as_path(), &dst_file, &mut annotate)?;
         }
 
         // _SUCCESS ファイルを書く
