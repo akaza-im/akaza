@@ -3,9 +3,8 @@ use std::io::Write;
 
 use crate::subcmd::check::check;
 use crate::subcmd::evaluate::evaluate;
-use crate::subcmd::make_system_dict::make_system_dict;
 use crate::subcmd::make_system_lm::make_system_lm;
-use crate::subcmd::make_text_dict::make_text_dict;
+use crate::subcmd::make_text_dict::{make_single_term, make_system_dict};
 use crate::subcmd::structured_perceptron::learn_structured_perceptron;
 use crate::subcmd::tokenize::tokenize;
 use crate::subcmd::vocab::vocab;
@@ -36,6 +35,7 @@ struct Args {
 enum Commands {
     #[clap(arg_required_else_help = true)]
     MakeSystemDict(MakeSystemDictArgs),
+    MakeSingleTerm(MakeSingleTermArgs),
     #[clap(arg_required_else_help = true)]
     MakeSystemLanguageModel(MakeSystemLanguageModelArgs),
     #[clap(arg_required_else_help = true)]
@@ -43,29 +43,29 @@ enum Commands {
     #[clap(arg_required_else_help = true)]
     Check(CheckArgs),
     LearnStructuredPerceptron(LearnStructuredPerceptronArgs),
-    MakeTextDict(MakeTextDictArgs),
     Tokenize(TokenizeArgs),
     Wfreq(WfreqArgs),
     Vocab(VocabArgs),
 }
 
 #[derive(Debug, clap::Args)]
-/// text のファイルからシステム辞書ファイルを作成する。
-/// 入力元となるファイルは以下のような形式である。
-/// UTF-8 でエンコードされたプレインテキストで、各行によみがなと漢字が半角空白区切りでおさめられている。
-/// 漢字は slash でくぎられて複数格納されている。
-///
-/// ```
-///     みやがく 宮学
-///     みやがた 宮方/宮形/宮型
-/// ```
-///
+/// システム辞書ファイルを作成する。
 struct MakeSystemDictArgs {
-    /// 生成元のテキストファイル
-    txtfile: String,
+    #[arg(short, long)]
+    vocab_file: String,
+    /// デバッグのための中間テキストファイル
+    txt_file: String,
     /// 出力先のトライが格納されるファイル
-    triefile: String,
+    trie_file: String,
 }
+
+/// 単項辞書を作成する
+#[derive(Debug, clap::Args)]
+struct MakeSingleTermArgs {
+    txt_file: String,
+    trie_file: String,
+}
+
 /// システム言語モデルを生成する。
 #[derive(Debug, clap::Args)]
 struct MakeSystemLanguageModelArgs {
@@ -96,13 +96,6 @@ struct CheckArgs {
 struct LearnStructuredPerceptronArgs {
     #[arg(short, long, default_value_t = 10)]
     epochs: i32,
-}
-
-/// テキスト辞書を作る
-#[derive(Debug, clap::Args)]
-struct MakeTextDictArgs {
-    #[arg(short, long)]
-    vocab_file: String,
 }
 
 /// コーパスを形態素解析機でトーカナイズする
@@ -154,7 +147,10 @@ fn main() -> anyhow::Result<()> {
         .init();
 
     match args.command {
-        Commands::MakeSystemDict(opt) => make_system_dict(&opt.txtfile, &opt.triefile),
+        Commands::MakeSystemDict(opt) => {
+            make_system_dict(&opt.txt_file, &opt.trie_file, Some(opt.vocab_file.as_str()))
+        }
+        Commands::MakeSingleTerm(opt) => make_single_term(&opt.txt_file, &opt.trie_file),
         Commands::MakeSystemLanguageModel(opt) => make_system_lm(
             &opt.unigram_src,
             &opt.unigram_dst,
@@ -164,7 +160,6 @@ fn main() -> anyhow::Result<()> {
         Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, &opt.system_data_dir),
         Commands::Check(opt) => check(&opt.yomi),
         Commands::LearnStructuredPerceptron(opts) => learn_structured_perceptron(opts.epochs),
-        Commands::MakeTextDict(opts) => make_text_dict(Some(opts.vocab_file.as_str())),
         Commands::Tokenize(opt) => tokenize(
             opt.tokenizer.as_str(),
             opt.user_dict,

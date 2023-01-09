@@ -87,21 +87,31 @@ data/stats-kytea-lm_v2_2gram.trie: work/stats-kytea/jawiki.merged-2gram.txt
 	cargo run -- make-system-language-model work/stats-kytea/jawiki.merged-1gram.txt data/stats-kytea-lm_v2_1gram.trie \
     	work/stats-kytea/jawiki.merged-2gram.txt data/stats-kytea-lm_v2_2gram.trie
 
-data/stats-kytea-system_dict.trie: work/stats-kytea/jawiki.system_dict.txt src/subcmd/make_system_dict.rs
-	cargo run -- make-system-dict work/stats-kytea/jawiki.system_dict.txt data/stats-kytea-system_dict.trie -vv
-
-data/stats-kytea-single_term.trie: work/stats-kytea/jawiki.single_term.txt
-	cargo run -- make-system-dict work/stats-kytea/jawiki.single_term.txt data/stats-kytea-single_term.trie
 
 # -------------------------------------------------------------------------
 
 # システム辞書の構築。現在は SKK の辞書などに加えて work/jawiki/vibrato-ipadic.vocab の語彙を混ぜている。
 # さらに、コーパスファイルに書かれている辞書の内容も入れている。
+#
+# 辞書の元になるvocab ファイルについては、ブレが少ない辞書ベースの形態素解析エンジンを利用した方が良いと思う。
+# kytea だと素頓狂な読み方を錬成することがある。
 
-work/single_term.txt: work/jawiki/vibrato-ipadic.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_text_dict.rs
-	cargo run --release -- make-text-dict --vocab-file work/jawiki/vibrato-ipadic.vocab -vvv
+# そして、そもそもテキストファイル生成フェーズとバイナリ生成フェーズにわける意味があまりないかもしれない。
 
+# work/system_dict.txt, work/single_term.txt を生成しているのは、辞書の状況調査のため。
 
+work/single_term.trie: src/subcmd/make_text_dict.rs
+	cargo run --release -- make-single-term \
+		work/single_term.txt \
+		data/single_term.trie \
+		-vvv
+
+data/system_dict.trie: work/jawiki/vibrato-ipadic.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_text_dict.rs
+	cargo run --release -- make-system-dict \
+		--vocab-file work/jawiki/vibrato-ipadic.vocab \
+		work/system_dict.txt \
+		data/system_dict.trie \
+		-vvv
 
 # -------------------------------------------------------------------------
 
