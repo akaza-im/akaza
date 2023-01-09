@@ -96,6 +96,7 @@ struct CheckArgs {
 struct LearnStructuredPerceptronArgs {
     #[arg(short, long, default_value_t = 10)]
     epochs: i32,
+    src_dir: String,
 }
 
 /// コーパスを形態素解析機でトーカナイズする
@@ -159,7 +160,9 @@ fn main() -> anyhow::Result<()> {
         ),
         Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, &opt.system_data_dir),
         Commands::Check(opt) => check(&opt.yomi),
-        Commands::LearnStructuredPerceptron(opts) => learn_structured_perceptron(opts.epochs),
+        Commands::LearnStructuredPerceptron(opts) => {
+            learn_structured_perceptron(&opts.src_dir, opts.epochs)
+        }
         Commands::Tokenize(opt) => tokenize(
             opt.tokenizer.as_str(),
             opt.user_dict,

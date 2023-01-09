@@ -14,10 +14,12 @@ use libakaza::lm::system_bigram::SystemBigramLMBuilder;
 use libakaza::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
 use libakaza::user_side_data::user_data::UserData;
 
+use crate::utils::get_file_list;
+
 /// 構造化パーセプトロンの学習を行います。
 /// 構造化パーセプトロンは、シンプルな実装で、そこそこのパフォーマンスがでる(予定)
 /// 構造化パーセプトロンでいい感じに動くようならば、構造化SVMなどに挑戦したい。
-pub fn learn_structured_perceptron(epochs: i32) -> anyhow::Result<()> {
+pub fn learn_structured_perceptron(src_dir: &String, epochs: i32) -> anyhow::Result<()> {
     // ここでは内部クラスなどを触ってスコア調整をしていかないといけないので、AkazaBuilder は使えない。
 
     let system_kana_kanji_dict = KanaKanjiDict::load("data/stats-kytea-system_dict.trie")?;
@@ -40,19 +42,19 @@ pub fn learn_structured_perceptron(epochs: i32) -> anyhow::Result<()> {
     let mut unigram_cost: HashMap<String, f32> = HashMap::new();
     let mut bigram_cost: HashMap<(i32, i32), f32> = HashMap::new();
 
-    // let corpuses = read_corpus_file(Path::new("corpus/must.txt"))?;
-    let corpuses = read_corpus_file(Path::new("work/stats-kytea/text/BA/wiki_05"))?;
-
     for _ in 1..epochs {
-        for teacher in corpuses.iter() {
-            learn(
-                teacher,
-                &mut unigram_cost,
-                &mut bigram_cost,
-                &segmenter,
-                &mut graph_builder,
-                &real_system_unigram_lm,
-            )?;
+        for file in get_file_list(Path::new(src_dir))? {
+            let corpuses = read_corpus_file(file.as_path())?;
+            for teacher in corpuses.iter() {
+                learn(
+                    teacher,
+                    &mut unigram_cost,
+                    &mut bigram_cost,
+                    &segmenter,
+                    &mut graph_builder,
+                    &real_system_unigram_lm,
+                )?;
+            }
         }
     }
 

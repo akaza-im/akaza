@@ -33,13 +33,21 @@ impl FullAnnotationCorpus {
         let p: Vec<&str> = src.split(' ').collect();
         let mut start_pos = 0;
         let mut nodes: Vec<WordNode> = Vec::new();
-        for x in p {
-            let (surface, yomi) = x.split_once('/').unwrap();
-            if surface.is_empty() {
-                bail!("Surface is empty: {}", src);
+        for word in p {
+            if word.is_empty() {
+                continue;
             }
-            nodes.push(WordNode::new(start_pos, surface, yomi));
-            start_pos += yomi.len() as i32;
+
+            if let Some((surface, yomi)) = word.split_once('/') {
+                if surface.is_empty() {
+                    bail!("Surface is empty: {}", src);
+                }
+                nodes.push(WordNode::new(start_pos, surface, yomi));
+                start_pos += yomi.len() as i32;
+            } else {
+                nodes.push(WordNode::new(start_pos, word, word));
+                start_pos += word.len() as i32;
+            }
         }
         Ok(FullAnnotationCorpus { nodes })
     }
