@@ -4,7 +4,7 @@ use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 
 use anyhow::Context;
-use log::info;
+
 use regex::Regex;
 use walkdir::WalkDir;
 

@@ -23,7 +23,7 @@ pub fn tokenize(
     match tokenizer_type {
         "lindera-ipadic" => {
             let tokenizer =
-                LinderaTokenizer::new(DictionaryKind::IPADIC, user_dict.map(|f| PathBuf::from(f)))?;
+                LinderaTokenizer::new(DictionaryKind::IPADIC, user_dict.map(PathBuf::from))?;
             let file_list = processor.get_file_list(Path::new(src_dir), Path::new(dst_dir))?;
 
             let result = file_list
