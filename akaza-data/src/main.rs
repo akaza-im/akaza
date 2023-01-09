@@ -8,9 +8,11 @@ use crate::subcmd::make_system_lm::make_system_lm;
 use crate::subcmd::make_text_dict::make_text_dict;
 use crate::subcmd::structured_perceptron::learn_structured_perceptron;
 use crate::subcmd::tokenize::tokenize;
+use crate::subcmd::wfreq::wfreq;
 
 mod subcmd;
 mod tokenizer;
+mod utils;
 mod wikipedia;
 
 #[derive(Debug, Parser)]
@@ -42,6 +44,7 @@ enum Commands {
     LearnStructuredPerceptron(LearnStructuredPerceptronArgs),
     MakeTextDict(MakeTextDictArgs),
     Tokenize(TokenizeArgs),
+    Wfreq(WfreqArgs),
 }
 
 #[derive(Debug, clap::Args)]
@@ -108,6 +111,12 @@ struct TokenizeArgs {
     dst_dir: String,
 }
 
+#[derive(Debug, clap::Args)]
+struct WfreqArgs {
+    src_dir: String,
+    dst_file: String,
+}
+
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
@@ -146,5 +155,6 @@ fn main() -> anyhow::Result<()> {
             opt.src_dir.as_str(),
             opt.dst_dir.as_str(),
         ),
+        Commands::Wfreq(opt) => wfreq(opt.src_dir.as_str(), opt.dst_file.as_str()),
     }
 }

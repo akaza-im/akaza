@@ -27,7 +27,10 @@ work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.
 	tar -xzf work/vibrato/ipadic-mecab-2_7_0.tar.gz -C work/vibrato/
 
  work/wikipedia-tokenized/vibrato-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs
-	cargo run -- tokenize -dict/lindera-userdic.bin -t lindera-ipadic work/extracted work/wikipedia-tokenized/vibrato-ipadic/ -vvv
+	cargo run -- tokenize -t lindera-ipadic work/extracted work/wikipedia-tokenized/vibrato-ipadic/ -vvv
+
+ work/wikipedia-tokenized/vibrato-ipadic.wfreq: work/wikipedia-tokenized/vibrato-ipadic/_SUCCESS src/subcmd/wfreq.rs
+	cargo run -- wfreq work/wikipedia-tokenized/vibrato-ipadic/ work/wikipedia-tokenized/vibrato-ipadic.wfreq -vvv
 
 
 # -------------------------------------------------------------------------
