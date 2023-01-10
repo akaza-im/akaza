@@ -1,7 +1,7 @@
+use chrono::Local;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
-use chrono::Local;
 
 use libakaza::lm::system_unigram_lm::SystemUnigramLMBuilder;
 
@@ -33,7 +33,8 @@ pub fn make_stats_system_unigram_lm(srcpath: &str, dstpath: &str) -> anyhow::Res
     println!("Writing {}", dstpath);
     builder.save(dstpath)?;
 
-    let dumpfname = format!("work/dump/unigram-{}.txt",
+    let dumpfname = format!(
+        "work/dump/unigram-{}.txt",
         Local::now().format("%Y%m%d-%H%M%S")
     );
     println!("Dump to text file: {}", dumpfname);

@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 
-use log::{info, warn, trace};
+use log::{info, trace, warn};
 use rayon::prelude::*;
 
 use crate::utils::get_file_list;

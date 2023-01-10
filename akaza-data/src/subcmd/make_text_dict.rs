@@ -272,4 +272,3 @@ fn make_trie_dict(txtfile: &String, triefile: &String) -> Result<()> {
     kana_kanji_dict.save(triefile)?;
     Ok(())
 }
-
