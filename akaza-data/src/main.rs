@@ -8,7 +8,7 @@ use crate::subcmd::make_stats_system_bigram_lm::make_stats_system_bigram_lm;
 use crate::subcmd::make_stats_system_unigram_lm::make_stats_system_unigram_lm;
 use crate::subcmd::make_text_dict::{make_single_term, make_system_dict};
 use crate::subcmd::structured_perceptron::learn_structured_perceptron;
-use crate::subcmd::tokenize::tokenize;
+use crate::subcmd::tokenize::{tokenize_vibrato_ipadic, tokenize_lindera_ipadic};
 use crate::subcmd::vocab::vocab;
 use crate::subcmd::wfreq::wfreq;
 
@@ -35,7 +35,8 @@ struct Args {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    Tokenize(TokenizeArgs),
+    TokenizeLinderaIpadic(TokenizeLinderaIpadicArgs),
+    TokenizeVibratoIpadic(TokenizeVibratoIpadicArgs),
     Wfreq(WfreqArgs),
     Vocab(VocabArgs),
     #[clap(arg_required_else_help = true)]
@@ -96,11 +97,17 @@ struct LearnStructuredPerceptronArgs {
 
 /// コーパスを形態素解析機でトーカナイズする
 #[derive(Debug, clap::Args)]
-struct TokenizeArgs {
-    #[arg(short, long)]
-    tokenizer: String,
+struct TokenizeLinderaIpadicArgs {
     #[arg(short, long)]
     user_dict: Option<String>,
+    src_dir: String,
+    dst_dir: String,
+}
+
+/// コーパスを形態素解析機でトーカナイズする
+#[derive(Debug, clap::Args)]
+struct TokenizeVibratoIpadicArgs {
+    system_dict: String,
     src_dir: String,
     dst_dir: String,
 }
@@ -167,9 +174,13 @@ fn main() -> anyhow::Result<()> {
         Commands::LearnStructuredPerceptron(opts) => {
             learn_structured_perceptron(&opts.src_dir, opts.epochs)
         }
-        Commands::Tokenize(opt) => tokenize(
-            opt.tokenizer.as_str(),
+        Commands::TokenizeLinderaIpadic(opt) => tokenize_lindera_ipadic(
             opt.user_dict,
+            opt.src_dir.as_str(),
+            opt.dst_dir.as_str(),
+        ),
+        Commands::TokenizeVibratoIpadic(opt) => tokenize_vibrato_ipadic(
+            opt.system_dict,
             opt.src_dir.as_str(),
             opt.dst_dir.as_str(),
         ),

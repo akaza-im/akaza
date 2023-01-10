@@ -28,20 +28,22 @@ work/jawiki/extracted/_SUCCESS: work/jawiki/jawiki-latest-pages-articles.xml
 # Vibrato トーカナイズ
 
 work/vibrato/ipadic-mecab-2_7_0.tar.gz:
+	mkdir -p work/vibrato/
 	wget --no-verbose --no-clobber -O work/vibrato/ipadic-mecab-2_7_0.tar.gz https://github.com/daac-tools/vibrato/releases/download/v0.3.1/ipadic-mecab-2_7_0.tar.gz
 
 work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.gz
+	mkdir -p work/vibrato/
 	tar -xzf work/vibrato/ipadic-mecab-2_7_0.tar.gz -C work/vibrato/
 
- work/jawiki/vibrato-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS
-	cargo run -- tokenize -t vibrato-ipadic work/jawiki/extracted work/jawiki/vibrato-ipadic/ -vvv
+work/jawiki/vibrato-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS work/vibrato/ipadic-mecab-2_7_0/system.dic
+	cargo run -- tokenize-vibrato-ipadic work/vibrato/ipadic-mecab-2_7_0/system.dic work/jawiki/extracted work/jawiki/vibrato-ipadic/ -vvv
 
- work/jawiki/vibrato-ipadic.wfreq: work/jawiki/vibrato-ipadic/_SUCCESS src/subcmd/wfreq.rs
+work/jawiki/vibrato-ipadic.wfreq: work/jawiki/vibrato-ipadic/_SUCCESS src/subcmd/wfreq.rs
 	cargo run -- wfreq work/jawiki/vibrato-ipadic/ work/jawiki/vibrato-ipadic.wfreq -vvv
 
 # threshold が 16 なのはヒューリスティックなパラメータ設定による。
 # vocab ファイルを作る意味は、辞書の作成のためだけなので、わざわざ作らなくてもよいかもしれない。
- work/jawiki/vibrato-ipadic.vocab: work/jawiki/vibrato-ipadic.wfreq src/subcmd/vocab.rs
+work/jawiki/vibrato-ipadic.vocab: work/jawiki/vibrato-ipadic.wfreq src/subcmd/vocab.rs
 	cargo run -- vocab --threshold 16 work/jawiki/vibrato-ipadic.wfreq work/jawiki/vibrato-ipadic.vocab -vvv
 
 
@@ -52,15 +54,15 @@ work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.
 # 以下のようにすれば、ユーザー辞書を追加可能。ただし、jawiki-kana-kanji-dict は wikipedia から生成しているため誤爆もあるので、ここでは使わないほうが良さそう。
 # -u jawiki-kana-kanji-dict/lindera-userdic.bin
 
- work/jawiki/lindera-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS
-	cargo run -- tokenize -t lindera-ipadic work/jawiki/extracted/ work/jawiki/lindera-ipadic/ -vvv
+work/jawiki/lindera-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS
+	cargo run -- tokenize-lindera-ipadic work/jawiki/extracted/ work/jawiki/lindera-ipadic/ -vvv
 
- work/jawiki/lindera-ipadic.wfreq: work/jawiki/lindera-ipadic/_SUCCESS src/subcmd/wfreq.rs
+work/jawiki/lindera-ipadic.wfreq: work/jawiki/lindera-ipadic/_SUCCESS src/subcmd/wfreq.rs
 	cargo run -- wfreq work/jawiki/lindera-ipadic/ work/jawiki/lindera-ipadic.wfreq -vvv
 
 # threshold が 16 なのは、ヒューリスティックなパラメータ設定による。
 # 調整の余地あり。
- work/jawiki/lindera-ipadic.vocab: work/jawiki/lindera-ipadic.wfreq src/subcmd/vocab.rs
+work/jawiki/lindera-ipadic.vocab: work/jawiki/lindera-ipadic.wfreq src/subcmd/vocab.rs
 	cargo run -- vocab --threshold 16 work/jawiki/lindera-ipadic.wfreq work/jawiki/lindera-ipadic.vocab -vvv
 
 

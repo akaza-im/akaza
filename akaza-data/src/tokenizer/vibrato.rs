@@ -11,9 +11,8 @@ pub struct VibratoTokenizer {
 }
 
 impl VibratoTokenizer {
-    pub fn new() -> anyhow::Result<VibratoTokenizer> {
+    pub fn new(dictpath: &str) -> anyhow::Result<VibratoTokenizer> {
         // システム辞書のロードには14秒ぐらいかかります。
-        let dictpath = "work/mecab/ipadic-mecab-2_7_0/system.dic";
         let t1 = SystemTime::now();
         let dict = Dictionary::read(File::open(dictpath)?)?;
         let t2 = SystemTime::now();

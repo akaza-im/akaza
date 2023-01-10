@@ -13,10 +13,10 @@ mod tests {
         basedir() + "/../akaza-data/data/"
     }
 
-    fn load_unigram() -> SystemUnigramLM {
+    fn load_unigram() -> anyhow::Result<SystemUnigramLM> {
         let datadir = datadir();
         let path = datadir + "/stats-vibrato-unigram.trie";
-        SystemUnigramLM::load(&path).unwrap()
+        Ok(SystemUnigramLM::load(&path)?)
     }
 
     fn load_bigram() -> SystemBigramLM {
@@ -27,8 +27,8 @@ mod tests {
     }
 
     #[test]
-    fn test_load() {
-        let unigram: SystemUnigramLM = load_unigram();
+    fn test_load() -> anyhow::Result<()> {
+        let unigram: SystemUnigramLM = load_unigram()?;
         let bigram = load_bigram();
 
         let (id1, score1) = unigram.find("私/わたし").unwrap();
@@ -54,6 +54,7 @@ mod tests {
             .unwrap();
         assert!(bigram_score > 0.0_f32);
 
-        println!("BigramScore={}", bigram_score)
+        println!("BigramScore={}", bigram_score);
+        Ok(())
     }
 }
