@@ -65,7 +65,7 @@ fn make_score_map(wordcnt: HashMap<(i32, i32), u32>) -> HashMap<(i32, i32), f32>
     let v = wordcnt.keys().count();
     wordcnt
         .iter()
-        .map(|(word, cnt)| (word.clone(), calc_score(*cnt, c, v)))
+        .map(|(word, cnt)| (*word, calc_score(*cnt, c, v)))
         .collect::<HashMap<_, _>>()
 }
 

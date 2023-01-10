@@ -34,7 +34,7 @@ pub fn make_stats_system_unigram_lm(srcpath: &str, dstpath: &str) -> anyhow::Res
     builder.save(dstpath)?;
 
     let dumpfname = format!("work/dump/unigram-{}.txt",
-        Local::now().format("%Y%m%d-%H%M%S").to_string()
+        Local::now().format("%Y%m%d-%H%M%S")
     );
     println!("Dump to text file: {}", dumpfname);
     let mut file = File::create(dumpfname)?;
@@ -49,7 +49,8 @@ fn homograph_hack(wordcnt: &mut HashMap<String, u32>) {
     // 同形異音字の処理
     // mecab では "日本" は "日本/にほん" に処理されるため、日本/にっぽん が表出しない。
     // かな漢字変換上は、同一程度の確率で出るだろうと予想されることから、この2つの確率を同じに設定する。
-    for (src, dst) in [("日本/にほん", "日本/にっぽん")] {
+    {
+        let (src, dst) = ("日本/にほん", "日本/にっぽん");
         try_copy_cost(src, dst, wordcnt);
         try_copy_cost(dst, src, wordcnt);
     }

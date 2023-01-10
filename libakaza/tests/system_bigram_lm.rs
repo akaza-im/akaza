@@ -16,7 +16,7 @@ mod tests {
     fn load_unigram() -> anyhow::Result<SystemUnigramLM> {
         let datadir = datadir();
         let path = datadir + "/stats-vibrato-unigram.trie";
-        Ok(SystemUnigramLM::load(&path)?)
+        SystemUnigramLM::load(&path)
     }
 
     fn load_bigram() -> SystemBigramLM {
