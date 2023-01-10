@@ -25,11 +25,11 @@ impl VibratoTokenizer {
         // ユーザー辞書として jawiki-kana-kanji-dict を使うと
         // 変な単語を間違って覚えることがあるので、
         // トーカナイズフェーズからは外す
-//      let dict = dict
-//          .reset_user_lexicon_from_reader(Some(File::open(
-//              "jawiki-kana-kanji-dict/mecab-userdic.csv",
-//          )?))
-//          .with_context(|| "Opening userdic")?;
+        //      let dict = dict
+        //          .reset_user_lexicon_from_reader(Some(File::open(
+        //              "jawiki-kana-kanji-dict/mecab-userdic.csv",
+        //          )?))
+        //          .with_context(|| "Opening userdic")?;
 
         let tokenizer = vibrato::Tokenizer::new(dict);
 
@@ -88,7 +88,7 @@ mod tests {
 
     #[test]
     fn test() -> anyhow::Result<()> {
-        let runner = VibratoTokenizer::new()?;
+        let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic")?;
         runner.tokenize("私の名前は中野です。")?;
         Ok(())
     }
@@ -111,7 +111,7 @@ mod tests {
             .is_test(true)
             .try_init();
 
-        let runner = VibratoTokenizer::new()?;
+        let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic")?;
         assert_eq!(
             runner.tokenize("書いていたものである")?,
             "書いて/かいて いた/いた もの/もの である/である"
