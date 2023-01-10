@@ -122,7 +122,7 @@ impl GraphBuilder {
                                 (end_pos - segmented_yomi.len()) as i32,
                                 &surface,
                                 segmented_yomi,
-                                self.system_unigram_lm.find(kanji.as_str()),
+                                self.system_unigram_lm.find(surface.as_str()),
                             );
                             vec.push(node);
                         }
