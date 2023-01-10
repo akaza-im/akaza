@@ -4,8 +4,8 @@ use clap::{Parser, Subcommand};
 
 use crate::subcmd::check::check;
 use crate::subcmd::evaluate::evaluate;
+use crate::subcmd::make_stats_system_bigram_lm::make_stats_system_bigram_lm;
 use crate::subcmd::make_stats_system_unigram_lm::make_stats_system_unigram_lm;
-use crate::subcmd::make_system_lm::make_system_lm;
 use crate::subcmd::make_text_dict::{make_single_term, make_system_dict};
 use crate::subcmd::structured_perceptron::learn_structured_perceptron;
 use crate::subcmd::tokenize::tokenize;
@@ -35,26 +35,27 @@ struct Args {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    Tokenize(TokenizeArgs),
+    Wfreq(WfreqArgs),
+    Vocab(VocabArgs),
     #[clap(arg_required_else_help = true)]
     MakeSystemDict(MakeSystemDictArgs),
     MakeSingleTerm(MakeSingleTermArgs),
     #[clap(arg_required_else_help = true)]
-    MakeSystemLanguageModel(MakeSystemLanguageModelArgs),
+    MakeStatsSystemBigramLM(MakeStatsSystemBigramLMArgs),
+    MakeStatsSystemUnigramLM(MakeStatsSystemUnigramLMArgs),
+
     #[clap(arg_required_else_help = true)]
     Evaluate(EvaluateArgs),
     #[clap(arg_required_else_help = true)]
     Check(CheckArgs),
+
     LearnStructuredPerceptron(LearnStructuredPerceptronArgs),
-    Tokenize(TokenizeArgs),
-    Wfreq(WfreqArgs),
-    Vocab(VocabArgs),
-    MakeStatsSystemUnigramLM(MakeStatsSystemUnigramLMArgs),
 }
 
 #[derive(Debug, clap::Args)]
 /// システム辞書ファイルを作成する。
 struct MakeSystemDictArgs {
-    #[arg(short, long)]
     vocab_file: String,
     /// デバッグのための中間テキストファイル
     txt_file: String,
@@ -67,15 +68,6 @@ struct MakeSystemDictArgs {
 struct MakeSingleTermArgs {
     txt_file: String,
     trie_file: String,
-}
-
-/// システム言語モデルを生成する。
-#[derive(Debug, clap::Args)]
-struct MakeSystemLanguageModelArgs {
-    unigram_src: String,
-    unigram_dst: String,
-    bigram_src: String,
-    bigram_dst: String,
 }
 
 /// 変換精度を評価する
@@ -137,6 +129,14 @@ struct MakeStatsSystemUnigramLMArgs {
     dst_file: String,
 }
 
+/// システム言語モデルを生成する。
+#[derive(Debug, clap::Args)]
+struct MakeStatsSystemBigramLMArgs {
+    corpus_dir: String,
+    unigram_trie_file: String,
+    bigram_trie_file: String,
+}
+
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
@@ -162,12 +162,6 @@ fn main() -> anyhow::Result<()> {
             make_system_dict(&opt.txt_file, &opt.trie_file, Some(opt.vocab_file.as_str()))
         }
         Commands::MakeSingleTerm(opt) => make_single_term(&opt.txt_file, &opt.trie_file),
-        Commands::MakeSystemLanguageModel(opt) => make_system_lm(
-            &opt.unigram_src,
-            &opt.unigram_dst,
-            &opt.bigram_src,
-            &opt.bigram_dst,
-        ),
         Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, &opt.system_data_dir),
         Commands::Check(opt) => check(&opt.yomi),
         Commands::LearnStructuredPerceptron(opts) => {
@@ -181,6 +175,11 @@ fn main() -> anyhow::Result<()> {
         ),
         Commands::Wfreq(opt) => wfreq(opt.src_dir.as_str(), opt.dst_file.as_str()),
         Commands::Vocab(opt) => vocab(opt.src_file.as_str(), opt.dst_file.as_str(), opt.threshold),
+        Commands::MakeStatsSystemBigramLM(opt) => make_stats_system_bigram_lm(
+            &opt.corpus_dir,
+            &opt.unigram_trie_file,
+            &opt.bigram_trie_file,
+        ),
         Commands::MakeStatsSystemUnigramLM(opt) => {
             make_stats_system_unigram_lm(opt.src_file.as_str(), opt.dst_file.as_str())
         }

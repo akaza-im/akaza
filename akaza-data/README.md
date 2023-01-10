@@ -69,5 +69,12 @@ bigram entries:
 
 5M * 10 = 50MB
 
+## LICENSE
+
+生成データには GPL の SKK の辞書が含まれているので、GPL 扱い。
+これは、今後 SudachiDic か IPADIC か UniDic か何かをベースにするように変更するかもしれない。
+
+それ以外の Rust で書かれたコードベースなどは MIT License.
+
 ## See also
 

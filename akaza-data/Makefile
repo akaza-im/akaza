@@ -3,8 +3,10 @@ DATADIR ?= $(PREFIX)/share
 DESTDIR ?=
 
 
-all: data/stats-kytea-system_dict.trie data/stats-kytea-lm_v2_2gram.trie data/stats-kytea-lm_v2_2gram.trie \
-	data/stats-kytea-system_dict.trie data/stats-kytea-single_term.trie work/jawiki/vibrato-ipadic.vocab
+all: data/stats-vibrato-bigram.trie \
+	 data/stats-vibrato-bigram.trie \
+	 data/single_term.trie \
+	 data/system_dict.trie
 
 # -------------------------------------------------------------------------
 
@@ -38,7 +40,7 @@ work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.
 	cargo run -- wfreq work/jawiki/vibrato-ipadic/ work/jawiki/vibrato-ipadic.wfreq -vvv
 
 # threshold が 16 なのはヒューリスティックなパラメータ設定による。
-# vocab ファイルを作る意味は、辞書の作成のためだけなので、わざわざ作らなく手もよいかもしれない。
+# vocab ファイルを作る意味は、辞書の作成のためだけなので、わざわざ作らなくてもよいかもしれない。
  work/jawiki/vibrato-ipadic.vocab: work/jawiki/vibrato-ipadic.wfreq src/subcmd/vocab.rs
 	cargo run -- vocab --threshold 16 work/jawiki/vibrato-ipadic.wfreq work/jawiki/vibrato-ipadic.vocab -vvv
 
@@ -69,9 +71,9 @@ work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.
 data/stats-vibrato-unigram.trie: work/jawiki/vibrato-ipadic.wfreq
 	cargo run -- make-stats-system-unigram-lm work/jawiki/vibrato-ipadic.wfreq data/stats-vibrato-unigram.trie
 
-# TODO: 未実装
 data/stats-vibrato-bigram.trie: data/stats-vibrato-unigram.trie data/stats-vibrato-unigram.trie
-	cargo run -- make-stats-system-bigram-lm data/stats-vibrato-unigram.trie work/jawiki/vibrato-ipadic/ data/stats-vibrato-bigram.trie
+	cargo run -- make-stats-system-bigram-lm work/jawiki/vibrato-ipadic/ \
+		data/stats-vibrato-unigram.trie data/stats-vibrato-bigram.trie
 
 # -------------------------------------------------------------------------
 
@@ -83,9 +85,9 @@ data/stats-vibrato-bigram.trie: data/stats-vibrato-unigram.trie data/stats-vibra
 
 # そして、そもそもテキストファイル生成フェーズとバイナリ生成フェーズにわける意味があまりないかもしれない。
 
-# work/system_dict.txt, work/single_term.txt を生成しているのは、辞書の状況調査のため。
+# work/system_dict.txt, work/single_term.txt を生成しているのは、辞書のデバッグのため。
 
-work/single_term.trie: src/subcmd/make_text_dict.rs
+data/single_term.trie: src/subcmd/make_text_dict.rs
 	cargo run --release -- make-single-term \
 		work/single_term.txt \
 		data/single_term.trie \
@@ -93,7 +95,7 @@ work/single_term.trie: src/subcmd/make_text_dict.rs
 
 data/system_dict.trie: work/jawiki/vibrato-ipadic.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_text_dict.rs
 	cargo run --release -- make-system-dict \
-		--vocab-file work/jawiki/vibrato-ipadic.vocab \
+		work/jawiki/vibrato-ipadic.vocab \
 		work/system_dict.txt \
 		data/system_dict.trie \
 		-vvv

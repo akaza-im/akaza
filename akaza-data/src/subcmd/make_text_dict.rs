@@ -109,7 +109,7 @@ mod system_dict {
         for line in BufReader::new(rfp).lines() {
             let line = line?;
             let Some((surface, yomi)) = line.split_once('/') else {
-                bail!("Cannot parse vocab file: {}", line);
+                bail!("Cannot parse vocab file: {:?} in {}", line, vocab_file_path);
             };
             if yomi == "UNK" {
                 // なんのときに発生するかはわからないが、なにか意味がありそうな処理。

@@ -2,11 +2,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
-
-
-
-
-use libakaza::lm::system_unigram_lm::{SystemUnigramLMBuilder};
+use libakaza::lm::system_unigram_lm::SystemUnigramLMBuilder;
 
 /// 統計的かな漢字変換のためのユニグラムシステム言語モデルの作成
 ///
@@ -62,7 +58,7 @@ fn make_score_map(wordcnt: HashMap<String, u32>) -> HashMap<String, f32> {
         .collect::<HashMap<_, _>>()
 }
 
-fn calc_score(n_words: u32, c: u32, v: usize) -> f32 {
+pub fn calc_score(n_words: u32, c: u32, v: usize) -> f32 {
     let alpha = 0.00001;
     -f32::log10(((n_words as f32) + alpha) / ((c as f32) + alpha * (v as f32)))
 }

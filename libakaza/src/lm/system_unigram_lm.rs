@@ -1,6 +1,7 @@
 use anyhow::Result;
 use log::info;
 use marisa_sys::{Keyset, Marisa};
+use std::collections::HashMap;
 
 /**
  * unigram 言語モデル。
@@ -92,6 +93,17 @@ impl SystemUnigramLM {
         } else {
             None
         }
+    }
+
+    pub fn as_id_map(&self) -> HashMap<String, i32> {
+        let mut map = HashMap::new();
+        self.marisa.predictive_search("".as_bytes(), |word, id| {
+            let idx = word.iter().position(|f| *f == b'\xff').unwrap();
+            let word = String::from_utf8_lossy(&word[0..idx]);
+            map.insert(word.to_string(), id as i32);
+            true
+        });
+        map
     }
 }
 
