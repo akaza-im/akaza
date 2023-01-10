@@ -58,7 +58,7 @@ mod system_dict {
 
         for (path, encoding) in dictionary_sources {
             let (ari, nasi) = read_skkdict(Path::new(path), encoding)?;
-            dicts.push(validate_dict(nasi).with_context(|| path.to_string())?);
+            dicts.push(validate_dict(cleanup_dict(&nasi)).with_context(|| path.to_string())?);
             dicts.push(validate_dict(ari2nasi.ari2nasi(&ari)?).with_context(|| path.to_string())?);
         }
         if let Some(vocab_file_path) = vocab_file_path {
@@ -74,6 +74,21 @@ mod system_dict {
         write_dict(txt_file, dicts)?;
         make_trie_dict(&txt_file.to_string(), &trie_file.to_string())?;
         Ok(())
+    }
+
+    fn cleanup_dict(dict: &HashMap<String, Vec<String>>) -> HashMap<String, Vec<String>> {
+        // 全角空白が入っているとテキスト処理時におかしくなりがちなので調整。
+        dict.iter()
+            .map(|(k, vs)| {
+                (
+                    k.to_string(),
+                    vs.iter()
+                        .filter(|m| m.as_str() != "\u{3000}")
+                        .map(|s| s.to_string())
+                        .collect(),
+                )
+            })
+            .collect::<HashMap<String, Vec<String>>>()
     }
 
     fn make_corpus_dict() -> Result<HashMap<String, Vec<String>>> {

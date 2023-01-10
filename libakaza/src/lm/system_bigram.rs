@@ -1,5 +1,6 @@
 use anyhow::Result;
 use half::f16;
+use log::info;
 
 use crate::trie::{Trie, TrieBuilder};
 
@@ -59,6 +60,7 @@ pub struct SystemBigramLM {
 
 impl SystemBigramLM {
     pub fn load(filename: &str) -> Result<SystemBigramLM> {
+        info!("Loading system-bigram: {}", filename);
         let trie = Trie::load(filename)?;
         Ok(SystemBigramLM { trie })
     }
