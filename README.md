@@ -26,20 +26,30 @@ kkc はモデルデータを自分で再構築することができない。気�
 
 ## Dependencies
 
+### Runtime dependencies
+
  * ibus
  * marisa-trie
 
+### Build time dependencies
+
+ * rust
+
 ## Install 方法
 
-    cd akaza-data/ && pip install -r requirements.txt
-    cd akaza-core/ && cargo install
-    make && sudo make install && ibus restart
+ibus-akaza をインストールしてください。
 
-ibus 側の設定をすればOKです。
+    cd akaza-data/ && sudo make install
+    cargo install --path ibus-akaza/
+    sudo rustup stable
+    cd ibus-akaza && make && sudo make install
+    ibus restart
 
 ## 設定方法
 
 ### config.yml
+
+**この機能は現在未実装です**
 
 XDG の設定ファイルディレクトリ以下、通常であれば `$HOME/.config/ibus-akaza/config.yml` に設定ファイルを書くことができます。
 
