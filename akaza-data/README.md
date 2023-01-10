@@ -7,6 +7,7 @@ System dictionary/language model package for Akaza.
 ## How to build this?
 
     make
+    make install
 
 ## Dependencies
 
@@ -16,6 +17,8 @@ System dictionary/language model package for Akaza.
 * wget
 
 ## How it works?
+
+TODO: 書き直し
 
 1. 日本語版 wikipedia の jawiki-latest-pages-articles.xml.bz2 を取得
 2. bunzip2 で伸長
@@ -68,6 +71,16 @@ bigram entries:
 - 50:   803,462
 
 5M * 10 = 50MB
+
+## 調整方法
+
+誤変換が多いな、と思ったら。
+
+* vibrato がトーカナイズできてなくてスコアがついてないな、と思った場合は mecab-user-dict.csv にエントリーを追加してください。
+    * akaza-data/ で make all したあとに、該当単語が work/jawiki/vibrato-ipadic.vocab に入っていなければ、mecab-user-dict.csv
+      に追加する必要があります
+    * このファイルには、明らかに必要な元号/国名などのみを追加してください。
+    * 固有名詞などは、入れたとて Wikipedia 内での記述回数が少ないために、スコアがつかないので無意味です。
 
 ## LICENSE
 

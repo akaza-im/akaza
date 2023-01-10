@@ -11,13 +11,14 @@ use crate::wikipedia::wikipedia_extracted::ExtractedWikipediaProcessor;
 
 pub fn tokenize_vibrato_ipadic(
     system_dict: String,
+    user_dict: Option<String>,
     src_dir: &str,
     dst_dir: &str,
 ) -> anyhow::Result<()> {
     info!("tokenize: {} => {}", src_dir, dst_dir);
     let processor = ExtractedWikipediaProcessor::new()?;
 
-    let tokenizer = VibratoTokenizer::new(system_dict.as_str())?;
+    let tokenizer = VibratoTokenizer::new(system_dict.as_str(), user_dict)?;
     let file_list = processor.get_file_list(Path::new(src_dir), Path::new(dst_dir))?;
 
     let result = file_list
@@ -48,8 +49,7 @@ pub fn tokenize_lindera_ipadic(
     info!("tokenize: {} => {}", src_dir, dst_dir);
     let processor = ExtractedWikipediaProcessor::new()?;
 
-    let tokenizer =
-        LinderaTokenizer::new(DictionaryKind::IPADIC, user_dict.map(PathBuf::from))?;
+    let tokenizer = LinderaTokenizer::new(DictionaryKind::IPADIC, user_dict.map(PathBuf::from))?;
     let file_list = processor.get_file_list(Path::new(src_dir), Path::new(dst_dir))?;
 
     let result = file_list

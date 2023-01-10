@@ -1,7 +1,9 @@
+use anyhow::Context;
 use std::fs::File;
 use std::time::SystemTime;
 
 use kelp::{kata2hira, ConvOption};
+use log::info;
 use vibrato::{Dictionary, Tokenizer};
 
 use crate::tokenizer::base::{merge_terms_ipadic, AkazaTokenizer, IntermediateToken};
@@ -11,10 +13,10 @@ pub struct VibratoTokenizer {
 }
 
 impl VibratoTokenizer {
-    pub fn new(dictpath: &str) -> anyhow::Result<VibratoTokenizer> {
+    pub fn new(dictpath: &str, user_dict: Option<String>) -> anyhow::Result<VibratoTokenizer> {
         // システム辞書のロードには14秒ぐらいかかります。
         let t1 = SystemTime::now();
-        let dict = Dictionary::read(File::open(dictpath)?)?;
+        let mut dict = Dictionary::read(File::open(dictpath)?)?;
         let t2 = SystemTime::now();
         println!(
             "Loaded {} in {}msec",
@@ -25,11 +27,12 @@ impl VibratoTokenizer {
         // ユーザー辞書として jawiki-kana-kanji-dict を使うと
         // 変な単語を間違って覚えることがあるので、
         // トーカナイズフェーズからは外す
-        //      let dict = dict
-        //          .reset_user_lexicon_from_reader(Some(File::open(
-        //              "jawiki-kana-kanji-dict/mecab-userdic.csv",
-        //          )?))
-        //          .with_context(|| "Opening userdic")?;
+        if let Some(user_dict) = user_dict {
+            info!("Loading user dictionary: {}", user_dict);
+            dict = dict
+                .reset_user_lexicon_from_reader(Some(File::open(user_dict)?))
+                .with_context(|| "Opening userdic")?;
+        }
 
         let tokenizer = vibrato::Tokenizer::new(dict);
 
