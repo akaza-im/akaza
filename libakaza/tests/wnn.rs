@@ -3,6 +3,7 @@ mod tests {
     use std::collections::vec_deque::VecDeque;
 
     use anyhow::Result;
+    use log::LevelFilter;
 
     use libakaza::akaza_builder::{Akaza, AkazaBuilder};
     use libakaza::graph::graph_resolver::Candidate;
@@ -36,7 +37,10 @@ mod tests {
 
     #[test]
     fn test_sushi() -> Result<()> {
-        env_logger::builder().is_test(true).try_init()?;
+        let _ = env_logger::builder()
+            .filter_level(LevelFilter::Trace)
+            .is_test(true)
+            .try_init();
 
         let yomi = "すし";
         let got: Vec<VecDeque<Candidate>> = load_akaza()?.convert(yomi, &vec![])?;
@@ -49,9 +53,13 @@ mod tests {
 
     #[test]
     fn test_with_data() -> anyhow::Result<()> {
+        let _ = env_logger::builder()
+            .filter_level(LevelFilter::Trace)
+            .is_test(true)
+            .try_init();
         let data: Vec<(&str, &str)> = vec![
-            ("きめつのやいば", "鬼滅の刃"),
             ("わたしのなまえはなかのです", "私の名前は中野です"),
+            ("きめつのやいば", "鬼滅の刃"),
             ("かたがわいっしゃせん", "片側一車線"),
             ("みかくにん", "未確認"),
             ("はくしかてい", "博士課程"),

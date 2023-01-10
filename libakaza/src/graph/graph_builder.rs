@@ -4,6 +4,7 @@ use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 use kelp::{hira2kata, ConvOption};
+use log::trace;
 
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::SegmentationResult;
@@ -91,8 +92,10 @@ impl GraphBuilder {
                             (end_pos - segmented_yomi.len()) as i32,
                             &kanji,
                             segmented_yomi,
-                            self.system_unigram_lm.find(kanji.as_str()),
+                            self.system_unigram_lm
+                                .find((kanji.to_string() + "/" + segmented_yomi).as_str()),
                         );
+                        trace!("WordIDScore: {:?}", node.word_id_and_score);
                         vec.push(node);
                         seen.insert(kanji.to_string());
                     }
@@ -122,7 +125,8 @@ impl GraphBuilder {
                                 (end_pos - segmented_yomi.len()) as i32,
                                 &surface,
                                 segmented_yomi,
-                                self.system_unigram_lm.find(surface.as_str()),
+                                self.system_unigram_lm
+                                    .find((surface.to_string() + "/" + segmented_yomi).as_str()),
                             );
                             vec.push(node);
                         }
