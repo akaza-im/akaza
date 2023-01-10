@@ -91,7 +91,7 @@ mod tests {
 
     #[test]
     fn test() -> anyhow::Result<()> {
-        let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic")?;
+        let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic", None)?;
         runner.tokenize("私の名前は中野です。")?;
         Ok(())
     }
@@ -114,7 +114,7 @@ mod tests {
             .is_test(true)
             .try_init();
 
-        let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic")?;
+        let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic", None)?;
         assert_eq!(
             runner.tokenize("書いていたものである")?,
             "書いて/かいて いた/いた もの/もの である/である"
