@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::time::SystemTime;
 
-use anyhow::Context;
 use kelp::{kata2hira, ConvOption};
 use vibrato::{Dictionary, Tokenizer};
 
@@ -24,11 +23,14 @@ impl VibratoTokenizer {
             t2.duration_since(t1)?.as_millis()
         );
 
-        let dict = dict
-            .reset_user_lexicon_from_reader(Some(File::open(
-                "jawiki-kana-kanji-dict/mecab-userdic.csv",
-            )?))
-            .with_context(|| "Opening userdic")?;
+        // ユーザー辞書として jawiki-kana-kanji-dict を使うと
+        // 変な単語を間違って覚えることがあるので、
+        // トーカナイズフェーズからは外す
+//      let dict = dict
+//          .reset_user_lexicon_from_reader(Some(File::open(
+//              "jawiki-kana-kanji-dict/mecab-userdic.csv",
+//          )?))
+//          .with_context(|| "Opening userdic")?;
 
         let tokenizer = vibrato::Tokenizer::new(dict);
 

@@ -13,6 +13,7 @@ System dictionary/language model package for Akaza.
 * wikiextractor
 * python3
 * rust
+* wget
 
 ## How it works?
 
