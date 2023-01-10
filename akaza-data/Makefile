@@ -45,10 +45,13 @@ work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.
 
 # -------------------------------------------------------------------------
 
-# Lindera の処理
+# Lindera によるトーカナイズ
+
+# 以下のようにすれば、ユーザー辞書を追加可能。ただし、jawiki-kana-kanji-dict は wikipedia から生成しているため誤爆もあるので、ここでは使わないほうが良さそう。
+# -u jawiki-kana-kanji-dict/lindera-userdic.bin
 
  work/jawiki/lindera-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS
-	cargo run -- tokenize -u jawiki-kana-kanji-dict/lindera-userdic.bin -t lindera-ipadic work/jawiki/extracted/ work/jawiki/lindera-ipadic/ -vvv
+	cargo run -- tokenize -t lindera-ipadic work/jawiki/extracted/ work/jawiki/lindera-ipadic/ -vvv
 
  work/jawiki/lindera-ipadic.wfreq: work/jawiki/lindera-ipadic/_SUCCESS src/subcmd/wfreq.rs
 	cargo run -- wfreq work/jawiki/lindera-ipadic/ work/jawiki/lindera-ipadic.wfreq -vvv
