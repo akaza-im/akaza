@@ -116,7 +116,7 @@ impl LatticeGraph {
     }
 
     pub(crate) fn get_node_cost(&self, node: &WordNode) -> f32 {
-        let key = node.kanji.to_string() + "/" + &node.yomi;
+        let key = node.key();
 
         if let Some(user_cost) = self
             .user_data
@@ -128,7 +128,7 @@ impl LatticeGraph {
             return user_cost;
         }
 
-        return if let Some((_, system_unigram_cost)) = self.system_unigram_lm.find(key.as_str()) {
+        return if let Some((_, system_unigram_cost)) = node.word_id_and_score {
             trace!("HIT!: {}, {}", node.key(), system_unigram_cost);
             system_unigram_cost
         } else if node.kanji.len() < node.yomi.len() {
@@ -146,10 +146,10 @@ impl LatticeGraph {
         // TODO user bigram cost
 
         // TODO ID 引く処理のキャッシュ。
-        let Some((prev_id, _)) = self.system_unigram_lm.find(prev.key().as_str()) else {
+        let Some((prev_id, _)) = prev.word_id_and_score else {
             return DEFAULT_SCORE;
         };
-        let Some((node_id, _)) = self.system_unigram_lm.find(node.key().as_str()) else {
+        let Some((node_id, _)) = node.word_id_and_score else {
             return DEFAULT_SCORE;
         };
         let Some(cost) = self.system_bigram_lm.get_edge_cost(prev_id, node_id) else {

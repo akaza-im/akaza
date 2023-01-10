@@ -9,6 +9,7 @@ pub struct WordNode {
     /// 読み仮名
     pub yomi: String,
     pub cost: f32,
+    pub word_id_and_score: Option<(i32, f32)>,
 }
 
 impl Hash for WordNode {
@@ -46,6 +47,7 @@ impl WordNode {
             kanji: "__BOS__".to_string(),
             yomi: "__BOS__".to_string(),
             cost: 0_f32,
+            word_id_and_score: None,
         }
     }
     pub(crate) fn create_eos(start_pos: i32) -> WordNode {
@@ -54,9 +56,15 @@ impl WordNode {
             kanji: "__EOS__".to_string(),
             yomi: "__EOS__".to_string(),
             cost: 0_f32,
+            word_id_and_score: None,
         }
     }
-    pub fn new(start_pos: i32, kanji: &str, yomi: &str) -> WordNode {
+    pub fn new(
+        start_pos: i32,
+        kanji: &str,
+        yomi: &str,
+        word_id_and_score: Option<(i32, f32)>,
+    ) -> WordNode {
         assert!(
             !kanji.is_empty(),
             "Kanji shouldn't be empty: {}/{}",
@@ -69,6 +77,7 @@ impl WordNode {
             kanji: kanji.to_string(),
             yomi: yomi.to_string(),
             cost: 0_f32,
+            word_id_and_score,
         }
     }
 }

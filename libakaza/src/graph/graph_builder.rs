@@ -91,6 +91,7 @@ impl GraphBuilder {
                             (end_pos - segmented_yomi.len()) as i32,
                             &kanji,
                             segmented_yomi,
+                            self.system_unigram_lm.find(kanji.as_str()),
                         );
                         vec.push(node);
                         seen.insert(kanji.to_string());
@@ -108,6 +109,7 @@ impl GraphBuilder {
                         (end_pos - segmented_yomi.len()) as i32,
                         surface,
                         segmented_yomi,
+                        None,
                     );
                     vec.push(node);
                 }
@@ -120,6 +122,7 @@ impl GraphBuilder {
                                 (end_pos - segmented_yomi.len()) as i32,
                                 &surface,
                                 segmented_yomi,
+                                self.system_unigram_lm.find(kanji.as_str()),
                             );
                             vec.push(node);
                         }
