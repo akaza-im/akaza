@@ -38,6 +38,7 @@ work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.
 	cargo run -- wfreq work/jawiki/vibrato-ipadic/ work/jawiki/vibrato-ipadic.wfreq -vvv
 
 # threshold が 16 なのはヒューリスティックなパラメータ設定による。
+# vocab ファイルを作る意味は、辞書の作成のためだけなので、わざわざ作らなく手もよいかもしれない。
  work/jawiki/vibrato-ipadic.vocab: work/jawiki/vibrato-ipadic.wfreq src/subcmd/vocab.rs
 	cargo run -- vocab --threshold 16 work/jawiki/vibrato-ipadic.wfreq work/jawiki/vibrato-ipadic.vocab -vvv
 
@@ -52,41 +53,22 @@ work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.
  work/jawiki/lindera-ipadic.wfreq: work/jawiki/lindera-ipadic/_SUCCESS src/subcmd/wfreq.rs
 	cargo run -- wfreq work/jawiki/lindera-ipadic/ work/jawiki/lindera-ipadic.wfreq -vvv
 
-# threshold が 16 なのはヒューリスティックなパラメータ設定による。
+# threshold が 16 なのは、ヒューリスティックなパラメータ設定による。
+# 調整の余地あり。
  work/jawiki/lindera-ipadic.vocab: work/jawiki/lindera-ipadic.wfreq src/subcmd/vocab.rs
 	cargo run -- vocab --threshold 16 work/jawiki/lindera-ipadic.wfreq work/jawiki/lindera-ipadic.vocab -vvv
 
 
 # -------------------------------------------------------------------------
 
-# 以下は、「統計的かな漢字変換(Kyteaで処理したコーパス使用) 用の処理
+# 統計的仮名かな漢字変換のためのモデル作成処理
 
-work/jawiki/kytea/_SUCCESS: work/jawiki/extracted/_SUCCESS bin/010_wiki2annotated.py
-	python3 bin/010_wiki2annotated.py
+data/stats-vibrato-unigram.trie: work/jawiki/vibrato-ipadic.wfreq
+	cargo run -- make-stats-system-unigram-lm work/jawiki/vibrato-ipadic.wfreq data/stats-vibrato-unigram.trie
 
-work/stats-kytea/text/BE/wiki_13: work/jawiki/kytea/_SUCCESS bin/020_annotated2text.py bin/akaza_data_utils/merge_terms.py
-	python3 bin/020_annotated2text.py
-
-work/stats-kytea/jawiki.wfreq: work/stats-kytea/text/BE/wiki_13 bin/030_text2wfreq.py
-	python3 bin/030_text2wfreq.py
-
-# 118,334=entry count of libkkc-data.
-work/stats-kytea/jawiki.vocab: work/stats-kytea/jawiki.wfreq bin/040_wfreq2vocab.py
-	python3 bin/040_wfreq2vocab.py
-
-# very slow
-work/stats-kytea/ngram/BE/wiki_13.1gram.txt: work/stats-kytea/jawiki.vocab  bin/050_dumpngram.py
-	python3 bin/050_dumpngram.py work/stats-kytea/jawiki.vocab
-
-work/stats-kytea/jawiki.merged-2gram.txt: work/stats-kytea/ngram/BE/wiki_13.1gram.txt work/stats-kytea/jawiki.vocab bin/060_create-system_language_model.py
-	python3 bin/060_create-system_language_model.py
-
-work/stats-kytea/jawiki.system_dict.txt: work/stats-kytea/jawiki.single_term.txt
-
-data/stats-kytea-lm_v2_2gram.trie: work/stats-kytea/jawiki.merged-2gram.txt
-	cargo run -- make-system-language-model work/stats-kytea/jawiki.merged-1gram.txt data/stats-kytea-lm_v2_1gram.trie \
-    	work/stats-kytea/jawiki.merged-2gram.txt data/stats-kytea-lm_v2_2gram.trie
-
+# TODO: 未実装
+data/stats-vibrato-bigram.trie: data/stats-vibrato-unigram.trie data/stats-vibrato-unigram.trie
+	cargo run -- make-stats-system-bigram-lm data/stats-vibrato-unigram.trie work/jawiki/vibrato-ipadic/ data/stats-vibrato-bigram.trie
 
 # -------------------------------------------------------------------------
 

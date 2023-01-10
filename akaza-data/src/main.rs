@@ -1,8 +1,10 @@
-use clap::{Parser, Subcommand};
 use std::io::Write;
+
+use clap::{Parser, Subcommand};
 
 use crate::subcmd::check::check;
 use crate::subcmd::evaluate::evaluate;
+use crate::subcmd::make_stats_system_unigram_lm::make_stats_system_unigram_lm;
 use crate::subcmd::make_system_lm::make_system_lm;
 use crate::subcmd::make_text_dict::{make_single_term, make_system_dict};
 use crate::subcmd::structured_perceptron::learn_structured_perceptron;
@@ -46,6 +48,7 @@ enum Commands {
     Tokenize(TokenizeArgs),
     Wfreq(WfreqArgs),
     Vocab(VocabArgs),
+    MakeStatsSystemUnigramLM(MakeStatsSystemUnigramLMArgs),
 }
 
 #[derive(Debug, clap::Args)]
@@ -127,6 +130,13 @@ struct VocabArgs {
     dst_file: String,
 }
 
+/// ユニグラム言語モデルを作成する。
+#[derive(Debug, clap::Args)]
+struct MakeStatsSystemUnigramLMArgs {
+    src_file: String,
+    dst_file: String,
+}
+
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
@@ -171,5 +181,8 @@ fn main() -> anyhow::Result<()> {
         ),
         Commands::Wfreq(opt) => wfreq(opt.src_dir.as_str(), opt.dst_file.as_str()),
         Commands::Vocab(opt) => vocab(opt.src_file.as_str(), opt.dst_file.as_str(), opt.threshold),
+        Commands::MakeStatsSystemUnigramLM(opt) => {
+            make_stats_system_unigram_lm(opt.src_file.as_str(), opt.dst_file.as_str())
+        }
     }
 }
