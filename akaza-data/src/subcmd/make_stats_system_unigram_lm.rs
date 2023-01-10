@@ -2,11 +2,11 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
-use anyhow::{anyhow, Context};
-use anyhow::{bail, Result};
 
-use libakaza::lm::system_bigram::{SystemBigramLM, SystemBigramLMBuilder};
-use libakaza::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
+
+
+
+use libakaza::lm::system_unigram_lm::{SystemUnigramLMBuilder};
 
 /// 統計的かな漢字変換のためのユニグラムシステム言語モデルの作成
 ///
