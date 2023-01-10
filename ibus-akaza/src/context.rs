@@ -664,4 +664,17 @@ impl AkazaContext {
         self.node_selected.clear();
         Ok(())
     }
+
+    pub fn do_candidate_clicked(
+        &mut self,
+        engine: *mut IBusEngine,
+        index: guint,
+        _button: guint,
+        _state: guint,
+    ) {
+        info!("do_candidate_clicked");
+        if self.set_lookup_table_cursor_pos_in_current_page(index as i32) {
+            self.commit_candidate(engine)
+        }
+    }
 }

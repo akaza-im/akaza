@@ -8,6 +8,7 @@
 // Callback for key typed.
 static void* global_context = NULL;
 static ibus_akaza_callback_key_event global_key_event_cb = NULL;
+static ibus_akaza_callback_candidate_clicked global_candidate_clicked_cb = NULL;
 
 #define IBUS_TYPE_AKAZA_ENGINE        \
         (ibus_akaza_engine_get_type ())
@@ -29,22 +30,21 @@ static gboolean ibus_akaza_engine_process_key_event(IBusEngine *engine,
 
 G_DEFINE_TYPE(IBusAkazaEngine, ibus_akaza_engine, IBUS_TYPE_ENGINE)
 
-static void ibus_akaza_engine_class_init(IBusAkazaEngineClass *klass) {
-  IBusObjectClass *ibus_object_class = IBUS_OBJECT_CLASS(klass);
-  IBusEngineClass *engine_class = IBUS_ENGINE_CLASS(klass);
-
-  ibus_object_class->destroy =
-      (IBusObjectDestroyFunc)ibus_akaza_engine_destroy;
-
-  engine_class->process_key_event = ibus_akaza_engine_process_key_event;
-}
-
 static void ibus_akaza_engine_init(IBusAkazaEngine *akaza) {
 }
 
 static void ibus_akaza_engine_destroy(IBusAkazaEngine *akaza) {
   ((IBusObjectClass *)ibus_akaza_engine_parent_class)
       ->destroy((IBusObject *)akaza);
+}
+
+static gboolean ibus_akaza_engine_candidate_clicked(
+    IBusEngine *engine,
+    int index,
+    int button,
+    int state
+) {
+  return global_candidate_clicked_cb(global_context, engine, index, button, state);
 }
 
 static gboolean ibus_akaza_engine_process_key_event(IBusEngine *engine,
@@ -58,9 +58,26 @@ static void ibus_disconnected_cb(IBusBus *bus, gpointer user_data) {
   ibus_quit();
 }
 
-void ibus_akaza_set_callback(void* context, ibus_akaza_callback_key_event* cb) {
+static void ibus_akaza_engine_class_init(IBusAkazaEngineClass *klass) {
+  IBusObjectClass *ibus_object_class = IBUS_OBJECT_CLASS(klass);
+  IBusEngineClass *engine_class = IBUS_ENGINE_CLASS(klass);
+
+  ibus_object_class->destroy =
+      (IBusObjectDestroyFunc)ibus_akaza_engine_destroy;
+
+  engine_class->process_key_event = ibus_akaza_engine_process_key_event;
+  engine_class->candidate_clicked = ibus_akaza_engine_candidate_clicked;
+}
+
+
+void ibus_akaza_set_callback(
+    void* context,
+    ibus_akaza_callback_key_event* cb,
+    ibus_akaza_callback_candidate_clicked* candidate_cb
+) {
     global_context = context;
     global_key_event_cb = cb;
+    global_candidate_clicked_cb = candidate_cb;
 }
 
 void ibus_akaza_init(bool ibus) {

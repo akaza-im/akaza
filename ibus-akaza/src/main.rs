@@ -34,6 +34,17 @@ unsafe extern "C" fn process_key_event(
     context_ref.process_key_event(engine, keyval, keycode, modifiers)
 }
 
+unsafe extern "C" fn candidate_clicked(
+    context: *mut c_void,
+    engine: *mut IBusEngine,
+    index: guint,
+    button: guint,
+    state: guint,
+) {
+    let context_ref = &mut *(context as *mut AkazaContext);
+    context_ref.do_candidate_clicked(engine, index, button, state);
+}
+
 fn load_user_data() -> Arc<Mutex<UserData>> {
     match UserData::load_from_default_path() {
         Ok(user_data) => Arc::new(Mutex::new(user_data)),
@@ -96,7 +107,11 @@ fn main() -> Result<()> {
                 }
             })?;
 
-        ibus_akaza_set_callback(&mut ac as *mut _ as *mut c_void, process_key_event);
+        ibus_akaza_set_callback(
+            &mut ac as *mut _ as *mut c_void,
+            process_key_event,
+            candidate_clicked,
+        );
 
         ibus_akaza_init(arg.ibus);
 
