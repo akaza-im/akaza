@@ -19,16 +19,16 @@ impl SystemBigramLMBuilder {
         // 最大でも 8,388,608 単語までになるように vocab を制限すること。
         // 現実的な線で切っても、500万単語ぐらいで十分だと思われる。
 
-        // -rw-r--r-- 1 tokuhirom tokuhirom  28M Dec 31 23:56 stats-kytea-lm_v2_2gram.trie
+        // -rw-r--r-- 1 tokuhirom tokuhirom  28M Dec 31 23:56 stats-vibrato-bigram.trie
         // ↓ 1MB 節約できる。
-        // -rw-r--r-- 1 tokuhirom tokuhirom  27M Jan  1 02:05 stats-kytea-lm_v2_2gram.trie
+        // -rw-r--r-- 1 tokuhirom tokuhirom  27M Jan  1 02:05 stats-vibrato-bigram.trie
 
         // 4+4+4=12バイト必要だったところが、3+3+4=10バイトになって、10/12=5/6 なので、
         // 本来なら 23.3 MB ぐらいまで減ってほしいところだけど、そこまではいかない。
         // TRIE 構造だからそういう感じには減らない。
 
         // さらに、スコアを f16 にしてみたが、あまりかわらない。
-        // -rw-r--r-- 1 tokuhirom tokuhirom  27M Jan  1 02:14 stats-kytea-lm_v2_2gram.trie
+        // -rw-r--r-- 1 tokuhirom tokuhirom  27M Jan  1 02:14 stats-vibrato-bigram.trie
 
         let id1_bytes = word_id1.to_le_bytes();
         let id2_bytes = word_id2.to_le_bytes();

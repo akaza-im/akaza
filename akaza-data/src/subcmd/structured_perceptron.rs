@@ -22,13 +22,13 @@ use crate::utils::get_file_list;
 pub fn learn_structured_perceptron(src_dir: &String, epochs: i32) -> anyhow::Result<()> {
     // ここでは内部クラスなどを触ってスコア調整をしていかないといけないので、AkazaBuilder は使えない。
 
-    let system_kana_kanji_dict = KanaKanjiDict::load("data/stats-kytea-system_dict.trie")?;
+    let system_kana_kanji_dict = KanaKanjiDict::load("data/system_dict.trie")?;
     let all_yomis = system_kana_kanji_dict.all_yomis().unwrap();
     let system_kana_trie = MarisaKanaTrie::build(all_yomis);
     let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
-    let system_single_term_dict = KanaKanjiDict::load("data/stats-kytea-single_term.trie")?;
+    let system_single_term_dict = KanaKanjiDict::load("data/single_term.trie")?;
     let system_bigram_lm = SystemBigramLMBuilder::default().build();
-    let real_system_unigram_lm = SystemUnigramLM::load("data/stats-kytea-lm_v2_1gram.trie")?;
+    let real_system_unigram_lm = SystemUnigramLM::load("data/stats-vibrato-unigram.trie")?;
     let mut graph_builder = GraphBuilder::new(
         system_kana_kanji_dict,
         system_single_term_dict,
@@ -166,13 +166,3 @@ pub fn learn(
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    #[ignore]
-    fn d() -> anyhow::Result<()> {
-        learn_structured_perceptron(1)
-    }
-}

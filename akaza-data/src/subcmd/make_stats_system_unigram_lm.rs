@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
+use chrono::Local;
 
 use libakaza::lm::system_unigram_lm::SystemUnigramLMBuilder;
 
@@ -25,12 +26,22 @@ pub fn make_stats_system_unigram_lm(srcpath: &str, dstpath: &str) -> anyhow::Res
     let scoremap = make_score_map(wordcnt);
 
     let mut builder = SystemUnigramLMBuilder::default();
-    for (word, score) in scoremap {
-        builder.add(word.as_str(), score);
+    for (word, score) in &scoremap {
+        builder.add(word.as_str(), *score);
     }
 
     println!("Writing {}", dstpath);
     builder.save(dstpath)?;
+
+    let dumpfname = format!("work/dump/unigram-{}.txt",
+        Local::now().format("%Y%m%d-%H%M%S").to_string()
+    );
+    println!("Dump to text file: {}", dumpfname);
+    let mut file = File::create(dumpfname)?;
+    for (word, score) in scoremap {
+        file.write_fmt(format_args!("{}\t{}\n", word, score))?;
+    }
+
     Ok(())
 }
 
@@ -39,10 +50,15 @@ fn homograph_hack(wordcnt: &mut HashMap<String, u32>) {
     // mecab では "日本" は "日本/にほん" に処理されるため、日本/にっぽん が表出しない。
     // かな漢字変換上は、同一程度の確率で出るだろうと予想されることから、この2つの確率を同じに設定する。
     for (src, dst) in [("日本/にほん", "日本/にっぽん")] {
-        if !wordcnt.contains_key(dst) {
-            if let Some(cost) = wordcnt.get(src) {
-                wordcnt.insert(dst.to_string(), *cost);
-            }
+        try_copy_cost(src, dst, wordcnt);
+        try_copy_cost(dst, src, wordcnt);
+    }
+}
+
+fn try_copy_cost(word1: &str, word2: &str, wordcnt: &mut HashMap<String, u32>) {
+    if !wordcnt.contains_key(word2) {
+        if let Some(cost) = wordcnt.get(word1) {
+            wordcnt.insert(word2.to_string(), *cost);
         }
     }
 }

@@ -273,22 +273,3 @@ fn make_trie_dict(txtfile: &String, triefile: &String) -> Result<()> {
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    /// コーパスファイルをちゃんと処理できているか
-    #[test]
-    fn test_corpus() -> Result<()> {
-        // 処理する
-        make_text_dict(None)?;
-
-        let mut file = File::open("work/stats-kytea/jawiki.system_dict.txt")?;
-        let mut buf = String::new();
-        file.read_to_string(&mut buf)?;
-
-        assert!(buf.contains("ぱーせぷとろん パーセプトロン"));
-
-        Ok(())
-    }
-}

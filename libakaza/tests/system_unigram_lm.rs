@@ -12,7 +12,7 @@ mod tests {
 
     #[test]
     fn test_load() {
-        let path = datadir() + "/stats-kytea-lm_v2_1gram.trie";
+        let path = datadir() + "/stats-vibrato-unigram.trie";
         let lm = SystemUnigramLM::load(&path).unwrap();
         let (id, score) = lm.find("私/わたし").unwrap();
         assert!(id > 0);

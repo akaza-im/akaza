@@ -15,13 +15,13 @@ mod tests {
 
     fn load_unigram() -> SystemUnigramLM {
         let datadir = datadir();
-        let path = datadir + "/stats-kytea-lm_v2_1gram.trie";
+        let path = datadir + "/stats-vibrato-unigram.trie";
         SystemUnigramLM::load(&path).unwrap()
     }
 
     fn load_bigram() -> SystemBigramLM {
         let datadir = datadir();
-        let path = datadir + "/stats-kytea-lm_v2_2gram.trie";
+        let path = datadir + "/stats-vibrato-bigram.trie";
 
         SystemBigramLM::load(&path).unwrap()
     }

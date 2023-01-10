@@ -16,7 +16,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test() -> anyhow::Result<()> {
-        let dict = KanaKanjiDict::load("data/stats-kytea-system_dict.trie")?;
+        let dict = KanaKanjiDict::load("data/system_dict.trie")?;
         let ku = dict.find("く").unwrap();
 
         assert!(
@@ -30,7 +30,7 @@ mod tests {
     /// 1文字の漢字は変換速度に悪影響を与えるのでできるだけ削りたい。
     #[test]
     fn test_1moji_kanji() -> anyhow::Result<()> {
-        let dict = KanaKanjiDict::load("data/stats-kytea-system_dict.trie")?;
+        let dict = KanaKanjiDict::load("data/system_dict.trie")?;
 
         // SKK-JISYO.L を読み込む
         let file = File::open("skk-dev-dict/SKK-JISYO.L")?;
