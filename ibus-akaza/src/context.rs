@@ -149,7 +149,7 @@ impl AkazaContext {
                 }
 
                 if ('!' as u32) <= keyval && keyval <= ('~' as u32) {
-                    info!("Insert new character to preedit: '{}'", self.preedit);
+                    trace!("Insert new character to preedit: '{}'", self.preedit);
                     if self.lookup_table.get_number_of_candidates() > 0 {
                         // 変換の途中に別の文字が入力された。よって、現在の preedit 文字列は確定させる。
                         self.commit_candidate(engine);
