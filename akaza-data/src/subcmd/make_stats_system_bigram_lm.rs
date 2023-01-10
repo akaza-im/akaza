@@ -16,8 +16,8 @@ use crate::utils::get_file_list;
 
 pub fn make_stats_system_bigram_lm(
     corpus_dir: &String,
-    unigram_trie_file: &String,
-    bigram_trie_file: &String,
+    unigram_trie_file: &str,
+    bigram_trie_file: &str,
 ) -> Result<()> {
     // まずは unigram の language model を読み込む
     let unigram_lm = SystemUnigramLM::load(unigram_trie_file)?;
