@@ -1,7 +1,0 @@
-skkdictutils>=0.1.0
-marisa-trie>=0.7.5
-kytea
-wikiextractor
-tqdm
-wheel
-pybind11
