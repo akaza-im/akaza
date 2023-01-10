@@ -116,8 +116,6 @@ impl LatticeGraph {
     }
 
     pub(crate) fn get_node_cost(&self, node: &WordNode) -> f32 {
-        let key = node.key();
-
         if let Some(user_cost) = self
             .user_data
             .lock()
