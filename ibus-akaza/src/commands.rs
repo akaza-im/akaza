@@ -55,5 +55,39 @@ pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaComman
         context.extend_clause_left(engine).unwrap();
     });
 
+    {
+        // TODO コピペがすごい。マクロかうまいなにかでまとめて登録できるようにしたい。
+        register("press_number_1", |context, engine| {
+            context.process_num_key(1, engine);
+        });
+        register("press_number_2", |context, engine| {
+            context.process_num_key(2, engine);
+        });
+        register("press_number_3", |context, engine| {
+            context.process_num_key(3, engine);
+        });
+        register("press_number_4", |context, engine| {
+            context.process_num_key(4, engine);
+        });
+        register("press_number_5", |context, engine| {
+            context.process_num_key(5, engine);
+        });
+        register("press_number_6", |context, engine| {
+            context.process_num_key(6, engine);
+        });
+        register("press_number_7", |context, engine| {
+            context.process_num_key(7, engine);
+        });
+        register("press_number_8", |context, engine| {
+            context.process_num_key(8, engine);
+        });
+        register("press_number_9", |context, engine| {
+            context.process_num_key(9, engine);
+        });
+        register("press_number_0", |context, engine| {
+            context.process_num_key(0, engine);
+        });
+    }
+
     function_map
 }

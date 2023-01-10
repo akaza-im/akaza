@@ -57,6 +57,14 @@ impl IBusLookupTable {
     pub fn get_cursor_pos(&mut self) -> guint {
         unsafe { ibus_lookup_table_get_cursor_pos(self as *mut _) }
     }
+
+    pub fn set_cursor_pos(&mut self, cursor_pos: guint) {
+        unsafe { ibus_lookup_table_set_cursor_pos(self as *mut _, cursor_pos) }
+    }
+
+    pub fn get_page_size(&mut self) -> guint {
+        unsafe { ibus_lookup_table_get_page_size(self as *mut _) }
+    }
 }
 
 extern "C" {
@@ -76,4 +84,6 @@ extern "C" {
     fn ibus_lookup_table_cursor_up(table: *mut IBusLookupTable) -> gboolean;
     fn ibus_lookup_table_cursor_down(table: *mut IBusLookupTable) -> gboolean;
     pub fn ibus_lookup_table_get_cursor_pos(table: *mut IBusLookupTable) -> guint;
+    fn ibus_lookup_table_set_cursor_pos(table: *mut IBusLookupTable, cursor_pos: guint);
+    fn ibus_lookup_table_get_page_size(table: *mut IBusLookupTable) -> guint;
 }

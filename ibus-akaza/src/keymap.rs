@@ -1,14 +1,19 @@
-use ibus_sys::core::{IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_SHIFT_MASK};
-use log::trace;
 use std::collections::HashMap;
 
-use crate::context::KeyState;
+use log::trace;
+
+use ibus_sys::core::{IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_SHIFT_MASK};
 use ibus_sys::ibus_key::{
     IBUS_KEY_BackSpace, IBUS_KEY_Down, IBUS_KEY_Hangul, IBUS_KEY_Hangul_Hanja, IBUS_KEY_Henkan,
     IBUS_KEY_KP_Down, IBUS_KEY_KP_Enter, IBUS_KEY_KP_Left, IBUS_KEY_KP_Right, IBUS_KEY_KP_Up,
     IBUS_KEY_Left, IBUS_KEY_Muhenkan, IBUS_KEY_Return, IBUS_KEY_Right, IBUS_KEY_Up, IBUS_KEY_h,
-    IBUS_KEY_space,
+    IBUS_KEY_space, IBUS_KEY_0, IBUS_KEY_1, IBUS_KEY_2, IBUS_KEY_3, IBUS_KEY_4, IBUS_KEY_5,
+    IBUS_KEY_6, IBUS_KEY_7, IBUS_KEY_8, IBUS_KEY_9, IBUS_KEY_KP_0, IBUS_KEY_KP_1, IBUS_KEY_KP_2,
+    IBUS_KEY_KP_3, IBUS_KEY_KP_4, IBUS_KEY_KP_5, IBUS_KEY_KP_6, IBUS_KEY_KP_7, IBUS_KEY_KP_8,
+    IBUS_KEY_KP_9,
 };
+
+use crate::context::KeyState;
 
 #[derive(Hash, PartialEq)]
 struct KeyPattern {
@@ -84,8 +89,6 @@ impl KeyMap {
         keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['Escape'], 'escape')
 
 
-        for n in range(0, 10):
-            keymap.register([KEY_STATE_CONVERSION], [str(n), f"KP_{n}"], f"press_number_{n}")
 
         keymap.register([KEY_STATE_CONVERSION], ['Page_Up', 'KP_Page_Up'], 'page_up')
         keymap.register([KEY_STATE_CONVERSION], ['Page_Down', 'KP_Page_Down'], 'page_down')
@@ -186,6 +189,26 @@ impl KeyMap {
             IBusModifierType_IBUS_SHIFT_MASK,
             "extend_clause_left",
         );
+
+        let mut num = |keyvals: &[u32], n: i32| {
+            // fn insert(&mut self, key_states: &[KeyState], keyvals: &[u32], modifier: u32, func_name: &str) {
+            builder.insert(
+                &[KeyState::Conversion],
+                keyvals,
+                0,
+                format!("press_number_{}", n).as_str(),
+            )
+        };
+        num(&[IBUS_KEY_1, IBUS_KEY_KP_1], 1);
+        num(&[IBUS_KEY_2, IBUS_KEY_KP_2], 2);
+        num(&[IBUS_KEY_3, IBUS_KEY_KP_3], 3);
+        num(&[IBUS_KEY_4, IBUS_KEY_KP_4], 4);
+        num(&[IBUS_KEY_5, IBUS_KEY_KP_5], 5);
+        num(&[IBUS_KEY_6, IBUS_KEY_KP_6], 6);
+        num(&[IBUS_KEY_7, IBUS_KEY_KP_7], 7);
+        num(&[IBUS_KEY_8, IBUS_KEY_KP_8], 8);
+        num(&[IBUS_KEY_9, IBUS_KEY_KP_9], 9);
+        num(&[IBUS_KEY_0, IBUS_KEY_KP_0], 0);
 
         KeyMap {
             keymap: builder.keymap,

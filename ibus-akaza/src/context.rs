@@ -73,6 +73,49 @@ pub struct AkazaContext {
 }
 
 impl AkazaContext {
+    pub(crate) fn process_num_key(&mut self, nn: i32, engine: *mut IBusEngine) {
+        let idx = if nn == 0 { 9 } else { nn - 1 };
+
+        if self.set_lookup_table_cursor_pos_in_current_page(idx) {
+            self.refresh(engine)
+        }
+    }
+
+    /// Sets the cursor in the lookup table to index in the current page
+    /// Returns True if successful, False if not.
+    fn set_lookup_table_cursor_pos_in_current_page(&mut self, idx: i32) -> bool {
+        trace!("set_lookup_table_cursor_pos_in_current_page: {}", idx);
+
+        let page_size = self.lookup_table.get_page_size();
+        if idx > (page_size as i32) {
+            info!("Index too big: {} > {}", idx, page_size);
+            return false;
+        }
+
+        let page = self.lookup_table.get_cursor_pos() / page_size;
+        // let pos_in_page = self.lookup_table.get_cursor_pos() % page_size;
+
+        let new_pos = page * page_size + (idx as u32);
+
+        if new_pos > self.lookup_table.get_number_of_candidates() {
+            info!(
+                "new_pos too big: {} > {}",
+                new_pos,
+                self.lookup_table.get_number_of_candidates()
+            );
+            return false;
+        }
+        self.lookup_table.set_cursor_pos(new_pos);
+        self.node_selected.insert(
+            self.current_clause,
+            self.lookup_table.get_cursor_pos() as usize,
+        );
+
+        true
+    }
+}
+
+impl AkazaContext {
     pub(crate) fn new(akaza: Akaza) -> Self {
         AkazaContext {
             input_mode: InputMode::Hiragana,
