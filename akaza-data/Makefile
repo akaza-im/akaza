@@ -113,4 +113,9 @@ install:
 	install -m 0755 -d $(DESTDIR)$(DATADIR)/akaza-data
 	install -m 0644 data/*.trie $(DESTDIR)$(DATADIR)/akaza-data
 
-.PHONY: all install evaluate
+# -------------------------------------------------------------------------
+
+test-data: work/vibrato/ipadic-mecab-2_7_0/system.dic
+
+.PHONY: all install evaluate test-data
+
