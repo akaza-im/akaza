@@ -35,10 +35,10 @@ work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.
 	mkdir -p work/vibrato/
 	tar -xmzf work/vibrato/ipadic-mecab-2_7_0.tar.gz -C work/vibrato/
 
-work/jawiki/vibrato-ipadic/_SUCCESS: src/subcmd/tokenize.rs mecab-user-dict.csv src/wikipedia/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS work/vibrato/ipadic-mecab-2_7_0/system.dic
+work/jawiki/vibrato-ipadic/_SUCCESS: src/subcmd/tokenize.rs mecab-user-dict.csv src/corpus_reader/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS work/vibrato/ipadic-mecab-2_7_0/system.dic
 	cargo run -- tokenize-vibrato-ipadic --user-dict=mecab-user-dict.csv work/vibrato/ipadic-mecab-2_7_0/system.dic work/jawiki/extracted work/jawiki/vibrato-ipadic/ -vvv
 
-work/aozora_bunko/vibrato-ipadic/_SUCCESS: src/aozora_bunko/aozora_bunko.rs work/vibrato/ipadic-mecab-2_7_0/system.dic
+work/aozora_bunko/vibrato-ipadic/_SUCCESS: src/corpus_reader/aozora_bunko.rs work/vibrato/ipadic-mecab-2_7_0/system.dic
 	cargo run -- tokenize-aozora-bunko-vibrato-ipadic work/vibrato/ipadic-mecab-2_7_0/system.dic aozorabunko_text/cards/ work/aozora_bunko/vibrato-ipadic/ -vv
 
 work/jawiki/vibrato-ipadic.wfreq: work/jawiki/vibrato-ipadic/_SUCCESS src/subcmd/wfreq.rs work/aozora_bunko/vibrato-ipadic/_SUCCESS
@@ -57,7 +57,7 @@ work/jawiki/vibrato-ipadic.vocab: work/jawiki/vibrato-ipadic.wfreq src/subcmd/vo
 # 以下のようにすれば、ユーザー辞書を追加可能。ただし、jawiki-kana-kanji-dict は wikipedia から生成しているため誤爆もあるので、ここでは使わないほうが良さそう。
 # -u jawiki-kana-kanji-dict/lindera-userdic.bin
 
-work/jawiki/lindera-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS
+work/jawiki/lindera-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/corpus_reader/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS
 	cargo run -- tokenize-lindera-ipadic work/jawiki/extracted/ work/jawiki/lindera-ipadic/ -vvv
 
 work/jawiki/lindera-ipadic.wfreq: work/jawiki/lindera-ipadic/_SUCCESS src/subcmd/wfreq.rs

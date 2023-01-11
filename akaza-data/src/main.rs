@@ -14,11 +14,10 @@ use crate::subcmd::tokenize::{
 use crate::subcmd::vocab::vocab;
 use crate::subcmd::wfreq::wfreq;
 
-mod aozora_bunko;
+mod corpus_reader;
 mod subcmd;
 mod tokenizer;
 mod utils;
-mod wikipedia;
 
 #[derive(Debug, Parser)]
 #[clap(

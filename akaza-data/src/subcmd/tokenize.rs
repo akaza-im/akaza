@@ -1,14 +1,14 @@
 use std::path::{Path, PathBuf};
 
+use crate::corpus_reader::aozora_bunko::AozoraBunkoProcessor;
 use lindera::DictionaryKind;
 use log::info;
 use rayon::prelude::*;
 
+use crate::corpus_reader::wikipedia_extracted::ExtractedWikipediaProcessor;
 use crate::tokenizer::base::AkazaTokenizer;
 use crate::tokenizer::lindera::LinderaTokenizer;
 use crate::tokenizer::vibrato::VibratoTokenizer;
-use crate::wikipedia::wikipedia_extracted::ExtractedWikipediaProcessor;
-use crate::aozora_bunko::aozora_bunko::AozoraBunkoProcessor;
 
 pub fn tokenize_aozora_bunko_vibrato_ipadic(
     system_dict: String,
