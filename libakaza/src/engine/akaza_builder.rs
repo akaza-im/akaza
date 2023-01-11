@@ -3,6 +3,7 @@ use std::ops::Range;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
+use crate::engine::base::HenkanEngine;
 use anyhow::Result;
 
 use crate::graph::graph_builder::GraphBuilder;
@@ -15,33 +16,6 @@ use crate::lm::system_bigram::{SystemBigramLM, SystemBigramLMBuilder};
 use crate::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
 use crate::romkan::RomKanConverter;
 use crate::user_side_data::user_data::UserData;
-
-pub trait HenkanEngine {
-    fn learn(&mut self, surface_kanas: &Vec<String>);
-
-    fn convert(
-        &self,
-        yomi: &str,
-        force_ranges: &Vec<Range<usize>>,
-    ) -> Result<Vec<VecDeque<Candidate>>> {
-        // 先頭が大文字なケースと、URL っぽい文字列のときは変換処理を実施しない。
-        if (!yomi.is_empty()
-            && yomi.chars().next().unwrap().is_ascii_uppercase()
-            && force_ranges.is_empty())
-            || yomi.starts_with("https://")
-            || yomi.starts_with("http://")
-        {
-            return Ok(vec![VecDeque::from([Candidate::new(yomi, yomi, 0_f32)])]);
-        }
-
-        let lattice = self.to_lattice(yomi, force_ranges)?;
-        self.resolve(&lattice)
-    }
-
-    fn resolve(&self, lattice: &LatticeGraph) -> Result<Vec<VecDeque<Candidate>>>;
-
-    fn to_lattice(&self, yomi: &str, force_ranges: &Vec<Range<usize>>) -> Result<LatticeGraph>;
-}
 
 pub struct Akaza {
     graph_builder: GraphBuilder,
