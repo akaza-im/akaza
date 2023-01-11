@@ -5,10 +5,10 @@ mod tests {
     use anyhow::Result;
     use log::LevelFilter;
 
-    use libakaza::engine::akaza_builder::{
+    use libakaza::engine::base::HenkanEngine;
+    use libakaza::engine::bigram_word_viterbi_engine::{
         BigramWordViterbiEngine, BigramWordViterbiEngineBuilder,
     };
-    use libakaza::engine::base::HenkanEngine;
     use libakaza::graph::graph_resolver::Candidate;
 
     fn load_akaza() -> Result<BigramWordViterbiEngine> {

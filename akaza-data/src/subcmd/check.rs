@@ -1,5 +1,5 @@
-use libakaza::engine::akaza_builder::BigramWordViterbiEngineBuilder;
 use libakaza::engine::base::HenkanEngine;
+use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 
 pub fn check(yomi: &str) -> anyhow::Result<()> {
     let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/data/";

@@ -5,8 +5,8 @@ use std::time::SystemTime;
 use anyhow::Context;
 use log::info;
 
-use libakaza::engine::akaza_builder::BigramWordViterbiEngineBuilder;
 use libakaza::engine::base::HenkanEngine;
+use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 
 #[derive(Default)]
 struct SaigenRitsu {
