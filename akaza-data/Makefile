@@ -33,7 +33,7 @@ work/vibrato/ipadic-mecab-2_7_0.tar.gz:
 
 work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.gz
 	mkdir -p work/vibrato/
-	tar -xzf work/vibrato/ipadic-mecab-2_7_0.tar.gz -C work/vibrato/
+	tar -xmzf work/vibrato/ipadic-mecab-2_7_0.tar.gz -C work/vibrato/
 
 work/jawiki/vibrato-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/wikipedia/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS work/vibrato/ipadic-mecab-2_7_0/system.dic
 	cargo run -- tokenize-vibrato-ipadic work/vibrato/ipadic-mecab-2_7_0/system.dic work/jawiki/extracted work/jawiki/vibrato-ipadic/ -vvv
