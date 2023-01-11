@@ -5,6 +5,7 @@ use clap::{Parser, Subcommand};
 use crate::subcmd::check::check;
 use crate::subcmd::evaluate::evaluate;
 use crate::subcmd::make_dict::{make_single_term, make_system_dict};
+use crate::subcmd::make_kana_trie::make_kana_trie;
 use crate::subcmd::make_stats_system_bigram_lm::make_stats_system_bigram_lm;
 use crate::subcmd::make_stats_system_unigram_lm::make_stats_system_unigram_lm;
 use crate::subcmd::structured_perceptron::learn_structured_perceptron;
@@ -49,6 +50,7 @@ enum Commands {
     #[clap(arg_required_else_help = true)]
     MakeStatsSystemBigramLM(MakeStatsSystemBigramLMArgs),
     MakeStatsSystemUnigramLM(MakeStatsSystemUnigramLMArgs),
+    MakeKanaTrie(MakeKanaTrieArgs),
 
     #[clap(arg_required_else_help = true)]
     Evaluate(EvaluateArgs),
@@ -153,6 +155,13 @@ struct MakeStatsSystemBigramLMArgs {
     bigram_trie_file: String,
 }
 
+/// かなトライを作成する
+#[derive(Debug, clap::Args)]
+struct MakeKanaTrieArgs {
+    system_dict_file: String,
+    trie_file: String,
+}
+
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
@@ -211,6 +220,9 @@ fn main() -> anyhow::Result<()> {
         ),
         Commands::MakeStatsSystemUnigramLM(opt) => {
             make_stats_system_unigram_lm(opt.src_file.as_str(), opt.dst_file.as_str())
+        }
+        Commands::MakeKanaTrie(opt) => {
+            make_kana_trie(opt.system_dict_file.as_str(), opt.trie_file.as_str())
         }
     }
 }
