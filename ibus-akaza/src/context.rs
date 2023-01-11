@@ -439,7 +439,7 @@ impl AkazaContext {
         } else {
             self.clauses = self
                 .akaza
-                .convert(self.preedit.as_str(), &self.force_selected_clause)?;
+                .convert(self.preedit.as_str(), Some(&self.force_selected_clause))?;
 
             // [a][bc]
             //    ^^^^

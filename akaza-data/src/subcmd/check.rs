@@ -7,7 +7,7 @@ pub fn check(yomi: &str) -> anyhow::Result<()> {
     let akaza = BigramWordViterbiEngineBuilder::default()
         .system_data_dir(&datadir)
         .build()?;
-    let lattice = akaza.to_lattice(yomi, &Vec::new())?;
+    let lattice = akaza.to_lattice(yomi, None)?;
     println!("{}", lattice.dump_cost_dot());
     println!("{:?}", lattice);
 

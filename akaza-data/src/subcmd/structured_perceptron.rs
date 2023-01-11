@@ -106,7 +106,7 @@ pub fn learn(
 
     let correct_nodes = teacher.correct_node_set();
     let yomi = teacher.yomi();
-    let segmentation_result = segmenter.build(&yomi, &force_ranges);
+    let segmentation_result = segmenter.build(&yomi, Some(&force_ranges));
     let graph_resolver = GraphResolver::default();
 
     let lattice = graph_builder.construct(yomi.as_str(), segmentation_result);

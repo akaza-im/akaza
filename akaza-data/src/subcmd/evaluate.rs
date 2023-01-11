@@ -92,7 +92,7 @@ pub fn evaluate(corpus_dir: &String, system_data_dir: &str) -> anyhow::Result<()
             let surface = surface.replace('|', "");
 
             let t1 = SystemTime::now();
-            let result = akaza.convert(yomi.as_str(), &force_ranges)?;
+            let result = akaza.convert(yomi.as_str(), Some(&force_ranges))?;
             let t2 = SystemTime::now();
             let elapsed = t2.duration_since(t1)?;
 

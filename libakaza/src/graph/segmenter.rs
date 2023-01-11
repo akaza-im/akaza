@@ -52,13 +52,15 @@ impl Segmenter {
      */
     // シフトを押して → を押したときのような処理の場合、
     // このメソッドに入ってくる前に別に処理する前提。
-    pub fn build(&self, yomi: &str, force_ranges: &[Range<usize>]) -> SegmentationResult {
-        if !force_ranges.is_empty() {
-            for force_range in force_ranges {
-                trace!(
-                    "force_range detected: {}",
-                    yomi[force_range.start..force_range.end].to_string()
-                );
+    pub fn build(&self, yomi: &str, force_ranges: Option<&[Range<usize>]>) -> SegmentationResult {
+        if let Some(force_ranges) = force_ranges {
+            if !force_ranges.is_empty() {
+                for force_range in force_ranges {
+                    trace!(
+                        "force_range detected: {}",
+                        yomi[force_range.start..force_range.end].to_string()
+                    );
+                }
             }
         }
 
@@ -78,16 +80,18 @@ impl Segmenter {
             }
 
             // start_pos が force の範囲に入っていたら処理しない。
-            for force_range in force_ranges {
-                if force_range.start == start_pos {
-                    trace!("force_range detected.");
-                    let vec = words_ends_at.entry(force_range.end).or_default();
-                    vec.push(yomi[force_range.start..force_range.end].to_string());
-                    queue.push(start_pos + force_range.len());
-                    continue 'queue_processing;
-                }
-                if force_range.contains(&start_pos) {
-                    continue 'queue_processing;
+            if let Some(force_ranges) = force_ranges {
+                for force_range in force_ranges {
+                    if force_range.start == start_pos {
+                        trace!("force_range detected.");
+                        let vec = words_ends_at.entry(force_range.end).or_default();
+                        vec.push(yomi[force_range.start..force_range.end].to_string());
+                        queue.push(start_pos + force_range.len());
+                        continue 'queue_processing;
+                    }
+                    if force_range.contains(&start_pos) {
+                        continue 'queue_processing;
+                    }
                 }
             }
 
@@ -103,13 +107,15 @@ impl Segmenter {
                     let ends_at = start_pos + word.len();
 
                     // end_pos が force の範囲に入っていたら処理しない。
-                    for force_range in force_ranges {
-                        // force_range は exclusive で、厳しい。
-                        if force_range.contains(&ends_at) || force_range.end == ends_at {
-                            trace!("Blocked candidate range: {}, {:?}", word, force_range);
-                            continue 'insert;
-                        } else {
-                            trace!("Accepted candidate range: {}, {:?}", word, force_range);
+                    if let Some(force_ranges) = force_ranges {
+                        for force_range in force_ranges {
+                            // force_range は exclusive で、厳しい。
+                            if force_range.contains(&ends_at) || force_range.end == ends_at {
+                                trace!("Blocked candidate range: {}, {:?}", word, force_range);
+                                continue 'insert;
+                            } else {
+                                trace!("Accepted candidate range: {}, {:?}", word, force_range);
+                            }
                         }
                     }
 
@@ -151,8 +157,9 @@ impl Segmenter {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
+
+    use super::*;
 
     #[test]
     fn test_simple() {
@@ -163,7 +170,7 @@ mod tests {
         ]);
 
         let segmenter = Segmenter::new(vec![Box::new(kana_trie)]);
-        let graph = segmenter.build("わたし", &Vec::new());
+        let graph = segmenter.build("わたし", None);
         assert_eq!(
             graph,
             SegmentationResult::new(BTreeMap::from([
@@ -178,7 +185,7 @@ mod tests {
         let kana_trie = MarisaKanaTrie::build(vec![]);
 
         let segmenter = Segmenter::new(vec![Box::new(kana_trie)]);
-        let graph = segmenter.build("わたし", &Vec::new());
+        let graph = segmenter.build("わたし", None);
         assert_eq!(
             graph,
             SegmentationResult::new(BTreeMap::from([
@@ -206,7 +213,7 @@ mod tests {
         // force_range に "たし" を指定する。
         let (i2, _) = yomi.char_indices().nth(1).unwrap();
         let (i3, c3) = yomi.char_indices().nth(2).unwrap();
-        let graph = segmenter.build(yomi, &vec![i2..(i3 + c3.len_utf8())]);
+        let graph = segmenter.build(yomi, Some(&vec![i2..(i3 + c3.len_utf8())]));
         assert_eq!(
             graph,
             SegmentationResult::new(BTreeMap::from([

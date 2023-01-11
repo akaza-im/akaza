@@ -9,12 +9,13 @@ pub trait HenkanEngine {
     fn convert(
         &self,
         yomi: &str,
-        force_ranges: &Vec<Range<usize>>,
+        force_ranges: Option<&[Range<usize>]>,
     ) -> anyhow::Result<Vec<VecDeque<Candidate>>> {
         // 先頭が大文字なケースと、URL っぽい文字列のときは変換処理を実施しない。
         if (!yomi.is_empty()
             && yomi.chars().next().unwrap().is_ascii_uppercase()
-            && force_ranges.is_empty())
+            && (force_ranges.is_none()
+                || (force_ranges.is_none() && force_ranges.unwrap().is_empty())))
             || yomi.starts_with("https://")
             || yomi.starts_with("http://")
         {
@@ -27,6 +28,9 @@ pub trait HenkanEngine {
 
     fn resolve(&self, lattice: &LatticeGraph) -> anyhow::Result<Vec<VecDeque<Candidate>>>;
 
-    fn to_lattice(&self, yomi: &str, force_ranges: &[Range<usize>])
-        -> anyhow::Result<LatticeGraph>;
+    fn to_lattice(
+        &self,
+        yomi: &str,
+        force_ranges: Option<&[Range<usize>]>,
+    ) -> anyhow::Result<LatticeGraph>;
 }
