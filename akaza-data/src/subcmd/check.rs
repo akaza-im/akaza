@@ -1,4 +1,4 @@
-use libakaza::akaza_builder::AkazaBuilder;
+use libakaza::engine::akaza_builder::{AkazaBuilder, HenkanEngine};
 
 pub fn check(yomi: &str) -> anyhow::Result<()> {
     let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/data/";

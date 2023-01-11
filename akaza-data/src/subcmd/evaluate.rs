@@ -5,7 +5,7 @@ use std::time::SystemTime;
 use anyhow::Context;
 use log::info;
 
-use libakaza::akaza_builder::AkazaBuilder;
+use libakaza::engine::akaza_builder::{AkazaBuilder, HenkanEngine};
 
 #[derive(Default)]
 struct SaigenRitsu {

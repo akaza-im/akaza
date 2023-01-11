@@ -5,7 +5,7 @@ mod tests {
     use anyhow::Result;
     use log::LevelFilter;
 
-    use libakaza::akaza_builder::{Akaza, AkazaBuilder};
+    use libakaza::engine::akaza_builder::{Akaza, AkazaBuilder, HenkanEngine};
     use libakaza::graph::graph_resolver::Candidate;
 
     fn load_akaza() -> Result<Akaza> {

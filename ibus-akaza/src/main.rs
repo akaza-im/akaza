@@ -12,7 +12,7 @@ use log::{error, info, warn};
 use ibus_sys::core::ibus_main;
 use ibus_sys::engine::IBusEngine;
 use ibus_sys::glib::guint;
-use libakaza::akaza_builder::AkazaBuilder;
+use libakaza::engine::akaza_builder::AkazaBuilder;
 use libakaza::user_side_data::user_data::UserData;
 
 use crate::context::AkazaContext;

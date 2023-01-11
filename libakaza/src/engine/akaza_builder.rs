@@ -16,22 +16,10 @@ use crate::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
 use crate::romkan::RomKanConverter;
 use crate::user_side_data::user_data::UserData;
 
-pub struct Akaza {
-    graph_builder: GraphBuilder,
-    pub segmenter: Segmenter,
-    pub graph_resolver: GraphResolver,
-    romkan_converter: RomKanConverter,
-    pub user_data: Arc<Mutex<UserData>>,
-}
+pub trait HenkanEngine {
+    fn learn(&mut self, surface_kanas: &Vec<String>);
 
-impl Akaza {}
-
-impl Akaza {
-    pub fn learn(&mut self, surface_kanas: &Vec<String>) {
-        self.user_data.lock().unwrap().record_entries(surface_kanas);
-    }
-
-    pub fn convert(
+    fn convert(
         &self,
         yomi: &str,
         force_ranges: &Vec<Range<usize>>,
@@ -47,14 +35,34 @@ impl Akaza {
         }
 
         let lattice = self.to_lattice(yomi, force_ranges)?;
-        self.graph_resolver.resolve(&lattice)
+        self.resolve(&lattice)
     }
 
-    pub fn resolve(&self, lattice: &LatticeGraph) -> Result<Vec<VecDeque<Candidate>>> {
+    fn resolve(&self, lattice: &LatticeGraph) -> Result<Vec<VecDeque<Candidate>>>;
+
+    fn to_lattice(&self, yomi: &str, force_ranges: &Vec<Range<usize>>) -> Result<LatticeGraph>;
+}
+
+pub struct Akaza {
+    graph_builder: GraphBuilder,
+    pub segmenter: Segmenter,
+    pub graph_resolver: GraphResolver,
+    romkan_converter: RomKanConverter,
+    pub user_data: Arc<Mutex<UserData>>,
+}
+
+impl Akaza {}
+
+impl HenkanEngine for Akaza {
+    fn learn(&mut self, surface_kanas: &Vec<String>) {
+        self.user_data.lock().unwrap().record_entries(surface_kanas);
+    }
+
+    fn resolve(&self, lattice: &LatticeGraph) -> Result<Vec<VecDeque<Candidate>>> {
         self.graph_resolver.resolve(lattice)
     }
 
-    pub fn to_lattice(&self, yomi: &str, force_ranges: &Vec<Range<usize>>) -> Result<LatticeGraph> {
+    fn to_lattice(&self, yomi: &str, force_ranges: &Vec<Range<usize>>) -> Result<LatticeGraph> {
         // ローマ字からひらがなへの変換をする。
         let yomi = self.romkan_converter.to_hiragana(yomi);
 
