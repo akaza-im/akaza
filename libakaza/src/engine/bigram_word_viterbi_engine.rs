@@ -112,6 +112,8 @@ impl BigramWordViterbiEngineBuilder {
     }
 
     pub fn build(&self) -> Result<BigramWordViterbiEngine> {
+        // TODO system_data_dir がなかったら abort してしまっていいと思う。
+
         let system_unigram_lm = match &self.system_data_dir {
             Some(dir) => {
                 let path = dir.to_string() + "/stats-vibrato-unigram.trie";
@@ -141,10 +143,13 @@ impl BigramWordViterbiEngineBuilder {
             }
             None => KanaKanjiDictBuilder::default().build(),
         };
-
-        // TODO 事前に静的生成可能。
-        let all_yomis = system_kana_kanji_dict.all_yomis().unwrap();
-        let system_kana_trie = MarisaKanaTrie::build(all_yomis);
+        let system_kana_trie = match &self.system_data_dir {
+            Some(dir) => {
+                let path = dir.to_string() + "/single_term.trie";
+                MarisaKanaTrie::load(path.as_str())?
+            }
+            None => MarisaKanaTrie::build(vec![]),
+        };
 
         let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
 

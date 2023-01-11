@@ -1,6 +1,7 @@
 pub mod check;
 pub mod evaluate;
 pub mod make_dict;
+pub mod make_kana_trie;
 pub mod make_stats_system_bigram_lm;
 pub mod make_stats_system_unigram_lm;
 pub mod structured_perceptron;

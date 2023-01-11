@@ -20,7 +20,7 @@ impl MarisaKanaTrie {
         MarisaKanaTrie { marisa }
     }
 
-    pub(crate) fn save(&self, file_name: &str) -> Result<()> {
+    pub fn save(&self, file_name: &str) -> Result<()> {
         self.marisa.save(file_name)
     }
 

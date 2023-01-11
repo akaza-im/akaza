@@ -105,6 +105,12 @@ data/system_dict.trie: work/vibrato-ipadic.vocab jawiki-kana-kanji-dict/SKK-JISY
 		data/system_dict.trie \
 		-vvv
 
+data/kana.trie: data/system_dict.trie
+	cargo run --release -- make-kana-trie \
+		data/system_dict.trie \
+		data/kana.trie \
+		-v
+
 # -------------------------------------------------------------------------
 
 evaluate:
