@@ -2,7 +2,6 @@ pub mod system_bigram;
 pub mod system_unigram_lm;
 
 // ↓↓このあたりは C++ 時代の Spec。
-// rust 版ではいったん、簡単のために id を sizeof(usize) バイト書いている。
 // TODO 最適化する
 
 /*
