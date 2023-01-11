@@ -17,6 +17,40 @@ use crate::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
 use crate::romkan::RomKanConverter;
 use crate::user_side_data::user_data::UserData;
 
+pub struct SystemDataLoader {
+    pub system_unigram_lm: SystemUnigramLM,
+    pub system_bigram_lm: SystemBigramLM,
+    pub system_kana_kanji_dict: KanaKanjiDict,
+    pub system_single_term_dict: KanaKanjiDict,
+    pub system_kana_trie: MarisaKanaTrie,
+}
+
+impl SystemDataLoader {
+    pub fn load(system_data_dir: &str) -> Result<SystemDataLoader> {
+        let system_unigram_lm = SystemUnigramLM::load(
+            (system_data_dir.to_string() + "/stats-vibrato-unigram.trie").as_str(),
+        )?;
+        let system_bigram_lm = SystemBigramLM::load(
+            (system_data_dir.to_string() + "/stats-vibrato-bigram.trie").as_str(),
+        )?;
+
+        let system_kana_kanji_dict =
+            KanaKanjiDict::load((system_data_dir.to_string() + "/system_dict.trie").as_str())?;
+        let system_single_term_dict =
+            KanaKanjiDict::load((system_data_dir.to_string() + "/single_term.trie").as_str())?;
+        let system_kana_trie =
+            MarisaKanaTrie::load((system_data_dir.to_string() + "/kana.trie").as_str())?;
+
+        Ok(SystemDataLoader {
+            system_unigram_lm,
+            system_bigram_lm,
+            system_kana_kanji_dict,
+            system_single_term_dict,
+            system_kana_trie,
+        })
+    }
+}
+
 /// バイグラムのビタビベースかな漢字変換エンジンです。
 /// 単語バイグラムを採用しています。
 pub struct BigramWordViterbiEngine {
@@ -110,21 +144,9 @@ impl BigramWordViterbiEngineBuilder {
     }
 
     pub fn build(&self) -> Result<BigramWordViterbiEngine> {
-        let system_unigram_lm = SystemUnigramLM::load(
-            (self.system_data_dir.to_string() + "/stats-vibrato-unigram.trie").as_str(),
-        )?;
-        let system_bigram_lm = SystemBigramLM::load(
-            (self.system_data_dir.to_string() + "/stats-vibrato-bigram.trie").as_str(),
-        )?;
+        let system_data_loader = SystemDataLoader::load(self.system_data_dir.as_str())?;
 
-        let system_kana_kanji_dict =
-            KanaKanjiDict::load((self.system_data_dir.to_string() + "/system_dict.trie").as_str())?;
-        let system_single_term_dict =
-            KanaKanjiDict::load((self.system_data_dir.to_string() + "/single_term.trie").as_str())?;
-        let system_kana_trie =
-            MarisaKanaTrie::load((self.system_data_dir.to_string() + "/kana.trie").as_str())?;
-
-        let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
+        let segmenter = Segmenter::new(vec![Box::new(system_data_loader.system_kana_trie)]);
 
         let user_data = if let Some(d) = &self.user_data {
             d.clone()
@@ -133,11 +155,11 @@ impl BigramWordViterbiEngineBuilder {
         };
 
         let graph_builder = GraphBuilder::new_with_default_score(
-            system_kana_kanji_dict,
-            system_single_term_dict,
+            system_data_loader.system_kana_kanji_dict,
+            system_data_loader.system_single_term_dict,
             user_data.clone(),
-            Rc::new(system_unigram_lm),
-            Rc::new(system_bigram_lm),
+            Rc::new(system_data_loader.system_unigram_lm),
+            Rc::new(system_data_loader.system_bigram_lm),
         );
 
         let graph_resolver = GraphResolver::default();
