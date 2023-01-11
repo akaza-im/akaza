@@ -20,3 +20,9 @@ crawdad = "0.4.0"
 encoding_rs = "0.8.31"
 
 [build-dependencies]
+
+[features]
+default = []
+# Integration test を有効化するフラグ
+it = []
+
