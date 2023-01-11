@@ -5,7 +5,7 @@ use std::time::SystemTime;
 use anyhow::Context;
 use log::info;
 
-use libakaza::engine::akaza_builder::AkazaBuilder;
+use libakaza::engine::akaza_builder::BigramWordViterbiEngineBuilder;
 use libakaza::engine::base::HenkanEngine;
 
 #[derive(Default)]
@@ -62,7 +62,7 @@ pub fn evaluate(corpus_dir: &String, system_data_dir: &str) -> anyhow::Result<()
         "corpus.5.txt",
     ];
 
-    let akaza = AkazaBuilder::default()
+    let akaza = BigramWordViterbiEngineBuilder::default()
         .system_data_dir(system_data_dir)
         .build()?;
 

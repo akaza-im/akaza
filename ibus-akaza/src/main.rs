@@ -12,7 +12,7 @@ use log::{error, info, warn};
 use ibus_sys::core::ibus_main;
 use ibus_sys::engine::IBusEngine;
 use ibus_sys::glib::guint;
-use libakaza::engine::akaza_builder::AkazaBuilder;
+use libakaza::engine::akaza_builder::BigramWordViterbiEngineBuilder;
 use libakaza::user_side_data::user_data::UserData;
 
 use crate::context::AkazaContext;
@@ -77,7 +77,7 @@ fn main() -> Result<()> {
     unsafe {
         let sys_time = SystemTime::now();
         let user_data = load_user_data();
-        let akaza = AkazaBuilder::default()
+        let akaza = BigramWordViterbiEngineBuilder::default()
             .user_data(user_data.clone())
             .system_data_dir("/home/tokuhirom/dev/akaza/akaza-data/data")
             .build()?;

@@ -5,19 +5,21 @@ mod tests {
     use anyhow::Result;
     use log::LevelFilter;
 
-    use libakaza::engine::akaza_builder::{Akaza, AkazaBuilder};
+    use libakaza::engine::akaza_builder::{
+        BigramWordViterbiEngine, BigramWordViterbiEngineBuilder,
+    };
     use libakaza::engine::base::HenkanEngine;
     use libakaza::graph::graph_resolver::Candidate;
 
-    fn load_akaza() -> Result<Akaza> {
+    fn load_akaza() -> Result<BigramWordViterbiEngine> {
         let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/../akaza-data/data/";
-        AkazaBuilder::default()
+        BigramWordViterbiEngineBuilder::default()
             .system_data_dir(datadir.as_str())
             .build()
     }
 
     struct Tester {
-        akaza: Akaza,
+        akaza: BigramWordViterbiEngine,
     }
 
     impl Tester {

@@ -17,7 +17,9 @@ use crate::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
 use crate::romkan::RomKanConverter;
 use crate::user_side_data::user_data::UserData;
 
-pub struct Akaza {
+/// バイグラムのビタビベースかな漢字変換エンジンです。
+/// 単語バイグラムを採用しています。
+pub struct BigramWordViterbiEngine {
     graph_builder: GraphBuilder,
     pub segmenter: Segmenter,
     pub graph_resolver: GraphResolver,
@@ -25,9 +27,9 @@ pub struct Akaza {
     pub user_data: Arc<Mutex<UserData>>,
 }
 
-impl Akaza {}
+impl BigramWordViterbiEngine {}
 
-impl HenkanEngine for Akaza {
+impl HenkanEngine for BigramWordViterbiEngine {
     fn learn(&mut self, surface_kanas: &Vec<String>) {
         self.user_data.lock().unwrap().record_entries(surface_kanas);
     }
@@ -86,23 +88,26 @@ impl HenkanEngine for Akaza {
 }
 
 #[derive(Default)]
-pub struct AkazaBuilder {
+pub struct BigramWordViterbiEngineBuilder {
     system_data_dir: Option<String>,
     user_data: Option<Arc<Mutex<UserData>>>,
 }
 
-impl AkazaBuilder {
+impl BigramWordViterbiEngineBuilder {
     pub fn user_data(&mut self, user_data: Arc<Mutex<UserData>>) -> &mut Self {
         self.user_data = Some(user_data);
         self
     }
 
-    pub fn system_data_dir(&mut self, system_data_dir: &str) -> &mut AkazaBuilder {
+    pub fn system_data_dir(
+        &mut self,
+        system_data_dir: &str,
+    ) -> &mut BigramWordViterbiEngineBuilder {
         self.system_data_dir = Some(system_data_dir.to_string());
         self
     }
 
-    pub fn build(&self) -> Result<Akaza> {
+    pub fn build(&self) -> Result<BigramWordViterbiEngine> {
         let system_unigram_lm = match &self.system_data_dir {
             Some(dir) => {
                 let path = dir.to_string() + "/stats-vibrato-unigram.trie";
@@ -157,7 +162,7 @@ impl AkazaBuilder {
 
         let romkan_converter = RomKanConverter::new();
 
-        Ok(Akaza {
+        Ok(BigramWordViterbiEngine {
             graph_builder,
             segmenter,
             graph_resolver,
