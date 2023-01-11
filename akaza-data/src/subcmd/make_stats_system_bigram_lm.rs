@@ -22,7 +22,11 @@ pub fn make_stats_system_bigram_lm(
 ) -> Result<()> {
     // まずは unigram の language model を読み込む
     let unigram_lm = SystemUnigramLM::load(unigram_trie_file)?;
-    info!("Unigram system lm: {} threshold={}", unigram_lm.num_keys(), threshold);
+    info!(
+        "Unigram system lm: {} threshold={}",
+        unigram_lm.num_keys(),
+        threshold
+    );
 
     let unigram_map = unigram_lm.as_id_map();
 
