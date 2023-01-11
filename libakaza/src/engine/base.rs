@@ -4,7 +4,7 @@ use std::collections::vec_deque::VecDeque;
 use std::ops::Range;
 
 pub trait HenkanEngine {
-    fn learn(&mut self, surface_kanas: &Vec<String>);
+    fn learn(&mut self, surface_kanas: &[String]);
 
     fn convert(
         &self,
@@ -27,9 +27,6 @@ pub trait HenkanEngine {
 
     fn resolve(&self, lattice: &LatticeGraph) -> anyhow::Result<Vec<VecDeque<Candidate>>>;
 
-    fn to_lattice(
-        &self,
-        yomi: &str,
-        force_ranges: &Vec<Range<usize>>,
-    ) -> anyhow::Result<LatticeGraph>;
+    fn to_lattice(&self, yomi: &str, force_ranges: &[Range<usize>])
+        -> anyhow::Result<LatticeGraph>;
 }

@@ -52,7 +52,7 @@ impl Segmenter {
      */
     // シフトを押して → を押したときのような処理の場合、
     // このメソッドに入ってくる前に別に処理する前提。
-    pub fn build(&self, yomi: &str, force_ranges: &Vec<Range<usize>>) -> SegmentationResult {
+    pub fn build(&self, yomi: &str, force_ranges: &[Range<usize>]) -> SegmentationResult {
         if !force_ranges.is_empty() {
             for force_range in force_ranges {
                 trace!(

@@ -42,7 +42,7 @@ impl BiGramUserStats {
         ))
     }
 
-    pub(crate) fn record_entries(&mut self, kanjis: &Vec<String>) {
+    pub(crate) fn record_entries(&mut self, kanjis: &[String]) {
         if kanjis.len() < 2 {
             return;
         }

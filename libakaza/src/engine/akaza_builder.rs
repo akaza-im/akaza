@@ -30,7 +30,7 @@ pub struct BigramWordViterbiEngine {
 impl BigramWordViterbiEngine {}
 
 impl HenkanEngine for BigramWordViterbiEngine {
-    fn learn(&mut self, surface_kanas: &Vec<String>) {
+    fn learn(&mut self, surface_kanas: &[String]) {
         self.user_data.lock().unwrap().record_entries(surface_kanas);
     }
 
@@ -38,7 +38,7 @@ impl HenkanEngine for BigramWordViterbiEngine {
         self.graph_resolver.resolve(lattice)
     }
 
-    fn to_lattice(&self, yomi: &str, force_ranges: &Vec<Range<usize>>) -> Result<LatticeGraph> {
+    fn to_lattice(&self, yomi: &str, force_ranges: &[Range<usize>]) -> Result<LatticeGraph> {
         // ローマ字からひらがなへの変換をする。
         let yomi = self.romkan_converter.to_hiragana(yomi);
 

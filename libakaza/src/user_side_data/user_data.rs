@@ -119,7 +119,7 @@ impl UserData {
 
     /// 入力確定した漢字のリストをユーザー統計データとして記録する。
     /// "Surface/Kana" のフォーマットで渡すこと。
-    pub fn record_entries(&mut self, kanji_kanas: &Vec<String>) {
+    pub fn record_entries(&mut self, kanji_kanas: &[String]) {
         self.unigram_user_stats.record_entries(kanji_kanas);
         self.bigram_user_stats.record_entries(kanji_kanas);
     }
