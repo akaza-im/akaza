@@ -29,7 +29,8 @@ use ibus_sys::glib::{gboolean, guint};
 use ibus_sys::lookup_table::IBusLookupTable;
 use ibus_sys::prop_list::IBusPropList;
 use ibus_sys::property::{
-    IBusPropState_PROP_STATE_UNCHECKED, IBusPropType_PROP_TYPE_MENU, IBusProperty,
+    IBusPropState_PROP_STATE_UNCHECKED, IBusPropType_PROP_TYPE_MENU, IBusPropType_PROP_TYPE_RADIO,
+    IBusProperty,
 };
 use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, StringExt};
 use libakaza::engine::base::HenkanEngine;
@@ -147,7 +148,7 @@ impl AkazaContext {
 
     /// タスクメニューからポップアップして選べるメニューを構築する。
     pub fn init_props() -> IBusPropList {
-        let mut prop_list = IBusPropList::new();
+        let mut prop_list = IBusPropList::default();
         // TODO これは self.input_mode_prop だった。pythonのときは。
         let subprop: *mut IBusPropList = std::ptr::null_mut();
         let mut input_mode_prop = IBusProperty::new(
@@ -163,12 +164,26 @@ impl AkazaContext {
         );
         prop_list.append(&mut input_mode_prop as *mut IBusProperty);
 
+        let mut props = IBusPropList::default();
+        props.append(
+            (&mut IBusProperty::new(
+                "InputMode".as_ptr() as *const gchar,
+                IBusPropType_PROP_TYPE_RADIO,
+                "Input mode (あ)".to_ibus_text(),
+                "".as_ptr() as *const gchar,
+                "Switch input mode".to_ibus_text(),
+                to_gboolean(true),
+                to_gboolean(true),
+                IBusPropState_PROP_STATE_UNCHECKED,
+                subprop as *mut IBusPropList,
+            )) as *mut _,
+        );
+
         // let props = IBusPropList::new();
         prop_list
     }
 
     /*
-       props = IBus.PropList()
        for input_mode in get_all_input_modes():
            props.append(IBus.Property(key=input_mode.prop_name,
                                       prop_type=IBus.PropType.RADIO,

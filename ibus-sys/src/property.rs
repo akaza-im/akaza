@@ -46,6 +46,7 @@ pub struct IBusProperty {
 }
 
 impl IBusProperty {
+    #[warn(clippy::too_many_arguments)]
     pub fn new(
         key: *const gchar,
         type_: IBusPropType,
