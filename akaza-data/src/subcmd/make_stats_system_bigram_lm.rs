@@ -15,13 +15,14 @@ use crate::subcmd::make_stats_system_unigram_lm::calc_score;
 use crate::utils::get_file_list;
 
 pub fn make_stats_system_bigram_lm(
+    threshold: u32,
     corpus_dir: &String,
     unigram_trie_file: &str,
     bigram_trie_file: &str,
 ) -> Result<()> {
     // まずは unigram の language model を読み込む
     let unigram_lm = SystemUnigramLM::load(unigram_trie_file)?;
-    println!("Unigram system lm: {}", unigram_lm.num_keys());
+    info!("Unigram system lm: {} threshold={}", unigram_lm.num_keys(), threshold);
 
     let unigram_map = unigram_lm.as_id_map();
 
@@ -42,7 +43,7 @@ pub fn make_stats_system_bigram_lm(
     }
 
     // スコアを計算する
-    let scoremap = make_score_map(merged);
+    let scoremap = make_score_map(threshold, merged);
 
     // 結果を書き込む
     let mut builder = SystemBigramLMBuilder::default();
@@ -58,13 +59,14 @@ pub fn make_stats_system_bigram_lm(
 }
 
 // unigram のロジックと一緒なのでまとめたい。
-fn make_score_map(wordcnt: HashMap<(i32, i32), u32>) -> HashMap<(i32, i32), f32> {
+fn make_score_map(threshold: u32, wordcnt: HashMap<(i32, i32), u32>) -> HashMap<(i32, i32), f32> {
     // 総出現単語数
     let c = wordcnt.values().sum();
     // 単語の種類数
     let v = wordcnt.keys().count();
     wordcnt
         .iter()
+        .filter(|(_word, cnt)| *cnt > &threshold)
         .map(|(word, cnt)| (*word, calc_score(*cnt, c, v)))
         .collect::<HashMap<_, _>>()
 }

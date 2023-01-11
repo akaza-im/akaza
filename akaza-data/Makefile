@@ -74,7 +74,7 @@ data/stats-vibrato-unigram.trie: work/jawiki/vibrato-ipadic.wfreq
 	cargo run -- make-stats-system-unigram-lm work/jawiki/vibrato-ipadic.wfreq data/stats-vibrato-unigram.trie
 
 data/stats-vibrato-bigram.trie: data/stats-vibrato-unigram.trie data/stats-vibrato-unigram.trie
-	cargo run -- make-stats-system-bigram-lm work/jawiki/vibrato-ipadic/ \
+	cargo run -- make-stats-system-bigram-lm --threshold=3 work/jawiki/vibrato-ipadic/ \
 		data/stats-vibrato-unigram.trie data/stats-vibrato-bigram.trie
 
 # -------------------------------------------------------------------------

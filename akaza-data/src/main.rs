@@ -141,6 +141,8 @@ struct MakeStatsSystemUnigramLMArgs {
 /// システム言語モデルを生成する。
 #[derive(Debug, clap::Args)]
 struct MakeStatsSystemBigramLMArgs {
+    #[arg(short, long)]
+    threshold: u32,
     corpus_dir: String,
     unigram_trie_file: String,
     bigram_trie_file: String,
@@ -188,6 +190,7 @@ fn main() -> anyhow::Result<()> {
         Commands::Wfreq(opt) => wfreq(opt.src_dir.as_str(), opt.dst_file.as_str()),
         Commands::Vocab(opt) => vocab(opt.src_file.as_str(), opt.dst_file.as_str(), opt.threshold),
         Commands::MakeStatsSystemBigramLM(opt) => make_stats_system_bigram_lm(
+            opt.threshold,
             &opt.corpus_dir,
             &opt.unigram_trie_file,
             &opt.bigram_trie_file,
