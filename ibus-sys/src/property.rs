@@ -1,5 +1,5 @@
 use crate::core::IBusSerializable;
-use crate::glib::{g_object_ref_sink, gboolean, gchar, gpointer};
+use crate::glib::{gboolean, gchar, gpointer};
 use crate::prop_list::IBusPropList;
 use crate::text::IBusText;
 
@@ -43,34 +43,4 @@ pub struct IBusProperty {
     parent: IBusSerializable,
     priv_: *mut IBusPropertyPrivate,
     pdummy: [gpointer; 7usize],
-}
-
-impl IBusProperty {
-    #[warn(clippy::too_many_arguments)]
-    pub fn new(
-        key: *const gchar,
-        type_: IBusPropType,
-        label: *mut IBusText,
-        icon: *const gchar,
-        tooltip: *mut IBusText,
-        sensitive: gboolean,
-        visible: gboolean,
-        state: IBusPropState,
-        prop_list: *mut IBusPropList,
-    ) -> Self {
-        unsafe {
-            let property = g_object_ref_sink(ibus_property_new(
-                key as *const _,
-                type_,
-                label as *mut _,
-                icon as *const _,
-                tooltip as *mut _,
-                sensitive,
-                visible,
-                state,
-                prop_list as *mut _,
-            ) as gpointer) as *mut IBusProperty;
-            *property
-        }
-    }
 }
