@@ -13,7 +13,7 @@ all: data/stats-vibrato-bigram.trie \
 # wikipedia の前処理
 
 work/jawiki/jawiki-latest-pages-articles.xml.bz2:
-	mkdir -p work/
+	mkdir -p work/jawiki/
 	wget --no-verbose --no-clobber -O work/jawiki/jawiki-latest-pages-articles.xml.bz2 https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-pages-articles.xml.bz2
 
 work/jawiki/jawiki-latest-pages-articles.xml: work/jawiki/jawiki-latest-pages-articles.xml.bz2
