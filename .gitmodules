@@ -10,3 +10,6 @@
 [submodule "rx-sys/rx"]
 	path = rx-sys/rx
 	url = git@github.com:yt76/rx.git
+[submodule "akaza-data/aozorabunko_text"]
+	path = akaza-data/aozorabunko_text
+	url = git@github.com:aozorahack/aozorabunko_text.git
