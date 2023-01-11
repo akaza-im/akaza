@@ -54,6 +54,9 @@ pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaComman
     register("extend_clause_left", |context, engine| {
         context.extend_clause_left(engine).unwrap();
     });
+    register("convert_to_full_hiragana", |context, engine| {
+        context.convert_to_full_hiragana(engine).unwrap();
+    });
 
     {
         // TODO コピペがすごい。マクロかうまいなにかでまとめて登録できるようにしたい。
