@@ -10,12 +10,46 @@ use crate::graph::graph_builder::GraphBuilder;
 use crate::graph::graph_resolver::{Candidate, GraphResolver};
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::Segmenter;
-use crate::kana_kanji_dict::{KanaKanjiDict, KanaKanjiDictBuilder};
+use crate::kana_kanji_dict::KanaKanjiDict;
 use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
-use crate::lm::system_bigram::{SystemBigramLM, SystemBigramLMBuilder};
-use crate::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
+use crate::lm::system_bigram::SystemBigramLM;
+use crate::lm::system_unigram_lm::SystemUnigramLM;
 use crate::romkan::RomKanConverter;
 use crate::user_side_data::user_data::UserData;
+
+pub struct SystemDataLoader {
+    pub system_unigram_lm: SystemUnigramLM,
+    pub system_bigram_lm: SystemBigramLM,
+    pub system_kana_kanji_dict: KanaKanjiDict,
+    pub system_single_term_dict: KanaKanjiDict,
+    pub system_kana_trie: MarisaKanaTrie,
+}
+
+impl SystemDataLoader {
+    pub fn load(system_data_dir: &str) -> Result<SystemDataLoader> {
+        let system_unigram_lm = SystemUnigramLM::load(
+            (system_data_dir.to_string() + "/stats-vibrato-unigram.trie").as_str(),
+        )?;
+        let system_bigram_lm = SystemBigramLM::load(
+            (system_data_dir.to_string() + "/stats-vibrato-bigram.trie").as_str(),
+        )?;
+
+        let system_kana_kanji_dict =
+            KanaKanjiDict::load((system_data_dir.to_string() + "/system_dict.trie").as_str())?;
+        let system_single_term_dict =
+            KanaKanjiDict::load((system_data_dir.to_string() + "/single_term.trie").as_str())?;
+        let system_kana_trie =
+            MarisaKanaTrie::load((system_data_dir.to_string() + "/kana.trie").as_str())?;
+
+        Ok(SystemDataLoader {
+            system_unigram_lm,
+            system_bigram_lm,
+            system_kana_kanji_dict,
+            system_single_term_dict,
+            system_kana_trie,
+        })
+    }
+}
 
 /// バイグラムのビタビベースかな漢字変換エンジンです。
 /// 単語バイグラムを採用しています。
@@ -91,67 +125,28 @@ impl HenkanEngine for BigramWordViterbiEngine {
     }
 }
 
-#[derive(Default)]
 pub struct BigramWordViterbiEngineBuilder {
-    system_data_dir: Option<String>,
+    system_data_dir: String,
     user_data: Option<Arc<Mutex<UserData>>>,
 }
 
 impl BigramWordViterbiEngineBuilder {
+    pub fn new(system_data_dir: &str) -> BigramWordViterbiEngineBuilder {
+        BigramWordViterbiEngineBuilder {
+            system_data_dir: system_data_dir.to_string(),
+            user_data: None,
+        }
+    }
+
     pub fn user_data(&mut self, user_data: Arc<Mutex<UserData>>) -> &mut Self {
         self.user_data = Some(user_data);
         self
     }
 
-    pub fn system_data_dir(
-        &mut self,
-        system_data_dir: &str,
-    ) -> &mut BigramWordViterbiEngineBuilder {
-        self.system_data_dir = Some(system_data_dir.to_string());
-        self
-    }
-
     pub fn build(&self) -> Result<BigramWordViterbiEngine> {
-        // TODO system_data_dir がなかったら abort してしまっていいと思う。
+        let system_data_loader = SystemDataLoader::load(self.system_data_dir.as_str())?;
 
-        let system_unigram_lm = match &self.system_data_dir {
-            Some(dir) => {
-                let path = dir.to_string() + "/stats-vibrato-unigram.trie";
-                SystemUnigramLM::load(path.as_str())?
-            }
-            None => SystemUnigramLMBuilder::default().build(),
-        };
-        let system_bigram_lm = match &self.system_data_dir {
-            Some(dir) => {
-                let path = dir.to_string() + "/stats-vibrato-bigram.trie";
-                SystemBigramLM::load(path.as_str())?
-            }
-            None => SystemBigramLMBuilder::default().build(),
-        };
-
-        let system_kana_kanji_dict = match &self.system_data_dir {
-            Some(dir) => {
-                let path = dir.to_string() + "/system_dict.trie";
-                KanaKanjiDict::load(path.as_str())?
-            }
-            None => KanaKanjiDictBuilder::default().build(),
-        };
-        let system_single_term_dict = match &self.system_data_dir {
-            Some(dir) => {
-                let path = dir.to_string() + "/single_term.trie";
-                KanaKanjiDict::load(path.as_str())?
-            }
-            None => KanaKanjiDictBuilder::default().build(),
-        };
-        let system_kana_trie = match &self.system_data_dir {
-            Some(dir) => {
-                let path = dir.to_string() + "/kana.trie";
-                MarisaKanaTrie::load(path.as_str())?
-            }
-            None => MarisaKanaTrie::build(vec![]),
-        };
-
-        let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
+        let segmenter = Segmenter::new(vec![Box::new(system_data_loader.system_kana_trie)]);
 
         let user_data = if let Some(d) = &self.user_data {
             d.clone()
@@ -160,11 +155,11 @@ impl BigramWordViterbiEngineBuilder {
         };
 
         let graph_builder = GraphBuilder::new_with_default_score(
-            system_kana_kanji_dict,
-            system_single_term_dict,
+            system_data_loader.system_kana_kanji_dict,
+            system_data_loader.system_single_term_dict,
             user_data.clone(),
-            Rc::new(system_unigram_lm),
-            Rc::new(system_bigram_lm),
+            Rc::new(system_data_loader.system_unigram_lm),
+            Rc::new(system_data_loader.system_bigram_lm),
         );
 
         let graph_resolver = GraphResolver::default();
