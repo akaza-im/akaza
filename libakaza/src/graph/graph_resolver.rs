@@ -224,7 +224,7 @@ mod tests {
         let system_bigram_lm = system_bigram_lm_builder.build();
         let mut user_data = UserData::default();
         // 私/わたし のスコアをガッと上げる。
-        user_data.record_entries(&vec!["私/わたし".to_string()]);
+        user_data.record_entries(&["私/わたし".to_string()]);
         let graph_builder = GraphBuilder::new_with_default_score(
             dict,
             KanaKanjiDict::default(),

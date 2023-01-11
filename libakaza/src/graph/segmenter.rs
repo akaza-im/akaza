@@ -213,7 +213,7 @@ mod tests {
         // force_range に "たし" を指定する。
         let (i2, _) = yomi.char_indices().nth(1).unwrap();
         let (i3, c3) = yomi.char_indices().nth(2).unwrap();
-        let graph = segmenter.build(yomi, Some(&vec![i2..(i3 + c3.len_utf8())]));
+        let graph = segmenter.build(yomi, Some(&[i2..(i3 + c3.len_utf8())]));
         assert_eq!(
             graph,
             SegmentationResult::new(BTreeMap::from([
