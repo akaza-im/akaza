@@ -141,18 +141,20 @@ impl LatticeGraph {
     }
 
     pub(crate) fn get_edge_cost(&self, prev: &WordNode, node: &WordNode) -> f32 {
-        // TODO user bigram cost
+        if let Some(cost) = self.user_data.lock().unwrap().get_bigram_cost(prev, node) {
+            return cost;
+        }
 
-        // TODO ID 引く処理のキャッシュ。
         let Some((prev_id, _)) = prev.word_id_and_score else {
             return DEFAULT_SCORE;
         };
         let Some((node_id, _)) = node.word_id_and_score else {
             return DEFAULT_SCORE;
         };
-        let Some(cost) = self.system_bigram_lm.get_edge_cost(prev_id, node_id) else {
-            return DEFAULT_SCORE;
-        };
-        cost
+        if let Some(cost) = self.system_bigram_lm.get_edge_cost(prev_id, node_id) {
+            cost
+        } else {
+            DEFAULT_SCORE
+        }
     }
 }

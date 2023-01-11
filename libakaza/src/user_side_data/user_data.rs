@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Mutex;
 
+use crate::graph::word_node::WordNode;
 use anyhow::Result;
 use log::{info, warn};
 
@@ -137,5 +138,10 @@ impl UserData {
     pub fn get_unigram_cost(&self, kanji: &str, yomi: &str) -> Option<f32> {
         self.unigram_user_stats
             .get_cost(format!("{}/{}", kanji, yomi))
+    }
+
+    pub fn get_bigram_cost(&self, node1: &WordNode, node2: &WordNode) -> Option<f32> {
+        self.bigram_user_stats
+            .get_cost(node1.key().as_str(), node2.key().as_str())
     }
 }
