@@ -721,6 +721,7 @@ dependencies = [
  "clap-verbosity-flag",
  "env_logger",
  "ibus-sys",
+ "kelp",
  "libakaza",
  "log",
  "tempfile",

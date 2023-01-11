@@ -65,6 +65,10 @@ impl IBusLookupTable {
     pub fn get_page_size(&mut self) -> guint {
         unsafe { ibus_lookup_table_get_page_size(self as *mut _) }
     }
+
+    pub fn append_candidate(&mut self, text: *mut IBusText) {
+        unsafe { ibus_lookup_table_append_candidate(self as *mut _, text as *mut _) }
+    }
 }
 
 extern "C" {
@@ -80,7 +84,7 @@ extern "C" {
     #[doc = " ibus_lookup_table_get_number_of_candidates:\n @table: An IBusLookupTable.\n\n Return the number of candidate in the table.\n\n Returns: The number of candidates in the table"]
     pub fn ibus_lookup_table_get_number_of_candidates(table: *const IBusLookupTable) -> guint;
     #[doc = " ibus_lookup_table_append_candidate:\n @table: An IBusLookupTable.\n @text: candidate word/phrase to be appended (in IBusText format).\n\n Append a candidate word/phrase to IBusLookupTable, and increase reference."]
-    pub fn ibus_lookup_table_append_candidate(table: *mut IBusLookupTable, text: *mut IBusText);
+    fn ibus_lookup_table_append_candidate(table: *mut IBusLookupTable, text: *mut IBusText);
     fn ibus_lookup_table_cursor_up(table: *mut IBusLookupTable) -> gboolean;
     fn ibus_lookup_table_cursor_down(table: *mut IBusLookupTable) -> gboolean;
     pub fn ibus_lookup_table_get_cursor_pos(table: *mut IBusLookupTable) -> guint;

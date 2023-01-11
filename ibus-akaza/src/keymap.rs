@@ -8,9 +8,9 @@ use ibus_sys::ibus_key::{
     IBUS_KEY_KP_Down, IBUS_KEY_KP_Enter, IBUS_KEY_KP_Left, IBUS_KEY_KP_Right, IBUS_KEY_KP_Up,
     IBUS_KEY_Left, IBUS_KEY_Muhenkan, IBUS_KEY_Return, IBUS_KEY_Right, IBUS_KEY_Up, IBUS_KEY_h,
     IBUS_KEY_space, IBUS_KEY_0, IBUS_KEY_1, IBUS_KEY_2, IBUS_KEY_3, IBUS_KEY_4, IBUS_KEY_5,
-    IBUS_KEY_6, IBUS_KEY_7, IBUS_KEY_8, IBUS_KEY_9, IBUS_KEY_KP_0, IBUS_KEY_KP_1, IBUS_KEY_KP_2,
-    IBUS_KEY_KP_3, IBUS_KEY_KP_4, IBUS_KEY_KP_5, IBUS_KEY_KP_6, IBUS_KEY_KP_7, IBUS_KEY_KP_8,
-    IBUS_KEY_KP_9,
+    IBUS_KEY_6, IBUS_KEY_7, IBUS_KEY_8, IBUS_KEY_9, IBUS_KEY_F10, IBUS_KEY_F6, IBUS_KEY_F7,
+    IBUS_KEY_F8, IBUS_KEY_F9, IBUS_KEY_KP_0, IBUS_KEY_KP_1, IBUS_KEY_KP_2, IBUS_KEY_KP_3,
+    IBUS_KEY_KP_4, IBUS_KEY_KP_5, IBUS_KEY_KP_6, IBUS_KEY_KP_7, IBUS_KEY_KP_8, IBUS_KEY_KP_9,
 };
 
 use crate::context::KeyState;
@@ -77,18 +77,9 @@ impl KeyMap {
         keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_PRECOMPOSITION, KEY_STATE_CONVERSION], ['C-S-K'],
                         'set_input_mode_katakana')
 
-        # 後から文字タイプを指定する
-        keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F6'], 'convert_to_full_hiragana')
-        keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F7'], 'convert_to_full_katakana')
-        keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F8'], 'convert_to_half_katakana')
-        keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F9'], 'convert_to_full_romaji')
-        keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['F10'], 'convert_to_half_romaji')
-
         keymap.register([KEY_STATE_CONVERSION], ['Return', 'KP_Enter'], 'commit_candidate')
 
         keymap.register([KEY_STATE_COMPOSITION, KEY_STATE_CONVERSION], ['Escape'], 'escape')
-
-
 
         keymap.register([KEY_STATE_CONVERSION], ['Page_Up', 'KP_Page_Up'], 'page_up')
         keymap.register([KEY_STATE_CONVERSION], ['Page_Down', 'KP_Page_Down'], 'page_down')
@@ -188,6 +179,38 @@ impl KeyMap {
             &[IBUS_KEY_Left, IBUS_KEY_KP_Left],
             IBusModifierType_IBUS_SHIFT_MASK,
             "extend_clause_left",
+        );
+
+        // 後から文字タイプを指定する
+        builder.insert(
+            &[KeyState::Composition, KeyState::Conversion],
+            &[IBUS_KEY_F6],
+            0,
+            "convert_to_full_hiragana",
+        );
+        builder.insert(
+            &[KeyState::Composition, KeyState::Conversion],
+            &[IBUS_KEY_F7],
+            0,
+            "convert_to_full_katakana",
+        );
+        builder.insert(
+            &[KeyState::Composition, KeyState::Conversion],
+            &[IBUS_KEY_F8],
+            0,
+            "convert_to_half_katakana",
+        );
+        builder.insert(
+            &[KeyState::Composition, KeyState::Conversion],
+            &[IBUS_KEY_F9],
+            0,
+            "convert_to_full_romaji",
+        );
+        builder.insert(
+            &[KeyState::Composition, KeyState::Conversion],
+            &[IBUS_KEY_F10],
+            0,
+            "convert_to_half_romaji",
         );
 
         let mut num = |keyvals: &[u32], n: i32| {

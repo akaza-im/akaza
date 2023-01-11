@@ -3,6 +3,7 @@ use std::ffi::CString;
 use std::ops::Range;
 
 use anyhow::Result;
+use kelp::{h2z, hira2kata, z2h, ConvOption};
 use log::{error, info, trace, warn};
 
 use ibus_sys::attr_list::{ibus_attr_list_append, ibus_attr_list_new};
@@ -24,7 +25,7 @@ use ibus_sys::engine::{
 use ibus_sys::engine::{ibus_engine_hide_auxiliary_text, ibus_engine_hide_lookup_table};
 use ibus_sys::glib::gchar;
 use ibus_sys::glib::{gboolean, guint};
-use ibus_sys::lookup_table::{ibus_lookup_table_append_candidate, IBusLookupTable};
+use ibus_sys::lookup_table::IBusLookupTable;
 use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, StringExt};
 use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngine;
@@ -459,21 +460,16 @@ impl AkazaContext {
      * 現在の候補選択状態から、 lookup table を構築する。
      */
     fn create_lookup_table(&mut self) {
-        unsafe {
-            // 一旦、ルックアップテーブルをクリアする
-            self.lookup_table.clear();
+        // 一旦、ルックアップテーブルをクリアする
+        self.lookup_table.clear();
 
-            // 現在の未変換情報を元に、候補を算出していく。
-            if !self.clauses.is_empty() {
-                // lookup table に候補を詰め込んでいく。
-                for node in &self.clauses[self.current_clause] {
-                    // TODO lisp
-                    let candidate = &node.kanji;
-                    ibus_lookup_table_append_candidate(
-                        &mut self.lookup_table as *mut _,
-                        candidate.to_ibus_text(),
-                    );
-                }
+        // 現在の未変換情報を元に、候補を算出していく。
+        if !self.clauses.is_empty() {
+            // lookup table に候補を詰め込んでいく。
+            for node in &self.clauses[self.current_clause] {
+                // TODO lisp
+                let candidate = &node.kanji;
+                self.lookup_table.append_candidate(candidate.to_ibus_text());
             }
         }
     }
@@ -677,5 +673,87 @@ impl AkazaContext {
         if self.set_lookup_table_cursor_pos_in_current_page(index as i32) {
             self.commit_candidate(engine)
         }
+    }
+
+    /// convert selected word/characters to full-width hiragana (standard hiragana): ホワイト → ほわいと
+    pub fn convert_to_full_hiragana(&mut self, engine: *mut IBusEngine) -> Result<()> {
+        info!("Convert to full hiragana");
+        let hira = self.romkan.to_hiragana(self.preedit.as_str());
+        self.convert_to_single(engine, hira.as_str(), hira.as_str())
+    }
+
+    /// convert to full-width katakana (standard katakana): ほわいと → ホワイト
+    pub fn convert_to_full_katakana(&mut self, engine: *mut IBusEngine) -> Result<()> {
+        let hira = self.romkan.to_hiragana(self.preedit.as_str());
+        let kata = hira2kata(hira.as_str(), ConvOption::default());
+        self.convert_to_single(engine, hira.as_str(), kata.as_str())
+    }
+
+    /// convert to half-width katakana (standard katakana): ほわいと → ﾎﾜｲﾄ
+    pub fn convert_to_half_katakana(&mut self, engine: *mut IBusEngine) -> Result<()> {
+        let hira = self.romkan.to_hiragana(self.preedit.as_str());
+        let kata = z2h(
+            hira2kata(hira.as_str(), ConvOption::default()).as_str(),
+            ConvOption::default(),
+        );
+        self.convert_to_single(engine, hira.as_str(), kata.as_str())
+    }
+
+    /// convert to full-width romaji, all-capitals, proper noun capitalization (latin script inside
+    /// Japanese text): ホワイト → ｈｏｗａｉｔｏ → ＨＯＷＡＩＴＯ → Ｈｏｗａｉｔｏ
+    pub fn convert_to_full_romaji(&mut self, engine: *mut IBusEngine) -> Result<()> {
+        let hira = self.romkan.to_hiragana(self.preedit.as_str());
+        let romaji = h2z(
+            &self.preedit,
+            ConvOption {
+                kana: true,
+                digit: true,
+                ascii: true,
+                ..Default::default()
+            },
+        );
+        self.convert_to_single(engine, hira.as_str(), romaji.as_str())
+    }
+
+    /// convert to half-width romaji, all-capitals, proper noun capitalization (latin script like
+    /// standard English): ホワイト → howaito → HOWAITO → Howaito
+    pub fn convert_to_half_romaji(&mut self, engine: *mut IBusEngine) -> Result<()> {
+        let hira = self.romkan.to_hiragana(self.preedit.as_str());
+        let romaji = z2h(
+            &self.preedit,
+            ConvOption {
+                kana: true,
+                digit: true,
+                ascii: true,
+                ..Default::default()
+            },
+        );
+        self.convert_to_single(engine, hira.as_str(), romaji.as_str())
+    }
+
+    /// 特定の1文節の文章を候補として表示する。
+    /// F6 などを押した時用。
+    fn convert_to_single(
+        &mut self,
+        engine: *mut IBusEngine,
+        yomi: &str,
+        surface: &str,
+    ) -> Result<()> {
+        // 候補を設定
+        let candidate = Candidate::new(yomi, surface, 0_f32);
+        let clauses = vec![VecDeque::from([candidate])];
+        self.clauses = clauses;
+        self.current_clause = 0;
+        self.node_selected.clear();
+        self.force_selected_clause = vec![];
+
+        // ルックアップテーブルに候補を設定
+        self.lookup_table.clear();
+        let candidate = surface.to_ibus_text();
+        self.lookup_table.append_candidate(candidate);
+
+        // 表示を更新
+        self.refresh(engine);
+        Ok(())
     }
 }
