@@ -3,9 +3,9 @@ use std::ops::Range;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
-use crate::engine::base::HenkanEngine;
 use anyhow::Result;
 
+use crate::engine::base::HenkanEngine;
 use crate::graph::graph_builder::GraphBuilder;
 use crate::graph::graph_resolver::{Candidate, GraphResolver};
 use crate::graph::lattice_graph::LatticeGraph;
@@ -145,7 +145,7 @@ impl BigramWordViterbiEngineBuilder {
         };
         let system_kana_trie = match &self.system_data_dir {
             Some(dir) => {
-                let path = dir.to_string() + "/single_term.trie";
+                let path = dir.to_string() + "/kana.trie";
                 MarisaKanaTrie::load(path.as_str())?
             }
             None => MarisaKanaTrie::build(vec![]),
