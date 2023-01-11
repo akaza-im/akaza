@@ -8,14 +8,16 @@ use crate::subcmd::make_dict::{make_single_term, make_system_dict};
 use crate::subcmd::make_stats_system_bigram_lm::make_stats_system_bigram_lm;
 use crate::subcmd::make_stats_system_unigram_lm::make_stats_system_unigram_lm;
 use crate::subcmd::structured_perceptron::learn_structured_perceptron;
-use crate::subcmd::tokenize::{tokenize_lindera_ipadic, tokenize_vibrato_ipadic};
+use crate::subcmd::tokenize::{
+    tokenize_aozora_bunko_vibrato_ipadic, tokenize_lindera_ipadic, tokenize_vibrato_ipadic,
+};
 use crate::subcmd::vocab::vocab;
 use crate::subcmd::wfreq::wfreq;
 
+mod corpus_reader;
 mod subcmd;
 mod tokenizer;
 mod utils;
-mod wikipedia;
 
 #[derive(Debug, Parser)]
 #[clap(
@@ -37,6 +39,8 @@ struct Args {
 enum Commands {
     TokenizeLinderaIpadic(TokenizeLinderaIpadicArgs),
     TokenizeVibratoIpadic(TokenizeVibratoIpadicArgs),
+    // ↓これは最終的には↑と統合予定
+    TokenizeAozoraBunkoVibratoIpadic(TokenizeVibratoIpadicArgs),
     Wfreq(WfreqArgs),
     Vocab(VocabArgs),
     #[clap(arg_required_else_help = true)]
@@ -116,7 +120,8 @@ struct TokenizeVibratoIpadicArgs {
 
 #[derive(Debug, clap::Args)]
 struct WfreqArgs {
-    src_dir: String,
+    src_dir1: String,
+    src_dir2: String,
     dst_file: String,
 }
 
@@ -187,7 +192,16 @@ fn main() -> anyhow::Result<()> {
             opt.src_dir.as_str(),
             opt.dst_dir.as_str(),
         ),
-        Commands::Wfreq(opt) => wfreq(opt.src_dir.as_str(), opt.dst_file.as_str()),
+        Commands::TokenizeAozoraBunkoVibratoIpadic(opt) => tokenize_aozora_bunko_vibrato_ipadic(
+            opt.system_dict,
+            opt.user_dict,
+            opt.src_dir.as_str(),
+            opt.dst_dir.as_str(),
+        ),
+        Commands::Wfreq(opt) => wfreq(
+            &vec![opt.src_dir1.as_str(), opt.src_dir2.as_str()],
+            opt.dst_file.as_str(),
+        ),
         Commands::Vocab(opt) => vocab(opt.src_file.as_str(), opt.dst_file.as_str(), opt.threshold),
         Commands::MakeStatsSystemBigramLM(opt) => make_stats_system_bigram_lm(
             opt.threshold,
