@@ -1,4 +1,5 @@
 #[cfg(test)]
+#[cfg(feature = "it")]
 mod tests {
     use anyhow::Context;
 
