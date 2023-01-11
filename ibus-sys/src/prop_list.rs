@@ -3,8 +3,8 @@ use crate::glib::{g_object_ref_sink, gpointer, GArray};
 use crate::property::IBusProperty;
 
 extern "C" {
-    fn ibus_prop_list_new() -> *mut IBusPropList;
-    fn ibus_prop_list_append(prop_list: *mut IBusPropList, prop: *mut IBusProperty);
+    pub fn ibus_prop_list_new() -> *mut IBusPropList;
+    pub fn ibus_prop_list_append(prop_list: *mut IBusPropList, prop: *mut IBusProperty);
 }
 
 #[repr(C)]

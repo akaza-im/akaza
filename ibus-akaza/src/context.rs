@@ -24,13 +24,13 @@ use ibus_sys::engine::{
     ibus_engine_update_preedit_text, IBusEngine,
 };
 use ibus_sys::engine::{ibus_engine_hide_auxiliary_text, ibus_engine_hide_lookup_table};
-use ibus_sys::glib::gchar;
+use ibus_sys::glib::{g_object_ref_sink, gchar, gpointer};
 use ibus_sys::glib::{gboolean, guint};
 use ibus_sys::lookup_table::IBusLookupTable;
-use ibus_sys::prop_list::IBusPropList;
+use ibus_sys::prop_list::{ibus_prop_list_append, ibus_prop_list_new, IBusPropList};
 use ibus_sys::property::{
-    IBusPropState_PROP_STATE_UNCHECKED, IBusPropType_PROP_TYPE_MENU, IBusPropType_PROP_TYPE_RADIO,
-    IBusProperty,
+    ibus_property_new, IBusPropState_PROP_STATE_UNCHECKED, IBusPropType_PROP_TYPE_MENU,
+    IBusPropType_PROP_TYPE_RADIO, IBusProperty,
 };
 use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, StringExt};
 use libakaza::engine::base::HenkanEngine;
@@ -78,7 +78,7 @@ pub struct AkazaContext {
     keymap: KeyMap,
     /// シフト+右 or シフト+左で
     force_selected_clause: Vec<Range<usize>>,
-    prop_list: IBusPropList,
+    prop_list: *mut IBusPropList,
 }
 
 impl AkazaContext {
@@ -147,28 +147,15 @@ impl AkazaContext {
     }
 
     /// タスクメニューからポップアップして選べるメニューを構築する。
-    pub fn init_props() -> IBusPropList {
-        let mut prop_list = IBusPropList::default();
-        // TODO これは self.input_mode_prop だった。pythonのときは。
-        let subprop: *mut IBusPropList = std::ptr::null_mut();
-        let mut input_mode_prop = IBusProperty::new(
-            "InputMode".as_ptr() as *const gchar,
-            IBusPropType_PROP_TYPE_MENU,
-            "Input mode (あ)".to_ibus_text(),
-            "".as_ptr() as *const gchar,
-            "Switch input mode".to_ibus_text(),
-            to_gboolean(true),
-            to_gboolean(true),
-            IBusPropState_PROP_STATE_UNCHECKED,
-            subprop as *mut IBusPropList,
-        );
-        prop_list.append(&mut input_mode_prop as *mut IBusProperty);
-
-        let mut props = IBusPropList::default();
-        props.append(
-            (&mut IBusProperty::new(
+    pub fn init_props() -> *mut IBusPropList {
+        unsafe {
+            let prop_list =
+                g_object_ref_sink(ibus_prop_list_new() as gpointer) as *mut IBusPropList;
+            // TODO これは self.input_mode_prop だった。pythonのときは。
+            let subprop: *mut IBusPropList = std::ptr::null_mut();
+            let input_mode_prop = g_object_ref_sink(ibus_property_new(
                 "InputMode".as_ptr() as *const gchar,
-                IBusPropType_PROP_TYPE_RADIO,
+                IBusPropType_PROP_TYPE_MENU,
                 "Input mode (あ)".to_ibus_text(),
                 "".as_ptr() as *const gchar,
                 "Switch input mode".to_ibus_text(),
@@ -176,11 +163,27 @@ impl AkazaContext {
                 to_gboolean(true),
                 IBusPropState_PROP_STATE_UNCHECKED,
                 subprop as *mut IBusPropList,
-            )) as *mut _,
-        );
+            ) as gpointer) as *mut IBusProperty;
+            ibus_prop_list_append(prop_list, input_mode_prop);
 
-        // let props = IBusPropList::new();
-        prop_list
+            // let mut props = IBusPropList::default();
+            // props.append(
+            //     (&mut IBusProperty::new(
+            //         "InputMode".as_ptr() as *const gchar,
+            //         IBusPropType_PROP_TYPE_RADIO,
+            //         "Input mode (あ)".to_ibus_text(),
+            //         "".as_ptr() as *const gchar,
+            //         "Switch input mode".to_ibus_text(),
+            //         to_gboolean(true),
+            //         to_gboolean(true),
+            //         IBusPropState_PROP_STATE_UNCHECKED,
+            //         subprop as *mut IBusPropList,
+            //     )) as *mut _,
+            // );
+
+            // let props = IBusPropList::new();
+            prop_list
+        }
     }
 
     /*
@@ -744,7 +747,7 @@ impl AkazaContext {
     pub fn do_focus_in(&mut self, engine: *mut IBusEngine) {
         info!("do_focus_in");
         unsafe {
-            ibus_engine_register_properties(engine, &mut self.prop_list as *mut _);
+            ibus_engine_register_properties(engine, self.prop_list);
         }
     }
 
