@@ -45,6 +45,11 @@ unsafe extern "C" fn candidate_clicked(
     context_ref.do_candidate_clicked(engine, index, button, state);
 }
 
+unsafe extern "C" fn focus_in(context: *mut c_void, engine: *mut IBusEngine) {
+    let context_ref = &mut *(context as *mut AkazaContext);
+    context_ref.do_focus_in(engine);
+}
+
 fn load_user_data() -> Arc<Mutex<UserData>> {
     match UserData::load_from_default_path() {
         Ok(user_data) => Arc::new(Mutex::new(user_data)),
@@ -111,6 +116,7 @@ fn main() -> Result<()> {
             &mut ac as *mut _ as *mut c_void,
             process_key_event,
             candidate_clicked,
+            focus_in,
         );
 
         ibus_akaza_init(arg.ibus);

@@ -19,13 +19,18 @@ use ibus_sys::core::{
     IBusModifierType_IBUS_RELEASE_MASK, IBusModifierType_IBUS_SHIFT_MASK,
 };
 use ibus_sys::engine::{
-    ibus_engine_commit_text, ibus_engine_hide_preedit_text, ibus_engine_update_auxiliary_text,
-    ibus_engine_update_lookup_table, ibus_engine_update_preedit_text, IBusEngine,
+    ibus_engine_commit_text, ibus_engine_hide_preedit_text, ibus_engine_register_properties,
+    ibus_engine_update_auxiliary_text, ibus_engine_update_lookup_table,
+    ibus_engine_update_preedit_text, IBusEngine,
 };
 use ibus_sys::engine::{ibus_engine_hide_auxiliary_text, ibus_engine_hide_lookup_table};
 use ibus_sys::glib::gchar;
 use ibus_sys::glib::{gboolean, guint};
 use ibus_sys::lookup_table::IBusLookupTable;
+use ibus_sys::prop_list::IBusPropList;
+use ibus_sys::property::{
+    IBusPropState_PROP_STATE_UNCHECKED, IBusPropType_PROP_TYPE_MENU, IBusProperty,
+};
 use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, StringExt};
 use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngine;
@@ -72,6 +77,7 @@ pub struct AkazaContext {
     keymap: KeyMap,
     /// シフト+右 or シフト+左で
     force_selected_clause: Vec<Range<usize>>,
+    prop_list: IBusPropList,
 }
 
 impl AkazaContext {
@@ -135,8 +141,53 @@ impl AkazaContext {
             node_selected: HashMap::new(),
             keymap: KeyMap::new(),
             force_selected_clause: Vec::new(),
+            prop_list: Self::init_props(),
         }
     }
+
+    /// タスクメニューからポップアップして選べるメニューを構築する。
+    pub fn init_props() -> IBusPropList {
+        let mut prop_list = IBusPropList::new();
+        // TODO これは self.input_mode_prop だった。pythonのときは。
+        let subprop: *mut IBusPropList = std::ptr::null_mut();
+        let mut input_mode_prop = IBusProperty::new(
+            "InputMode".as_ptr() as *const gchar,
+            IBusPropType_PROP_TYPE_MENU,
+            "Input mode (あ)".to_ibus_text(),
+            "".as_ptr() as *const gchar,
+            "Switch input mode".to_ibus_text(),
+            to_gboolean(true),
+            to_gboolean(true),
+            IBusPropState_PROP_STATE_UNCHECKED,
+            subprop as *mut IBusPropList,
+        );
+        prop_list.append(&mut input_mode_prop as *mut IBusProperty);
+
+        // let props = IBusPropList::new();
+        prop_list
+    }
+
+    /*
+       props = IBus.PropList()
+       for input_mode in get_all_input_modes():
+           props.append(IBus.Property(key=input_mode.prop_name,
+                                      prop_type=IBus.PropType.RADIO,
+                                      label=IBus.Text.new_from_string(input_mode.label),
+                                      icon=None,
+                                      tooltip=None,
+                                      sensitive=True,
+                                      visible=True,
+                                      state=IBus.PropState.UNCHECKED,
+                                      sub_props=None))
+       i = 0
+       while props.get(i) is not None:
+           prop = props.get(i)
+           self.__prop_dict[prop.get_key()] = prop
+           i += 1
+       props.get(self.input_mode.mode_code).set_state(IBus.PropState.CHECKED)
+       self.input_mode_prop.set_sub_props(props)
+
+    */
 }
 
 impl AkazaContext {
@@ -672,6 +723,13 @@ impl AkazaContext {
         info!("do_candidate_clicked");
         if self.set_lookup_table_cursor_pos_in_current_page(index as i32) {
             self.commit_candidate(engine)
+        }
+    }
+
+    pub fn do_focus_in(&mut self, engine: *mut IBusEngine) {
+        info!("do_focus_in");
+        unsafe {
+            ibus_engine_register_properties(engine, &mut self.prop_list as *mut _);
         }
     }
 

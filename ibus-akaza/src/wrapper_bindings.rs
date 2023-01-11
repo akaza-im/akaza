@@ -24,6 +24,9 @@ pub(crate) type ibus_akaza_callback_candidate_clicked = unsafe extern "C" fn(
     state: guint,
 );
 
+pub(crate) type ibus_akaza_callback_focus_in =
+    unsafe extern "C" fn(context: *mut c_void, engine: *mut IBusEngine);
+
 extern "C" {
     /// is_ibus: true if the project run with `--ibus` option.
     pub fn ibus_akaza_init(is_ibus: bool);
@@ -32,5 +35,6 @@ extern "C" {
         context: *mut c_void,
         key_event_cb: ibus_akaza_callback_key_event,
         candidate_cb: ibus_akaza_callback_candidate_clicked,
+        focus_in_cb: ibus_akaza_callback_focus_in,
     );
 }
