@@ -10,10 +10,10 @@ use crate::graph::graph_builder::GraphBuilder;
 use crate::graph::graph_resolver::{Candidate, GraphResolver};
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::Segmenter;
-use crate::kana_kanji_dict::{KanaKanjiDict};
+use crate::kana_kanji_dict::KanaKanjiDict;
 use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
-use crate::lm::system_bigram::{SystemBigramLM};
-use crate::lm::system_unigram_lm::{SystemUnigramLM};
+use crate::lm::system_bigram::SystemBigramLM;
+use crate::lm::system_unigram_lm::SystemUnigramLM;
 use crate::romkan::RomKanConverter;
 use crate::user_side_data::user_data::UserData;
 
