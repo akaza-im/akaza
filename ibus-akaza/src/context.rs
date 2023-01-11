@@ -26,7 +26,8 @@ use ibus_sys::glib::gchar;
 use ibus_sys::glib::{gboolean, guint};
 use ibus_sys::lookup_table::{ibus_lookup_table_append_candidate, IBusLookupTable};
 use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, StringExt};
-use libakaza::akaza_builder::Akaza;
+use libakaza::engine::base::HenkanEngine;
+use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngine;
 use libakaza::extend_clause::{extend_left, extend_right};
 use libakaza::graph::graph_resolver::Candidate;
 use libakaza::romkan::RomKanConverter;
@@ -59,7 +60,7 @@ pub struct AkazaContext {
     pub(crate) lookup_table: IBusLookupTable,
     pub(crate) romkan: RomKanConverter,
     command_map: HashMap<&'static str, IbusAkazaCommand>,
-    akaza: Akaza,
+    akaza: BigramWordViterbiEngine,
     clauses: Vec<VecDeque<Candidate>>,
     // げんざいせんたくされているぶんせつ。
     current_clause: usize,
@@ -116,7 +117,7 @@ impl AkazaContext {
 }
 
 impl AkazaContext {
-    pub(crate) fn new(akaza: Akaza) -> Self {
+    pub(crate) fn new(akaza: BigramWordViterbiEngine) -> Self {
         AkazaContext {
             input_mode: InputMode::Hiragana,
             cursor_pos: 0,
@@ -438,7 +439,7 @@ impl AkazaContext {
         } else {
             self.clauses = self
                 .akaza
-                .convert(self.preedit.as_str(), &self.force_selected_clause)?;
+                .convert(self.preedit.as_str(), Some(&self.force_selected_clause))?;
 
             // [a][bc]
             //    ^^^^

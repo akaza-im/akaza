@@ -1,10 +1,13 @@
-use libakaza::akaza_builder::AkazaBuilder;
+use libakaza::engine::base::HenkanEngine;
+use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 
 pub fn check(yomi: &str) -> anyhow::Result<()> {
     let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/data/";
 
-    let akaza = AkazaBuilder::default().system_data_dir(&datadir).build()?;
-    let lattice = akaza.to_lattice(yomi, &Vec::new())?;
+    let akaza = BigramWordViterbiEngineBuilder::default()
+        .system_data_dir(&datadir)
+        .build()?;
+    let lattice = akaza.to_lattice(yomi, None)?;
     println!("{}", lattice.dump_cost_dot());
     println!("{:?}", lattice);
 

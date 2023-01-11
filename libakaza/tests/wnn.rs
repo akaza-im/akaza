@@ -5,18 +5,21 @@ mod tests {
     use anyhow::Result;
     use log::LevelFilter;
 
-    use libakaza::akaza_builder::{Akaza, AkazaBuilder};
+    use libakaza::engine::base::HenkanEngine;
+    use libakaza::engine::bigram_word_viterbi_engine::{
+        BigramWordViterbiEngine, BigramWordViterbiEngineBuilder,
+    };
     use libakaza::graph::graph_resolver::Candidate;
 
-    fn load_akaza() -> Result<Akaza> {
+    fn load_akaza() -> Result<BigramWordViterbiEngine> {
         let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/../akaza-data/data/";
-        AkazaBuilder::default()
+        BigramWordViterbiEngineBuilder::default()
             .system_data_dir(datadir.as_str())
             .build()
     }
 
     struct Tester {
-        akaza: Akaza,
+        akaza: BigramWordViterbiEngine,
     }
 
     impl Tester {
@@ -27,7 +30,7 @@ mod tests {
         }
 
         fn test(&self, yomi: &str, kanji: &str) -> Result<()> {
-            let got1 = &self.akaza.convert(yomi, &Vec::new())?;
+            let got1 = &self.akaza.convert(yomi, None)?;
             let terms: Vec<String> = got1.iter().map(|f| f[0].kanji.clone()).collect();
             let got = terms.join("");
             assert_eq!(got, kanji);
@@ -43,7 +46,7 @@ mod tests {
             .try_init();
 
         let yomi = "すし";
-        let got: Vec<VecDeque<Candidate>> = load_akaza()?.convert(yomi, &vec![])?;
+        let got: Vec<VecDeque<Candidate>> = load_akaza()?.convert(yomi, None)?;
         assert_eq!(&got[0][0].yomi, "すし");
         let words: Vec<String> = got[0].iter().map(|x| x.kanji.to_string()).collect();
         assert!(words.contains(&"🍣".to_string()));

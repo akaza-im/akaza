@@ -41,7 +41,7 @@ impl UniGramUserStats {
         ))
     }
 
-    pub(crate) fn record_entries(&mut self, kanji_kanas: &Vec<String>) {
+    pub(crate) fn record_entries(&mut self, kanji_kanas: &[String]) {
         for kanji_kana in kanji_kanas {
             if let Some(i) = self.word_count.get(kanji_kana) {
                 self.word_count.insert(kanji_kana.clone(), i + 1);

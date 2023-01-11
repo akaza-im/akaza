@@ -5,7 +5,8 @@ use std::time::SystemTime;
 use anyhow::Context;
 use log::info;
 
-use libakaza::akaza_builder::AkazaBuilder;
+use libakaza::engine::base::HenkanEngine;
+use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 
 #[derive(Default)]
 struct SaigenRitsu {
@@ -61,7 +62,7 @@ pub fn evaluate(corpus_dir: &String, system_data_dir: &str) -> anyhow::Result<()
         "corpus.5.txt",
     ];
 
-    let akaza = AkazaBuilder::default()
+    let akaza = BigramWordViterbiEngineBuilder::default()
         .system_data_dir(system_data_dir)
         .build()?;
 
@@ -91,7 +92,7 @@ pub fn evaluate(corpus_dir: &String, system_data_dir: &str) -> anyhow::Result<()
             let surface = surface.replace('|', "");
 
             let t1 = SystemTime::now();
-            let result = akaza.convert(yomi.as_str(), &force_ranges)?;
+            let result = akaza.convert(yomi.as_str(), Some(&force_ranges))?;
             let t2 = SystemTime::now();
             let elapsed = t2.duration_since(t1)?;
 

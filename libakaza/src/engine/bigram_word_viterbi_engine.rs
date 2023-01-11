@@ -3,6 +3,7 @@ use std::ops::Range;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
+use crate::engine::base::HenkanEngine;
 use anyhow::Result;
 
 use crate::graph::graph_builder::GraphBuilder;
@@ -16,7 +17,9 @@ use crate::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
 use crate::romkan::RomKanConverter;
 use crate::user_side_data::user_data::UserData;
 
-pub struct Akaza {
+/// バイグラムのビタビベースかな漢字変換エンジンです。
+/// 単語バイグラムを採用しています。
+pub struct BigramWordViterbiEngine {
     graph_builder: GraphBuilder,
     pub segmenter: Segmenter,
     pub graph_resolver: GraphResolver,
@@ -24,37 +27,22 @@ pub struct Akaza {
     pub user_data: Arc<Mutex<UserData>>,
 }
 
-impl Akaza {}
+impl BigramWordViterbiEngine {}
 
-impl Akaza {
-    pub fn learn(&mut self, surface_kanas: &Vec<String>) {
+impl HenkanEngine for BigramWordViterbiEngine {
+    fn learn(&mut self, surface_kanas: &[String]) {
         self.user_data.lock().unwrap().record_entries(surface_kanas);
     }
 
-    pub fn convert(
-        &self,
-        yomi: &str,
-        force_ranges: &Vec<Range<usize>>,
-    ) -> Result<Vec<VecDeque<Candidate>>> {
-        // 先頭が大文字なケースと、URL っぽい文字列のときは変換処理を実施しない。
-        if (!yomi.is_empty()
-            && yomi.chars().next().unwrap().is_ascii_uppercase()
-            && force_ranges.is_empty())
-            || yomi.starts_with("https://")
-            || yomi.starts_with("http://")
-        {
-            return Ok(vec![VecDeque::from([Candidate::new(yomi, yomi, 0_f32)])]);
-        }
-
-        let lattice = self.to_lattice(yomi, force_ranges)?;
-        self.graph_resolver.resolve(&lattice)
-    }
-
-    pub fn resolve(&self, lattice: &LatticeGraph) -> Result<Vec<VecDeque<Candidate>>> {
+    fn resolve(&self, lattice: &LatticeGraph) -> Result<Vec<VecDeque<Candidate>>> {
         self.graph_resolver.resolve(lattice)
     }
 
-    pub fn to_lattice(&self, yomi: &str, force_ranges: &Vec<Range<usize>>) -> Result<LatticeGraph> {
+    fn to_lattice(
+        &self,
+        yomi: &str,
+        force_ranges: Option<&[Range<usize>]>,
+    ) -> Result<LatticeGraph> {
         // ローマ字からひらがなへの変換をする。
         let yomi = self.romkan_converter.to_hiragana(yomi);
 
@@ -104,23 +92,26 @@ impl Akaza {
 }
 
 #[derive(Default)]
-pub struct AkazaBuilder {
+pub struct BigramWordViterbiEngineBuilder {
     system_data_dir: Option<String>,
     user_data: Option<Arc<Mutex<UserData>>>,
 }
 
-impl AkazaBuilder {
+impl BigramWordViterbiEngineBuilder {
     pub fn user_data(&mut self, user_data: Arc<Mutex<UserData>>) -> &mut Self {
         self.user_data = Some(user_data);
         self
     }
 
-    pub fn system_data_dir(&mut self, system_data_dir: &str) -> &mut AkazaBuilder {
+    pub fn system_data_dir(
+        &mut self,
+        system_data_dir: &str,
+    ) -> &mut BigramWordViterbiEngineBuilder {
         self.system_data_dir = Some(system_data_dir.to_string());
         self
     }
 
-    pub fn build(&self) -> Result<Akaza> {
+    pub fn build(&self) -> Result<BigramWordViterbiEngine> {
         let system_unigram_lm = match &self.system_data_dir {
             Some(dir) => {
                 let path = dir.to_string() + "/stats-vibrato-unigram.trie";
@@ -175,7 +166,7 @@ impl AkazaBuilder {
 
         let romkan_converter = RomKanConverter::new();
 
-        Ok(Akaza {
+        Ok(BigramWordViterbiEngine {
             graph_builder,
             segmenter,
             graph_resolver,
