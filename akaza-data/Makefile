@@ -38,8 +38,11 @@ work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.
 work/jawiki/vibrato-ipadic/_SUCCESS: src/subcmd/tokenize.rs mecab-user-dict.csv src/wikipedia/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS work/vibrato/ipadic-mecab-2_7_0/system.dic
 	cargo run -- tokenize-vibrato-ipadic --user-dict=mecab-user-dict.csv work/vibrato/ipadic-mecab-2_7_0/system.dic work/jawiki/extracted work/jawiki/vibrato-ipadic/ -vvv
 
-work/jawiki/vibrato-ipadic.wfreq: work/jawiki/vibrato-ipadic/_SUCCESS src/subcmd/wfreq.rs
-	cargo run -- wfreq work/jawiki/vibrato-ipadic/ work/jawiki/vibrato-ipadic.wfreq -vvv
+work/aozora_bunko/vibrato-ipadic/_SUCCESS: src/aozora_bunko/aozora_bunko.rs work/vibrato/ipadic-mecab-2_7_0/system.dic
+	cargo run -- tokenize-aozora-bunko-vibrato-ipadic work/vibrato/ipadic-mecab-2_7_0/system.dic aozorabunko_text/cards/ work/aozora_bunko/vibrato-ipadic/ -vv
+
+work/jawiki/vibrato-ipadic.wfreq: work/jawiki/vibrato-ipadic/_SUCCESS src/subcmd/wfreq.rs work/aozora_bunko/vibrato-ipadic/_SUCCESS
+	cargo run -- wfreq work/jawiki/vibrato-ipadic/ work/aozora_bunko/vibrato-ipadic/ work/jawiki/vibrato-ipadic.wfreq -vvv
 
 # threshold が 16 なのはヒューリスティックなパラメータ設定による。
 # vocab ファイルを作る意味は、辞書の作成のためだけなので、わざわざ作らなくてもよいかもしれない。

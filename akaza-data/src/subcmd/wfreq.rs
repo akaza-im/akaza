@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use log::{info, trace, warn};
 use rayon::prelude::*;
@@ -10,15 +10,22 @@ use rayon::prelude::*;
 use crate::utils::get_file_list;
 
 /// 単語の発生確率を数え上げる。
-pub fn wfreq(src_dir: &str, dst_file: &str) -> anyhow::Result<()> {
-    info!("wfreq: {} => {}", src_dir, dst_file);
+pub fn wfreq(src_dirs: &Vec<&str>, dst_file: &str) -> anyhow::Result<()> {
+    info!("wfreq: {:?} => {}", src_dirs, dst_file);
 
-    let file_list = get_file_list(Path::new(src_dir))?;
+    let mut file_list: Vec<PathBuf> = Vec::new();
+    for src_dir in src_dirs {
+        let list = get_file_list(Path::new(src_dir))?;
+        for x in list {
+            file_list.push(x)
+        }
+    }
+
     let results = file_list
         .par_iter()
         .map(|path_buf| -> anyhow::Result<HashMap<String, u32>> {
             // ファイルを読み込んで、HashSet に単語数を数え上げる。
-            info!("Processing {}", path_buf.to_string_lossy());
+            info!("Processing {} for wfreq", path_buf.to_string_lossy());
             let file = File::open(path_buf)?;
             let mut stats: HashMap<String, u32> = HashMap::new();
             for line in BufReader::new(file).lines() {
