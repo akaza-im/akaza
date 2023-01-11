@@ -57,6 +57,18 @@ pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaComman
     register("convert_to_full_hiragana", |context, engine| {
         context.convert_to_full_hiragana(engine).unwrap();
     });
+    register("convert_to_full_katakana", |context, engine| {
+        context.convert_to_full_katakana(engine).unwrap();
+    });
+    register("convert_to_half_katakana", |context, engine| {
+        context.convert_to_half_katakana(engine).unwrap();
+    });
+    register("convert_to_full_romaji", |context, engine| {
+        context.convert_to_full_romaji(engine).unwrap();
+    });
+    register("convert_to_half_romaji", |context, engine| {
+        context.convert_to_half_romaji(engine).unwrap();
+    });
 
     {
         // TODO コピペがすごい。マクロかうまいなにかでまとめて登録できるようにしたい。

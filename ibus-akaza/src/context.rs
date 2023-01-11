@@ -3,6 +3,7 @@ use std::ffi::CString;
 use std::ops::Range;
 
 use anyhow::Result;
+use kelp::{h2z, hira2kata, z2h, ConvOption};
 use log::{error, info, trace, warn};
 
 use ibus_sys::attr_list::{ibus_attr_list_append, ibus_attr_list_new};
@@ -679,6 +680,55 @@ impl AkazaContext {
         info!("Convert to full hiragana");
         let hira = self.romkan.to_hiragana(self.preedit.as_str());
         self.convert_to_single(engine, hira.as_str(), hira.as_str())
+    }
+
+    /// convert to full-width katakana (standard katakana): ほわいと → ホワイト
+    pub fn convert_to_full_katakana(&mut self, engine: *mut IBusEngine) -> Result<()> {
+        let hira = self.romkan.to_hiragana(self.preedit.as_str());
+        let kata = hira2kata(hira.as_str(), ConvOption::default());
+        self.convert_to_single(engine, hira.as_str(), kata.as_str())
+    }
+
+    /// convert to half-width katakana (standard katakana): ほわいと → ﾎﾜｲﾄ
+    pub fn convert_to_half_katakana(&mut self, engine: *mut IBusEngine) -> Result<()> {
+        let hira = self.romkan.to_hiragana(self.preedit.as_str());
+        let kata = z2h(
+            hira2kata(hira.as_str(), ConvOption::default()).as_str(),
+            ConvOption::default(),
+        );
+        self.convert_to_single(engine, hira.as_str(), kata.as_str())
+    }
+
+    /// convert to full-width romaji, all-capitals, proper noun capitalization (latin script inside
+    /// Japanese text): ホワイト → ｈｏｗａｉｔｏ → ＨＯＷＡＩＴＯ → Ｈｏｗａｉｔｏ
+    pub fn convert_to_full_romaji(&mut self, engine: *mut IBusEngine) -> Result<()> {
+        let hira = self.romkan.to_hiragana(self.preedit.as_str());
+        let romaji = h2z(
+            &self.preedit,
+            ConvOption {
+                kana: true,
+                digit: true,
+                ascii: true,
+                ..Default::default()
+            },
+        );
+        self.convert_to_single(engine, hira.as_str(), romaji.as_str())
+    }
+
+    /// convert to half-width romaji, all-capitals, proper noun capitalization (latin script like
+    /// standard English): ホワイト → howaito → HOWAITO → Howaito
+    pub fn convert_to_half_romaji(&mut self, engine: *mut IBusEngine) -> Result<()> {
+        let hira = self.romkan.to_hiragana(self.preedit.as_str());
+        let romaji = z2h(
+            &self.preedit,
+            ConvOption {
+                kana: true,
+                digit: true,
+                ascii: true,
+                ..Default::default()
+            },
+        );
+        self.convert_to_single(engine, hira.as_str(), romaji.as_str())
     }
 
     /// 特定の1文節の文章を候補として表示する。
