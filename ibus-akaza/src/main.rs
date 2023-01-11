@@ -77,10 +77,11 @@ fn main() -> Result<()> {
     unsafe {
         let sys_time = SystemTime::now();
         let user_data = load_user_data();
-        let akaza = BigramWordViterbiEngineBuilder::default()
-            .user_data(user_data.clone())
-            .system_data_dir("/home/tokuhirom/dev/akaza/akaza-data/data")
-            .build()?;
+        // TODO fix path
+        let akaza =
+            BigramWordViterbiEngineBuilder::new("/home/tokuhirom/dev/akaza/akaza-data/data")
+                .user_data(user_data.clone())
+                .build()?;
         let mut ac = AkazaContext::new(akaza);
         let new_sys_time = SystemTime::now();
         let difference = new_sys_time.duration_since(sys_time)?;

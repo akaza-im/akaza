@@ -91,65 +91,38 @@ impl HenkanEngine for BigramWordViterbiEngine {
     }
 }
 
-#[derive(Default)]
 pub struct BigramWordViterbiEngineBuilder {
-    system_data_dir: Option<String>,
+    system_data_dir: String,
     user_data: Option<Arc<Mutex<UserData>>>,
 }
 
 impl BigramWordViterbiEngineBuilder {
+    pub fn new(system_data_dir: &str) -> BigramWordViterbiEngineBuilder {
+        BigramWordViterbiEngineBuilder {
+            system_data_dir: system_data_dir.to_string(),
+            user_data: None,
+        }
+    }
+
     pub fn user_data(&mut self, user_data: Arc<Mutex<UserData>>) -> &mut Self {
         self.user_data = Some(user_data);
         self
     }
 
-    pub fn system_data_dir(
-        &mut self,
-        system_data_dir: &str,
-    ) -> &mut BigramWordViterbiEngineBuilder {
-        self.system_data_dir = Some(system_data_dir.to_string());
-        self
-    }
-
     pub fn build(&self) -> Result<BigramWordViterbiEngine> {
-        // TODO system_data_dir がなかったら abort してしまっていいと思う。
+        let system_unigram_lm = SystemUnigramLM::load(
+            (self.system_data_dir.to_string() + "/stats-vibrato-unigram.trie").as_str(),
+        )?;
+        let system_bigram_lm = SystemBigramLM::load(
+            (self.system_data_dir.to_string() + "/stats-vibrato-bigram.trie").as_str(),
+        )?;
 
-        let system_unigram_lm = match &self.system_data_dir {
-            Some(dir) => {
-                let path = dir.to_string() + "/stats-vibrato-unigram.trie";
-                SystemUnigramLM::load(path.as_str())?
-            }
-            None => SystemUnigramLMBuilder::default().build(),
-        };
-        let system_bigram_lm = match &self.system_data_dir {
-            Some(dir) => {
-                let path = dir.to_string() + "/stats-vibrato-bigram.trie";
-                SystemBigramLM::load(path.as_str())?
-            }
-            None => SystemBigramLMBuilder::default().build(),
-        };
-
-        let system_kana_kanji_dict = match &self.system_data_dir {
-            Some(dir) => {
-                let path = dir.to_string() + "/system_dict.trie";
-                KanaKanjiDict::load(path.as_str())?
-            }
-            None => KanaKanjiDictBuilder::default().build(),
-        };
-        let system_single_term_dict = match &self.system_data_dir {
-            Some(dir) => {
-                let path = dir.to_string() + "/single_term.trie";
-                KanaKanjiDict::load(path.as_str())?
-            }
-            None => KanaKanjiDictBuilder::default().build(),
-        };
-        let system_kana_trie = match &self.system_data_dir {
-            Some(dir) => {
-                let path = dir.to_string() + "/kana.trie";
-                MarisaKanaTrie::load(path.as_str())?
-            }
-            None => MarisaKanaTrie::build(vec![]),
-        };
+        let system_kana_kanji_dict =
+            KanaKanjiDict::load((self.system_data_dir.to_string() + "/system_dict.trie").as_str())?;
+        let system_single_term_dict =
+            KanaKanjiDict::load((self.system_data_dir.to_string() + "/single_term.trie").as_str())?;
+        let system_kana_trie =
+            MarisaKanaTrie::load((self.system_data_dir.to_string() + "/kana.trie").as_str())?;
 
         let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
 
