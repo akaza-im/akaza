@@ -67,7 +67,7 @@ impl IBusLookupTable {
     }
 
     pub fn append_candidate(&mut self, text: *mut IBusText) {
-        unsafe { ibus_lookup_table_append_candidate(self as *mut _, text) }
+        unsafe { ibus_lookup_table_append_candidate(self as *mut _, text as *mut _) }
     }
 }
 
