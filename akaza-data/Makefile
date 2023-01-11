@@ -89,13 +89,13 @@ data/stats-vibrato-bigram.trie: data/stats-vibrato-unigram.trie data/stats-vibra
 
 # work/system_dict.txt, work/single_term.txt を生成しているのは、辞書のデバッグのため。
 
-data/single_term.trie: src/subcmd/make_text_dict.rs
+data/single_term.trie: src/subcmd/make_dict.rs
 	cargo run --release -- make-single-term \
 		work/single_term.txt \
 		data/single_term.trie \
 		-vvv
 
-data/system_dict.trie: work/jawiki/vibrato-ipadic.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_text_dict.rs
+data/system_dict.trie: work/jawiki/vibrato-ipadic.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_dict.rs
 	cargo run --release -- make-system-dict \
 		work/jawiki/vibrato-ipadic.vocab \
 		work/system_dict.txt \

@@ -4,9 +4,9 @@ use clap::{Parser, Subcommand};
 
 use crate::subcmd::check::check;
 use crate::subcmd::evaluate::evaluate;
+use crate::subcmd::make_dict::{make_single_term, make_system_dict};
 use crate::subcmd::make_stats_system_bigram_lm::make_stats_system_bigram_lm;
 use crate::subcmd::make_stats_system_unigram_lm::make_stats_system_unigram_lm;
-use crate::subcmd::make_text_dict::{make_single_term, make_system_dict};
 use crate::subcmd::structured_perceptron::learn_structured_perceptron;
 use crate::subcmd::tokenize::{tokenize_lindera_ipadic, tokenize_vibrato_ipadic};
 use crate::subcmd::vocab::vocab;
