@@ -115,12 +115,12 @@ impl AozoraBunkoProcessor {
             return Ok(());
         }
 
-        if self.is_kyukana(src.to_string().as_str()) {
+        if self.is_kyukana(src.as_str()) {
             info!("Skipping {} due to 旧仮名", ifname.to_string_lossy());
             return Ok(());
         }
 
-        let src = self.strip_meta(src.to_string().as_str());
+        let src = self.strip_meta(src.as_str());
 
         let mut buf = String::new();
         for line in src.lines() {
