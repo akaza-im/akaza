@@ -46,6 +46,9 @@ jobs:
       with:
         command: test
         args: --feature it
+    - name: evaluate the model
+      run: |
+        cd akaza-data/ && make evaluate
     - name: Release
       uses: fnkr/github-action-ghr@v1
         if: startsWith(github.ref, 'refs/tags/')
