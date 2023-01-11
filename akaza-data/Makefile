@@ -41,13 +41,13 @@ work/jawiki/vibrato-ipadic/_SUCCESS: src/subcmd/tokenize.rs mecab-user-dict.csv 
 work/aozora_bunko/vibrato-ipadic/_SUCCESS: src/corpus_reader/aozora_bunko.rs work/vibrato/ipadic-mecab-2_7_0/system.dic
 	cargo run -- tokenize-aozora-bunko-vibrato-ipadic work/vibrato/ipadic-mecab-2_7_0/system.dic aozorabunko_text/cards/ work/aozora_bunko/vibrato-ipadic/ -vv
 
-work/jawiki/vibrato-ipadic.wfreq: work/jawiki/vibrato-ipadic/_SUCCESS src/subcmd/wfreq.rs work/aozora_bunko/vibrato-ipadic/_SUCCESS
-	cargo run -- wfreq work/jawiki/vibrato-ipadic/ work/aozora_bunko/vibrato-ipadic/ work/jawiki/vibrato-ipadic.wfreq -vvv
+work/vibrato-ipadic.wfreq: work/jawiki/vibrato-ipadic/_SUCCESS src/subcmd/wfreq.rs work/aozora_bunko/vibrato-ipadic/_SUCCESS
+	cargo run -- wfreq work/jawiki/vibrato-ipadic/ work/aozora_bunko/vibrato-ipadic/ work/vibrato-ipadic.wfreq -vvv
 
 # threshold が 16 なのはヒューリスティックなパラメータ設定による。
 # vocab ファイルを作る意味は、辞書の作成のためだけなので、わざわざ作らなくてもよいかもしれない。
-work/jawiki/vibrato-ipadic.vocab: work/jawiki/vibrato-ipadic.wfreq src/subcmd/vocab.rs
-	cargo run -- vocab --threshold 16 work/jawiki/vibrato-ipadic.wfreq work/jawiki/vibrato-ipadic.vocab -vvv
+work/vibrato-ipadic.vocab: work/vibrato-ipadic.wfreq src/subcmd/vocab.rs
+	cargo run -- vocab --threshold 16 work/vibrato-ipadic.wfreq work/vibrato-ipadic.vocab -vvv
 
 
 # -------------------------------------------------------------------------
@@ -73,8 +73,8 @@ work/jawiki/lindera-ipadic.vocab: work/jawiki/lindera-ipadic.wfreq src/subcmd/vo
 
 # 統計的仮名かな漢字変換のためのモデル作成処理
 
-data/stats-vibrato-unigram.trie: work/jawiki/vibrato-ipadic.wfreq
-	cargo run -- make-stats-system-unigram-lm work/jawiki/vibrato-ipadic.wfreq data/stats-vibrato-unigram.trie
+data/stats-vibrato-unigram.trie: work/vibrato-ipadic.wfreq
+	cargo run -- make-stats-system-unigram-lm work/vibrato-ipadic.wfreq data/stats-vibrato-unigram.trie
 
 data/stats-vibrato-bigram.trie: data/stats-vibrato-unigram.trie data/stats-vibrato-unigram.trie
 	cargo run -- make-stats-system-bigram-lm --threshold=3 work/jawiki/vibrato-ipadic/ \
@@ -82,7 +82,7 @@ data/stats-vibrato-bigram.trie: data/stats-vibrato-unigram.trie data/stats-vibra
 
 # -------------------------------------------------------------------------
 
-# システム辞書の構築。現在は SKK の辞書などに加えて work/jawiki/vibrato-ipadic.vocab の語彙を混ぜている。
+# システム辞書の構築。現在は SKK の辞書などに加えて work/vibrato-ipadic.vocab の語彙を混ぜている。
 # さらに、コーパスファイルに書かれている辞書の内容も入れている。
 #
 # 辞書の元になるvocab ファイルについては、ブレが少ない辞書ベースの形態素解析エンジンを利用した方が良いと思う。
@@ -98,9 +98,9 @@ data/single_term.trie: src/subcmd/make_dict.rs
 		data/single_term.trie \
 		-vvv
 
-data/system_dict.trie: work/jawiki/vibrato-ipadic.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_dict.rs
+data/system_dict.trie: work/vibrato-ipadic.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_dict.rs
 	cargo run --release -- make-system-dict \
-		work/jawiki/vibrato-ipadic.vocab \
+		work/vibrato-ipadic.vocab \
 		work/system_dict.txt \
 		data/system_dict.trie \
 		-vvv
