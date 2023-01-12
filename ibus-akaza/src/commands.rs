@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use ibus_sys::engine::IBusEngine;
 
-use crate::input_mode::{INPUT_MODE_ALNUM, INPUT_MODE_HIRAGANA};
+use crate::input_mode::{
+    INPUT_MODE_ALNUM, INPUT_MODE_FULLWIDTH_ALNUM, INPUT_MODE_HALFWIDTH_KATAKANA,
+    INPUT_MODE_HIRAGANA, INPUT_MODE_KATAKANA,
+};
 use crate::AkazaContext;
 
 /**
@@ -24,12 +27,23 @@ pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaComman
         let (_, surface) = context.make_preedit_word();
         context.commit_string(engine, surface.as_str());
     });
+
     register("set_input_mode_hiragana", |context, engine| {
         context.set_input_mode(engine, &INPUT_MODE_HIRAGANA)
     });
     register("set_input_mode_alnum", |context, engine| {
         context.set_input_mode(engine, &INPUT_MODE_ALNUM)
     });
+    register("set_input_mode_fullwidth_alnum", |context, engine| {
+        context.set_input_mode(engine, &INPUT_MODE_FULLWIDTH_ALNUM)
+    });
+    register("set_input_mode_katakana", |context, engine| {
+        context.set_input_mode(engine, &INPUT_MODE_KATAKANA)
+    });
+    register("set_input_mode_halfwidth_katakana", |context, engine| {
+        context.set_input_mode(engine, &INPUT_MODE_HALFWIDTH_KATAKANA)
+    });
+
     register("update_candidates", |context, engine| {
         context.update_candidates(engine)
     });
