@@ -47,7 +47,13 @@ pub fn make_stats_system_bigram_lm(
     }
 
     // スコアを計算する
-    let scoremap = make_score_map(threshold, merged);
+    let scoremap = make_score_map(threshold, &merged);
+
+    // 総出現単語数
+    let c = merged.values().sum();
+    // 単語の種類数
+    let v = merged.keys().count();
+    info!("Default score for 0: {}", calc_score(0, c, v));
 
     // 結果を書き込む
     let mut builder = SystemBigramLMBuilder::default();
@@ -63,7 +69,7 @@ pub fn make_stats_system_bigram_lm(
 }
 
 // unigram のロジックと一緒なのでまとめたい。
-fn make_score_map(threshold: u32, wordcnt: HashMap<(i32, i32), u32>) -> HashMap<(i32, i32), f32> {
+fn make_score_map(threshold: u32, wordcnt: &HashMap<(i32, i32), u32>) -> HashMap<(i32, i32), f32> {
     // 総出現単語数
     let c = wordcnt.values().sum();
     // 単語の種類数

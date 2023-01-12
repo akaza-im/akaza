@@ -234,10 +234,10 @@ mod tests {
         );
         let lattice = graph_builder.construct(&yomi, graph);
         // dot -Tpng -o /tmp/lattice.png /tmp/lattice.dot && open /tmp/lattice.png
-        File::create("/tmp/lattice.dot")
-            .unwrap()
-            .write_all(lattice.dump_cost_dot().as_bytes())
-            .unwrap();
+        // File::create("/tmp/lattice.dot")
+        //     .unwrap()
+        //     .write_all(lattice.dump_cost_dot().as_bytes())
+        //     .unwrap();
         let resolver = GraphResolver::default();
         let got = resolver.resolve(&lattice)?;
         let terms: Vec<String> = got.iter().map(|f| f[0].kanji.clone()).collect();

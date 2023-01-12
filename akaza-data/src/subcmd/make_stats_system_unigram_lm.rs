@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
 use chrono::Local;
+use log::info;
 
 use libakaza::lm::system_unigram_lm::SystemUnigramLMBuilder;
 
@@ -26,7 +27,14 @@ pub fn make_stats_system_unigram_lm(srcpath: &str, dstpath: &str) -> anyhow::Res
     homograph_hack(&mut wordcnt);
     score_hack(&mut wordcnt);
 
-    let scoremap = make_score_map(wordcnt);
+    let scoremap = make_score_map(&wordcnt);
+
+    // 総出現単語数
+    let c = wordcnt.values().sum();
+    // 単語の種類数
+    let v = wordcnt.keys().count();
+    info!("Score for word count 1: {}", calc_score(1, c, v));
+    info!("Score for word count 0: {}", calc_score(0, c, v));
 
     let mut builder = SystemUnigramLMBuilder::default();
     for (word, score) in &scoremap {
@@ -86,7 +94,7 @@ fn score_hack(wordcnt: &mut HashMap<String, u32>) {
     }
 }
 
-fn make_score_map(wordcnt: HashMap<String, u32>) -> HashMap<String, f32> {
+fn make_score_map(wordcnt: &HashMap<String, u32>) -> HashMap<String, f32> {
     // 総出現単語数
     let c = wordcnt.values().sum();
     // 単語の種類数
