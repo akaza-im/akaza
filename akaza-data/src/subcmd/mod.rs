@@ -1,4 +1,5 @@
 pub mod check;
+pub mod dump_unigram_dict;
 pub mod evaluate;
 pub mod make_dict;
 pub mod make_kana_trie;
