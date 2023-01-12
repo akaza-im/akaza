@@ -29,6 +29,8 @@ extern "C" {
         state: IBusPropState,
         prop_list: *mut IBusPropList,
     ) -> *mut IBusProperty;
+
+    pub fn ibus_property_set_sub_props(prop: *mut IBusProperty, prop_list: *mut IBusPropList);
 }
 
 #[repr(C)]

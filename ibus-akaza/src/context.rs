@@ -29,10 +29,10 @@ use ibus_sys::glib::{gboolean, guint};
 use ibus_sys::lookup_table::IBusLookupTable;
 use ibus_sys::prop_list::{ibus_prop_list_append, ibus_prop_list_new, IBusPropList};
 use ibus_sys::property::{
-    ibus_property_new, IBusPropState_PROP_STATE_UNCHECKED, IBusPropType_PROP_TYPE_MENU,
-    IBusPropType_PROP_TYPE_RADIO, IBusProperty,
+    ibus_property_new, ibus_property_set_sub_props, IBusPropState_PROP_STATE_UNCHECKED,
+    IBusPropType_PROP_TYPE_MENU, IBusPropType_PROP_TYPE_RADIO, IBusProperty,
 };
-use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, StringExt};
+use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, IBusText, StringExt};
 use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngine;
 use libakaza::extend_clause::{extend_left, extend_right};
@@ -40,6 +40,7 @@ use libakaza::graph::graph_resolver::Candidate;
 use libakaza::romkan::RomKanConverter;
 
 use crate::commands::{ibus_akaza_commands_map, IbusAkazaCommand};
+use crate::input_mode::get_all_input_modes;
 use crate::keymap::KeyMap;
 
 #[repr(C)]
@@ -79,6 +80,8 @@ pub struct AkazaContext {
     /// シフト+右 or シフト+左で
     force_selected_clause: Vec<Range<usize>>,
     prop_list: *mut IBusPropList,
+    pub input_mode_prop: *mut IBusProperty,
+    pub prop_dict: HashMap<String, *mut IBusProperty>,
 }
 
 impl AkazaContext {
@@ -126,6 +129,7 @@ impl AkazaContext {
 
 impl AkazaContext {
     pub(crate) fn new(akaza: BigramWordViterbiEngine) -> Self {
+        let (input_mode_prop, prop_list, prop_dict) = Self::init_props();
         AkazaContext {
             input_mode: InputMode::Hiragana,
             cursor_pos: 0,
@@ -142,70 +146,58 @@ impl AkazaContext {
             node_selected: HashMap::new(),
             keymap: KeyMap::new(),
             force_selected_clause: Vec::new(),
-            prop_list: Self::init_props(),
+            prop_list,
+            input_mode_prop,
+            prop_dict,
         }
     }
 
     /// タスクメニューからポップアップして選べるメニューを構築する。
-    pub fn init_props() -> *mut IBusPropList {
+    pub fn init_props() -> (
+        *mut IBusProperty,
+        *mut IBusPropList,
+        HashMap<String, *mut IBusProperty>,
+    ) {
         unsafe {
             let prop_list =
                 g_object_ref_sink(ibus_prop_list_new() as gpointer) as *mut IBusPropList;
-            // TODO これは self.input_mode_prop だった。pythonのときは。
-            let subprop: *mut IBusPropList = std::ptr::null_mut();
+
             let input_mode_prop = g_object_ref_sink(ibus_property_new(
-                "InputMode".as_ptr() as *const gchar,
+                "InputMode\0".as_ptr() as *const gchar,
                 IBusPropType_PROP_TYPE_MENU,
                 "Input mode (あ)".to_ibus_text(),
-                "".as_ptr() as *const gchar,
+                "\0".as_ptr() as *const gchar,
                 "Switch input mode".to_ibus_text(),
                 to_gboolean(true),
                 to_gboolean(true),
                 IBusPropState_PROP_STATE_UNCHECKED,
-                subprop as *mut IBusPropList,
+                std::ptr::null_mut() as *mut IBusPropList,
             ) as gpointer) as *mut IBusProperty;
             ibus_prop_list_append(prop_list, input_mode_prop);
 
-            // let mut props = IBusPropList::default();
-            // props.append(
-            //     (&mut IBusProperty::new(
-            //         "InputMode".as_ptr() as *const gchar,
-            //         IBusPropType_PROP_TYPE_RADIO,
-            //         "Input mode (あ)".to_ibus_text(),
-            //         "".as_ptr() as *const gchar,
-            //         "Switch input mode".to_ibus_text(),
-            //         to_gboolean(true),
-            //         to_gboolean(true),
-            //         IBusPropState_PROP_STATE_UNCHECKED,
-            //         subprop as *mut IBusPropList,
-            //     )) as *mut _,
-            // );
+            let props = ibus_prop_list_new();
+            let mut prop_map: HashMap<String, *mut IBusProperty> = HashMap::new();
+            for input_mode in get_all_input_modes() {
+                let prop = g_object_ref_sink(ibus_property_new(
+                    (input_mode.prop_name.to_string() + "\0").as_ptr() as *const gchar,
+                    IBusPropType_PROP_TYPE_RADIO,
+                    input_mode.label.to_ibus_text(),
+                    "\0".as_ptr() as *const gchar,
+                    std::ptr::null_mut() as *mut IBusText,
+                    to_gboolean(true),
+                    to_gboolean(true),
+                    IBusPropState_PROP_STATE_UNCHECKED,
+                    std::ptr::null_mut() as *mut IBusPropList,
+                ) as gpointer) as *mut IBusProperty;
+                prop_map.insert(input_mode.prop_name.to_string(), prop);
+                ibus_prop_list_append(props, prop);
+            }
 
-            // let props = IBusPropList::new();
-            prop_list
+            ibus_property_set_sub_props(input_mode_prop, props);
+
+            (input_mode_prop, prop_list, prop_map)
         }
     }
-
-    /*
-       for input_mode in get_all_input_modes():
-           props.append(IBus.Property(key=input_mode.prop_name,
-                                      prop_type=IBus.PropType.RADIO,
-                                      label=IBus.Text.new_from_string(input_mode.label),
-                                      icon=None,
-                                      tooltip=None,
-                                      sensitive=True,
-                                      visible=True,
-                                      state=IBus.PropState.UNCHECKED,
-                                      sub_props=None))
-       i = 0
-       while props.get(i) is not None:
-           prop = props.get(i)
-           self.__prop_dict[prop.get_key()] = prop
-           i += 1
-       props.get(self.input_mode.mode_code).set_state(IBus.PropState.CHECKED)
-       self.input_mode_prop.set_sub_props(props)
-
-    */
 }
 
 impl AkazaContext {
