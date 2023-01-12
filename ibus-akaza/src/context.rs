@@ -310,7 +310,7 @@ impl AkazaContext {
                         & (IBusModifierType_IBUS_CONTROL_MASK | IBusModifierType_IBUS_MOD1_MASK))
                         == 0
                 {
-                    let mut option = ConvOption {
+                    let option = ConvOption {
                         ascii: true,
                         digit: true,
                         ..Default::default()
@@ -427,7 +427,7 @@ impl AkazaContext {
         self.update_property(self.__prop_dict[mode.prop_name])
          */
 
-        self.input_mode = input_mode.clone();
+        self.input_mode = *input_mode;
     }
 
     pub(crate) fn run_callback_by_name(
