@@ -50,7 +50,7 @@ jobs:
     - uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --feature it
+        args: --features it
     - name: evaluate the model
       run: |
         cd akaza-data/ && make evaluate
