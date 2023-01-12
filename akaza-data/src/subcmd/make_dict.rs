@@ -131,6 +131,10 @@ mod system_dict {
                 // Python 版にあったので残してある。たぶんいらない処理。
                 continue;
             }
+            if yomi.contains('\u{3000}') || surface.contains('\u{3000}') {
+                // 全角空白はいってるのはおかしい
+                continue;
+            }
             words.push((yomi.to_string(), surface.to_string()));
         }
         Ok(grouping_words(words))
@@ -230,6 +234,9 @@ fn validate_dict(dict: HashMap<String, Vec<String>>) -> Result<HashMap<String, V
             }
             if kana == "い" && surface == "好い" {
                 bail!("Missing surface: {}<{}", kana, surface);
+            }
+            if kana.contains('\u{3000}') {
+                bail!("Full width space: {}<{}", kana, surface);
             }
         }
     }
