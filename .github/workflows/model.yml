@@ -32,10 +32,12 @@ jobs:
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
+    - name: download wikipedia data
+      run: |
+        cd akaza-data/ && make work/jawiki-latest-pages-articles.xml.bz2
     - name: make data
       run: |
         cd akaza-data/ && make all
-        components: rustfmt, clippy
     - uses: actions-rs/cargo@v1
       with:
         command: fmt
