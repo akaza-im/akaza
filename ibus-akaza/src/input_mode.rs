@@ -1,5 +1,6 @@
 use anyhow::bail;
 
+#[derive(Copy, Clone, Debug)]
 pub struct InputMode {
     pub prop_name: &'static str,
     pub mode_code: i32,
@@ -29,19 +30,19 @@ impl InputMode {
     }
 }
 
-const INPUT_MODE_ALNUM: InputMode =
+pub const INPUT_MODE_ALNUM: InputMode =
     InputMode::new("InputMode.Alphanumeric", 0, "_A", "Alphanumeric (C-S-;)");
-const INPUT_MODE_HIRAGANA: InputMode =
+pub const INPUT_MODE_HIRAGANA: InputMode =
     InputMode::new("InputMode.Hiragana", 1, "あ", "Hiragana (C-S-j)");
-const INPUT_MODE_KATAKANA: InputMode =
+pub const INPUT_MODE_KATAKANA: InputMode =
     InputMode::new("InputMode.Katakana", 2, "ア", "Katakana (C-S-K)");
-const INPUT_MODE_HALFWIDTH_KATAKANA: InputMode = InputMode::new(
+pub const INPUT_MODE_HALFWIDTH_KATAKANA: InputMode = InputMode::new(
     "InputMode.HalfWidthKatakana",
     3,
     "_ｱ",
     "Half-width Katakana",
 );
-const INPUT_MODE_FULLWIDTH_ALNUM: InputMode = InputMode::new(
+pub const INPUT_MODE_FULLWIDTH_ALNUM: InputMode = InputMode::new(
     "InputMode.FullWidthAlnum",
     4,
     "Ａ",

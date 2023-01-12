@@ -1,6 +1,8 @@
 #![allow(non_upper_case_globals)]
 
-use std::ffi::c_void;
+extern crate alloc;
+
+use std::ffi::{c_char, c_void, CStr};
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 use std::{thread, time};
@@ -11,7 +13,7 @@ use log::{error, info, warn};
 
 use ibus_sys::core::ibus_main;
 use ibus_sys::engine::IBusEngine;
-use ibus_sys::glib::guint;
+use ibus_sys::glib::{gchar, guint};
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 use libakaza::user_side_data::user_data::UserData;
 
@@ -49,6 +51,22 @@ unsafe extern "C" fn candidate_clicked(
 unsafe extern "C" fn focus_in(context: *mut c_void, engine: *mut IBusEngine) {
     let context_ref = &mut *(context as *mut AkazaContext);
     context_ref.do_focus_in(engine);
+}
+
+unsafe extern "C" fn property_activate(
+    context: *mut c_void,
+    engine: *mut IBusEngine,
+    prop_name: *mut gchar,
+    prop_state: guint,
+) {
+    let context_ref = &mut *(context as *mut AkazaContext);
+    context_ref.do_property_activate(
+        engine,
+        CStr::from_ptr(prop_name as *mut c_char)
+            .to_string_lossy()
+            .to_string(),
+        prop_state,
+    );
 }
 
 fn load_user_data() -> Arc<Mutex<UserData>> {
@@ -118,6 +136,7 @@ fn main() -> Result<()> {
             process_key_event,
             candidate_clicked,
             focus_in,
+            property_activate,
         );
 
         ibus_akaza_init(arg.ibus);

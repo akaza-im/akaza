@@ -4,7 +4,7 @@ use std::ops::Range;
 
 use anyhow::Result;
 use kelp::{h2z, hira2kata, z2h, ConvOption};
-use log::{error, info, trace, warn};
+use log::{debug, error, info, trace, warn};
 
 use ibus_sys::attr_list::{ibus_attr_list_append, ibus_attr_list_new};
 use ibus_sys::attribute::{
@@ -29,8 +29,9 @@ use ibus_sys::glib::{gboolean, guint};
 use ibus_sys::lookup_table::IBusLookupTable;
 use ibus_sys::prop_list::{ibus_prop_list_append, ibus_prop_list_new, IBusPropList};
 use ibus_sys::property::{
-    ibus_property_new, ibus_property_set_sub_props, IBusPropState_PROP_STATE_UNCHECKED,
-    IBusPropType_PROP_TYPE_MENU, IBusPropType_PROP_TYPE_RADIO, IBusProperty,
+    ibus_property_new, ibus_property_set_sub_props, IBusPropState_PROP_STATE_CHECKED,
+    IBusPropState_PROP_STATE_UNCHECKED, IBusPropType_PROP_TYPE_MENU, IBusPropType_PROP_TYPE_RADIO,
+    IBusProperty,
 };
 use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, IBusText, StringExt};
 use libakaza::engine::base::HenkanEngine;
@@ -40,15 +41,17 @@ use libakaza::graph::graph_resolver::Candidate;
 use libakaza::romkan::RomKanConverter;
 
 use crate::commands::{ibus_akaza_commands_map, IbusAkazaCommand};
-use crate::input_mode::get_all_input_modes;
+use crate::input_mode::{
+    get_all_input_modes, get_input_mode_from_prop_name, InputMode, INPUT_MODE_HIRAGANA,
+};
 use crate::keymap::KeyMap;
 
-#[repr(C)]
-#[derive(Debug)]
-pub(crate) enum InputMode {
-    Hiragana,
-    Alnum,
-}
+// #[repr(C)]
+// #[derive(Debug)]
+// pub(crate) enum InputMode {
+//     Hiragana,
+//     Alnum,
+// }
 
 #[derive(Debug, Hash, PartialEq, Copy, Clone)]
 pub enum KeyState {
@@ -82,6 +85,34 @@ pub struct AkazaContext {
     prop_list: *mut IBusPropList,
     pub input_mode_prop: *mut IBusProperty,
     pub prop_dict: HashMap<String, *mut IBusProperty>,
+}
+
+impl AkazaContext {
+    /// Set props
+    pub(crate) fn do_property_activate(
+        &mut self,
+        engine: *mut IBusEngine,
+        prop_name: String,
+        prop_state: guint,
+    ) {
+        debug!("do_property_activate: {}, {}", prop_name, prop_state);
+        if prop_state == IBusPropState_PROP_STATE_CHECKED && prop_name.starts_with("InputMode.") {
+            self.input_mode_activate(engine, prop_name, prop_state);
+        }
+    }
+
+    pub fn input_mode_activate(
+        &mut self,
+        engine: *mut IBusEngine,
+        prop_name: String,
+        _prop_state: guint,
+    ) {
+        if let Ok(input_mode) = get_input_mode_from_prop_name(prop_name.as_str()) {
+            self.set_input_mode(engine, &input_mode);
+        } else {
+            warn!("Unknown prop_name: {}", prop_name);
+        }
+    }
 }
 
 impl AkazaContext {
@@ -131,7 +162,7 @@ impl AkazaContext {
     pub(crate) fn new(akaza: BigramWordViterbiEngine) -> Self {
         let (input_mode_prop, prop_list, prop_dict) = Self::init_props();
         AkazaContext {
-            input_mode: InputMode::Hiragana,
+            input_mode: INPUT_MODE_HIRAGANA,
             cursor_pos: 0,
             preedit: String::new(),
             //         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
@@ -175,7 +206,7 @@ impl AkazaContext {
             ) as gpointer) as *mut IBusProperty;
             ibus_prop_list_append(prop_list, input_mode_prop);
 
-            let props = ibus_prop_list_new();
+            let props = g_object_ref_sink(ibus_prop_list_new() as gpointer) as *mut IBusPropList;
             let mut prop_map: HashMap<String, *mut IBusProperty> = HashMap::new();
             for input_mode in get_all_input_modes() {
                 let prop = g_object_ref_sink(ibus_property_new(
@@ -245,8 +276,8 @@ impl AkazaContext {
             return self.run_callback_by_name(engine, callback.as_str());
         }
 
-        match &self.input_mode {
-            InputMode::Hiragana => {
+        match self.input_mode.prop_name {
+            "InputMode.Hiragana" => {
                 if modifiers
                     & (IBusModifierType_IBUS_CONTROL_MASK | IBusModifierType_IBUS_MOD1_MASK)
                     != 0
@@ -270,8 +301,11 @@ impl AkazaContext {
                     return true;
                 }
             }
-            InputMode::Alnum => return false,
-            // _ => return false,
+            "InputMode.Alphanumeric" => return false,
+            _ => {
+                warn!("Unknown prop: {}", self.input_mode.prop_name);
+                return false;
+            }
         }
 
         false // not proceeded
@@ -356,7 +390,7 @@ impl AkazaContext {
     /**
      * 入力モードの変更
      */
-    pub(crate) fn set_input_mode(&mut self, input_mode: InputMode, engine: *mut IBusEngine) {
+    pub(crate) fn set_input_mode(&mut self, engine: *mut IBusEngine, input_mode: &InputMode) {
         info!("Changing input mode to : {:?}", input_mode);
 
         // 変換候補をいったんコミットする。
@@ -364,29 +398,18 @@ impl AkazaContext {
 
         // TODO update menu prop
 
-        self.input_mode = input_mode;
-
         /*
-        def _set_input_mode(self, mode: InputMode):
-            """
+        label = _("Input mode (%s)") % mode.symbol
+        prop = self.input_mode_prop
+        prop.set_symbol(IBus.Text.new_from_string(mode.symbol))
+        prop.set_label(IBus.Text.new_from_string(label))
+        self.update_property(prop)
 
-            """
-            self.logger.info(f"input mode activate: {mode}")
+        self.__prop_dict[mode.prop_name].set_state(IBus.PropState.CHECKED)
+        self.update_property(self.__prop_dict[mode.prop_name])
+         */
 
-            # 変換候補をいったんコミットする。
-            self.commit_candidate()
-
-            label = _("Input mode (%s)") % mode.symbol
-            prop = self.input_mode_prop
-            prop.set_symbol(IBus.Text.new_from_string(mode.symbol))
-            prop.set_label(IBus.Text.new_from_string(label))
-            self.update_property(prop)
-
-            self.__prop_dict[mode.prop_name].set_state(IBus.PropState.CHECKED)
-            self.update_property(self.__prop_dict[mode.prop_name])
-
-            self.input_mode = mode
-             */
+        self.input_mode = input_mode.clone();
     }
 
     pub(crate) fn run_callback_by_name(
