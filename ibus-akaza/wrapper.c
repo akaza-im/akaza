@@ -9,6 +9,8 @@
 static void* global_context = NULL;
 static ibus_akaza_callback_key_event global_key_event_cb = NULL;
 static ibus_akaza_callback_candidate_clicked global_candidate_clicked_cb = NULL;
+static ibus_akaza_callback_focus_in global_focus_in_cb = NULL;
+static ibus_akaza_callback_property_activate global_property_activate_cb = NULL;
 
 #define IBUS_TYPE_AKAZA_ENGINE        \
         (ibus_akaza_engine_get_type ())
@@ -27,6 +29,14 @@ static gboolean ibus_akaza_engine_process_key_event(IBusEngine *engine,
                                                       guint keyval,
                                                       guint keycode,
                                                       guint modifiers);
+static void ibus_akaza_engine_focus_in(
+    IBusEngine *engine
+);
+static void ibus_akaza_engine_property_activate(
+    IBusEngine *engine,
+    const gchar *prop_name,
+    guint prop_state
+);
 
 G_DEFINE_TYPE(IBusAkazaEngine, ibus_akaza_engine, IBUS_TYPE_ENGINE)
 
@@ -45,6 +55,20 @@ static gboolean ibus_akaza_engine_candidate_clicked(
     int state
 ) {
   return global_candidate_clicked_cb(global_context, engine, index, button, state);
+}
+
+static void ibus_akaza_engine_focus_in(
+    IBusEngine *engine
+) {
+   global_focus_in_cb(global_context, engine);
+}
+
+static void ibus_akaza_engine_property_activate(
+    IBusEngine *engine,
+    const gchar *prop_name,
+    guint prop_state
+) {
+   global_property_activate_cb(global_context, engine, prop_name, prop_state);
 }
 
 static gboolean ibus_akaza_engine_process_key_event(IBusEngine *engine,
@@ -67,17 +91,23 @@ static void ibus_akaza_engine_class_init(IBusAkazaEngineClass *klass) {
 
   engine_class->process_key_event = ibus_akaza_engine_process_key_event;
   engine_class->candidate_clicked = ibus_akaza_engine_candidate_clicked;
+  engine_class->focus_in = ibus_akaza_engine_focus_in;
+  engine_class->property_activate = ibus_akaza_engine_property_activate;
 }
 
 
 void ibus_akaza_set_callback(
     void* context,
-    ibus_akaza_callback_key_event* cb,
-    ibus_akaza_callback_candidate_clicked* candidate_cb
+    ibus_akaza_callback_key_event* key_event_cb,
+    ibus_akaza_callback_candidate_clicked* candidate_cb,
+    ibus_akaza_callback_focus_in* focus_in_cb,
+    ibus_akaza_callback_property_activate* property_activate_cb
 ) {
     global_context = context;
-    global_key_event_cb = cb;
+    global_key_event_cb = key_event_cb;
     global_candidate_clicked_cb = candidate_cb;
+    global_focus_in_cb = focus_in_cb;
+    global_property_activate_cb = property_activate_cb;
 }
 
 void ibus_akaza_init(bool ibus) {

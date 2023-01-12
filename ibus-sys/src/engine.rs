@@ -1,5 +1,6 @@
 use crate::glib::{gboolean, guint};
 use crate::lookup_table::IBusLookupTable;
+use crate::prop_list::IBusPropList;
 use crate::text::IBusText;
 
 extern "C" {
@@ -29,6 +30,8 @@ extern "C" {
         lookup_table: *mut IBusLookupTable,
         visible: gboolean,
     );
+
+    pub fn ibus_engine_register_properties(engine: *mut IBusEngine, prop_list: *mut IBusPropList);
 }
 
 pub type IBusEngine = [u64; 11usize];
