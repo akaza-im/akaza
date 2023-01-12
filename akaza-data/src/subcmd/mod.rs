@@ -8,3 +8,4 @@ pub mod structured_perceptron;
 pub mod tokenize;
 pub mod vocab;
 pub mod wfreq;
+pub mod dump_unigram_dict;

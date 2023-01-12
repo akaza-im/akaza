@@ -3,6 +3,7 @@ use std::io::Write;
 use clap::{Parser, Subcommand};
 
 use crate::subcmd::check::check;
+use crate::subcmd::dump_unigram_dict::dump_unigram_dict;
 use crate::subcmd::evaluate::evaluate;
 use crate::subcmd::make_dict::{make_single_term, make_system_dict};
 use crate::subcmd::make_kana_trie::make_kana_trie;
@@ -58,6 +59,8 @@ enum Commands {
     Check(CheckArgs),
 
     LearnStructuredPerceptron(LearnStructuredPerceptronArgs),
+
+    DumpUnigramDict(DumpUnigramDictArgs),
 }
 
 #[derive(Debug, clap::Args)]
@@ -162,6 +165,12 @@ struct MakeKanaTrieArgs {
     trie_file: String,
 }
 
+/// ユニグラム辞書ファイルをダンプする
+#[derive(Debug, clap::Args)]
+struct DumpUnigramDictArgs {
+    dict: String,
+}
+
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
@@ -224,5 +233,6 @@ fn main() -> anyhow::Result<()> {
         Commands::MakeKanaTrie(opt) => {
             make_kana_trie(opt.system_dict_file.as_str(), opt.trie_file.as_str())
         }
+        Commands::DumpUnigramDict(opt) => dump_unigram_dict(opt.dict.as_str()),
     }
 }
