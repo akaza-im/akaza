@@ -42,7 +42,8 @@ use libakaza::romkan::RomKanConverter;
 
 use crate::commands::{ibus_akaza_commands_map, IbusAkazaCommand};
 use crate::input_mode::{
-    get_all_input_modes, get_input_mode_from_prop_name, InputMode, INPUT_MODE_HIRAGANA,
+    get_all_input_modes, get_input_mode_from_prop_name, InputMode, INPUT_MODE_HALFWIDTH_KATAKANA,
+    INPUT_MODE_HIRAGANA, INPUT_MODE_KATAKANA,
 };
 use crate::keymap::KeyMap;
 
@@ -277,7 +278,7 @@ impl AkazaContext {
         }
 
         match self.input_mode.prop_name {
-            "InputMode.Hiragana" => {
+            "InputMode.Hiragana" | "InputMode.Katakana" | "InputMode.HalfWidthKatakana" => {
                 if modifiers
                     & (IBusModifierType_IBUS_CONTROL_MASK | IBusModifierType_IBUS_MOD1_MASK)
                     != 0
@@ -302,6 +303,23 @@ impl AkazaContext {
                 }
             }
             "InputMode.Alphanumeric" => return false,
+            "InputMode.FullWidthAlnum" => {
+                if ('!' as u32) <= keyval
+                    && keyval <= ('~' as u32)
+                    && (modifiers
+                        & (IBusModifierType_IBUS_CONTROL_MASK | IBusModifierType_IBUS_MOD1_MASK))
+                        == 0
+                {
+                    let mut option = ConvOption {
+                        ascii: true,
+                        digit: true,
+                        ..Default::default()
+                    };
+                    let text = h2z(char::from_u32(keyval).unwrap().to_string().as_str(), option);
+                    unsafe { ibus_engine_commit_text(engine, text.to_ibus_text()) };
+                    return true;
+                }
+            }
             _ => {
                 warn!("Unknown prop: {}", self.input_mode.prop_name);
                 return false;
@@ -650,9 +668,25 @@ impl AkazaContext {
         } else {
             ""
         };
+
         let yomi = self.romkan.to_hiragana(preedit.as_str());
         let surface = yomi.clone();
-        (yomi + suffix, surface + suffix)
+        if self.input_mode == INPUT_MODE_KATAKANA {
+            (
+                yomi.to_string() + suffix,
+                hira2kata(yomi.as_str(), ConvOption::default()) + suffix,
+            )
+        } else if self.input_mode == INPUT_MODE_HALFWIDTH_KATAKANA {
+            (
+                yomi.to_string() + suffix,
+                z2h(
+                    hira2kata(yomi.as_str(), ConvOption::default()).as_str(),
+                    ConvOption::default(),
+                ) + suffix,
+            )
+        } else {
+            (yomi + suffix, surface + suffix)
+        }
 
         /*
             yomi = self.romkan.to_hiragana(self.preedit_string)
@@ -760,7 +794,7 @@ impl AkazaContext {
     }
 
     pub fn do_focus_in(&mut self, engine: *mut IBusEngine) {
-        info!("do_focus_in");
+        trace!("do_focus_in");
         unsafe {
             ibus_engine_register_properties(engine, self.prop_list);
         }
