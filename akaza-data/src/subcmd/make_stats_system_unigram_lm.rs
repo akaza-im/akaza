@@ -1,7 +1,9 @@
-use chrono::Local;
+use std::cmp::max;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
+
+use chrono::Local;
 
 use libakaza::lm::system_unigram_lm::SystemUnigramLMBuilder;
 
@@ -22,6 +24,7 @@ pub fn make_stats_system_unigram_lm(srcpath: &str, dstpath: &str) -> anyhow::Res
     }
 
     homograph_hack(&mut wordcnt);
+    score_hack(&mut wordcnt);
 
     let scoremap = make_score_map(wordcnt);
 
@@ -62,6 +65,24 @@ fn try_copy_cost(word1: &str, word2: &str, wordcnt: &mut HashMap<String, u32>) {
         if let Some(cost) = wordcnt.get(word1) {
             wordcnt.insert(word2.to_string(), *cost);
         }
+    }
+}
+
+// Wikipedia 特有で、日本語の一般的な分布よりも少しずれたスコアをつけている時があるので
+// ヒューリスティックに調整する。
+fn score_hack(wordcnt: &mut HashMap<String, u32>) {
+    // a の方のスコアが b よりも高くなるように調整します。
+    // https://github.com/tokuhirom/akaza/wiki/%E5%A4%A7%E5%AD%97
+    // https://github.com/tokuhirom/akaza/wiki/%E5%8D%BF
+    for (a, b) in [("今日/きょう", "卿/きょう"), ("大事/だいじ", "大字/だいじ")]
+    {
+        let Some(a_score) = wordcnt.get(a) else {
+            return;
+        };
+        let Some(b_score) = wordcnt.get(b) else {
+            return;
+        };
+        wordcnt.insert(a.to_string(), max(*a_score, b_score + 1));
     }
 }
 
