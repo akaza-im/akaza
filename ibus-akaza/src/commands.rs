@@ -27,6 +27,7 @@ pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaComman
         let (_, surface) = context.make_preedit_word();
         context.commit_string(engine, surface.as_str());
     });
+    register("escape", |context, engine| context.escape(engine));
 
     register("set_input_mode_hiragana", |context, engine| {
         context.set_input_mode(engine, &INPUT_MODE_HIRAGANA)
