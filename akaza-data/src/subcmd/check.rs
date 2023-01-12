@@ -11,7 +11,7 @@ pub fn check(yomi: &str) -> anyhow::Result<()> {
 
     let got = akaza.resolve(&lattice)?;
     let terms: Vec<String> = got.iter().map(|f| f[0].kanji.clone()).collect();
-    let result = terms.join("");
+    let result = terms.join("/");
     println!("{}", result);
 
     Ok(())
