@@ -14,9 +14,7 @@ mod tests {
 
     fn load_akaza() -> Result<BigramWordViterbiEngine> {
         let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/../akaza-data/data/";
-        BigramWordViterbiEngineBuilder::default()
-            .system_data_dir(datadir.as_str())
-            .build()
+        BigramWordViterbiEngineBuilder::new(datadir.as_str()).build()
     }
 
     struct Tester {
@@ -37,6 +35,22 @@ mod tests {
             assert_eq!(got, kanji);
             Ok(())
         }
+    }
+
+    #[test]
+    fn test_go() -> Result<()> {
+        let _ = env_logger::builder()
+            .filter_level(LevelFilter::Trace)
+            .is_test(true)
+            .try_init();
+
+        let yomi = "ご";
+        let got: Vec<VecDeque<Candidate>> = load_akaza()?.convert(yomi, None)?;
+        assert_eq!(&got[0][0].yomi, "ご");
+        let words: Vec<String> = got[0].iter().map(|x| x.kanji.to_string()).collect();
+        assert!(words.contains(&"語".to_string()));
+        // assert_eq!(got, kanji);
+        Ok(())
     }
 
     #[test]
