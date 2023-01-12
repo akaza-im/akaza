@@ -36,18 +36,18 @@ work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.
 	tar -xmzf work/vibrato/ipadic-mecab-2_7_0.tar.gz -C work/vibrato/
 
 work/jawiki/vibrato-ipadic/_SUCCESS: src/subcmd/tokenize.rs mecab-user-dict.csv src/corpus_reader/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS work/vibrato/ipadic-mecab-2_7_0/system.dic
-	cargo run -- tokenize-vibrato-ipadic --user-dict=mecab-user-dict.csv work/vibrato/ipadic-mecab-2_7_0/system.dic work/jawiki/extracted work/jawiki/vibrato-ipadic/ -vvv
+	cargo run --release -- tokenize-vibrato-ipadic --user-dict=mecab-user-dict.csv work/vibrato/ipadic-mecab-2_7_0/system.dic work/jawiki/extracted work/jawiki/vibrato-ipadic/ -vvv
 
 work/aozora_bunko/vibrato-ipadic/_SUCCESS: src/corpus_reader/aozora_bunko.rs work/vibrato/ipadic-mecab-2_7_0/system.dic
-	cargo run -- tokenize-aozora-bunko-vibrato-ipadic work/vibrato/ipadic-mecab-2_7_0/system.dic aozorabunko_text/cards/ work/aozora_bunko/vibrato-ipadic/ -vv
+	cargo run --release -- tokenize-aozora-bunko-vibrato-ipadic work/vibrato/ipadic-mecab-2_7_0/system.dic aozorabunko_text/cards/ work/aozora_bunko/vibrato-ipadic/ -vv
 
 work/vibrato-ipadic.wfreq: work/jawiki/vibrato-ipadic/_SUCCESS src/subcmd/wfreq.rs work/aozora_bunko/vibrato-ipadic/_SUCCESS
-	cargo run -- wfreq work/jawiki/vibrato-ipadic/ work/aozora_bunko/vibrato-ipadic/ work/vibrato-ipadic.wfreq -vvv
+	cargo run --release -- wfreq work/jawiki/vibrato-ipadic/ work/aozora_bunko/vibrato-ipadic/ work/vibrato-ipadic.wfreq -vvv
 
 # threshold が 16 なのはヒューリスティックなパラメータ設定による。
 # vocab ファイルを作る意味は、辞書の作成のためだけなので、わざわざ作らなくてもよいかもしれない。
 work/vibrato-ipadic.vocab: work/vibrato-ipadic.wfreq src/subcmd/vocab.rs
-	cargo run -- vocab --threshold 16 work/vibrato-ipadic.wfreq work/vibrato-ipadic.vocab -vvv
+	cargo run --release -- vocab --threshold 16 work/vibrato-ipadic.wfreq work/vibrato-ipadic.vocab -vvv
 
 
 # -------------------------------------------------------------------------
@@ -58,15 +58,15 @@ work/vibrato-ipadic.vocab: work/vibrato-ipadic.wfreq src/subcmd/vocab.rs
 # -u jawiki-kana-kanji-dict/lindera-userdic.bin
 
 work/jawiki/lindera-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/corpus_reader/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS
-	cargo run -- tokenize-lindera-ipadic work/jawiki/extracted/ work/jawiki/lindera-ipadic/ -vvv
+	cargo run --release -- tokenize-lindera-ipadic work/jawiki/extracted/ work/jawiki/lindera-ipadic/ -vvv
 
 work/jawiki/lindera-ipadic.wfreq: work/jawiki/lindera-ipadic/_SUCCESS src/subcmd/wfreq.rs
-	cargo run -- wfreq work/jawiki/lindera-ipadic/ work/jawiki/lindera-ipadic.wfreq -vvv
+	cargo run --release -- wfreq work/jawiki/lindera-ipadic/ work/jawiki/lindera-ipadic.wfreq -vvv
 
 # threshold が 16 なのは、ヒューリスティックなパラメータ設定による。
 # 調整の余地あり。
 work/jawiki/lindera-ipadic.vocab: work/jawiki/lindera-ipadic.wfreq src/subcmd/vocab.rs
-	cargo run -- vocab --threshold 16 work/jawiki/lindera-ipadic.wfreq work/jawiki/lindera-ipadic.vocab -vvv
+	cargo run --release -- vocab --threshold 16 work/jawiki/lindera-ipadic.wfreq work/jawiki/lindera-ipadic.vocab -vvv
 
 
 # -------------------------------------------------------------------------
@@ -74,10 +74,10 @@ work/jawiki/lindera-ipadic.vocab: work/jawiki/lindera-ipadic.wfreq src/subcmd/vo
 # 統計的仮名かな漢字変換のためのモデル作成処理
 
 data/stats-vibrato-unigram.trie: work/vibrato-ipadic.wfreq
-	cargo run -- make-stats-system-unigram-lm work/vibrato-ipadic.wfreq data/stats-vibrato-unigram.trie
+	cargo run --release -- make-stats-system-unigram-lm work/vibrato-ipadic.wfreq data/stats-vibrato-unigram.trie
 
 data/stats-vibrato-bigram.trie: data/stats-vibrato-unigram.trie data/stats-vibrato-unigram.trie
-	cargo run -- make-stats-system-bigram-lm --threshold=3 work/jawiki/vibrato-ipadic/ \
+	cargo run --release -- make-stats-system-bigram-lm --threshold=3 work/jawiki/vibrato-ipadic/ \
 		data/stats-vibrato-unigram.trie data/stats-vibrato-bigram.trie
 
 # -------------------------------------------------------------------------
