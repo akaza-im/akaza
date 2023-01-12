@@ -10,7 +10,7 @@ use crate::lm::system_bigram::SystemBigramLM;
 use crate::lm::system_unigram_lm::SystemUnigramLM;
 use crate::user_side_data::user_data::UserData;
 
-const DEFAULT_SCORE: f32 = 20.0; // -log10(1e-20)
+const DEFAULT_SCORE: f32 = 13.641709; // -log10(1e-20)
 
 // 考えられる単語の列全てを含むようなグラフ構造
 pub struct LatticeGraph {
@@ -77,37 +77,49 @@ impl LatticeGraph {
         buf
     }
 
+    fn is_match(s: &str, expected: &str) -> bool {
+        if expected.contains(s) {
+            return true;
+        }
+        false
+    }
+
     // for debugging purpose
     /// コストが各ノードおよびエッジについているかを出力する。
     /// graphviz の dot 形式で出力する。
     #[allow(unused)]
-    pub fn dump_cost_dot(&self) -> String {
+    pub fn dump_cost_dot(&self, expected: &str) -> String {
         let mut buf = String::new();
         buf += "digraph Lattice {\n";
+
         // start 及び end は、byte 数単位
         for (end_pos, nodes) in self.graph.iter() {
             for node in nodes {
-                buf += &*format!(
-                    r#"    "{}/{}" [xlabel="{}"]{}"#,
-                    node.kanji,
-                    node.yomi,
-                    self.get_node_cost(node),
-                    "\n"
-                );
-                if let Some(prev_nodes) = self.get_prev_nodes(node) {
-                    for prev_node in prev_nodes {
-                        buf += &*format!(
-                            r#"    "{}/{}" -> "{}/{}" [label="{}"]{}"#,
-                            prev_node.kanji,
-                            prev_node.yomi,
-                            node.kanji,
-                            node.yomi,
-                            self.get_edge_cost(prev_node, node),
-                            "\n"
-                        );
+                if Self::is_match(node.kanji.as_str(), expected) {
+                    buf += &*format!(
+                        r#"    "{}/{}" [xlabel="{}"]{}"#,
+                        node.kanji,
+                        node.yomi,
+                        self.get_node_cost(node),
+                        "\n"
+                    );
+                    if let Some(prev_nodes) = self.get_prev_nodes(node) {
+                        for prev_node in prev_nodes {
+                            if Self::is_match(prev_node.kanji.as_str(), expected) {
+                                buf += &*format!(
+                                    r#"    "{}/{}" -> "{}/{}" [label="{}"]{}"#,
+                                    prev_node.kanji,
+                                    prev_node.yomi,
+                                    node.kanji,
+                                    node.yomi,
+                                    self.get_edge_cost(prev_node, node),
+                                    "\n"
+                                );
+                            }
+                        }
+                    } else {
+                        error!("Missing previous nodes for {}", node);
                     }
-                } else {
-                    error!("Missing previous nodes for {}", node);
                 }
             }
         }

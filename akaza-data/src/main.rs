@@ -94,6 +94,7 @@ struct EvaluateArgs {
 struct CheckArgs {
     /// 変換したい読みがな
     yomi: String,
+    expected: Option<String>,
 }
 
 /// 動作確認する
@@ -197,7 +198,7 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::MakeSingleTerm(opt) => make_single_term(&opt.txt_file, &opt.trie_file),
         Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, &opt.system_data_dir),
-        Commands::Check(opt) => check(&opt.yomi),
+        Commands::Check(opt) => check(&opt.yomi, opt.expected),
         Commands::LearnStructuredPerceptron(opts) => {
             learn_structured_perceptron(&opts.src_dir, opts.epochs)
         }

@@ -65,8 +65,8 @@ impl GraphBuilder {
             user_data,
             system_unigram_lm,
             system_bigram_lm,
-            19_f32,
-            20_f32,
+            13.672812_f32,
+            8.672809_f32,
         )
     }
 
@@ -140,8 +140,8 @@ impl GraphBuilder {
             user_data: self.user_data.clone(),
             system_unigram_lm: self.system_unigram_lm.clone(),
             system_bigram_lm: self.system_bigram_lm.clone(),
-            default_unigram_score_for_long: 20.0_f32,
-            default_unigram_score_for_short: 19.0_f32,
+            default_unigram_score_for_long: self.default_unigram_score_for_long,
+            default_unigram_score_for_short: self.default_unigram_score_for_short,
         }
     }
 }
