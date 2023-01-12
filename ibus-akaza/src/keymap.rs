@@ -5,8 +5,9 @@ use log::trace;
 use ibus_sys::core::{IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_SHIFT_MASK};
 use ibus_sys::ibus_key::{
     IBUS_KEY_BackSpace, IBUS_KEY_Down, IBUS_KEY_Escape, IBUS_KEY_Hangul, IBUS_KEY_Hangul_Hanja,
-    IBUS_KEY_Henkan, IBUS_KEY_KP_Down, IBUS_KEY_KP_Enter, IBUS_KEY_KP_Left, IBUS_KEY_KP_Right,
-    IBUS_KEY_KP_Up, IBUS_KEY_Left, IBUS_KEY_Muhenkan, IBUS_KEY_Return, IBUS_KEY_Right, IBUS_KEY_Up,
+    IBUS_KEY_Henkan, IBUS_KEY_KP_Down, IBUS_KEY_KP_Enter, IBUS_KEY_KP_Left, IBUS_KEY_KP_Page_Down,
+    IBUS_KEY_KP_Page_Up, IBUS_KEY_KP_Right, IBUS_KEY_KP_Up, IBUS_KEY_Left, IBUS_KEY_Muhenkan,
+    IBUS_KEY_Page_Down, IBUS_KEY_Page_Up, IBUS_KEY_Return, IBUS_KEY_Right, IBUS_KEY_Up,
     IBUS_KEY_colon, IBUS_KEY_h, IBUS_KEY_j, IBUS_KEY_k, IBUS_KEY_l, IBUS_KEY_space, IBUS_KEY_0,
     IBUS_KEY_1, IBUS_KEY_2, IBUS_KEY_3, IBUS_KEY_4, IBUS_KEY_5, IBUS_KEY_6, IBUS_KEY_7, IBUS_KEY_8,
     IBUS_KEY_9, IBUS_KEY_F10, IBUS_KEY_F6, IBUS_KEY_F7, IBUS_KEY_F8, IBUS_KEY_F9, IBUS_KEY_KP_0,
@@ -72,12 +73,6 @@ pub struct KeyMap {
 impl KeyMap {
     pub(crate) fn new() -> Self {
         let mut builder = KeyMapBuilder::new();
-
-        /*
-
-        keymap.register([KEY_STATE_CONVERSION], ['Page_Up', 'KP_Page_Up'], 'page_up')
-        keymap.register([KEY_STATE_CONVERSION], ['Page_Down', 'KP_Page_Down'], 'page_down')
-         */
 
         // TODO use IBus.Hotkey
 
@@ -252,6 +247,19 @@ impl KeyMap {
             &[IBUS_KEY_F10],
             0,
             "convert_to_half_romaji",
+        );
+
+        builder.insert(
+            &[KeyState::Conversion],
+            &[IBUS_KEY_KP_Page_Up, IBUS_KEY_Page_Up],
+            0,
+            "page_up",
+        );
+        builder.insert(
+            &[KeyState::Conversion],
+            &[IBUS_KEY_KP_Page_Down, IBUS_KEY_Page_Down],
+            0,
+            "page_down",
         );
 
         let mut num = |keyvals: &[u32], n: i32| {
