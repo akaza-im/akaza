@@ -1,4 +1,0 @@
-import os
-
-SYS_CONF_DIR = os.environ.get('AKAZA_SYSCONF_DIR', '@SYSCONFDIR@')
-MODEL_DIR = os.environ.get('AKAZA_MODEL_DIR', '@MODELDIR@')
