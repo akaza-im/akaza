@@ -887,4 +887,32 @@ impl AkazaContext {
         self.preedit.clear();
         self.update_candidates(engine)
     }
+
+    pub fn page_up(&mut self, engine: *mut IBusEngine) -> bool {
+        if self.lookup_table.page_up() {
+            self.node_selected.insert(
+                self.current_clause,
+                self.lookup_table.get_cursor_pos() as usize,
+            );
+            self.cursor_moved = true;
+            self.refresh(engine);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn page_down(&mut self, engine: *mut IBusEngine) -> bool {
+        if self.lookup_table.page_up() {
+            self.node_selected.insert(
+                self.current_clause,
+                self.lookup_table.get_cursor_pos() as usize,
+            );
+            self.cursor_moved = true;
+            self.refresh(engine);
+            true
+        } else {
+            false
+        }
+    }
 }
