@@ -881,4 +881,10 @@ impl AkazaContext {
         self.refresh(engine);
         Ok(())
     }
+
+    pub fn escape(&mut self, engine: *mut IBusEngine) {
+        trace!("escape: {}", self.preedit);
+        self.preedit.clear();
+        self.update_candidates(engine)
+    }
 }
