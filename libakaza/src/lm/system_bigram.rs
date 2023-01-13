@@ -2,8 +2,10 @@ use anyhow::{bail, Result};
 use half::f16;
 use log::info;
 
+use marisa_sys::{Keyset, Marisa};
+
 use crate::lm::base::SystemBigramLM;
-use crate::trie::{Trie, TrieBuilder};
+use crate::trie::SearchResult;
 
 /*
    {word1 ID}    # 3 bytes
@@ -19,7 +21,7 @@ const DEFAULT_COST_KEY: &str = "__DEFAULT_EDGE_COST__";
  */
 #[derive(Default)]
 pub struct MarisaSystemBigramLMBuilder {
-    builder: TrieBuilder,
+    keyset: Keyset,
 }
 
 impl MarisaSystemBigramLMBuilder {
@@ -50,56 +52,61 @@ impl MarisaSystemBigramLMBuilder {
         key.extend(id1_bytes[0..3].iter());
         key.extend(id2_bytes[0..3].iter());
         key.extend(f16::from_f32(score).to_le_bytes());
-        self.builder.add(key);
+        self.keyset.push_back(key.as_slice());
     }
 
     pub fn set_default_edge_cost(&mut self, score: f32) -> &mut Self {
         let key = format!("{}\t{}", DEFAULT_COST_KEY, score);
-        self.builder.add(key.as_bytes().to_vec());
+        let key1 = key.as_bytes().to_vec();
+        self.keyset.push_back(key1.as_slice());
         self
     }
 
     pub fn build(&self) -> Result<MarisaSystemBigramLM> {
-        let trie = self.builder.build();
-        let default_edge_cost = MarisaSystemBigramLM::read_default_edge_cost(&trie)?;
+        let mut marisa = Marisa::default();
+        marisa.build(&self.keyset);
+        let default_edge_cost = MarisaSystemBigramLM::read_default_edge_cost(&marisa)?;
         Ok(MarisaSystemBigramLM {
-            trie,
+            marisa,
             default_edge_cost,
         })
     }
 
     pub fn save(&self, ofname: &str) -> anyhow::Result<()> {
-        self.builder.save(ofname)
+        let mut marisa = Marisa::default();
+        marisa.build(&self.keyset);
+        marisa.save(ofname)?;
+        Ok(())
     }
 }
 
 pub struct MarisaSystemBigramLM {
-    trie: Trie,
+    marisa: Marisa,
     default_edge_cost: f32,
 }
 
 impl MarisaSystemBigramLM {
     pub fn load(filename: &str) -> Result<MarisaSystemBigramLM> {
         info!("Loading system-bigram: {}", filename);
-        let trie = Trie::load(filename)?;
-        let default_edge_cost = Self::read_default_edge_cost(&trie);
+        let mut marisa = Marisa::default();
+        marisa.load(filename)?;
+        let default_edge_cost = Self::read_default_edge_cost(&marisa);
         Ok(MarisaSystemBigramLM {
-            trie,
+            marisa,
             default_edge_cost: default_edge_cost?,
         })
     }
 
     pub fn num_keys(&self) -> usize {
-        self.trie.num_keys()
+        self.marisa.num_keys()
     }
 
-    fn read_default_edge_cost(trie: &Trie) -> Result<f32> {
+    fn read_default_edge_cost(marisa: &Marisa) -> Result<f32> {
         let mut keys: Vec<Vec<u8>> = Vec::new();
-        trie.marisa
-            .predictive_search(DEFAULT_COST_KEY.as_bytes(), |key, _| {
-                keys.push(key.to_vec());
-                false
-            });
+        marisa.predictive_search(DEFAULT_COST_KEY.as_bytes(), |key, _| {
+            keys.push(key.to_vec());
+            false
+        });
 
         let Some(key) = keys.get(0) else {
             bail!("Cannot read default cost from trie");
@@ -127,7 +134,14 @@ impl SystemBigramLM for MarisaSystemBigramLM {
         let mut key: Vec<u8> = Vec::new();
         key.extend(word_id1.to_le_bytes()[0..3].iter());
         key.extend(word_id2.to_le_bytes()[0..3].iter());
-        let got = self.trie.predictive_search(key);
+        let mut got: Vec<SearchResult> = Vec::new();
+        self.marisa.predictive_search(key.as_slice(), |key, id| {
+            got.push(SearchResult {
+                keyword: key.to_vec(),
+                id,
+            });
+            true
+        });
         let Some(result) = got.first() else {
             return None;
         };
