@@ -36,8 +36,6 @@ pub fn learn_structured_perceptron(src_dir: &String, epochs: i32) -> anyhow::Res
         Arc::new(Mutex::new(UserData::default())),
         Rc::new(MarisaSystemUnigramLMBuilder::default().build()),
         Rc::new(system_bigram_lm),
-        0_f32,
-        0_f32,
     );
 
     let mut unigram_cost: HashMap<String, f32> = HashMap::new();

@@ -19,8 +19,6 @@ pub struct GraphBuilder<U: SystemUnigramLM, B: SystemBigramLM> {
     user_data: Arc<Mutex<UserData>>,
     system_unigram_lm: Rc<U>,
     system_bigram_lm: Rc<B>,
-    default_unigram_score_for_long: f32,
-    default_unigram_score_for_short: f32,
 }
 
 impl<U: SystemUnigramLM, B: SystemBigramLM> GraphBuilder<U, B> {
@@ -37,8 +35,6 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> GraphBuilder<U, B> {
         user_data: Arc<Mutex<UserData>>,
         system_unigram_lm: Rc<U>,
         system_bigram_lm: Rc<B>,
-        default_unigram_score_for_short: f32,
-        default_unigram_score_for_long: f32,
     ) -> GraphBuilder<U, B> {
         GraphBuilder {
             system_kana_kanji_dict,
@@ -46,8 +42,6 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> GraphBuilder<U, B> {
             user_data,
             system_unigram_lm,
             system_bigram_lm,
-            default_unigram_score_for_short,
-            default_unigram_score_for_long,
         }
     }
 
@@ -64,8 +58,6 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> GraphBuilder<U, B> {
             user_data,
             system_unigram_lm,
             system_bigram_lm,
-            13.672812_f32,
-            8.672809_f32,
         )
     }
 
@@ -139,8 +131,6 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> GraphBuilder<U, B> {
             user_data: self.user_data.clone(),
             system_unigram_lm: self.system_unigram_lm.clone(),
             system_bigram_lm: self.system_bigram_lm.clone(),
-            default_unigram_score_for_long: self.default_unigram_score_for_long,
-            default_unigram_score_for_short: self.default_unigram_score_for_short,
         }
     }
 }
@@ -159,7 +149,12 @@ mod tests {
             KanaKanjiDict::default(),
             KanaKanjiDictBuilder::default().add("すし", "🍣").build(),
             Arc::new(Mutex::new(UserData::default())),
-            Rc::new(MarisaSystemUnigramLMBuilder::default().build()),
+            Rc::new(
+                MarisaSystemUnigramLMBuilder::default()
+                    .set_default_cost(20_f32)
+                    .set_default_cost_for_short(19_f32)
+                    .build(),
+            ),
             Rc::new(MarisaSystemBigramLMBuilder::default().build()),
         );
         let yomi = "すし";
@@ -182,7 +177,12 @@ mod tests {
             KanaKanjiDict::default(),
             KanaKanjiDictBuilder::default().build(),
             Arc::new(Mutex::new(UserData::default())),
-            Rc::new(MarisaSystemUnigramLMBuilder::default().build()),
+            Rc::new(
+                MarisaSystemUnigramLMBuilder::default()
+                    .set_default_cost(20_f32)
+                    .set_default_cost_for_short(19_f32)
+                    .build(),
+            ),
             Rc::new(MarisaSystemBigramLMBuilder::default().build()),
         );
         let yomi = "す";
@@ -202,7 +202,12 @@ mod tests {
             KanaKanjiDictBuilder::default().add("す", "す/ス").build(),
             KanaKanjiDictBuilder::default().build(),
             Arc::new(Mutex::new(UserData::default())),
-            Rc::new(MarisaSystemUnigramLMBuilder::default().build()),
+            Rc::new(
+                MarisaSystemUnigramLMBuilder::default()
+                    .set_default_cost(20_f32)
+                    .set_default_cost_for_short(19_f32)
+                    .build(),
+            ),
             Rc::new(MarisaSystemBigramLMBuilder::default().build()),
         );
         let yomi = "す";

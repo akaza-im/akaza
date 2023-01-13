@@ -174,8 +174,10 @@ mod tests {
         // BOS a  b  c
         let dict_builder = KanaKanjiDictBuilder::default();
         let dict = dict_builder.build();
-        let system_unigram_lm_builder = MarisaSystemUnigramLMBuilder::default();
-        let system_unigram_lm = system_unigram_lm_builder.build();
+        let system_unigram_lm = MarisaSystemUnigramLMBuilder::default()
+            .set_default_cost(20_f32)
+            .set_default_cost_for_short(19_f32)
+            .build();
         let system_bigram_lm_builder = MarisaSystemBigramLMBuilder::default();
         let system_bigram_lm = system_bigram_lm_builder.build();
         let user_data = UserData::default();
@@ -221,8 +223,11 @@ mod tests {
         let yomi = "わたし".to_string();
 
         let dict = dict_builder.build();
-        let system_unigram_lm_builder = MarisaSystemUnigramLMBuilder::default();
-        let system_unigram_lm = system_unigram_lm_builder.build();
+        let mut system_unigram_lm_builder = MarisaSystemUnigramLMBuilder::default();
+        let system_unigram_lm = system_unigram_lm_builder
+            .set_default_cost(19_f32)
+            .set_default_cost_for_short(20_f32)
+            .build();
         let system_bigram_lm_builder = MarisaSystemBigramLMBuilder::default();
         let system_bigram_lm = system_bigram_lm_builder.build();
         let mut user_data = UserData::default();

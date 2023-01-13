@@ -18,10 +18,6 @@ pub struct LatticeGraph<U: SystemUnigramLM, B: SystemBigramLM> {
     pub(crate) user_data: Arc<Mutex<UserData>>,
     pub(crate) system_unigram_lm: Rc<U>,
     pub(crate) system_bigram_lm: Rc<B>,
-    /// -log10(1e-19)=19.0
-    pub(crate) default_unigram_score_for_short: f32,
-    /// -log10(1e-20)=20.0
-    pub(crate) default_unigram_score_for_long: f32,
 }
 
 impl<U: SystemUnigramLM, B: SystemBigramLM> Debug for LatticeGraph<U, B> {
@@ -144,10 +140,9 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> LatticeGraph<U, B> {
             // 労働者災害補償保険法 のように、システム辞書には wikipedia から採録されているが,
             // 言語モデルには採録されていない場合,漢字候補を先頭に持ってくる。
             // つまり、変換後のほうが短くなるもののほうをコストを安くしておく。
-            self.default_unigram_score_for_short
-            // -log10(1e-19)
+            self.system_unigram_lm.get_default_cost_for_short()
         } else {
-            self.default_unigram_score_for_long
+            self.system_unigram_lm.get_default_cost()
         };
     }
 
