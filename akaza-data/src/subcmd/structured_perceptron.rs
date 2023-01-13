@@ -1,5 +1,5 @@
+use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use std::ops::Range;
 use std::path::Path;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
@@ -10,12 +10,81 @@ use libakaza::graph::graph_resolver::GraphResolver;
 use libakaza::graph::segmenter::Segmenter;
 use libakaza::kana_kanji_dict::KanaKanjiDict;
 use libakaza::kana_trie::marisa_kana_trie::MarisaKanaTrie;
-use libakaza::lm::base::SystemUnigramLM;
-use libakaza::lm::system_bigram::{MarisaSystemBigramLM, MarisaSystemBigramLMBuilder};
-use libakaza::lm::system_unigram_lm::{MarisaSystemUnigramLM, MarisaSystemUnigramLMBuilder};
+use libakaza::lm::base::{SystemBigramLM, SystemUnigramLM};
+use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use libakaza::user_side_data::user_data::UserData;
 
 use crate::utils::get_file_list;
+
+pub struct OnMemorySystemUnigramLM {
+    // word -> (word_id, cost)
+    unigram_cost_map: Rc<RefCell<HashMap<String, (i32, f32)>>>,
+}
+
+impl OnMemorySystemUnigramLM {
+    fn update(&self, word: &str, cost: f32) {
+        let Some((word_id, _)) = self.find(word) else {
+            // 登録されてない単語は無視。
+            return;
+        };
+
+        self.unigram_cost_map
+            .borrow_mut()
+            .insert(word.to_string(), (word_id, cost));
+    }
+}
+
+impl SystemUnigramLM for OnMemorySystemUnigramLM {
+    fn get_default_cost(&self) -> f32 {
+        20_f32
+    }
+
+    fn get_default_cost_for_short(&self) -> f32 {
+        19_f32
+    }
+
+    fn find(&self, word: &str) -> Option<(i32, f32)> {
+        self.unigram_cost_map.borrow().get(word).copied()
+    }
+
+    fn as_id_map(&self) -> HashMap<String, i32> {
+        self.unigram_cost_map
+            .borrow()
+            .iter()
+            .map(|(k, (id, _))| (k.clone(), *id))
+            .collect()
+    }
+
+    fn as_hash_map(&self) -> HashMap<String, (i32, f32)> {
+        self.unigram_cost_map.borrow().clone()
+    }
+}
+
+pub struct OnMemorySystemBigramLM {
+    // (word_id, word_id) -> cost
+    bigram_cost: Rc<RefCell<HashMap<(i32, i32), f32>>>,
+}
+
+impl SystemBigramLM for OnMemorySystemBigramLM {
+    fn get_default_edge_cost(&self) -> f32 {
+        20_f32
+    }
+
+    fn get_edge_cost(&self, word_id1: i32, word_id2: i32) -> Option<f32> {
+        self.bigram_cost
+            .borrow()
+            .get(&(word_id1, word_id2))
+            .cloned()
+    }
+}
+
+impl OnMemorySystemBigramLM {
+    pub fn update(&self, word_id1: i32, word_id2: i32, cost: f32) {
+        self.bigram_cost
+            .borrow_mut()
+            .insert((word_id1, word_id2), cost);
+    }
+}
 
 /// 構造化パーセプトロンの学習を行います。
 /// 構造化パーセプトロンは、シンプルな実装で、そこそこのパフォーマンスがでる(予定)
@@ -28,18 +97,25 @@ pub fn learn_structured_perceptron(src_dir: &String, epochs: i32) -> anyhow::Res
     let system_kana_trie = MarisaKanaTrie::build(all_yomis);
     let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
     let system_single_term_dict = KanaKanjiDict::load("data/single_term.trie")?;
-    let system_bigram_lm = MarisaSystemBigramLMBuilder::default().build()?;
+
+    let bigram_cost: Rc<RefCell<HashMap<(i32, i32), f32>>> = Rc::new(RefCell::new(HashMap::new()));
+    let system_bigram_lm = Rc::new(OnMemorySystemBigramLM { bigram_cost });
+
     let real_system_unigram_lm = MarisaSystemUnigramLM::load("data/stats-vibrato-unigram.trie")?;
+
+    let unigram_cost: Rc<RefCell<HashMap<String, (i32, f32)>>> =
+        Rc::new(RefCell::new(real_system_unigram_lm.as_hash_map()));
+    let system_unigram_lm = Rc::new(OnMemorySystemUnigramLM {
+        unigram_cost_map: unigram_cost,
+    });
+
     let mut graph_builder = GraphBuilder::new(
         system_kana_kanji_dict,
         system_single_term_dict,
         Arc::new(Mutex::new(UserData::default())),
-        Rc::new(MarisaSystemUnigramLMBuilder::default().build()),
-        Rc::new(system_bigram_lm),
+        system_unigram_lm.clone(),
+        system_bigram_lm.clone(),
     );
-
-    let mut unigram_cost: HashMap<String, f32> = HashMap::new();
-    let mut bigram_cost: HashMap<(i32, i32), f32> = HashMap::new();
 
     for _ in 1..epochs {
         for file in get_file_list(Path::new(src_dir))? {
@@ -47,11 +123,10 @@ pub fn learn_structured_perceptron(src_dir: &String, epochs: i32) -> anyhow::Res
             for teacher in corpuses.iter() {
                 learn(
                     teacher,
-                    &mut unigram_cost,
-                    &mut bigram_cost,
                     &segmenter,
                     &mut graph_builder,
-                    &real_system_unigram_lm,
+                    system_unigram_lm.clone(),
+                    system_bigram_lm.clone(),
                 )?;
             }
         }
@@ -62,11 +137,10 @@ pub fn learn_structured_perceptron(src_dir: &String, epochs: i32) -> anyhow::Res
 
 pub fn learn(
     teacher: &FullAnnotationCorpus,
-    unigram_cost: &mut HashMap<String, f32>,
-    bigram_cost: &mut HashMap<(i32, i32), f32>,
     segmenter: &Segmenter,
-    graph_builder: &mut GraphBuilder<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
-    real_system_unigram_lm: &MarisaSystemUnigramLM,
+    graph_builder: &mut GraphBuilder<OnMemorySystemUnigramLM, OnMemorySystemBigramLM>,
+    system_unigram_lm: Rc<OnMemorySystemUnigramLM>,
+    system_bigram_lm: Rc<OnMemorySystemBigramLM>,
 ) -> anyhow::Result<()> {
     // let system_kana_kanji_dict = KanaKanjiDictBuilder::default()
     //     .add("せんたくもの", "洗濯物")
@@ -75,24 +149,6 @@ pub fn learn(
     //     .add("ほす", "干す/HOS")
     //     .add("めんどう", "面倒")
     //     .build();
-
-    let force_ranges: Vec<Range<usize>> = Vec::new();
-
-    let mut unigram_lm_builder = MarisaSystemUnigramLMBuilder::default();
-    for (key, cost) in unigram_cost.iter() {
-        // warn!("SYSTEM UNIGRM LM: {} cost={}", key.as_str(), *cost);
-        unigram_lm_builder.add(key.as_str(), *cost);
-    }
-    let system_unigram_lm = unigram_lm_builder.build();
-
-    let mut bigram_lm_builder = MarisaSystemBigramLMBuilder::default();
-    for ((word_id1, word_id2), cost) in bigram_cost.iter() {
-        bigram_lm_builder.add(*word_id1, *word_id2, *cost);
-    }
-    let system_bigram_lm = bigram_lm_builder.build()?;
-
-    graph_builder.set_system_unigram_lm(Rc::new(system_unigram_lm));
-    graph_builder.set_system_bigram_lm(Rc::new(system_bigram_lm));
 
     let mut correct_edges: HashSet<String> = HashSet::new();
     if teacher.nodes.len() > 1 {
@@ -105,7 +161,7 @@ pub fn learn(
 
     let correct_nodes = teacher.correct_node_set();
     let yomi = teacher.yomi();
-    let segmentation_result = segmenter.build(&yomi, Some(&force_ranges));
+    let segmentation_result = segmenter.build(&yomi, None);
     let graph_resolver = GraphResolver::default();
 
     let lattice = graph_builder.construct(yomi.as_str(), segmentation_result);
@@ -127,17 +183,19 @@ pub fn learn(
                 } else {
                     1_f32
                 };
-                let v = unigram_cost.get(&node.key().to_string()).unwrap_or(&0_f32);
-                unigram_cost.insert(node.key(), *v + modifier);
+                let (_, cost) = system_unigram_lm
+                    .find(&node.key().to_string())
+                    .unwrap_or((-1, 0_f32));
+                system_unigram_lm.update(node.key().as_str(), cost + modifier);
             }
             for j in 1..nodes.len() {
                 let word1 = &nodes[j - 1];
                 let word2 = &nodes[j];
-                let Some((word_id1, _)) = real_system_unigram_lm.find(&word1.key().to_string()) else {
+                let Some((word_id1, _)) = system_unigram_lm.find(&word1.key().to_string()) else {
                     // info!("{} is not registered in the real system unigram LM.",word1);
                     continue;
                 };
-                let Some((word_id2, _)) = real_system_unigram_lm.find(&word2.key().to_string()) else {
+                let Some((word_id2, _)) = system_unigram_lm.find(&word2.key().to_string()) else {
                     // info!("{} is not registered in the real system unigram LM.",word1);
                     continue;
                 };
@@ -152,9 +210,11 @@ pub fn learn(
                     1_f32
                 };
 
-                let v = bigram_cost.get(&(word_id1, word_id2)).unwrap_or(&0_f32);
+                let v = system_bigram_lm
+                    .get_edge_cost(word_id1, word_id2)
+                    .unwrap_or(0_f32);
 
-                bigram_cost.insert((word_id1, word_id2), *v + modifier);
+                system_bigram_lm.update(word_id1, word_id2, v + modifier);
             }
         }
     }

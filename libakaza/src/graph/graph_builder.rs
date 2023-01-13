@@ -22,13 +22,6 @@ pub struct GraphBuilder<U: SystemUnigramLM, B: SystemBigramLM> {
 }
 
 impl<U: SystemUnigramLM, B: SystemBigramLM> GraphBuilder<U, B> {
-    pub fn set_system_unigram_lm(&mut self, system_unigram_lm: Rc<U>) {
-        self.system_unigram_lm = system_unigram_lm;
-    }
-    pub fn set_system_bigram_lm(&mut self, system_bigram_lm: Rc<B>) {
-        self.system_bigram_lm = system_bigram_lm;
-    }
-
     pub fn new(
         system_kana_kanji_dict: KanaKanjiDict,
         system_single_term_dict: KanaKanjiDict,
