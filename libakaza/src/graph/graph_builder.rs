@@ -169,7 +169,7 @@ mod tests {
             SegmentationResult::new(BTreeMap::from([(6, vec!["すし".to_string()])])),
         );
         let nodes = got.node_list(6).unwrap();
-        let got_surfaces: Vec<String> = nodes.iter().map(|f| f.kanji.to_string()).collect();
+        let got_surfaces: Vec<String> = nodes.iter().map(|f| f.surface.to_string()).collect();
         assert_eq!(
             got_surfaces,
             vec!["すし".to_string(), "スシ".to_string(), "🍣".to_string()]
@@ -192,7 +192,7 @@ mod tests {
             SegmentationResult::new(BTreeMap::from([(3, vec!["す".to_string()])])),
         );
         let nodes = got.node_list(3).unwrap();
-        let got_surfaces: Vec<String> = nodes.iter().map(|f| f.kanji.to_string()).collect();
+        let got_surfaces: Vec<String> = nodes.iter().map(|f| f.surface.to_string()).collect();
         assert_eq!(got_surfaces, vec!["す".to_string(), "ス".to_string()]);
     }
 
@@ -212,7 +212,7 @@ mod tests {
             SegmentationResult::new(BTreeMap::from([(3, vec!["す".to_string()])])),
         );
         let nodes = got.node_list(3).unwrap();
-        let got_surfaces: Vec<String> = nodes.iter().map(|f| f.kanji.to_string()).collect();
+        let got_surfaces: Vec<String> = nodes.iter().map(|f| f.surface.to_string()).collect();
         assert_eq!(got_surfaces, vec!["す".to_string(), "ス".to_string()]);
     }
 }

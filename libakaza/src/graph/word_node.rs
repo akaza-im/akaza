@@ -5,7 +5,7 @@ use std::hash::{Hash, Hasher};
 pub struct WordNode {
     pub start_pos: i32,
     /// 漢字
-    pub kanji: String,
+    pub surface: String,
     /// 読み仮名
     pub yomi: String,
     pub cost: f32,
@@ -15,7 +15,7 @@ pub struct WordNode {
 impl Hash for WordNode {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.start_pos.hash(state);
-        self.kanji.hash(state);
+        self.surface.hash(state);
         self.yomi.hash(state);
         u32::from_le_bytes(self.cost.to_le_bytes()).hash(state);
     }
@@ -24,7 +24,7 @@ impl Hash for WordNode {
 impl PartialEq<Self> for WordNode {
     fn eq(&self, other: &Self) -> bool {
         self.start_pos == other.start_pos
-            && self.kanji == other.kanji
+            && self.surface == other.surface
             && self.yomi == other.yomi
             && self.cost == other.cost
     }
@@ -35,7 +35,7 @@ impl Eq for WordNode {}
 impl WordNode {
     pub fn key(&self) -> String {
         let mut buf = String::new();
-        buf += self.kanji.as_str();
+        buf += self.surface.as_str();
         buf += "/";
         buf += self.yomi.as_str();
         buf
@@ -44,7 +44,7 @@ impl WordNode {
     pub(crate) fn create_bos() -> WordNode {
         WordNode {
             start_pos: 0,
-            kanji: "__BOS__".to_string(),
+            surface: "__BOS__".to_string(),
             yomi: "__BOS__".to_string(),
             cost: 0_f32,
             word_id_and_score: None,
@@ -53,7 +53,7 @@ impl WordNode {
     pub(crate) fn create_eos(start_pos: i32) -> WordNode {
         WordNode {
             start_pos,
-            kanji: "__EOS__".to_string(),
+            surface: "__EOS__".to_string(),
             yomi: "__EOS__".to_string(),
             cost: 0_f32,
             word_id_and_score: None,
@@ -74,7 +74,7 @@ impl WordNode {
 
         WordNode {
             start_pos,
-            kanji: kanji.to_string(),
+            surface: kanji.to_string(),
             yomi: yomi.to_string(),
             cost: 0_f32,
             word_id_and_score,
@@ -84,6 +84,6 @@ impl WordNode {
 
 impl Display for WordNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}/{}", self.kanji, self.yomi)
+        write!(f, "{}/{}", self.surface, self.yomi)
     }
 }
