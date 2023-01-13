@@ -3,8 +3,9 @@ use std::collections::HashMap;
 use anyhow::{bail, Result};
 use log::info;
 
-use crate::lm::base::SystemUnigramLM;
 use marisa_sys::{Keyset, Marisa};
+
+use crate::lm::base::SystemUnigramLM;
 
 /*
    {word} # in utf-8
@@ -149,6 +150,19 @@ impl SystemUnigramLM for MarisaSystemUnigramLM {
             let idx = word.iter().position(|f| *f == b'\xff').unwrap();
             let word = String::from_utf8_lossy(&word[0..idx]);
             map.insert(word.to_string(), id as i32);
+            true
+        });
+        map
+    }
+
+    fn as_hash_map(&self) -> HashMap<String, (i32, f32)> {
+        let mut map = HashMap::new();
+        self.marisa.predictive_search("".as_bytes(), |word, id| {
+            let idx = word.iter().position(|f| *f == b'\xff').unwrap();
+            let bytes: [u8; 4] = word[idx + 1..idx + 1 + 4].try_into().unwrap();
+            let word = String::from_utf8_lossy(&word[0..idx]);
+            let cost = f32::from_le_bytes(bytes);
+            map.insert(word.to_string(), (id as i32, cost));
             true
         });
         map
