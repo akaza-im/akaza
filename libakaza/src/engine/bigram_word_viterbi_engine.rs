@@ -12,14 +12,14 @@ use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::Segmenter;
 use crate::kana_kanji_dict::KanaKanjiDict;
 use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
-use crate::lm::system_bigram::SystemBigramLM;
-use crate::lm::system_unigram_lm::SystemUnigramLM;
+use crate::lm::system_bigram::MarisaSystemBigramLM;
+use crate::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use crate::romkan::RomKanConverter;
 use crate::user_side_data::user_data::UserData;
 
 pub struct SystemDataLoader {
-    pub system_unigram_lm: SystemUnigramLM,
-    pub system_bigram_lm: SystemBigramLM,
+    pub system_unigram_lm: MarisaSystemUnigramLM,
+    pub system_bigram_lm: MarisaSystemBigramLM,
     pub system_kana_kanji_dict: KanaKanjiDict,
     pub system_single_term_dict: KanaKanjiDict,
     pub system_kana_trie: MarisaKanaTrie,
@@ -27,10 +27,10 @@ pub struct SystemDataLoader {
 
 impl SystemDataLoader {
     pub fn load(system_data_dir: &str) -> Result<SystemDataLoader> {
-        let system_unigram_lm = SystemUnigramLM::load(
+        let system_unigram_lm = MarisaSystemUnigramLM::load(
             (system_data_dir.to_string() + "/stats-vibrato-unigram.trie").as_str(),
         )?;
-        let system_bigram_lm = SystemBigramLM::load(
+        let system_bigram_lm = MarisaSystemBigramLM::load(
             (system_data_dir.to_string() + "/stats-vibrato-bigram.trie").as_str(),
         )?;
 

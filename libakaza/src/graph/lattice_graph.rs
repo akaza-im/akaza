@@ -6,8 +6,9 @@ use std::sync::{Arc, Mutex};
 use log::{error, trace};
 
 use crate::graph::word_node::WordNode;
-use crate::lm::system_bigram::SystemBigramLM;
-use crate::lm::system_unigram_lm::SystemUnigramLM;
+use crate::lm::base::SystemBigramLM;
+use crate::lm::system_bigram::MarisaSystemBigramLM;
+use crate::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use crate::user_side_data::user_data::UserData;
 
 const DEFAULT_SCORE: f32 = 13.641709; // -log10(1e-20)
@@ -17,8 +18,8 @@ pub struct LatticeGraph {
     pub(crate) yomi: String,
     pub(crate) graph: BTreeMap<i32, Vec<WordNode>>,
     pub(crate) user_data: Arc<Mutex<UserData>>,
-    pub(crate) system_unigram_lm: Rc<SystemUnigramLM>,
-    pub(crate) system_bigram_lm: Rc<SystemBigramLM>,
+    pub(crate) system_unigram_lm: Rc<MarisaSystemUnigramLM>,
+    pub(crate) system_bigram_lm: Rc<MarisaSystemBigramLM>,
     /// -log10(1e-19)=19.0
     pub(crate) default_unigram_score_for_short: f32,
     /// -log10(1e-20)=20.0

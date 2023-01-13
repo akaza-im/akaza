@@ -10,25 +10,26 @@ use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::SegmentationResult;
 use crate::graph::word_node::WordNode;
 use crate::kana_kanji_dict::KanaKanjiDict;
-use crate::lm::system_bigram::SystemBigramLM;
-use crate::lm::system_unigram_lm::SystemUnigramLM;
+use crate::lm::base::SystemUnigramLM;
+use crate::lm::system_bigram::MarisaSystemBigramLM;
+use crate::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use crate::user_side_data::user_data::UserData;
 
 pub struct GraphBuilder {
     system_kana_kanji_dict: KanaKanjiDict,
     system_single_term_dict: KanaKanjiDict,
     user_data: Arc<Mutex<UserData>>,
-    system_unigram_lm: Rc<SystemUnigramLM>,
-    system_bigram_lm: Rc<SystemBigramLM>,
+    system_unigram_lm: Rc<MarisaSystemUnigramLM>,
+    system_bigram_lm: Rc<MarisaSystemBigramLM>,
     default_unigram_score_for_long: f32,
     default_unigram_score_for_short: f32,
 }
 
 impl GraphBuilder {
-    pub fn set_system_unigram_lm(&mut self, system_unigram_lm: Rc<SystemUnigramLM>) {
+    pub fn set_system_unigram_lm(&mut self, system_unigram_lm: Rc<MarisaSystemUnigramLM>) {
         self.system_unigram_lm = system_unigram_lm;
     }
-    pub fn set_system_bigram_lm(&mut self, system_bigram_lm: Rc<SystemBigramLM>) {
+    pub fn set_system_bigram_lm(&mut self, system_bigram_lm: Rc<MarisaSystemBigramLM>) {
         self.system_bigram_lm = system_bigram_lm;
     }
 
@@ -36,8 +37,8 @@ impl GraphBuilder {
         system_kana_kanji_dict: KanaKanjiDict,
         system_single_term_dict: KanaKanjiDict,
         user_data: Arc<Mutex<UserData>>,
-        system_unigram_lm: Rc<SystemUnigramLM>,
-        system_bigram_lm: Rc<SystemBigramLM>,
+        system_unigram_lm: Rc<MarisaSystemUnigramLM>,
+        system_bigram_lm: Rc<MarisaSystemBigramLM>,
         default_unigram_score_for_short: f32,
         default_unigram_score_for_long: f32,
     ) -> GraphBuilder {
@@ -56,8 +57,8 @@ impl GraphBuilder {
         system_kana_kanji_dict: KanaKanjiDict,
         system_single_term_dict: KanaKanjiDict,
         user_data: Arc<Mutex<UserData>>,
-        system_unigram_lm: Rc<SystemUnigramLM>,
-        system_bigram_lm: Rc<SystemBigramLM>,
+        system_unigram_lm: Rc<MarisaSystemUnigramLM>,
+        system_bigram_lm: Rc<MarisaSystemBigramLM>,
     ) -> GraphBuilder {
         Self::new(
             system_kana_kanji_dict,
@@ -149,8 +150,8 @@ impl GraphBuilder {
 #[cfg(test)]
 mod tests {
     use crate::kana_kanji_dict::KanaKanjiDictBuilder;
-    use crate::lm::system_bigram::SystemBigramLMBuilder;
-    use crate::lm::system_unigram_lm::SystemUnigramLMBuilder;
+    use crate::lm::system_bigram::MarisaSystemBigramLMBuilder;
+    use crate::lm::system_unigram_lm::MarisaSystemUnigramLMBuilder;
 
     use super::*;
 
@@ -160,8 +161,8 @@ mod tests {
             KanaKanjiDict::default(),
             KanaKanjiDictBuilder::default().add("すし", "🍣").build(),
             Arc::new(Mutex::new(UserData::default())),
-            Rc::new(SystemUnigramLMBuilder::default().build()),
-            Rc::new(SystemBigramLMBuilder::default().build()),
+            Rc::new(MarisaSystemUnigramLMBuilder::default().build()),
+            Rc::new(MarisaSystemBigramLMBuilder::default().build()),
         );
         let yomi = "すし";
         let got = graph_builder.construct(
@@ -183,8 +184,8 @@ mod tests {
             KanaKanjiDict::default(),
             KanaKanjiDictBuilder::default().build(),
             Arc::new(Mutex::new(UserData::default())),
-            Rc::new(SystemUnigramLMBuilder::default().build()),
-            Rc::new(SystemBigramLMBuilder::default().build()),
+            Rc::new(MarisaSystemUnigramLMBuilder::default().build()),
+            Rc::new(MarisaSystemBigramLMBuilder::default().build()),
         );
         let yomi = "す";
         let got = graph_builder.construct(
@@ -203,8 +204,8 @@ mod tests {
             KanaKanjiDictBuilder::default().add("す", "す/ス").build(),
             KanaKanjiDictBuilder::default().build(),
             Arc::new(Mutex::new(UserData::default())),
-            Rc::new(SystemUnigramLMBuilder::default().build()),
-            Rc::new(SystemBigramLMBuilder::default().build()),
+            Rc::new(MarisaSystemUnigramLMBuilder::default().build()),
+            Rc::new(MarisaSystemBigramLMBuilder::default().build()),
         );
         let yomi = "す";
         let got = graph_builder.construct(

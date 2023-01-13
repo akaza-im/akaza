@@ -10,8 +10,9 @@ use libakaza::graph::graph_resolver::GraphResolver;
 use libakaza::graph::segmenter::Segmenter;
 use libakaza::kana_kanji_dict::KanaKanjiDict;
 use libakaza::kana_trie::marisa_kana_trie::MarisaKanaTrie;
-use libakaza::lm::system_bigram::SystemBigramLMBuilder;
-use libakaza::lm::system_unigram_lm::{SystemUnigramLM, SystemUnigramLMBuilder};
+use libakaza::lm::base::SystemUnigramLM;
+use libakaza::lm::system_bigram::MarisaSystemBigramLMBuilder;
+use libakaza::lm::system_unigram_lm::{MarisaSystemUnigramLM, MarisaSystemUnigramLMBuilder};
 use libakaza::user_side_data::user_data::UserData;
 
 use crate::utils::get_file_list;
@@ -27,13 +28,13 @@ pub fn learn_structured_perceptron(src_dir: &String, epochs: i32) -> anyhow::Res
     let system_kana_trie = MarisaKanaTrie::build(all_yomis);
     let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
     let system_single_term_dict = KanaKanjiDict::load("data/single_term.trie")?;
-    let system_bigram_lm = SystemBigramLMBuilder::default().build();
-    let real_system_unigram_lm = SystemUnigramLM::load("data/stats-vibrato-unigram.trie")?;
+    let system_bigram_lm = MarisaSystemBigramLMBuilder::default().build();
+    let real_system_unigram_lm = MarisaSystemUnigramLM::load("data/stats-vibrato-unigram.trie")?;
     let mut graph_builder = GraphBuilder::new(
         system_kana_kanji_dict,
         system_single_term_dict,
         Arc::new(Mutex::new(UserData::default())),
-        Rc::new(SystemUnigramLMBuilder::default().build()),
+        Rc::new(MarisaSystemUnigramLMBuilder::default().build()),
         Rc::new(system_bigram_lm),
         0_f32,
         0_f32,
@@ -67,7 +68,7 @@ pub fn learn(
     bigram_cost: &mut HashMap<(i32, i32), f32>,
     segmenter: &Segmenter,
     graph_builder: &mut GraphBuilder,
-    real_system_unigram_lm: &SystemUnigramLM,
+    real_system_unigram_lm: &MarisaSystemUnigramLM,
 ) -> anyhow::Result<()> {
     // let system_kana_kanji_dict = KanaKanjiDictBuilder::default()
     //     .add("せんたくもの", "洗濯物")
@@ -79,14 +80,14 @@ pub fn learn(
 
     let force_ranges: Vec<Range<usize>> = Vec::new();
 
-    let mut unigram_lm_builder = SystemUnigramLMBuilder::default();
+    let mut unigram_lm_builder = MarisaSystemUnigramLMBuilder::default();
     for (key, cost) in unigram_cost.iter() {
         // warn!("SYSTEM UNIGRM LM: {} cost={}", key.as_str(), *cost);
         unigram_lm_builder.add(key.as_str(), *cost);
     }
     let system_unigram_lm = unigram_lm_builder.build();
 
-    let mut bigram_lm_builder = SystemBigramLMBuilder::default();
+    let mut bigram_lm_builder = MarisaSystemBigramLMBuilder::default();
     for ((word_id1, word_id2), cost) in bigram_cost.iter() {
         bigram_lm_builder.add(*word_id1, *word_id2, *cost);
     }

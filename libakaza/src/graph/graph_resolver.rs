@@ -139,8 +139,8 @@ mod tests {
     use crate::graph::segmenter::{SegmentationResult, Segmenter};
     use crate::kana_kanji_dict::{KanaKanjiDict, KanaKanjiDictBuilder};
     use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
-    use crate::lm::system_bigram::SystemBigramLMBuilder;
-    use crate::lm::system_unigram_lm::SystemUnigramLMBuilder;
+    use crate::lm::system_bigram::MarisaSystemBigramLMBuilder;
+    use crate::lm::system_unigram_lm::MarisaSystemUnigramLMBuilder;
     use crate::user_side_data::user_data::UserData;
 
     use super::*;
@@ -169,9 +169,9 @@ mod tests {
         // BOS a  b  c
         let dict_builder = KanaKanjiDictBuilder::default();
         let dict = dict_builder.build();
-        let system_unigram_lm_builder = SystemUnigramLMBuilder::default();
+        let system_unigram_lm_builder = MarisaSystemUnigramLMBuilder::default();
         let system_unigram_lm = system_unigram_lm_builder.build();
-        let system_bigram_lm_builder = SystemBigramLMBuilder::default();
+        let system_bigram_lm_builder = MarisaSystemBigramLMBuilder::default();
         let system_bigram_lm = system_bigram_lm_builder.build();
         let user_data = UserData::default();
         let graph_builder = GraphBuilder::new_with_default_score(
@@ -216,9 +216,9 @@ mod tests {
         let yomi = "わたし".to_string();
 
         let dict = dict_builder.build();
-        let system_unigram_lm_builder = SystemUnigramLMBuilder::default();
+        let system_unigram_lm_builder = MarisaSystemUnigramLMBuilder::default();
         let system_unigram_lm = system_unigram_lm_builder.build();
-        let system_bigram_lm_builder = SystemBigramLMBuilder::default();
+        let system_bigram_lm_builder = MarisaSystemBigramLMBuilder::default();
         let system_bigram_lm = system_bigram_lm_builder.build();
         let mut user_data = UserData::default();
         // 私/わたし のスコアをガッと上げる。
