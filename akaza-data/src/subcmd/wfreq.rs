@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 
 use log::{info, trace, warn};
 use rayon::prelude::*;
+use regex::Regex;
 
 use crate::utils::get_file_list;
 
@@ -68,8 +69,17 @@ pub fn wfreq(src_dirs: &Vec<&str>, dst_file: &str) -> anyhow::Result<()> {
 
     // 結果をファイルに書いていく
     info!("Write to {}", dst_file);
+    // 明らかに不要なワードが登録されているのを除外する。
+    // カタカナ二文字系は全般的にノイズになりがちだが、Wikipedia/青空文庫においては
+    // 架空の人物や実在の人物の名前として使われがちなので、消す。
+    let re = Regex::new("^[\u{30A0}-\u{30FF}]{2}/[\u{3040}-\u{309F}]{2}$")?;
+    // let ignore_files = HashSet::from(["テル/てる", "ニナ/にな", "ガチ/がち"]);
     let mut ofp = File::create(dst_file.to_string() + ".tmp")?;
     for (word, cnt) in retval {
+        if re.is_match(word.as_str()) {
+            info!("Skip 2 character katakana entry: {}", word);
+            continue;
+        }
         ofp.write_fmt(format_args!("{}\t{}\n", word, cnt))?;
     }
     fs::rename(dst_file.to_owned() + ".tmp", dst_file)?;

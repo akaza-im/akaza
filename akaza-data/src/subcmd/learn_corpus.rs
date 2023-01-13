@@ -121,7 +121,11 @@ pub fn learn_corpus(
             for corpus in corpuses {
                 for node in corpus.nodes {
                     if !unigram_map.contains_key(node.key().as_str()) {
-                        info!("Insert missing element: {}", node.key());
+                        info!(
+                            "Insert missing element: {} max_id={}",
+                            node.key(),
+                            max_id + 1
+                        );
                         unigram_map.insert(
                             node.key(),
                             (max_id + 1, src_system_unigram_lm.get_default_cost()),
@@ -192,9 +196,12 @@ pub fn learn_corpus(
             .map(|(key, (word_id, _))| (*word_id, key.to_string()))
             .collect::<HashMap<i32, String>>();
         for ((word_id1, word_id2), cost) in system_bigram_lm.as_hash_map() {
-            let (new_word_id1, _) = new_unigram
-                .find(src_wordid2key.get(&word_id1).unwrap())
-                .unwrap();
+            let (new_word_id1, _) =
+                new_unigram
+                    .find(src_wordid2key.get(&word_id1).unwrap_or_else(|| {
+                        panic!("Missing word_id in src_wordid2key: {}", word_id1)
+                    }))
+                    .expect("Missing word_id in new_unigram");
             let (new_word_id2, _) = new_unigram
                 .find(src_wordid2key.get(&word_id2).unwrap())
                 .unwrap();
