@@ -1,6 +1,8 @@
 use anyhow::Result;
 
-use crate::trie::{Trie, TrieBuilder};
+use marisa_sys::{Keyset, Marisa};
+
+use crate::trie::SearchResult;
 
 /**
  * 「よみ」から「漢字」への変換辞書である。
@@ -11,29 +13,32 @@ use crate::trie::{Trie, TrieBuilder};
  */
 #[derive(Default)]
 pub struct KanaKanjiDictBuilder {
-    trie_builder: TrieBuilder,
+    keyset: Keyset,
 }
 
 impl KanaKanjiDictBuilder {
     pub fn add(&mut self, yomi: &str, kanjis: &str) -> &mut KanaKanjiDictBuilder {
         let key = [yomi.as_bytes(), b"\t", kanjis.as_bytes()].concat();
-        self.trie_builder.add(key);
+        self.keyset.push_back(key.as_slice());
         self
     }
 
     pub fn save(&self, filename: &str) -> Result<()> {
-        self.trie_builder.save(filename)
+        let mut marisa = Marisa::default();
+        marisa.build(&self.keyset);
+        marisa.save(filename)?;
+        Ok(())
     }
 
     pub fn build(&self) -> KanaKanjiDict {
-        KanaKanjiDict {
-            trie: self.trie_builder.build(),
-        }
+        let mut marisa = Marisa::default();
+        marisa.build(&self.keyset);
+        KanaKanjiDict { marisa }
     }
 }
 
 pub struct KanaKanjiDict {
-    trie: Trie,
+    marisa: Marisa,
 }
 
 impl Default for KanaKanjiDict {
@@ -44,14 +49,22 @@ impl Default for KanaKanjiDict {
 
 impl KanaKanjiDict {
     pub fn load(file_name: &str) -> Result<KanaKanjiDict> {
-        let trie = Trie::load(file_name)?;
-        Ok(KanaKanjiDict { trie })
+        let mut marisa = Marisa::default();
+        marisa.load(file_name)?;
+        Ok(KanaKanjiDict { marisa })
     }
 
     pub fn find(&self, yomi: &str) -> Option<Vec<String>> {
-        let got = self
-            .trie
-            .predictive_search([yomi.as_bytes(), b"\t"].concat().to_vec());
+        let keyword = [yomi.as_bytes(), b"\t"].concat().to_vec();
+        let mut got: Vec<SearchResult> = Vec::new();
+        self.marisa
+            .predictive_search(keyword.as_slice(), |key, id| {
+                got.push(SearchResult {
+                    keyword: key.to_vec(),
+                    id,
+                });
+                true
+            });
         if let Some(result) = got.into_iter().next() {
             let s: String = String::from_utf8(result.keyword).unwrap();
             let (_, kanjis) = s.split_once('\t')?;
@@ -62,7 +75,16 @@ impl KanaKanjiDict {
 
     pub fn all_yomis(&self) -> Option<Vec<String>> {
         let mut result: Vec<String> = Vec::new();
-        let got = self.trie.predictive_search(b"".to_vec());
+        let keyword = b"".to_vec();
+        let mut got: Vec<SearchResult> = Vec::new();
+        self.marisa
+            .predictive_search(keyword.as_slice(), |key, id| {
+                got.push(SearchResult {
+                    keyword: key.to_vec(),
+                    id,
+                });
+                true
+            });
         for item in got {
             let item: String = String::from_utf8(item.keyword).unwrap();
             let (yomi, _) = item.split_once('\t')?;
