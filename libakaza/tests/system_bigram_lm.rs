@@ -37,23 +37,20 @@ mod tests {
         assert!(id1 > 0);
         assert!(score1 > 0.0_f32);
 
-        let (id2, score2) = unigram.find("から/から").unwrap();
+        let (id2, score2) = unigram.find("と/と").unwrap();
         assert!(id2 > 0);
         assert!(score2 > 0.0_f32);
 
         println!("id1={}, id2={}", id1, id2);
 
-        let bigram_score = bigram
-            .get_edge_cost(id1, id2)
-            .with_context(|| {
-                format!(
-                    "bigram.num_entries={} id1={} id2={}",
-                    bigram.num_keys(),
-                    id1,
-                    id2
-                )
-            })
-            .unwrap();
+        let bigram_score = bigram.get_edge_cost(id1, id2).with_context(|| {
+            format!(
+                "bigram.num_entries={} id1={} id2={}",
+                bigram.num_keys(),
+                id1,
+                id2
+            )
+        })?;
         assert!(bigram_score > 0.0_f32);
 
         println!("BigramScore={}", bigram_score);

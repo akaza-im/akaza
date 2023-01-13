@@ -11,14 +11,17 @@ mod tests {
         BigramWordViterbiEngine, BigramWordViterbiEngineBuilder,
     };
     use libakaza::graph::graph_resolver::Candidate;
+    use libakaza::lm::system_bigram::MarisaSystemBigramLM;
+    use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 
-    fn load_akaza() -> Result<BigramWordViterbiEngine> {
+    fn load_akaza() -> Result<BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>>
+    {
         let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/../akaza-data/data/";
         BigramWordViterbiEngineBuilder::new(datadir.as_str()).build()
     }
 
     struct Tester {
-        akaza: BigramWordViterbiEngine,
+        akaza: BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
     }
 
     impl Tester {
