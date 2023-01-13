@@ -29,9 +29,10 @@ pub fn make_stats_system_bigram_lm(
         threshold
     );
 
-    let unigram_map = unigram_lm.as_hash_map()
+    let unigram_map = unigram_lm
+        .as_hash_map()
         .iter()
-        .map(|(key, (word_id, cost))| (key.clone(), *word_id))
+        .map(|(key, (word_id, _cost))| (key.clone(), *word_id))
         .collect::<HashMap<_, _>>();
 
     // 次に、コーパスをスキャンして bigram を読み取る。

@@ -47,14 +47,6 @@ impl SystemUnigramLM for OnMemorySystemUnigramLM {
         self.unigram_cost_map.borrow().get(word).copied()
     }
 
-    fn as_id_map(&self) -> HashMap<String, i32> {
-        self.unigram_cost_map
-            .borrow()
-            .iter()
-            .map(|(k, (id, _))| (k.clone(), *id))
-            .collect()
-    }
-
     fn as_hash_map(&self) -> HashMap<String, (i32, f32)> {
         self.unigram_cost_map.borrow().clone()
     }
