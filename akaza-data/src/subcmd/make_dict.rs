@@ -98,7 +98,7 @@ mod system_dict {
         for corpus in corpus_vec {
             for node in corpus.nodes {
                 // info!("Add {}/{}", node.yomi, node.kanji);
-                words.push((node.yomi.to_string(), node.kanji.to_string()));
+                words.push((node.yomi.to_string(), node.surface.to_string()));
             }
         }
 

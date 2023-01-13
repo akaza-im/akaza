@@ -65,11 +65,11 @@ impl LatticeGraph {
             for node in nodes {
                 buf += &*format!(
                     r#"    {} -> "{}/{}"{}"#,
-                    node.start_pos, node.kanji, node.yomi, "\n"
+                    node.start_pos, node.surface, node.yomi, "\n"
                 );
                 buf += &*format!(
                     r#"    "{}/{}" -> {}{}"#,
-                    node.kanji, node.yomi, end_pos, "\n"
+                    node.surface, node.yomi, end_pos, "\n"
                 );
             }
         }
@@ -95,22 +95,22 @@ impl LatticeGraph {
         // start 及び end は、byte 数単位
         for (end_pos, nodes) in self.graph.iter() {
             for node in nodes {
-                if Self::is_match(node.kanji.as_str(), expected) {
+                if Self::is_match(node.surface.as_str(), expected) {
                     buf += &*format!(
                         r#"    "{}/{}" [xlabel="{}"]{}"#,
-                        node.kanji,
+                        node.surface,
                         node.yomi,
                         self.get_node_cost(node),
                         "\n"
                     );
                     if let Some(prev_nodes) = self.get_prev_nodes(node) {
                         for prev_node in prev_nodes {
-                            if Self::is_match(prev_node.kanji.as_str(), expected) {
+                            if Self::is_match(prev_node.surface.as_str(), expected) {
                                 buf += &*format!(
                                     r#"    "{}/{}" -> "{}/{}" [label="{}"]{}"#,
-                                    prev_node.kanji,
+                                    prev_node.surface,
                                     prev_node.yomi,
-                                    node.kanji,
+                                    node.surface,
                                     node.yomi,
                                     self.get_edge_cost(prev_node, node),
                                     "\n"
@@ -132,7 +132,7 @@ impl LatticeGraph {
             .user_data
             .lock()
             .unwrap()
-            .get_unigram_cost(&node.kanji, &node.yomi)
+            .get_unigram_cost(&node.surface, &node.yomi)
         {
             // use user's score. if it's exists.
             return user_cost;
@@ -141,7 +141,7 @@ impl LatticeGraph {
         return if let Some((_, system_unigram_cost)) = node.word_id_and_score {
             trace!("HIT!: {}, {}", node.key(), system_unigram_cost);
             system_unigram_cost
-        } else if node.kanji.len() < node.yomi.len() {
+        } else if node.surface.len() < node.yomi.len() {
             // 労働者災害補償保険法 のように、システム辞書には wikipedia から採録されているが,
             // 言語モデルには採録されていない場合,漢字候補を先頭に持ってくる。
             // つまり、変換後のほうが短くなるもののほうをコストを安くしておく。

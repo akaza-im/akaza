@@ -50,7 +50,7 @@ impl GraphResolver {
                 let prev_nodes = lattice.get_prev_nodes(node).with_context(|| {
                     format!(
                         "Cannot get prev nodes for '{}' start={} lattice={:?}",
-                        node.kanji, node.start_pos, lattice
+                        node.surface, node.start_pos, lattice
                     )
                 })?;
                 for prev in prev_nodes {
@@ -90,7 +90,7 @@ impl GraphResolver {
         let mut node = eos;
         let mut result: Vec<VecDeque<Candidate>> = Vec::new();
         while node != bos {
-            if node.kanji != "__EOS__" {
+            if node.surface != "__EOS__" {
                 // 同一の開始位置、終了位置を持つものを集める。
                 let end_pos = node.start_pos + (node.yomi.len() as i32);
                 let mut candidates: VecDeque<Candidate> = lattice
@@ -103,7 +103,7 @@ impl GraphResolver {
                             && alt_node != &node
                     })
                     .map(|f| Candidate {
-                        kanji: f.kanji.clone(),
+                        kanji: f.surface.clone(),
                         yomi: f.yomi.clone(),
                         cost: *costmap.get(f).unwrap(),
                     })
@@ -112,7 +112,7 @@ impl GraphResolver {
                     .make_contiguous()
                     .sort_by(|a, b| a.cost.partial_cmp(&b.cost).unwrap());
                 candidates.push_front(Candidate {
-                    kanji: node.kanji.clone(),
+                    kanji: node.surface.clone(),
                     yomi: node.yomi.clone(),
                     cost: *costmap.get(node).unwrap(),
                 });
@@ -120,7 +120,7 @@ impl GraphResolver {
             }
             node = prevmap
                 .get(node)
-                .unwrap_or_else(|| panic!("Cannot get previous node: {}", node.kanji));
+                .unwrap_or_else(|| panic!("Cannot get previous node: {}", node.surface));
         }
         result.reverse();
         Ok(result)
@@ -130,8 +130,6 @@ impl GraphResolver {
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
-    use std::fs::File;
-    use std::io::Write;
     use std::rc::Rc;
     use std::sync::{Arc, Mutex};
 
