@@ -13,75 +13,11 @@ use libakaza::graph::segmenter::Segmenter;
 use libakaza::kana_kanji_dict::KanaKanjiDict;
 use libakaza::kana_trie::marisa_kana_trie::MarisaKanaTrie;
 use libakaza::lm::base::{SystemBigramLM, SystemUnigramLM};
+use libakaza::lm::on_memory::on_memory_system_bigram_lm::OnMemorySystemBigramLM;
+use libakaza::lm::on_memory::on_memory_system_unigram_lm::OnMemorySystemUnigramLM;
 use libakaza::lm::system_bigram::{MarisaSystemBigramLM, MarisaSystemBigramLMBuilder};
 use libakaza::lm::system_unigram_lm::{MarisaSystemUnigramLM, MarisaSystemUnigramLMBuilder};
 use libakaza::user_side_data::user_data::UserData;
-
-pub struct OnMemorySystemUnigramLM {
-    // word -> (word_id, cost)
-    unigram_cost_map: Rc<RefCell<HashMap<String, (i32, f32)>>>,
-}
-
-impl OnMemorySystemUnigramLM {
-    fn update(&self, word: &str, cost: f32) {
-        let Some((word_id, _)) = self.find(word) else {
-            // 登録されてない単語は無視。
-            return;
-        };
-
-        self.unigram_cost_map
-            .borrow_mut()
-            .insert(word.to_string(), (word_id, cost));
-    }
-}
-
-impl SystemUnigramLM for OnMemorySystemUnigramLM {
-    fn get_default_cost(&self) -> f32 {
-        20_f32
-    }
-
-    fn get_default_cost_for_short(&self) -> f32 {
-        19_f32
-    }
-
-    fn find(&self, word: &str) -> Option<(i32, f32)> {
-        self.unigram_cost_map.borrow().get(word).copied()
-    }
-
-    fn as_hash_map(&self) -> HashMap<String, (i32, f32)> {
-        self.unigram_cost_map.borrow().clone()
-    }
-}
-
-pub struct OnMemorySystemBigramLM {
-    // (word_id, word_id) -> cost
-    bigram_cost: Rc<RefCell<HashMap<(i32, i32), f32>>>,
-}
-
-impl SystemBigramLM for OnMemorySystemBigramLM {
-    fn get_default_edge_cost(&self) -> f32 {
-        20_f32
-    }
-
-    fn get_edge_cost(&self, word_id1: i32, word_id2: i32) -> Option<f32> {
-        self.bigram_cost
-            .borrow()
-            .get(&(word_id1, word_id2))
-            .cloned()
-    }
-
-    fn as_hash_map(&self) -> HashMap<(i32, i32), f32> {
-        self.bigram_cost.borrow().clone()
-    }
-}
-
-impl OnMemorySystemBigramLM {
-    pub fn update(&self, word_id1: i32, word_id2: i32, cost: f32) {
-        self.bigram_cost
-            .borrow_mut()
-            .insert((word_id1, word_id2), cost);
-    }
-}
 
 /// コーパスを元にした学習を行います。
 #[allow(clippy::too_many_arguments)]
@@ -137,16 +73,21 @@ pub fn learn_corpus(
         }
     }
     let unigram_cost: Rc<RefCell<HashMap<String, (i32, f32)>>> = Rc::new(RefCell::new(unigram_map));
-    let system_unigram_lm = Rc::new(OnMemorySystemUnigramLM {
-        unigram_cost_map: unigram_cost,
-    });
+    let system_unigram_lm = Rc::new(OnMemorySystemUnigramLM::new(
+        unigram_cost,
+        src_system_unigram_lm.get_default_cost(),
+        src_system_unigram_lm.get_default_cost_for_short(),
+    ));
 
     info!("bigram source file: {}", src_bigram);
     let src_system_bigram_lm = MarisaSystemBigramLM::load(src_bigram)?;
     let src_system_bigram_lm_map = src_system_bigram_lm.as_hash_map();
     let bigram_cost: Rc<RefCell<HashMap<(i32, i32), f32>>> =
         Rc::new(RefCell::new(src_system_bigram_lm_map));
-    let system_bigram_lm = Rc::new(OnMemorySystemBigramLM { bigram_cost });
+    let system_bigram_lm = Rc::new(OnMemorySystemBigramLM::new(
+        bigram_cost,
+        src_system_bigram_lm.get_default_edge_cost(),
+    ));
 
     let mut graph_builder = GraphBuilder::new(
         system_kana_kanji_dict,
