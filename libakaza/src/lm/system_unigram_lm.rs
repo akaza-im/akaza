@@ -144,17 +144,6 @@ impl SystemUnigramLM for MarisaSystemUnigramLM {
         Self::find_from_trie(&self.marisa, word)
     }
 
-    fn as_id_map(&self) -> HashMap<String, i32> {
-        let mut map = HashMap::new();
-        self.marisa.predictive_search("".as_bytes(), |word, id| {
-            let idx = word.iter().position(|f| *f == b'\xff').unwrap();
-            let word = String::from_utf8_lossy(&word[0..idx]);
-            map.insert(word.to_string(), id as i32);
-            true
-        });
-        map
-    }
-
     fn as_hash_map(&self) -> HashMap<String, (i32, f32)> {
         let mut map = HashMap::new();
         self.marisa.predictive_search("".as_bytes(), |word, id| {
