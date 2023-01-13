@@ -5,6 +5,7 @@ use log::trace;
 
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::word_node::WordNode;
+use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 
 #[derive(Debug)]
 pub struct Candidate {
@@ -33,7 +34,10 @@ impl GraphResolver {
     /**
      * ビタビアルゴリズムで最適な経路を見つける。
      */
-    pub fn resolve(&self, lattice: &LatticeGraph) -> anyhow::Result<Vec<VecDeque<Candidate>>> {
+    pub fn resolve<U: SystemUnigramLM, B: SystemBigramLM>(
+        &self,
+        lattice: &LatticeGraph<U, B>,
+    ) -> anyhow::Result<Vec<VecDeque<Candidate>>> {
         let yomi = &lattice.yomi;
         let mut prevmap: HashMap<&WordNode, &WordNode> = HashMap::new();
         let mut costmap: HashMap<&WordNode, f32> = HashMap::new();

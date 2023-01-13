@@ -11,7 +11,7 @@ use libakaza::graph::segmenter::Segmenter;
 use libakaza::kana_kanji_dict::KanaKanjiDict;
 use libakaza::kana_trie::marisa_kana_trie::MarisaKanaTrie;
 use libakaza::lm::base::SystemUnigramLM;
-use libakaza::lm::system_bigram::MarisaSystemBigramLMBuilder;
+use libakaza::lm::system_bigram::{MarisaSystemBigramLM, MarisaSystemBigramLMBuilder};
 use libakaza::lm::system_unigram_lm::{MarisaSystemUnigramLM, MarisaSystemUnigramLMBuilder};
 use libakaza::user_side_data::user_data::UserData;
 
@@ -67,7 +67,7 @@ pub fn learn(
     unigram_cost: &mut HashMap<String, f32>,
     bigram_cost: &mut HashMap<(i32, i32), f32>,
     segmenter: &Segmenter,
-    graph_builder: &mut GraphBuilder,
+    graph_builder: &mut GraphBuilder<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
     real_system_unigram_lm: &MarisaSystemUnigramLM,
 ) -> anyhow::Result<()> {
     // let system_kana_kanji_dict = KanaKanjiDictBuilder::default()

@@ -10,26 +10,24 @@ use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::SegmentationResult;
 use crate::graph::word_node::WordNode;
 use crate::kana_kanji_dict::KanaKanjiDict;
-use crate::lm::base::SystemUnigramLM;
-use crate::lm::system_bigram::MarisaSystemBigramLM;
-use crate::lm::system_unigram_lm::MarisaSystemUnigramLM;
+use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 use crate::user_side_data::user_data::UserData;
 
-pub struct GraphBuilder {
+pub struct GraphBuilder<U: SystemUnigramLM, B: SystemBigramLM> {
     system_kana_kanji_dict: KanaKanjiDict,
     system_single_term_dict: KanaKanjiDict,
     user_data: Arc<Mutex<UserData>>,
-    system_unigram_lm: Rc<MarisaSystemUnigramLM>,
-    system_bigram_lm: Rc<MarisaSystemBigramLM>,
+    system_unigram_lm: Rc<U>,
+    system_bigram_lm: Rc<B>,
     default_unigram_score_for_long: f32,
     default_unigram_score_for_short: f32,
 }
 
-impl GraphBuilder {
-    pub fn set_system_unigram_lm(&mut self, system_unigram_lm: Rc<MarisaSystemUnigramLM>) {
+impl<U: SystemUnigramLM, B: SystemBigramLM> GraphBuilder<U, B> {
+    pub fn set_system_unigram_lm(&mut self, system_unigram_lm: Rc<U>) {
         self.system_unigram_lm = system_unigram_lm;
     }
-    pub fn set_system_bigram_lm(&mut self, system_bigram_lm: Rc<MarisaSystemBigramLM>) {
+    pub fn set_system_bigram_lm(&mut self, system_bigram_lm: Rc<B>) {
         self.system_bigram_lm = system_bigram_lm;
     }
 
@@ -37,11 +35,11 @@ impl GraphBuilder {
         system_kana_kanji_dict: KanaKanjiDict,
         system_single_term_dict: KanaKanjiDict,
         user_data: Arc<Mutex<UserData>>,
-        system_unigram_lm: Rc<MarisaSystemUnigramLM>,
-        system_bigram_lm: Rc<MarisaSystemBigramLM>,
+        system_unigram_lm: Rc<U>,
+        system_bigram_lm: Rc<B>,
         default_unigram_score_for_short: f32,
         default_unigram_score_for_long: f32,
-    ) -> GraphBuilder {
+    ) -> GraphBuilder<U, B> {
         GraphBuilder {
             system_kana_kanji_dict,
             system_single_term_dict,
@@ -57,9 +55,9 @@ impl GraphBuilder {
         system_kana_kanji_dict: KanaKanjiDict,
         system_single_term_dict: KanaKanjiDict,
         user_data: Arc<Mutex<UserData>>,
-        system_unigram_lm: Rc<MarisaSystemUnigramLM>,
-        system_bigram_lm: Rc<MarisaSystemBigramLM>,
-    ) -> GraphBuilder {
+        system_unigram_lm: Rc<U>,
+        system_bigram_lm: Rc<B>,
+    ) -> GraphBuilder<U, B> {
         Self::new(
             system_kana_kanji_dict,
             system_single_term_dict,
@@ -71,7 +69,7 @@ impl GraphBuilder {
         )
     }
 
-    pub fn construct(&self, yomi: &str, words_ends_at: SegmentationResult) -> LatticeGraph {
+    pub fn construct(&self, yomi: &str, words_ends_at: SegmentationResult) -> LatticeGraph<U, B> {
         // このグラフのインデクスは単語の終了位置。
         let mut graph: BTreeMap<i32, Vec<WordNode>> = BTreeMap::new();
         graph.insert(0, vec![WordNode::create_bos()]);
