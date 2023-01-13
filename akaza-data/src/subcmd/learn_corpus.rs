@@ -4,7 +4,7 @@ use std::path::Path;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
-use log::{debug, info, warn};
+use log::{debug, info};
 
 use libakaza::corpus::{read_corpus_file, FullAnnotationCorpus};
 use libakaza::graph::graph_builder::GraphBuilder;
@@ -84,7 +84,7 @@ impl OnMemorySystemBigramLM {
 }
 
 /// コーパスを元にした学習を行います。
-#[warn(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments)]
 pub fn learn_corpus(
     delta: f32,
     may_epochs: i32,
