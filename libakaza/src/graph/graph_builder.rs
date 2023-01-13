@@ -144,7 +144,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_single_term() {
+    fn test_single_term() -> anyhow::Result<()> {
         let graph_builder = GraphBuilder::new_with_default_score(
             KanaKanjiDict::default(),
             KanaKanjiDictBuilder::default().add("すし", "🍣").build(),
@@ -155,7 +155,11 @@ mod tests {
                     .set_default_cost_for_short(19_f32)
                     .build(),
             ),
-            Rc::new(MarisaSystemBigramLMBuilder::default().build()),
+            Rc::new(
+                MarisaSystemBigramLMBuilder::default()
+                    .set_default_edge_cost(20_f32)
+                    .build()?,
+            ),
         );
         let yomi = "すし";
         let got = graph_builder.construct(
@@ -168,11 +172,12 @@ mod tests {
             got_surfaces,
             vec!["すし".to_string(), "スシ".to_string(), "🍣".to_string()]
         );
+        Ok(())
     }
 
     // ひらがな、カタカナのエントリーが自動的に入るようにする。
     #[test]
-    fn test_default_terms() {
+    fn test_default_terms() -> anyhow::Result<()> {
         let graph_builder = GraphBuilder::new_with_default_score(
             KanaKanjiDict::default(),
             KanaKanjiDictBuilder::default().build(),
@@ -183,7 +188,11 @@ mod tests {
                     .set_default_cost_for_short(19_f32)
                     .build(),
             ),
-            Rc::new(MarisaSystemBigramLMBuilder::default().build()),
+            Rc::new(
+                MarisaSystemBigramLMBuilder::default()
+                    .set_default_edge_cost(20_f32)
+                    .build()?,
+            ),
         );
         let yomi = "す";
         let got = graph_builder.construct(
@@ -193,11 +202,12 @@ mod tests {
         let nodes = got.node_list(3).unwrap();
         let got_surfaces: Vec<String> = nodes.iter().map(|f| f.surface.to_string()).collect();
         assert_eq!(got_surfaces, vec!["す".to_string(), "ス".to_string()]);
+        Ok(())
     }
 
     // ひらがな、カタカナがすでにかな漢字辞書から提供されている場合でも、重複させない。
     #[test]
-    fn test_default_terms_duplicated() {
+    fn test_default_terms_duplicated() -> anyhow::Result<()> {
         let graph_builder = GraphBuilder::new_with_default_score(
             KanaKanjiDictBuilder::default().add("す", "す/ス").build(),
             KanaKanjiDictBuilder::default().build(),
@@ -208,7 +218,11 @@ mod tests {
                     .set_default_cost_for_short(19_f32)
                     .build(),
             ),
-            Rc::new(MarisaSystemBigramLMBuilder::default().build()),
+            Rc::new(
+                MarisaSystemBigramLMBuilder::default()
+                    .set_default_edge_cost(20_f32)
+                    .build()?,
+            ),
         );
         let yomi = "す";
         let got = graph_builder.construct(
@@ -218,5 +232,6 @@ mod tests {
         let nodes = got.node_list(3).unwrap();
         let got_surfaces: Vec<String> = nodes.iter().map(|f| f.surface.to_string()).collect();
         assert_eq!(got_surfaces, vec!["す".to_string(), "ス".to_string()]);
+        Ok(())
     }
 }

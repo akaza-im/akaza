@@ -178,8 +178,9 @@ mod tests {
             .set_default_cost(20_f32)
             .set_default_cost_for_short(19_f32)
             .build();
-        let system_bigram_lm_builder = MarisaSystemBigramLMBuilder::default();
-        let system_bigram_lm = system_bigram_lm_builder.build();
+        let system_bigram_lm = MarisaSystemBigramLMBuilder::default()
+            .set_default_edge_cost(20_f32)
+            .build()?;
         let user_data = UserData::default();
         let graph_builder = GraphBuilder::new_with_default_score(
             dict,
@@ -228,8 +229,9 @@ mod tests {
             .set_default_cost(19_f32)
             .set_default_cost_for_short(20_f32)
             .build();
-        let system_bigram_lm_builder = MarisaSystemBigramLMBuilder::default();
-        let system_bigram_lm = system_bigram_lm_builder.build();
+        let system_bigram_lm = MarisaSystemBigramLMBuilder::default()
+            .set_default_edge_cost(20_f32)
+            .build()?;
         let mut user_data = UserData::default();
         // 私/わたし のスコアをガッと上げる。
         user_data.record_entries(&["私/わたし".to_string()]);

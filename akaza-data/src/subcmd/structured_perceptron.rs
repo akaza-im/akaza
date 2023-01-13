@@ -28,7 +28,7 @@ pub fn learn_structured_perceptron(src_dir: &String, epochs: i32) -> anyhow::Res
     let system_kana_trie = MarisaKanaTrie::build(all_yomis);
     let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
     let system_single_term_dict = KanaKanjiDict::load("data/single_term.trie")?;
-    let system_bigram_lm = MarisaSystemBigramLMBuilder::default().build();
+    let system_bigram_lm = MarisaSystemBigramLMBuilder::default().build()?;
     let real_system_unigram_lm = MarisaSystemUnigramLM::load("data/stats-vibrato-unigram.trie")?;
     let mut graph_builder = GraphBuilder::new(
         system_kana_kanji_dict,
@@ -89,7 +89,7 @@ pub fn learn(
     for ((word_id1, word_id2), cost) in bigram_cost.iter() {
         bigram_lm_builder.add(*word_id1, *word_id2, *cost);
     }
-    let system_bigram_lm = bigram_lm_builder.build();
+    let system_bigram_lm = bigram_lm_builder.build()?;
 
     graph_builder.set_system_unigram_lm(Rc::new(system_unigram_lm));
     graph_builder.set_system_bigram_lm(Rc::new(system_bigram_lm));

@@ -9,8 +9,6 @@ use crate::graph::word_node::WordNode;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 use crate::user_side_data::user_data::UserData;
 
-const DEFAULT_SCORE: f32 = 13.641709; // -log10(1e-20)
-
 // 考えられる単語の列全てを含むようなグラフ構造
 pub struct LatticeGraph<U: SystemUnigramLM, B: SystemBigramLM> {
     pub(crate) yomi: String,
@@ -152,15 +150,15 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> LatticeGraph<U, B> {
         }
 
         let Some((prev_id, _)) = prev.word_id_and_score else {
-            return DEFAULT_SCORE;
+            return self.system_bigram_lm.get_default_edge_cost();
         };
         let Some((node_id, _)) = node.word_id_and_score else {
-            return DEFAULT_SCORE;
+            return self.system_bigram_lm.get_default_edge_cost();
         };
         if let Some(cost) = self.system_bigram_lm.get_edge_cost(prev_id, node_id) {
             cost
         } else {
-            DEFAULT_SCORE
+            self.system_bigram_lm.get_default_edge_cost()
         }
     }
 }
