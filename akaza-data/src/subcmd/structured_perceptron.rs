@@ -106,7 +106,7 @@ pub fn learn_structured_perceptron(src_dir: &String, epochs: i32) -> anyhow::Res
     let unigram_cost: Rc<RefCell<HashMap<String, (i32, f32)>>> =
         Rc::new(RefCell::new(real_system_unigram_lm.as_hash_map()));
     let system_unigram_lm = Rc::new(OnMemorySystemUnigramLM {
-        unigram_cost_map: unigram_cost.clone(),
+        unigram_cost_map: unigram_cost,
     });
 
     let mut graph_builder = GraphBuilder::new(
