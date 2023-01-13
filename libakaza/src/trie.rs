@@ -31,7 +31,7 @@ impl TrieBuilder {
 // Load trie from file.
 // predictive search
 pub struct Trie {
-    marisa: Marisa,
+    pub marisa: Marisa,
 }
 
 impl Trie {

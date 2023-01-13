@@ -10,25 +10,22 @@ use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::SegmentationResult;
 use crate::graph::word_node::WordNode;
 use crate::kana_kanji_dict::KanaKanjiDict;
-use crate::lm::system_bigram::SystemBigramLM;
-use crate::lm::system_unigram_lm::SystemUnigramLM;
+use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 use crate::user_side_data::user_data::UserData;
 
-pub struct GraphBuilder {
+pub struct GraphBuilder<U: SystemUnigramLM, B: SystemBigramLM> {
     system_kana_kanji_dict: KanaKanjiDict,
     system_single_term_dict: KanaKanjiDict,
     user_data: Arc<Mutex<UserData>>,
-    system_unigram_lm: Rc<SystemUnigramLM>,
-    system_bigram_lm: Rc<SystemBigramLM>,
-    default_unigram_score_for_long: f32,
-    default_unigram_score_for_short: f32,
+    system_unigram_lm: Rc<U>,
+    system_bigram_lm: Rc<B>,
 }
 
-impl GraphBuilder {
-    pub fn set_system_unigram_lm(&mut self, system_unigram_lm: Rc<SystemUnigramLM>) {
+impl<U: SystemUnigramLM, B: SystemBigramLM> GraphBuilder<U, B> {
+    pub fn set_system_unigram_lm(&mut self, system_unigram_lm: Rc<U>) {
         self.system_unigram_lm = system_unigram_lm;
     }
-    pub fn set_system_bigram_lm(&mut self, system_bigram_lm: Rc<SystemBigramLM>) {
+    pub fn set_system_bigram_lm(&mut self, system_bigram_lm: Rc<B>) {
         self.system_bigram_lm = system_bigram_lm;
     }
 
@@ -36,19 +33,15 @@ impl GraphBuilder {
         system_kana_kanji_dict: KanaKanjiDict,
         system_single_term_dict: KanaKanjiDict,
         user_data: Arc<Mutex<UserData>>,
-        system_unigram_lm: Rc<SystemUnigramLM>,
-        system_bigram_lm: Rc<SystemBigramLM>,
-        default_unigram_score_for_short: f32,
-        default_unigram_score_for_long: f32,
-    ) -> GraphBuilder {
+        system_unigram_lm: Rc<U>,
+        system_bigram_lm: Rc<B>,
+    ) -> GraphBuilder<U, B> {
         GraphBuilder {
             system_kana_kanji_dict,
             system_single_term_dict,
             user_data,
             system_unigram_lm,
             system_bigram_lm,
-            default_unigram_score_for_short,
-            default_unigram_score_for_long,
         }
     }
 
@@ -56,21 +49,19 @@ impl GraphBuilder {
         system_kana_kanji_dict: KanaKanjiDict,
         system_single_term_dict: KanaKanjiDict,
         user_data: Arc<Mutex<UserData>>,
-        system_unigram_lm: Rc<SystemUnigramLM>,
-        system_bigram_lm: Rc<SystemBigramLM>,
-    ) -> GraphBuilder {
+        system_unigram_lm: Rc<U>,
+        system_bigram_lm: Rc<B>,
+    ) -> GraphBuilder<U, B> {
         Self::new(
             system_kana_kanji_dict,
             system_single_term_dict,
             user_data,
             system_unigram_lm,
             system_bigram_lm,
-            13.672812_f32,
-            8.672809_f32,
         )
     }
 
-    pub fn construct(&self, yomi: &str, words_ends_at: SegmentationResult) -> LatticeGraph {
+    pub fn construct(&self, yomi: &str, words_ends_at: SegmentationResult) -> LatticeGraph<U, B> {
         // このグラフのインデクスは単語の終了位置。
         let mut graph: BTreeMap<i32, Vec<WordNode>> = BTreeMap::new();
         graph.insert(0, vec![WordNode::create_bos()]);
@@ -140,8 +131,6 @@ impl GraphBuilder {
             user_data: self.user_data.clone(),
             system_unigram_lm: self.system_unigram_lm.clone(),
             system_bigram_lm: self.system_bigram_lm.clone(),
-            default_unigram_score_for_long: self.default_unigram_score_for_long,
-            default_unigram_score_for_short: self.default_unigram_score_for_short,
         }
     }
 }
@@ -149,19 +138,28 @@ impl GraphBuilder {
 #[cfg(test)]
 mod tests {
     use crate::kana_kanji_dict::KanaKanjiDictBuilder;
-    use crate::lm::system_bigram::SystemBigramLMBuilder;
-    use crate::lm::system_unigram_lm::SystemUnigramLMBuilder;
+    use crate::lm::system_bigram::MarisaSystemBigramLMBuilder;
+    use crate::lm::system_unigram_lm::MarisaSystemUnigramLMBuilder;
 
     use super::*;
 
     #[test]
-    fn test_single_term() {
+    fn test_single_term() -> anyhow::Result<()> {
         let graph_builder = GraphBuilder::new_with_default_score(
             KanaKanjiDict::default(),
             KanaKanjiDictBuilder::default().add("すし", "🍣").build(),
             Arc::new(Mutex::new(UserData::default())),
-            Rc::new(SystemUnigramLMBuilder::default().build()),
-            Rc::new(SystemBigramLMBuilder::default().build()),
+            Rc::new(
+                MarisaSystemUnigramLMBuilder::default()
+                    .set_default_cost(20_f32)
+                    .set_default_cost_for_short(19_f32)
+                    .build(),
+            ),
+            Rc::new(
+                MarisaSystemBigramLMBuilder::default()
+                    .set_default_edge_cost(20_f32)
+                    .build()?,
+            ),
         );
         let yomi = "すし";
         let got = graph_builder.construct(
@@ -174,17 +172,27 @@ mod tests {
             got_surfaces,
             vec!["すし".to_string(), "スシ".to_string(), "🍣".to_string()]
         );
+        Ok(())
     }
 
     // ひらがな、カタカナのエントリーが自動的に入るようにする。
     #[test]
-    fn test_default_terms() {
+    fn test_default_terms() -> anyhow::Result<()> {
         let graph_builder = GraphBuilder::new_with_default_score(
             KanaKanjiDict::default(),
             KanaKanjiDictBuilder::default().build(),
             Arc::new(Mutex::new(UserData::default())),
-            Rc::new(SystemUnigramLMBuilder::default().build()),
-            Rc::new(SystemBigramLMBuilder::default().build()),
+            Rc::new(
+                MarisaSystemUnigramLMBuilder::default()
+                    .set_default_cost(20_f32)
+                    .set_default_cost_for_short(19_f32)
+                    .build(),
+            ),
+            Rc::new(
+                MarisaSystemBigramLMBuilder::default()
+                    .set_default_edge_cost(20_f32)
+                    .build()?,
+            ),
         );
         let yomi = "す";
         let got = graph_builder.construct(
@@ -194,17 +202,27 @@ mod tests {
         let nodes = got.node_list(3).unwrap();
         let got_surfaces: Vec<String> = nodes.iter().map(|f| f.surface.to_string()).collect();
         assert_eq!(got_surfaces, vec!["す".to_string(), "ス".to_string()]);
+        Ok(())
     }
 
     // ひらがな、カタカナがすでにかな漢字辞書から提供されている場合でも、重複させない。
     #[test]
-    fn test_default_terms_duplicated() {
+    fn test_default_terms_duplicated() -> anyhow::Result<()> {
         let graph_builder = GraphBuilder::new_with_default_score(
             KanaKanjiDictBuilder::default().add("す", "す/ス").build(),
             KanaKanjiDictBuilder::default().build(),
             Arc::new(Mutex::new(UserData::default())),
-            Rc::new(SystemUnigramLMBuilder::default().build()),
-            Rc::new(SystemBigramLMBuilder::default().build()),
+            Rc::new(
+                MarisaSystemUnigramLMBuilder::default()
+                    .set_default_cost(20_f32)
+                    .set_default_cost_for_short(19_f32)
+                    .build(),
+            ),
+            Rc::new(
+                MarisaSystemBigramLMBuilder::default()
+                    .set_default_edge_cost(20_f32)
+                    .build()?,
+            ),
         );
         let yomi = "す";
         let got = graph_builder.construct(
@@ -214,5 +232,6 @@ mod tests {
         let nodes = got.node_list(3).unwrap();
         let got_surfaces: Vec<String> = nodes.iter().map(|f| f.surface.to_string()).collect();
         assert_eq!(got_surfaces, vec!["す".to_string(), "ス".to_string()]);
+        Ok(())
     }
 }

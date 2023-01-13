@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::vec_deque::VecDeque;
 use std::ops::Range;
 
 use crate::graph::graph_resolver::Candidate;

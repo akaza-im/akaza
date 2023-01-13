@@ -1,18 +1,31 @@
-use anyhow::Result;
-use log::info;
-use marisa_sys::{Keyset, Marisa};
 use std::collections::HashMap;
+
+use anyhow::{bail, Result};
+use log::info;
+
+use crate::lm::base::SystemUnigramLM;
+use marisa_sys::{Keyset, Marisa};
+
+/*
+   {word} # in utf-8
+   0xff   # marker
+   packed ID     # 3 bytes(24bit). 最大語彙: 8,388,608(2**24/2)
+   packed float  # score: 4 bytes
+*/
+
+const DEFAULT_COST_FOR_SHORT_KEY: &str = "__DEFAULT_COST_FOR_SHORT__";
+const DEFAULT_COST_KEY: &str = "__DEFAULT_COST__";
 
 /**
  * unigram 言語モデル。
- * 「漢字」に対して、発生確率スコアを保持している。
+ * 「漢字/かな」に対して、発生確率スコアを保持している。
  */
 #[derive(Default)]
-pub struct SystemUnigramLMBuilder {
+pub struct MarisaSystemUnigramLMBuilder {
     data: Vec<(String, f32)>,
 }
 
-impl SystemUnigramLMBuilder {
+impl MarisaSystemUnigramLMBuilder {
     pub fn add(&mut self, word: &str, score: f32) {
         self.data.push((word.to_string(), score));
     }
@@ -34,6 +47,16 @@ impl SystemUnigramLMBuilder {
         keyset
     }
 
+    pub fn set_default_cost_for_short(&mut self, cost: f32) -> &mut Self {
+        self.add(DEFAULT_COST_FOR_SHORT_KEY, cost);
+        self
+    }
+
+    pub fn set_default_cost(&mut self, cost: f32) -> &mut Self {
+        self.add(DEFAULT_COST_KEY, cost);
+        self
+    }
+
     pub fn save(&self, fname: &str) -> Result<()> {
         let mut marisa = Marisa::default();
         marisa.build(&self.keyset());
@@ -41,46 +64,56 @@ impl SystemUnigramLMBuilder {
         Ok(())
     }
 
-    pub fn build(&self) -> SystemUnigramLM {
+    pub fn build(&self) -> MarisaSystemUnigramLM {
         let mut marisa = Marisa::default();
         marisa.build(&self.keyset());
-        SystemUnigramLM { marisa }
+        let (_, default_cost_for_short) =
+            MarisaSystemUnigramLM::find_from_trie(&marisa, DEFAULT_COST_FOR_SHORT_KEY).unwrap();
+        let (_, default_cost) =
+            MarisaSystemUnigramLM::find_from_trie(&marisa, DEFAULT_COST_FOR_SHORT_KEY).unwrap();
+        MarisaSystemUnigramLM {
+            marisa,
+            default_cost_for_short,
+            default_cost,
+        }
     }
 }
 
-pub struct SystemUnigramLM {
+pub struct MarisaSystemUnigramLM {
     marisa: Marisa,
+    default_cost_for_short: f32,
+    default_cost: f32,
 }
 
-impl SystemUnigramLM {
-    pub(crate) fn get_default_cost(&self) -> f32 {
-        todo!()
-    }
-    pub(crate) fn get_default_cost_for_short(&self) -> f32 {
-        todo!()
-    }
-}
-
-impl SystemUnigramLM {
+impl MarisaSystemUnigramLM {
     pub fn num_keys(&self) -> usize {
         self.marisa.num_keys()
     }
 
-    pub fn load(fname: &str) -> Result<SystemUnigramLM> {
+    pub fn load(fname: &str) -> Result<MarisaSystemUnigramLM> {
         info!("Reading {}", fname);
         let mut marisa = Marisa::default();
         marisa.load(fname)?;
-        Ok(SystemUnigramLM { marisa })
+        let Some((_, default_cost_for_short)) = Self::find_from_trie(&marisa, DEFAULT_COST_FOR_SHORT_KEY) else {
+            bail!("Missing key for {}", DEFAULT_COST_FOR_SHORT_KEY);
+        };
+        let Some((_, default_cost)) = Self::find_from_trie(&marisa, DEFAULT_COST_FOR_SHORT_KEY) else {
+            bail!("Missing key for {}", DEFAULT_COST_KEY);
+        };
+        Ok(MarisaSystemUnigramLM {
+            marisa,
+            default_cost_for_short,
+            default_cost,
+        })
     }
 
-    /// @return (word_id, score)。
-    pub fn find(&self, word: &str) -> Option<(i32, f32)> {
+    fn find_from_trie(marisa: &Marisa, word: &str) -> Option<(i32, f32)> {
         assert_ne!(word.len(), 0);
 
         let key = [word.as_bytes(), b"\xff"].concat();
         let mut kanji_id: usize = usize::MAX;
         let mut score = f32::MAX;
-        self.marisa.predictive_search(key.as_slice(), |word, id| {
+        marisa.predictive_search(key.as_slice(), |word, id| {
             kanji_id = id;
 
             let idx = word.iter().position(|f| *f == b'\xff').unwrap();
@@ -94,8 +127,23 @@ impl SystemUnigramLM {
             None
         }
     }
+}
 
-    pub fn as_id_map(&self) -> HashMap<String, i32> {
+impl SystemUnigramLM for MarisaSystemUnigramLM {
+    fn get_default_cost(&self) -> f32 {
+        self.default_cost
+    }
+
+    fn get_default_cost_for_short(&self) -> f32 {
+        self.default_cost_for_short
+    }
+
+    /// @return (word_id, score)。
+    fn find(&self, word: &str) -> Option<(i32, f32)> {
+        Self::find_from_trie(&self.marisa, word)
+    }
+
+    fn as_id_map(&self) -> HashMap<String, i32> {
         let mut map = HashMap::new();
         self.marisa.predictive_search("".as_bytes(), |word, id| {
             let idx = word.iter().position(|f| *f == b'\xff').unwrap();
@@ -118,12 +166,16 @@ mod tests {
         let named_tmpfile = NamedTempFile::new().unwrap();
         let tmpfile = named_tmpfile.path().to_str().unwrap().to_string();
 
-        let mut builder = SystemUnigramLMBuilder::default();
+        let mut builder = MarisaSystemUnigramLMBuilder::default();
         builder.add("hello", 0.4);
         builder.add("world", 0.2);
-        builder.save(&tmpfile).unwrap();
+        builder
+            .set_default_cost(20_f32)
+            .set_default_cost_for_short(19_f32)
+            .save(&tmpfile)
+            .unwrap();
 
-        let lm = SystemUnigramLM::load(&tmpfile).unwrap();
+        let lm = MarisaSystemUnigramLM::load(&tmpfile).unwrap();
         {
             let (word_id, score) = lm.find("hello").unwrap();
             assert_eq!(word_id, 0);

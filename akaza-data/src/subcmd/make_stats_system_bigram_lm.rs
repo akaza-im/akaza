@@ -8,8 +8,9 @@ use anyhow::{anyhow, Context};
 use log::info;
 use rayon::prelude::*;
 
-use libakaza::lm::system_bigram::{SystemBigramLM, SystemBigramLMBuilder};
-use libakaza::lm::system_unigram_lm::SystemUnigramLM;
+use libakaza::lm::base::{SystemBigramLM, SystemUnigramLM};
+use libakaza::lm::system_bigram::{MarisaSystemBigramLM, MarisaSystemBigramLMBuilder};
+use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 
 use crate::subcmd::make_stats_system_unigram_lm::calc_score;
 use crate::utils::get_file_list;
@@ -21,7 +22,7 @@ pub fn make_stats_system_bigram_lm(
     bigram_trie_file: &str,
 ) -> Result<()> {
     // まずは unigram の language model を読み込む
-    let unigram_lm = SystemUnigramLM::load(unigram_trie_file)?;
+    let unigram_lm = MarisaSystemUnigramLM::load(unigram_trie_file)?;
     info!(
         "Unigram system lm: {} threshold={}",
         unigram_lm.num_keys(),
@@ -49,16 +50,22 @@ pub fn make_stats_system_bigram_lm(
     // スコアを計算する
     let scoremap = make_score_map(threshold, &merged);
 
-    // 総出現単語数
-    let c = merged.values().sum();
-    // 単語の種類数
-    let v = merged.keys().count();
-    info!("Default score for 0: {}", calc_score(0, c, v));
-
     // 結果を書き込む
-    let mut builder = SystemBigramLMBuilder::default();
+    let mut builder = MarisaSystemBigramLMBuilder::default();
     for ((word_id1, word_id2), score) in scoremap {
         builder.add(word_id1, word_id2, score);
+    }
+    {
+        // default edge cost の計算。
+        // 頻度0の単語として計算する
+
+        // 総出現単語数
+        let c = merged.values().sum();
+        // 単語の種類数
+        let v = merged.keys().count();
+        let default_edge_cost = calc_score(0, c, v);
+        builder.set_default_edge_cost(default_edge_cost);
+        info!("Default score for 0: {}", default_edge_cost);
     }
     builder.save(bigram_trie_file)?;
 
@@ -115,8 +122,8 @@ fn count_bigram(
 
 // 言語モデルファイルが正確に生成されたか確認を実施する
 fn validation(unigram_dst: &str, bigram_dst: &str) -> Result<()> {
-    let unigram = SystemUnigramLM::load(unigram_dst).unwrap();
-    let bigram = SystemBigramLM::load(bigram_dst).unwrap();
+    let unigram = MarisaSystemUnigramLM::load(unigram_dst).unwrap();
+    let bigram = MarisaSystemBigramLM::load(bigram_dst).unwrap();
 
     let word1 = "私/わたし";
 

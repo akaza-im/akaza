@@ -6,7 +6,7 @@ use std::io::{prelude::*, BufReader};
 use chrono::Local;
 use log::info;
 
-use libakaza::lm::system_unigram_lm::SystemUnigramLMBuilder;
+use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLMBuilder;
 
 /// 統計的かな漢字変換のためのユニグラムシステム言語モデルの作成
 ///
@@ -29,17 +29,19 @@ pub fn make_stats_system_unigram_lm(srcpath: &str, dstpath: &str) -> anyhow::Res
 
     let scoremap = make_score_map(&wordcnt);
 
+    let mut builder = MarisaSystemUnigramLMBuilder::default();
+    for (word, score) in &scoremap {
+        builder.add(word.as_str(), *score);
+    }
+
     // 総出現単語数
     let c = wordcnt.values().sum();
     // 単語の種類数
     let v = wordcnt.keys().count();
+    builder.set_default_cost_for_short(calc_score(1, c, v));
+    builder.set_default_cost(calc_score(0, c, v));
     info!("Score for word count 1: {}", calc_score(1, c, v));
     info!("Score for word count 0: {}", calc_score(0, c, v));
-
-    let mut builder = SystemUnigramLMBuilder::default();
-    for (word, score) in &scoremap {
-        builder.add(word.as_str(), *score);
-    }
 
     println!("Writing {}", dstpath);
     builder.save(dstpath)?;

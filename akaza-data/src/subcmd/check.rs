@@ -1,7 +1,7 @@
-use libakaza::engine::base::HenkanEngine;
-use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 use std::fs::File;
 use std::io::Write;
+
+use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 
 pub fn check(yomi: &str, expected: Option<String>) -> anyhow::Result<()> {
     let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/data/";

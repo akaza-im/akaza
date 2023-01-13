@@ -1,5 +1,6 @@
-use std::collections::{HashMap, VecDeque};
-use std::ffi::CString;
+use alloc::collections::vec_deque::VecDeque;
+use alloc::ffi::CString;
+use std::collections::HashMap;
 use std::ops::Range;
 
 use anyhow::Result;
@@ -38,6 +39,8 @@ use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngine;
 use libakaza::extend_clause::{extend_left, extend_right};
 use libakaza::graph::graph_resolver::Candidate;
+use libakaza::lm::system_bigram::MarisaSystemBigramLM;
+use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use libakaza::romkan::RomKanConverter;
 
 use crate::commands::{ibus_akaza_commands_map, IbusAkazaCommand};
@@ -72,7 +75,7 @@ pub struct AkazaContext {
     pub(crate) lookup_table: IBusLookupTable,
     pub(crate) romkan: RomKanConverter,
     command_map: HashMap<&'static str, IbusAkazaCommand>,
-    akaza: BigramWordViterbiEngine,
+    akaza: BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
     clauses: Vec<VecDeque<Candidate>>,
     // げんざいせんたくされているぶんせつ。
     current_clause: usize,
@@ -160,7 +163,9 @@ impl AkazaContext {
 }
 
 impl AkazaContext {
-    pub(crate) fn new(akaza: BigramWordViterbiEngine) -> Self {
+    pub(crate) fn new(
+        akaza: BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
+    ) -> Self {
         let (input_mode_prop, prop_list, prop_dict) = Self::init_props();
         AkazaContext {
             input_mode: INPUT_MODE_HIRAGANA,

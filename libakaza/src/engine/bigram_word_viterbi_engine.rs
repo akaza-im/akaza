@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::vec_deque::VecDeque;
 use std::ops::Range;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
@@ -12,14 +12,15 @@ use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::Segmenter;
 use crate::kana_kanji_dict::KanaKanjiDict;
 use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
-use crate::lm::system_bigram::SystemBigramLM;
-use crate::lm::system_unigram_lm::SystemUnigramLM;
+use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
+use crate::lm::system_bigram::MarisaSystemBigramLM;
+use crate::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use crate::romkan::RomKanConverter;
 use crate::user_side_data::user_data::UserData;
 
 pub struct SystemDataLoader {
-    pub system_unigram_lm: SystemUnigramLM,
-    pub system_bigram_lm: SystemBigramLM,
+    pub system_unigram_lm: MarisaSystemUnigramLM,
+    pub system_bigram_lm: MarisaSystemBigramLM,
     pub system_kana_kanji_dict: KanaKanjiDict,
     pub system_single_term_dict: KanaKanjiDict,
     pub system_kana_trie: MarisaKanaTrie,
@@ -27,10 +28,10 @@ pub struct SystemDataLoader {
 
 impl SystemDataLoader {
     pub fn load(system_data_dir: &str) -> Result<SystemDataLoader> {
-        let system_unigram_lm = SystemUnigramLM::load(
+        let system_unigram_lm = MarisaSystemUnigramLM::load(
             (system_data_dir.to_string() + "/stats-vibrato-unigram.trie").as_str(),
         )?;
-        let system_bigram_lm = SystemBigramLM::load(
+        let system_bigram_lm = MarisaSystemBigramLM::load(
             (system_data_dir.to_string() + "/stats-vibrato-bigram.trie").as_str(),
         )?;
 
@@ -53,30 +54,50 @@ impl SystemDataLoader {
 
 /// バイグラムのビタビベースかな漢字変換エンジンです。
 /// 単語バイグラムを採用しています。
-pub struct BigramWordViterbiEngine {
-    graph_builder: GraphBuilder,
+pub struct BigramWordViterbiEngine<U: SystemUnigramLM, B: SystemBigramLM> {
+    graph_builder: GraphBuilder<U, B>,
     pub segmenter: Segmenter,
     pub graph_resolver: GraphResolver,
     romkan_converter: RomKanConverter,
     pub user_data: Arc<Mutex<UserData>>,
 }
 
-impl BigramWordViterbiEngine {}
-
-impl HenkanEngine for BigramWordViterbiEngine {
+impl<U: SystemUnigramLM, B: SystemBigramLM> HenkanEngine for BigramWordViterbiEngine<U, B> {
     fn learn(&mut self, surface_kanas: &[String]) {
         self.user_data.lock().unwrap().record_entries(surface_kanas);
     }
 
-    fn resolve(&self, lattice: &LatticeGraph) -> Result<Vec<VecDeque<Candidate>>> {
-        self.graph_resolver.resolve(lattice)
-    }
-
-    fn to_lattice(
+    fn convert(
         &self,
         yomi: &str,
         force_ranges: Option<&[Range<usize>]>,
-    ) -> Result<LatticeGraph> {
+    ) -> anyhow::Result<Vec<VecDeque<Candidate>>> {
+        // 先頭が大文字なケースと、URL っぽい文字列のときは変換処理を実施しない。
+        if (!yomi.is_empty()
+            && yomi.chars().next().unwrap().is_ascii_uppercase()
+            && (force_ranges.is_none()
+                || (force_ranges.is_none() && force_ranges.unwrap().is_empty())))
+            || yomi.starts_with("https://")
+            || yomi.starts_with("http://")
+        {
+            return Ok(vec![VecDeque::from([Candidate::new(yomi, yomi, 0_f32)])]);
+        }
+
+        let lattice = self.to_lattice(yomi, force_ranges)?;
+        self.resolve(&lattice)
+    }
+}
+
+impl<U: SystemUnigramLM, B: SystemBigramLM> BigramWordViterbiEngine<U, B> {
+    pub fn resolve(&self, lattice: &LatticeGraph<U, B>) -> Result<Vec<VecDeque<Candidate>>> {
+        self.graph_resolver.resolve(lattice)
+    }
+
+    pub fn to_lattice(
+        &self,
+        yomi: &str,
+        force_ranges: Option<&[Range<usize>]>,
+    ) -> Result<LatticeGraph<U, B>> {
         // ローマ字からひらがなへの変換をする。
         let yomi = self.romkan_converter.to_hiragana(yomi);
 
@@ -143,7 +164,9 @@ impl BigramWordViterbiEngineBuilder {
         self
     }
 
-    pub fn build(&self) -> Result<BigramWordViterbiEngine> {
+    pub fn build(
+        &self,
+    ) -> Result<BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>> {
         let system_data_loader = SystemDataLoader::load(self.system_data_dir.as_str())?;
 
         let segmenter = Segmenter::new(vec![Box::new(system_data_loader.system_kana_trie)]);

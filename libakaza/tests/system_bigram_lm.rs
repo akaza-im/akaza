@@ -2,9 +2,10 @@
 #[cfg(feature = "it")]
 mod tests {
     use anyhow::Context;
+    use libakaza::lm::base::{SystemBigramLM, SystemUnigramLM};
 
-    use libakaza::lm::system_bigram::SystemBigramLM;
-    use libakaza::lm::system_unigram_lm::SystemUnigramLM;
+    use libakaza::lm::system_bigram::MarisaSystemBigramLM;
+    use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 
     fn basedir() -> String {
         env!("CARGO_MANIFEST_DIR").to_string()
@@ -14,22 +15,22 @@ mod tests {
         basedir() + "/../akaza-data/data/"
     }
 
-    fn load_unigram() -> anyhow::Result<SystemUnigramLM> {
+    fn load_unigram() -> anyhow::Result<MarisaSystemUnigramLM> {
         let datadir = datadir();
         let path = datadir + "/stats-vibrato-unigram.trie";
-        SystemUnigramLM::load(&path)
+        MarisaSystemUnigramLM::load(&path)
     }
 
-    fn load_bigram() -> SystemBigramLM {
+    fn load_bigram() -> MarisaSystemBigramLM {
         let datadir = datadir();
         let path = datadir + "/stats-vibrato-bigram.trie";
 
-        SystemBigramLM::load(&path).unwrap()
+        MarisaSystemBigramLM::load(&path).unwrap()
     }
 
     #[test]
     fn test_load() -> anyhow::Result<()> {
-        let unigram: SystemUnigramLM = load_unigram()?;
+        let unigram: MarisaSystemUnigramLM = load_unigram()?;
         let bigram = load_bigram();
 
         let (id1, score1) = unigram.find("私/わたし").unwrap();

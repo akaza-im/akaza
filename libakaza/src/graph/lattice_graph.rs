@@ -6,26 +6,19 @@ use std::sync::{Arc, Mutex};
 use log::{error, trace};
 
 use crate::graph::word_node::WordNode;
-use crate::lm::system_bigram::SystemBigramLM;
-use crate::lm::system_unigram_lm::SystemUnigramLM;
+use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 use crate::user_side_data::user_data::UserData;
 
-const DEFAULT_SCORE: f32 = 13.641709; // -log10(1e-20)
-
 // 考えられる単語の列全てを含むようなグラフ構造
-pub struct LatticeGraph {
+pub struct LatticeGraph<U: SystemUnigramLM, B: SystemBigramLM> {
     pub(crate) yomi: String,
     pub(crate) graph: BTreeMap<i32, Vec<WordNode>>,
     pub(crate) user_data: Arc<Mutex<UserData>>,
-    pub(crate) system_unigram_lm: Rc<SystemUnigramLM>,
-    pub(crate) system_bigram_lm: Rc<SystemBigramLM>,
-    /// -log10(1e-19)=19.0
-    pub(crate) default_unigram_score_for_short: f32,
-    /// -log10(1e-20)=20.0
-    pub(crate) default_unigram_score_for_long: f32,
+    pub(crate) system_unigram_lm: Rc<U>,
+    pub(crate) system_bigram_lm: Rc<B>,
 }
 
-impl Debug for LatticeGraph {
+impl<U: SystemUnigramLM, B: SystemBigramLM> Debug for LatticeGraph<U, B> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -35,7 +28,7 @@ impl Debug for LatticeGraph {
     }
 }
 
-impl LatticeGraph {
+impl<U: SystemUnigramLM, B: SystemBigramLM> LatticeGraph<U, B> {
     /// i文字目で終わるノードを探す
     pub fn node_list(&self, end_pos: i32) -> Option<&Vec<WordNode>> {
         self.graph.get(&end_pos)
@@ -145,10 +138,9 @@ impl LatticeGraph {
             // 労働者災害補償保険法 のように、システム辞書には wikipedia から採録されているが,
             // 言語モデルには採録されていない場合,漢字候補を先頭に持ってくる。
             // つまり、変換後のほうが短くなるもののほうをコストを安くしておく。
-            self.default_unigram_score_for_short
-            // -log10(1e-19)
+            self.system_unigram_lm.get_default_cost_for_short()
         } else {
-            self.default_unigram_score_for_long
+            self.system_unigram_lm.get_default_cost()
         };
     }
 
@@ -158,15 +150,15 @@ impl LatticeGraph {
         }
 
         let Some((prev_id, _)) = prev.word_id_and_score else {
-            return DEFAULT_SCORE;
+            return self.system_bigram_lm.get_default_edge_cost();
         };
         let Some((node_id, _)) = node.word_id_and_score else {
-            return DEFAULT_SCORE;
+            return self.system_bigram_lm.get_default_edge_cost();
         };
         if let Some(cost) = self.system_bigram_lm.get_edge_cost(prev_id, node_id) {
             cost
         } else {
-            DEFAULT_SCORE
+            self.system_bigram_lm.get_default_edge_cost()
         }
     }
 }
