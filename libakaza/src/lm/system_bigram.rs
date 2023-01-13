@@ -185,7 +185,7 @@ mod tests {
         let map = system_bigram_lm.as_hash_map();
         assert!(map.contains_key(&(4649, 5963)));
         let g = *map.get(&(4649, 5963)).unwrap();
-        assert!(f16::from_f32(5.10) < g && g < f16::from_f32(5.12_f32));
+        assert!(5.10_f32 < g && g < 5.12_f32);
 
         Ok(())
     }
