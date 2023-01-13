@@ -50,16 +50,22 @@ pub fn make_stats_system_bigram_lm(
     // スコアを計算する
     let scoremap = make_score_map(threshold, &merged);
 
-    // 総出現単語数
-    let c = merged.values().sum();
-    // 単語の種類数
-    let v = merged.keys().count();
-    info!("Default score for 0: {}", calc_score(0, c, v));
-
     // 結果を書き込む
     let mut builder = MarisaSystemBigramLMBuilder::default();
     for ((word_id1, word_id2), score) in scoremap {
         builder.add(word_id1, word_id2, score);
+    }
+    {
+        // default edge cost の計算。
+        // 頻度0の単語として計算する
+
+        // 総出現単語数
+        let c = merged.values().sum();
+        // 単語の種類数
+        let v = merged.keys().count();
+        let default_edge_cost = calc_score(0, c, v);
+        builder.set_default_edge_cost(default_edge_cost);
+        info!("Default score for 0: {}", default_edge_cost);
     }
     builder.save(bigram_trie_file)?;
 
