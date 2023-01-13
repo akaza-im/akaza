@@ -61,6 +61,15 @@ impl FullAnnotationCorpus {
         buf
     }
 
+    /// コーパスの「表装」を連結したものを返す。
+    pub fn surface(&self) -> String {
+        let mut buf = String::new();
+        for yomi in self.nodes.iter().map(|f| f.surface.as_str()) {
+            buf += yomi;
+        }
+        buf
+    }
+
     /// 正解ノードオブジェクトのセットを返す
     pub fn correct_node_set(&self) -> HashSet<WordNode> {
         HashSet::from_iter(self.nodes.iter().cloned())

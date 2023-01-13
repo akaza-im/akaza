@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anyhow::{bail, Result};
 use half::f16;
 use log::info;
@@ -109,7 +111,7 @@ impl MarisaSystemBigramLM {
         });
 
         let Some(key) = keys.get(0) else {
-            bail!("Cannot read default cost from trie");
+            bail!("Cannot read default cost from bigram-trie");
         };
 
         let key = String::from_utf8_lossy(key);
@@ -151,6 +153,20 @@ impl SystemBigramLM for MarisaSystemBigramLM {
         let score: f16 = f16::from_le_bytes(last2);
         Some(score.to_f32())
     }
+
+    fn as_hash_map(&self) -> HashMap<(i32, i32), f32> {
+        let mut map: HashMap<(i32, i32), f32> = HashMap::new();
+        self.marisa.predictive_search("".as_bytes(), |word, _id| {
+            if word.len() == 8 {
+                let word_id1 = i32::from_le_bytes([word[0], word[1], word[2], 0]);
+                let word_id2 = i32::from_le_bytes([word[3], word[4], word[5], 0]);
+                let cost = f16::from_le_bytes([word[6], word[7]]).to_f32();
+                map.insert((word_id1, word_id2), cost);
+            }
+            true
+        });
+        map
+    }
 }
 
 #[cfg(test)]
@@ -165,6 +181,12 @@ mod tests {
         let system_bigram_lm = builder.build()?;
         let got_score = system_bigram_lm.get_edge_cost(4649, 5963).unwrap();
         assert!(5.0 < got_score && got_score < 5.12);
+
+        let map = system_bigram_lm.as_hash_map();
+        assert!(map.contains_key(&(4649, 5963)));
+        let g = *map.get(&(4649, 5963)).unwrap();
+        assert!(f16::from_f32(5.10) < g && g < f16::from_f32(5.12_f32));
+
         Ok(())
     }
 }

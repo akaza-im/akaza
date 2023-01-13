@@ -3,13 +3,14 @@ use std::io::Write;
 use clap::{Parser, Subcommand};
 
 use crate::subcmd::check::check;
+use crate::subcmd::dump_bigram_dict::dump_bigram_dict;
 use crate::subcmd::dump_unigram_dict::dump_unigram_dict;
 use crate::subcmd::evaluate::evaluate;
+use crate::subcmd::learn_corpus::learn_corpus;
 use crate::subcmd::make_dict::{make_single_term, make_system_dict};
 use crate::subcmd::make_kana_trie::make_kana_trie;
 use crate::subcmd::make_stats_system_bigram_lm::make_stats_system_bigram_lm;
 use crate::subcmd::make_stats_system_unigram_lm::make_stats_system_unigram_lm;
-use crate::subcmd::structured_perceptron::learn_structured_perceptron;
 use crate::subcmd::tokenize::{
     tokenize_aozora_bunko_vibrato_ipadic, tokenize_lindera_ipadic, tokenize_vibrato_ipadic,
 };
@@ -58,9 +59,10 @@ enum Commands {
     #[clap(arg_required_else_help = true)]
     Check(CheckArgs),
 
-    LearnStructuredPerceptron(LearnStructuredPerceptronArgs),
+    LearnCorpus(LearnCorpusArgs),
 
     DumpUnigramDict(DumpUnigramDictArgs),
+    DumpBigramDict(DumpBigramDictArgs),
 }
 
 #[derive(Debug, clap::Args)]
@@ -99,10 +101,22 @@ struct CheckArgs {
 
 /// 動作確認する
 #[derive(Debug, clap::Args)]
-struct LearnStructuredPerceptronArgs {
+struct LearnCorpusArgs {
+    #[arg(short, long)]
+    delta: f32,
     #[arg(short, long, default_value_t = 10)]
-    epochs: i32,
-    src_dir: String,
+    may_epochs: i32,
+    #[arg(short, long, default_value_t = 100)]
+    should_epochs: i32,
+    #[arg(short, long, default_value_t = 1000)]
+    must_epochs: i32,
+    may_corpus: String,
+    should_corpus: String,
+    must_corpus: String,
+    src_unigram: String,
+    src_bigram: String,
+    dst_unigram: String,
+    dst_bigram: String,
 }
 
 /// コーパスを形態素解析機でトーカナイズする
@@ -128,6 +142,7 @@ struct TokenizeVibratoIpadicArgs {
 struct WfreqArgs {
     src_dir1: String,
     src_dir2: String,
+    src_dir3: String,
     dst_file: String,
 }
 
@@ -172,6 +187,13 @@ struct DumpUnigramDictArgs {
     dict: String,
 }
 
+/// バイグラム辞書ファイルをダンプする
+#[derive(Debug, clap::Args)]
+struct DumpBigramDictArgs {
+    unigram_file: String,
+    bigram_file: String,
+}
+
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
@@ -199,9 +221,19 @@ fn main() -> anyhow::Result<()> {
         Commands::MakeSingleTerm(opt) => make_single_term(&opt.txt_file, &opt.trie_file),
         Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, &opt.system_data_dir),
         Commands::Check(opt) => check(&opt.yomi, opt.expected),
-        Commands::LearnStructuredPerceptron(opts) => {
-            learn_structured_perceptron(&opts.src_dir, opts.epochs)
-        }
+        Commands::LearnCorpus(opts) => learn_corpus(
+            opts.delta,
+            opts.may_epochs,
+            opts.should_epochs,
+            opts.must_epochs,
+            opts.may_corpus.as_str(),
+            opts.should_corpus.as_str(),
+            opts.must_corpus.as_str(),
+            opts.src_unigram.as_str(),
+            opts.src_bigram.as_str(),
+            opts.dst_unigram.as_str(),
+            opts.dst_bigram.as_str(),
+        ),
         Commands::TokenizeLinderaIpadic(opt) => {
             tokenize_lindera_ipadic(opt.user_dict, opt.src_dir.as_str(), opt.dst_dir.as_str())
         }
@@ -218,7 +250,11 @@ fn main() -> anyhow::Result<()> {
             opt.dst_dir.as_str(),
         ),
         Commands::Wfreq(opt) => wfreq(
-            &vec![opt.src_dir1.as_str(), opt.src_dir2.as_str()],
+            &vec![
+                opt.src_dir1.as_str(),
+                opt.src_dir2.as_str(),
+                opt.src_dir3.as_str(),
+            ],
             opt.dst_file.as_str(),
         ),
         Commands::Vocab(opt) => vocab(opt.src_file.as_str(), opt.dst_file.as_str(), opt.threshold),
@@ -235,5 +271,8 @@ fn main() -> anyhow::Result<()> {
             make_kana_trie(opt.system_dict_file.as_str(), opt.trie_file.as_str())
         }
         Commands::DumpUnigramDict(opt) => dump_unigram_dict(opt.dict.as_str()),
+        Commands::DumpBigramDict(opt) => {
+            dump_bigram_dict(opt.unigram_file.as_str(), opt.bigram_file.as_str())
+        }
     }
 }
