@@ -1,4 +1,5 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::vec_deque::VecDeque;
+use std::collections::HashMap;
 
 use anyhow::Context;
 use log::trace;
@@ -133,7 +134,7 @@ impl GraphResolver {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeMap;
+    use std::collections::btree_map::BTreeMap;
     use std::rc::Rc;
     use std::sync::{Arc, Mutex};
 

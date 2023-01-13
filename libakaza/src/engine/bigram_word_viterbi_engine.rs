@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::vec_deque::VecDeque;
 use std::ops::Range;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};

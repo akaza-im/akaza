@@ -1,5 +1,6 @@
-use std::collections::{HashMap, VecDeque};
-use std::ffi::CString;
+use alloc::collections::vec_deque::VecDeque;
+use alloc::ffi::CString;
+use std::collections::HashMap;
 use std::ops::Range;
 
 use anyhow::Result;
