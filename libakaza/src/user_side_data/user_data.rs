@@ -28,7 +28,6 @@ pub struct UserData {
 
     unigram_path: Option<String>,
     bigram_path: Option<String>,
-    kana_trie_path: Option<String>,
 
     pub(crate) need_save: bool,
 }
@@ -46,19 +45,14 @@ impl UserData {
             .to_str()
             .unwrap()
             .to_string();
-        let kana_trie_path = basedir
-            .place_data_file(Path::new("kana_trie.v1.crawdad"))?
-            .to_str()
-            .unwrap()
-            .to_string();
         info!(
-            "Load user data from default path: unigram={}, bigram={}, marisa_kana_trie={}",
-            unigram_path, bigram_path, kana_trie_path
+            "Load user data from default path: unigram={}, bigram={}",
+            unigram_path, bigram_path
         );
-        Ok(UserData::load(&unigram_path, &bigram_path, &kana_trie_path))
+        Ok(UserData::load(&unigram_path, &bigram_path))
     }
 
-    pub fn load(unigram_path: &String, bigram_path: &String, kana_trie_path: &String) -> Self {
+    pub fn load(unigram_path: &String, bigram_path: &String) -> Self {
         // ユーザーデータが読み込めないことは fatal エラーではない。
         // 初回起動時にはデータがないので。
         // データがなければ初期所状態から始める
@@ -130,7 +124,6 @@ impl UserData {
             kana_trie: Mutex::new(kana_trie),
             unigram_path: Some(unigram_path.clone()),
             bigram_path: Some(bigram_path.clone()),
-            kana_trie_path: Some(kana_trie_path.clone()),
             need_save: false,
         }
     }
@@ -144,7 +137,7 @@ impl UserData {
         let kana_trie = self.kana_trie.get_mut().unwrap();
         for kanji_kanas in kanji_kanas {
             let Some((_, yomi)) = kanji_kanas.split_once('/') else {
-                continue
+                continue;
             };
             if kana_trie.contains(yomi) {
                 trace!("Skip word: {}", yomi);
