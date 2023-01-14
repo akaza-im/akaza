@@ -2,6 +2,7 @@
 
 extern crate core;
 
+pub mod config;
 pub mod corpus;
 pub mod cost;
 pub mod engine;

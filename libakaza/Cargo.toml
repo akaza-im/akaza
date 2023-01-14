@@ -19,6 +19,8 @@ xdg = "2.4.1"
 crawdad = "0.4.0"
 encoding_rs = "0.8.31"
 cedarwood = "0.4.6"
+serde = { version = "1.0.152", features = ["derive"] }
+serde_yaml = "0.9.16"
 
 [build-dependencies]
 
