@@ -75,7 +75,7 @@ pub struct AkazaContext {
     pub(crate) lookup_table: IBusLookupTable,
     pub(crate) romkan: RomKanConverter,
     command_map: HashMap<&'static str, IbusAkazaCommand>,
-    akaza: BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
+    engine: BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
     clauses: Vec<VecDeque<Candidate>>,
     // げんざいせんたくされているぶんせつ。
     current_clause: usize,
@@ -175,7 +175,7 @@ impl AkazaContext {
             lookup_table: IBusLookupTable::new(10, 0, 1, 1),
             romkan: RomKanConverter::default(), // TODO make it configurable.
             command_map: ibus_akaza_commands_map(),
-            akaza,
+            engine: akaza,
             clauses: vec![],
             current_clause: 0,
             is_invalidate: false,
@@ -472,13 +472,12 @@ impl AkazaContext {
 
             if self.in_henkan_mode() {
                 // 変換モードのときのみ学習を実施する
-                let mut targets: Vec<String> = Vec::new();
-                for (i, nodes) in self.clauses.iter().enumerate() {
+                let mut targets: Vec<Candidate> = Vec::new();
+                for (i, candidates) in self.clauses.iter().enumerate() {
                     let idx = self.node_selected.get(&i).unwrap_or(&0);
-                    let node = &nodes[*idx];
-                    targets.push((node.kanji.to_string()) + "/" + &node.yomi);
+                    targets.push(candidates[*idx].clone());
                 }
-                self.akaza.learn(&targets);
+                self.engine.learn(&targets);
             }
 
             ibus_engine_commit_text(engine, text.to_ibus_text());
@@ -546,7 +545,7 @@ impl AkazaContext {
             self.clauses = vec![]
         } else {
             self.clauses = self
-                .akaza
+                .engine
                 .convert(self.preedit.as_str(), Some(&self.force_selected_clause))?;
 
             // [a][bc]

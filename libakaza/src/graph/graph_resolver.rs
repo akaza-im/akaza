@@ -8,11 +8,17 @@ use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::word_node::WordNode;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Candidate {
     pub kanji: String,
     pub yomi: String,
     pub cost: f32,
+}
+
+impl Candidate {
+    pub(crate) fn key(&self) -> String {
+        self.kanji.to_string() + "/" + self.yomi.as_str()
+    }
 }
 
 impl Candidate {
@@ -234,7 +240,7 @@ mod tests {
             .build()?;
         let mut user_data = UserData::default();
         // 私/わたし のスコアをガッと上げる。
-        user_data.record_entries(&["私/わたし".to_string()]);
+        user_data.record_entries(&[Candidate::new("わたし", "私", 0_f32)]);
         let graph_builder = GraphBuilder::new_with_default_score(
             dict,
             KanaKanjiDict::default(),

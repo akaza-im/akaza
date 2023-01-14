@@ -3,8 +3,9 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
+use crate::graph::graph_resolver::Candidate;
 use anyhow::Result;
-use log::{debug, info, trace, warn};
+use log::{debug, info, warn};
 
 use crate::graph::word_node::WordNode;
 use crate::kana_trie::base::KanaTrie;
@@ -135,22 +136,20 @@ impl UserData {
 
     /// 入力確定した漢字のリストをユーザー統計データとして記録する。
     /// "Surface/Kana" のフォーマットで渡すこと。
-    pub fn record_entries(&mut self, kanji_kanas: &[String]) {
-        self.unigram_user_stats.record_entries(kanji_kanas);
-        self.bigram_user_stats.record_entries(kanji_kanas);
+    pub fn record_entries(&mut self, candidates: &[Candidate]) {
+        self.unigram_user_stats.record_entries(candidates);
+        self.bigram_user_stats.record_entries(candidates);
 
+        // かなトライを更新する
         let mut kana_trie = self.kana_trie.lock().unwrap();
-        for kanji_kanas in kanji_kanas {
-            let Some((_, yomi)) = kanji_kanas.split_once('/') else {
-                continue;
-            };
-            if kana_trie.contains(yomi) {
-                trace!("Skip word: {}", yomi);
-                continue;
-            }
-            trace!("Record word to kana_trie: {}", yomi);
-            kana_trie.update(yomi);
-        }
+        candidates
+            .iter()
+            .map(|it| it.yomi.to_string())
+            .for_each(|it| {
+                if !kana_trie.contains(it.as_str()) {
+                    kana_trie.update(it.as_str())
+                }
+            });
 
         self.need_save = true;
     }

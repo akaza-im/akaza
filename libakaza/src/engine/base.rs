@@ -4,7 +4,7 @@ use std::ops::Range;
 use crate::graph::graph_resolver::Candidate;
 
 pub trait HenkanEngine {
-    fn learn(&mut self, surface_kanas: &[String]);
+    fn learn(&mut self, candidates: &[Candidate]);
 
     fn convert(
         &self,
