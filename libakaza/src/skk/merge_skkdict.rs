@@ -1,31 +1,15 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 pub fn merge_skkdict(dicts: Vec<HashMap<String, Vec<String>>>) -> HashMap<String, Vec<String>> {
     let mut result: HashMap<String, Vec<String>> = HashMap::new();
 
-    // 取りうるキーをリストアップする
-    let mut keys: HashSet<String> = HashSet::new();
-    for dic in &dicts {
-        for key in dic.keys() {
-            keys.insert(key.to_string());
-        }
-    }
-
-    // それぞれのキーについて、候補をリストアップする
-    for key in keys {
-        let mut kanjis: Vec<String> = Vec::new();
-
-        for dic in &dicts {
-            if let Some(kkk) = dic.get(&key.to_string()) {
-                for k in kkk {
-                    if !kanjis.contains(k) {
-                        kanjis.push(k.clone());
-                    }
-                }
+    for dict in dicts {
+        for (yomi, kanjis) in dict {
+            let target = result.entry(yomi).or_insert(Vec::new());
+            for kanji in kanjis {
+                target.push(kanji);
             }
         }
-
-        result.insert(key, kanjis);
     }
 
     result
