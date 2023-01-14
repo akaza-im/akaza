@@ -56,7 +56,7 @@ mod system_dict {
             ("dict/SKK-JISYO.akaza", UTF_8),
         ];
         let mut dicts = Vec::new();
-        let ari2nasi = Ari2Nasi::new();
+        let ari2nasi = Ari2Nasi::default();
 
         for (path, encoding) in dictionary_sources {
             let (ari, nasi) = read_skkdict(Path::new(path), encoding)?;
@@ -186,7 +186,7 @@ mod single_term {
             ("skk-dev-dict/zipcode/SKK-JISYO.zipcode", EUC_JP),
         ];
         let mut dicts = Vec::new();
-        let ari2nasi = Ari2Nasi::new();
+        let ari2nasi = Ari2Nasi::default();
         for (path, encoding) in dictionary_sources {
             let (ari, nasi) = read_skkdict(Path::new(path), encoding)?;
             dicts.push(nasi);

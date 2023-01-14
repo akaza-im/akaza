@@ -7,8 +7,8 @@ pub struct Ari2Nasi {
     roman_map: HashMap<&'static str, &'static str>,
 }
 
-impl Ari2Nasi {
-    pub fn new() -> Ari2Nasi {
+impl Default for Ari2Nasi {
+    fn default() -> Ari2Nasi {
         let boin_map = HashMap::from([
             ('a', "あ"),
             ('i', "い"),
@@ -317,7 +317,9 @@ impl Ari2Nasi {
             roman_map,
         }
     }
+}
 
+impl Ari2Nasi {
     fn expand_okuri(
         &self,
         kana: &str,
@@ -374,12 +376,13 @@ impl Ari2Nasi {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::collections::HashSet;
+
+    use super::*;
 
     #[test]
     fn test_expand_okuri() -> anyhow::Result<()> {
-        let ari2nasi = Ari2Nasi::new();
+        let ari2nasi = Ari2Nasi::default();
         let got = ari2nasi.expand_okuri("あいしあw", &["愛し合".to_string()])?;
         assert_eq!(
             got.iter().collect::<HashSet<_>>(),
@@ -397,7 +400,7 @@ mod tests {
 
     #[test]
     fn test_expand_okuri_iu() -> anyhow::Result<()> {
-        let ari2nasi = Ari2Nasi::new();
+        let ari2nasi = Ari2Nasi::default();
         let got = ari2nasi.expand_okuri("いu", &["言".to_string()])?;
         assert_eq!(got, vec!(("いう".to_string(), vec!("言う".to_string())),),);
         Ok(())
