@@ -82,7 +82,7 @@ work/stats-vibrato-bigram.raw.trie: work/stats-vibrato-unigram.raw.trie work/sta
 		--corpus-dirs work/aozora_bunko/vibrato-ipadic/ \
 		work/stats-vibrato-unigram.raw.trie work/stats-vibrato-bigram.raw.trie
 
-data/stats-vibrato-bigram.trie: work/stats-vibrato-bigram.raw.trie work/stats-vibrato-unigram.raw.trie src/subcmd/learn_corpus.rs corpus/must.txt corpus/should.txt corpus/may.txt
+data/stats-vibrato-bigram.trie: work/stats-vibrato-bigram.raw.trie work/stats-vibrato-unigram.raw.trie src/subcmd/learn_corpus.rs corpus/must.txt corpus/should.txt corpus/may.txt data/system_dict.trie data/single_term.trie
 	cargo run --release -- learn-corpus \
 		--delta=0.5 \
 		--may-epochs=10 \
