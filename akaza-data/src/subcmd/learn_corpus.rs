@@ -31,7 +31,7 @@ impl LearningService {
         let system_kana_kanji_dict = KanaKanjiDict::load("data/system_dict.trie")?;
         let all_yomis = system_kana_kanji_dict.all_yomis().unwrap();
         let system_kana_trie = MarisaKanaTrie::build(all_yomis);
-        let segmenter = Segmenter::new(vec![Box::new(system_kana_trie)]);
+        let segmenter = Segmenter::new(vec![Arc::new(Mutex::new(system_kana_trie))]);
         let system_single_term_dict = KanaKanjiDict::load("data/single_term.trie")?;
 
         info!("unigram source file: {}", src_unigram);

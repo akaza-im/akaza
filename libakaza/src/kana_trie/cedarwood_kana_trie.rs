@@ -1,4 +1,5 @@
 use cedarwood::Cedar;
+use log::debug;
 
 use crate::kana_trie::base::KanaTrie;
 
@@ -40,6 +41,7 @@ impl CedarwoodKanaTrie {
 
 impl KanaTrie for CedarwoodKanaTrie {
     fn common_prefix_search(&self, query: &str) -> Vec<String> {
+        debug!("Search with CedarwoodKanaTrie: {}", query);
         self.cedar
             .common_prefix_iter(query)
             .map(|(n, _)| self.words[n as usize].clone())

@@ -160,7 +160,7 @@ mod tests {
             "c".to_string(),
         ]));
 
-        let graph_builder = Segmenter::new(vec![Box::new(kana_trie)]);
+        let graph_builder = Segmenter::new(vec![Arc::new(Mutex::new(kana_trie))]);
         let graph = graph_builder.build("abc", None);
         assert_eq!(
             graph,
@@ -208,7 +208,7 @@ mod tests {
             "し".to_string(),
         ]));
 
-        let graph_builder = Segmenter::new(vec![Box::new(kana_trie)]);
+        let graph_builder = Segmenter::new(vec![Arc::new(Mutex::new(kana_trie))]);
         let graph = graph_builder.build("わたし", None);
         assert_eq!(
             graph,

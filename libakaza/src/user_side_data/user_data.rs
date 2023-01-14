@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
 use anyhow::Result;
-use log::{info, trace, warn};
+use log::{debug, info, trace, warn};
 
 use crate::graph::word_node::WordNode;
+use crate::kana_trie::base::KanaTrie;
 use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 use crate::user_side_data::bigram_user_stats::BiGramUserStats;
 use crate::user_side_data::unigram_user_stats::UniGramUserStats;
@@ -21,7 +22,7 @@ pub struct UserData {
     // ここで MARISA ではなく Cedarwood を採用しているのは
     // - FFI していると std::marker::Send を実装できなくてスレッドをまたいだ処理が困難になるから
     // - 更新可能なトライ構造だから
-    kana_trie: Mutex<CedarwoodKanaTrie>,
+    pub(crate) kana_trie: Arc<Mutex<CedarwoodKanaTrie>>,
 
     unigram_user_stats: UniGramUserStats,
     bigram_user_stats: BiGramUserStats,
@@ -111,17 +112,21 @@ impl UserData {
             .filter_map(|it| it.split_once('/'))
             .map(|(_, yomi)| yomi.to_string())
             .collect::<Vec<_>>();
+        let yomi_len = yomis.len();
         let kana_trie = CedarwoodKanaTrie::build(yomis);
         let t2 = SystemTime::now();
         info!(
-            "Built kana trie in {}msec",
-            t2.duration_since(t1).unwrap().as_millis()
+            "Built kana trie in {}msec({} entries)",
+            t2.duration_since(t1).unwrap().as_millis(),
+            yomi_len
         );
+        // TODO remove this
+        debug!("{:?}", kana_trie.common_prefix_search("あぐりげーしょん"));
 
         UserData {
             unigram_user_stats,
             bigram_user_stats,
-            kana_trie: Mutex::new(kana_trie),
+            kana_trie: Arc::new(Mutex::new(kana_trie)),
             unigram_path: Some(unigram_path.clone()),
             bigram_path: Some(bigram_path.clone()),
             need_save: false,
@@ -134,7 +139,7 @@ impl UserData {
         self.unigram_user_stats.record_entries(kanji_kanas);
         self.bigram_user_stats.record_entries(kanji_kanas);
 
-        let kana_trie = self.kana_trie.get_mut().unwrap();
+        let mut kana_trie = self.kana_trie.lock().unwrap();
         for kanji_kanas in kanji_kanas {
             let Some((_, yomi)) = kanji_kanas.split_once('/') else {
                 continue;

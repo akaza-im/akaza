@@ -169,13 +169,16 @@ impl BigramWordViterbiEngineBuilder {
     ) -> Result<BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>> {
         let system_data_loader = SystemDataLoader::load(self.system_data_dir.as_str())?;
 
-        let segmenter = Segmenter::new(vec![Box::new(system_data_loader.system_kana_trie)]);
-
         let user_data = if let Some(d) = &self.user_data {
             d.clone()
         } else {
             Arc::new(Mutex::new(UserData::default()))
         };
+
+        let segmenter = Segmenter::new(vec![
+            Arc::new(Mutex::new(system_data_loader.system_kana_trie)),
+            user_data.lock().unwrap().kana_trie.clone(),
+        ]);
 
         let graph_builder = GraphBuilder::new_with_default_score(
             system_data_loader.system_kana_kanji_dict,

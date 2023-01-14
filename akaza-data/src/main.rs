@@ -94,6 +94,8 @@ struct EvaluateArgs {
 /// 動作確認する
 #[derive(Debug, clap::Args)]
 struct CheckArgs {
+    #[arg(short, long, default_value_t = false)]
+    user_data: bool,
     /// 変換したい読みがな
     yomi: String,
     expected: Option<String>,
@@ -221,7 +223,7 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::MakeSingleTerm(opt) => make_single_term(&opt.txt_file, &opt.trie_file),
         Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, &opt.system_data_dir),
-        Commands::Check(opt) => check(&opt.yomi, opt.expected),
+        Commands::Check(opt) => check(&opt.yomi, opt.expected, opt.user_data),
         Commands::LearnCorpus(opts) => learn_corpus(
             opts.delta,
             opts.may_epochs,
