@@ -2,19 +2,13 @@ use std::collections::HashMap;
 
 use anyhow::bail;
 
-use crate::romkan::RomKanConverter;
-
-// TODO remove
-const BOIN: [char; 5] = ['a', 'i', 'u', 'e', 'o'];
-
 pub struct Ari2Nasi {
-    romkan_converter: RomKanConverter,
     boin_map: HashMap<char, &'static str>,
     roman_map: HashMap<&'static str, &'static str>,
 }
 
 impl Ari2Nasi {
-    pub fn new(romkan_converter: RomKanConverter) -> Ari2Nasi {
+    pub fn new() -> Ari2Nasi {
         let boin_map = HashMap::from([
             ('a', "あ"),
             ('i', "い"),
@@ -268,6 +262,8 @@ impl Ari2Nasi {
             ("ro", "ろ"),
             ("xwa", "ゎ"),
             ("wa", "わ"),
+            ("wi", "うぃ"),
+            ("we", "うぇ"),
             ("wo", "を"),
             ("n", "ん"),
             ("n'", "ん"),
@@ -315,11 +311,8 @@ impl Ari2Nasi {
             ("zl", "→"),
             ("z]", "』"),
             ("z/", "・"),
-            ("wi", "うぃ"),
-            ("we", "うぇ"),
         ]);
         Ari2Nasi {
-            romkan_converter,
             boin_map,
             roman_map,
         }
@@ -345,7 +338,7 @@ impl Ari2Nasi {
                 // 子音の場合は母音の組み合わせによって全パターンつくって返す。
                 let mut result: Vec<(String, Vec<String>)> = Vec::new();
                 let yomi_base = &kana[0..kana.len() - last_char.len_utf8()].to_string();
-                for boin in BOIN {
+                for boin in self.boin_map.keys() {
                     let Some(okuri) = self
                         .roman_map.get((last_char.to_string() + boin.to_string().as_str()).as_str()) else {
                         // "wu" のような、平仮名に変換できない不正なローマ字パターンを生成しているケースもある。
@@ -382,26 +375,29 @@ impl Ari2Nasi {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashSet;
 
     #[test]
     fn test_expand_okuri() -> anyhow::Result<()> {
-        let ari2nasi = Ari2Nasi::new(RomKanConverter::default());
+        let ari2nasi = Ari2Nasi::new();
         let got = ari2nasi.expand_okuri("あいしあw", &["愛し合".to_string()])?;
         assert_eq!(
-            got,
+            got.iter().collect::<HashSet<_>>(),
             vec!(
                 ("あいしあわ".to_string(), vec!("愛し合わ".to_string())),
                 ("あいしあうぃ".to_string(), vec!("愛し合うぃ".to_string())),
                 ("あいしあうぇ".to_string(), vec!("愛し合うぇ".to_string())),
                 ("あいしあを".to_string(), vec!("愛し合を".to_string()))
-            ),
+            )
+            .iter()
+            .collect::<HashSet<_>>(),
         );
         Ok(())
     }
 
     #[test]
     fn test_expand_okuri_iu() -> anyhow::Result<()> {
-        let ari2nasi = Ari2Nasi::new(RomKanConverter::default());
+        let ari2nasi = Ari2Nasi::new();
         let got = ari2nasi.expand_okuri("いu", &["言".to_string()])?;
         assert_eq!(got, vec!(("いう".to_string(), vec!("言う".to_string())),),);
         Ok(())

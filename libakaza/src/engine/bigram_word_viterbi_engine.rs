@@ -307,7 +307,7 @@ impl BigramWordViterbiEngineBuilder {
         match dict.dict_type.as_str() {
             "skk" => {
                 let (ari, nasi) = parse_skkdict(src.to_string().as_str())?;
-                let ari2nasi = Ari2Nasi::new(RomKanConverter::new());
+                let ari2nasi = Ari2Nasi::new();
                 let ari = ari2nasi.ari2nasi(&ari)?;
                 let merged = merge_skkdict(vec![ari, nasi]);
                 info!("Loaded {}: {} entries.", dict.path, merged.len());
