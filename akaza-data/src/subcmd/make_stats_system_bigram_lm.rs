@@ -118,13 +118,13 @@ fn count_bigram(
             .collect::<Vec<_>>();
 
         for i in 0..(word_ids.len() - 1) {
-            let Some(maybe_word_id1) = word_ids[i] else {
+            let Some(word_id1) = word_ids[i] else {
                 continue;
             };
-            let Some(maybe_word_id2) = word_ids[i + 1] else {
+            let Some(word_id2) = word_ids[i + 1] else {
                 continue;
             };
-            *map.entry((*maybe_word_id1, *maybe_word_id2)).or_insert(0) += 1;
+            *map.entry((*word_id1, *word_id2)).or_insert(0) += 1;
         }
     }
     Ok(map)
