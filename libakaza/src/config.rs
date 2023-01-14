@@ -43,7 +43,7 @@ mod tests {
             config.dicts[0],
             DictConfig {
                 path: "/usr/share/skk/SKK-JISYO.okinawa".to_string(),
-                encoding: "euc-jp".to_string(),
+                encoding: Some("euc-jp".to_string()),
                 dict_type: "skk".to_string()
             }
         );

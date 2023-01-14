@@ -212,7 +212,6 @@ impl BigramWordViterbiEngineBuilder {
                 "Loaded configuration in {}msec.",
                 t2.duration_since(t1).unwrap().as_millis()
             );
-            // TODO 実際に辞書を使う処理を実装する
         }
 
         let segmenter = Segmenter::new(vec![
