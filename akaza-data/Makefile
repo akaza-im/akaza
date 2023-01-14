@@ -116,8 +116,11 @@ data/single_term.trie: src/subcmd/make_dict.rs
 		data/single_term.trie \
 		-vvv
 
-data/system_dict.trie: work/vibrato-ipadic.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_dict.rs
+data/system_dict.trie: work/vibrato-ipadic.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_dict.rs  corpus/must.txt corpus/should.txt corpus/may.txt
 	cargo run --release -- make-system-dict \
+		--corpus corpus/must.txt \
+		--corpus corpus/should.txt \
+		--corpus corpus/may.txt \
 		work/vibrato-ipadic.vocab \
 		work/system_dict.txt \
 		data/system_dict.trie \

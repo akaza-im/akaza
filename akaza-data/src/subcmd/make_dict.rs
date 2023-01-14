@@ -20,8 +20,9 @@ pub fn make_system_dict(
     txt_file: &str,
     trie_file: &str,
     vocab_file_path: Option<&str>,
+    corpus_files: Vec<String>,
 ) -> Result<()> {
-    system_dict::make_system_dict(txt_file, trie_file, vocab_file_path)?;
+    system_dict::make_system_dict(txt_file, trie_file, vocab_file_path, corpus_files)?;
     Ok(())
 }
 
@@ -44,6 +45,7 @@ mod system_dict {
         txt_file: &str,
         trie_file: &str,
         vocab_file_path: Option<&str>,
+        corpus_files: Vec<String>,
     ) -> anyhow::Result<()> {
         let dictionary_sources = [
             // 先の方が優先される
@@ -69,7 +71,8 @@ mod system_dict {
             );
         }
         dicts.push(
-            validate_dict(make_corpus_dict()?).with_context(|| "make_corpus_dict".to_string())?,
+            validate_dict(make_corpus_dict(corpus_files)?)
+                .with_context(|| "make_corpus_dict".to_string())?,
         );
         write_dict(txt_file, dicts)?;
         make_trie_dict(&txt_file.to_string(), &trie_file.to_string())?;
@@ -91,14 +94,16 @@ mod system_dict {
             .collect::<HashMap<String, Vec<String>>>()
     }
 
-    fn make_corpus_dict() -> Result<HashMap<String, Vec<String>>> {
+    fn make_corpus_dict(corpus_files: Vec<String>) -> Result<HashMap<String, Vec<String>>> {
         let mut words: Vec<(String, String)> = Vec::new();
 
-        let corpus_vec = read_corpus_file(Path::new("corpus/must.txt"))?;
-        for corpus in corpus_vec {
-            for node in corpus.nodes {
-                // info!("Add {}/{}", node.yomi, node.kanji);
-                words.push((node.yomi.to_string(), node.surface.to_string()));
+        for corpus_file in corpus_files {
+            let corpus_vec = read_corpus_file(Path::new(corpus_file.as_str()))?;
+            for corpus in corpus_vec {
+                for node in corpus.nodes {
+                    // info!("Add {}/{}", node.yomi, node.kanji);
+                    words.push((node.yomi.to_string(), node.surface.to_string()));
+                }
             }
         }
 

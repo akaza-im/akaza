@@ -68,6 +68,8 @@ enum Commands {
 #[derive(Debug, clap::Args)]
 /// システム辞書ファイルを作成する。
 struct MakeSystemDictArgs {
+    #[arg(short, long)]
+    corpus: Vec<String>,
     vocab_file: String,
     /// デバッグのための中間テキストファイル
     txt_file: String,
@@ -218,9 +220,12 @@ fn main() -> anyhow::Result<()> {
         .init();
 
     match args.command {
-        Commands::MakeSystemDict(opt) => {
-            make_system_dict(&opt.txt_file, &opt.trie_file, Some(opt.vocab_file.as_str()))
-        }
+        Commands::MakeSystemDict(opt) => make_system_dict(
+            &opt.txt_file,
+            &opt.trie_file,
+            Some(opt.vocab_file.as_str()),
+            opt.corpus,
+        ),
         Commands::MakeSingleTerm(opt) => make_single_term(&opt.txt_file, &opt.trie_file),
         Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, &opt.system_data_dir),
         Commands::Check(opt) => check(&opt.yomi, opt.expected, opt.user_data),
