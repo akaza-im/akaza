@@ -121,7 +121,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> LatticeGraph<U, B> {
     }
 
     pub(crate) fn get_node_cost(&self, node: &WordNode) -> f32 {
-        if let Some(user_cost) = self.user_data.lock().unwrap().get_unigram_cost(&node) {
+        if let Some(user_cost) = self.user_data.lock().unwrap().get_unigram_cost(node) {
             // use user's score. if it's exists.
             return user_cost;
         }
