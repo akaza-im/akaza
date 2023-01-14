@@ -10,7 +10,6 @@ use log::info;
 use log::trace;
 
 use libakaza::kana_kanji_dict::KanaKanjiDictBuilder;
-use libakaza::romkan::RomKanConverter;
 use libakaza::skk::ari2nasi::Ari2Nasi;
 use libakaza::skk::merge_skkdict::merge_skkdict;
 
@@ -57,7 +56,7 @@ mod system_dict {
             ("dict/SKK-JISYO.akaza", UTF_8),
         ];
         let mut dicts = Vec::new();
-        let ari2nasi = Ari2Nasi::new(RomKanConverter::default());
+        let ari2nasi = Ari2Nasi::new();
 
         for (path, encoding) in dictionary_sources {
             let (ari, nasi) = read_skkdict(Path::new(path), encoding)?;
@@ -187,7 +186,7 @@ mod single_term {
             ("skk-dev-dict/zipcode/SKK-JISYO.zipcode", EUC_JP),
         ];
         let mut dicts = Vec::new();
-        let ari2nasi = Ari2Nasi::new(RomKanConverter::default());
+        let ari2nasi = Ari2Nasi::new();
         for (path, encoding) in dictionary_sources {
             let (ari, nasi) = read_skkdict(Path::new(path), encoding)?;
             dicts.push(nasi);
