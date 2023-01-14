@@ -161,6 +161,10 @@ impl LearningService {
                         .system_bigram_lm
                         .get_edge_cost(word_id1, word_id2)
                         .unwrap_or(0_f32);
+                    info!(
+                        "Update bigram cost: {}={},{}={}, v={}",
+                        key1, word_id1, key2, word_id2, v
+                    );
                     self.system_bigram_lm.update(word_id1, word_id2, v - delta);
                 }
             }
@@ -198,16 +202,36 @@ impl LearningService {
             .iter()
             .map(|(key, (word_id, _))| (*word_id, key.to_string()))
             .collect::<HashMap<i32, String>>();
+        // info!("src_wordid2key: {:?}", src_wordid2key);
         for ((word_id1, word_id2), cost) in self.system_bigram_lm.as_hash_map() {
-            let word_id = src_wordid2key
-                .get(&word_id1)
-                .unwrap_or_else(|| panic!("Missing word_id in src_wordid2key: {}", word_id1));
-            let (new_word_id1, _) = new_unigram
-                .find(word_id)
-                .expect("Missing word_id in new_unigram");
-            let (new_word_id2, _) = new_unigram
-                .find(src_wordid2key.get(&word_id2).unwrap())
-                .unwrap();
+            // このへんで落ちるときはデータの整合性がとれてないことがあるので、work/ 以下のデータを一度全部作り直した方が
+            // 良いケースが多いです。work/ 以下を作り直すと良いです。
+
+            // KNOWN BUG:
+            // Unknown word_id が一種類出ます。が、なぜ出るのか不明。
+            // 一個ぐらいのデータがロストしてもここでは問題がないので後回し。
+
+            let Some(word1) = src_wordid2key
+                .get(&word_id1) else {
+                info!("Unknown word_id: {}", word_id1);
+                continue;
+            };
+            let Some((new_word_id1, _)) = new_unigram
+                .find(word1) else {
+                info!("Unknown word: {}", word1);
+                continue;
+            };
+
+            let Some(word2) = src_wordid2key
+                .get(&word_id2) else {
+                info!("Unknown word_id: {}", word_id2);
+                continue;
+            };
+
+            let Some((new_word_id2, _)) = new_unigram.find(word2) else {
+                info!("Unknown word: {}", word2);
+                continue;
+            };
             bigram_builder.add(new_word_id1, new_word_id2, cost);
         }
         // ↓本来なら現在のデータで再調整すべきだが、一旦元のものを使う。

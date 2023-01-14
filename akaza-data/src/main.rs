@@ -104,11 +104,11 @@ struct CheckArgs {
 struct LearnCorpusArgs {
     #[arg(short, long)]
     delta: f32,
-    #[arg(short, long, default_value_t = 10)]
+    #[arg(long, default_value_t = 10)]
     may_epochs: i32,
-    #[arg(short, long, default_value_t = 100)]
+    #[arg(long, default_value_t = 100)]
     should_epochs: i32,
-    #[arg(short, long, default_value_t = 1000)]
+    #[arg(long, default_value_t = 1000)]
     must_epochs: i32,
     may_corpus: String,
     should_corpus: String,

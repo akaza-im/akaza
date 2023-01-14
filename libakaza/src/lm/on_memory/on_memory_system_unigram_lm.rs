@@ -1,7 +1,8 @@
-use crate::lm::base::SystemUnigramLM;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+
+use crate::lm::base::SystemUnigramLM;
 
 pub struct OnMemorySystemUnigramLM {
     // word -> (word_id, cost)
@@ -32,6 +33,15 @@ impl OnMemorySystemUnigramLM {
         self.map
             .borrow_mut()
             .insert(word.to_string(), (word_id, cost));
+    }
+
+    pub fn reverse_lookup(&self, word_id: i32) -> Option<String> {
+        self.map
+            .borrow()
+            .iter()
+            .filter(|(_, (id, _))| *id == word_id)
+            .map(|(key, (_, _))| key.clone())
+            .next()
     }
 }
 
