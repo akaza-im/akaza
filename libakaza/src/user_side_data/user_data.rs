@@ -155,16 +155,19 @@ impl UserData {
         self.need_save = true;
     }
 
-    pub fn write_user_stats_file(&self) -> Result<()> {
-        info!("Saving user stats file");
-        if let Some(unigram_path) = &self.unigram_path {
-            write_user_stats_file(unigram_path, &self.unigram_user_stats.word_count)?;
+    pub fn write_user_stats_file(&mut self) -> Result<()> {
+        if self.need_save {
+            info!("Saving user stats file");
+            if let Some(unigram_path) = &self.unigram_path {
+                write_user_stats_file(unigram_path, &self.unigram_user_stats.word_count)?;
+            }
+            if let Some(bigram_path) = &self.bigram_path {
+                write_user_stats_file(bigram_path, &self.bigram_user_stats.word_count)?;
+            }
+
+            self.need_save = false;
         }
-        if let Some(bigram_path) = &self.bigram_path {
-            write_user_stats_file(bigram_path, &self.bigram_user_stats.word_count)?;
-        }
-        // ↓ TODO ここ更新しないと意味ない
-        // self.need_save = false;
+
         Ok(())
     }
 
