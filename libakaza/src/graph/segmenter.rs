@@ -1,8 +1,9 @@
 use std::collections::btree_map::{BTreeMap, Iter};
 use std::collections::HashSet;
 use std::ops::Range;
+use std::sync::{Arc, Mutex};
 
-use log::trace;
+use log::{debug, info, trace};
 
 use crate::kana_trie::base::KanaTrie;
 
@@ -36,11 +37,12 @@ impl SegmentationResult {
 }
 
 pub struct Segmenter {
-    tries: Vec<Box<dyn KanaTrie>>,
+    tries: Vec<Arc<Mutex<dyn KanaTrie>>>,
 }
 
 impl Segmenter {
-    pub fn new(tries: Vec<Box<dyn KanaTrie>>) -> Segmenter {
+    pub fn new(tries: Vec<Arc<Mutex<dyn KanaTrie>>>) -> Segmenter {
+        info!("Registering tries for Segmenter: {}", tries.len());
         Segmenter { tries }
     }
 
@@ -102,7 +104,8 @@ impl Segmenter {
 
             let mut candidates: HashSet<String> = HashSet::new();
             for trie in &self.tries {
-                let got = trie.common_prefix_search(yomi);
+                let got = trie.lock().unwrap().common_prefix_search(yomi);
+                debug!("Common prefix search: {:?}", got);
                 'insert: for word in got {
                     let ends_at = start_pos + word.len();
 
@@ -169,7 +172,7 @@ mod tests {
             "し".to_string(),
         ]);
 
-        let segmenter = Segmenter::new(vec![Box::new(kana_trie)]);
+        let segmenter = Segmenter::new(vec![Arc::new(Mutex::new(kana_trie))]);
         let graph = segmenter.build("わたし", None);
         assert_eq!(
             graph,
@@ -184,7 +187,7 @@ mod tests {
     fn test_without_kanatrie() {
         let kana_trie = MarisaKanaTrie::build(vec![]);
 
-        let segmenter = Segmenter::new(vec![Box::new(kana_trie)]);
+        let segmenter = Segmenter::new(vec![Arc::new(Mutex::new(kana_trie))]);
         let graph = segmenter.build("わたし", None);
         assert_eq!(
             graph,
@@ -208,7 +211,7 @@ mod tests {
             "し".to_string(),
         ]));
 
-        let segmenter = Segmenter::new(vec![Box::new(kana_trie)]);
+        let segmenter = Segmenter::new(vec![Arc::new(Mutex::new(kana_trie))]);
         let yomi = "わたし";
         // force_range に "たし" を指定する。
         let (i2, _) = yomi.char_indices().nth(1).unwrap();

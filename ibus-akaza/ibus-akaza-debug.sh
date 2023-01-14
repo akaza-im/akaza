@@ -10,4 +10,4 @@ exec 2>&1
 
 export RUST_BACKTRACE=4
 
-exec $BASEDIR/../target/debug/ibus-akaza --ibus -v
+exec $BASEDIR/../target/debug/ibus-akaza --ibus -vv
