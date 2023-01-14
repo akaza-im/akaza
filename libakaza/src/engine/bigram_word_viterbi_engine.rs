@@ -1,8 +1,7 @@
 use std::collections::vec_deque::VecDeque;
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufReader, Read};
 use std::ops::Range;
+use std::path::Path;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
@@ -26,7 +25,7 @@ use crate::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use crate::romkan::RomKanConverter;
 use crate::skk::ari2nasi::Ari2Nasi;
 use crate::skk::merge_skkdict::merge_skkdict;
-use crate::skk::skkdict::parse_skkdict;
+use crate::skk::skkdict::read_skkdict;
 use crate::user_side_data::user_data::UserData;
 
 pub struct SystemDataLoader {
@@ -300,17 +299,20 @@ impl BigramWordViterbiEngineBuilder {
             None => UTF_8,
         };
 
-        let file = File::open(dict.path.as_str())?;
-        let mut buf: Vec<u8> = Vec::new();
-        BufReader::new(file).read_to_end(&mut buf)?;
-        let (src, _, _) = encoding.decode(buf.as_slice());
         match dict.dict_type.as_str() {
             "skk" => {
-                let (ari, nasi) = parse_skkdict(src.to_string().as_str())?;
+                let t1 = SystemTime::now();
+                let (ari, nasi) = read_skkdict(Path::new(dict.path.as_str()), encoding)?;
                 let ari2nasi = Ari2Nasi::default();
                 let ari = ari2nasi.ari2nasi(&ari)?;
                 let merged = merge_skkdict(vec![ari, nasi]);
-                info!("Loaded {}: {} entries.", dict.path, merged.len());
+                let t2 = SystemTime::now();
+                info!(
+                    "Loaded {}: {} entries in {} msec",
+                    dict.path,
+                    merged.len(),
+                    t2.duration_since(t1).unwrap().as_millis()
+                );
                 Ok(merged)
             }
             _ => {
