@@ -114,14 +114,15 @@ fn main() -> Result<()> {
             difference.as_millis()
         );
 
+        // ユーザー辞書をバックグラウンドで保存するスレッド。
         thread::Builder::new()
             .name("user-data-save-thread".to_string())
             .spawn(move || {
-                let interval = time::Duration::from_secs(3);
+                let interval = time::Duration::from_secs(60);
 
                 // スレッド内で雑に例外投げるとスレッドとまっちゃうので丁寧めに処理する。
                 loop {
-                    if let Ok(data) = user_data.lock() {
+                    if let Ok(mut data) = user_data.lock() {
                         if let Err(e) = data.write_user_stats_file() {
                             warn!("Cannot save user stats file: {}", e);
                         }
