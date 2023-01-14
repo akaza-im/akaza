@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Mutex;
+use std::time::SystemTime;
+
+use anyhow::Result;
+use log::{info, trace, warn};
 
 use crate::graph::word_node::WordNode;
-use anyhow::Result;
-use log::{info, warn};
-
-use crate::kana_trie::crawdad_kana_trie::CrawdadKanaTrie;
+use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 use crate::user_side_data::bigram_user_stats::BiGramUserStats;
 use crate::user_side_data::unigram_user_stats::UniGramUserStats;
 use crate::user_side_data::user_stats_utils::{read_user_stats_file, write_user_stats_file};
@@ -17,9 +18,10 @@ use crate::user_side_data::user_stats_utils::{read_user_stats_file, write_user_s
 #[derive(Default)]
 pub struct UserData {
     /// 読み仮名のトライ。入力変換時に共通接頭辞検索するために使用。
-    // ここで MARISA ではなく Crawdad を採用しているのは、FFI していると std::marker::Send を実装できなくて
-    // スレッドをまたいだ処理が困難になるから、以上の理由はないです。
-    kana_trie: Mutex<CrawdadKanaTrie>,
+    // ここで MARISA ではなく Cedarwood を採用しているのは
+    // - FFI していると std::marker::Send を実装できなくてスレッドをまたいだ処理が困難になるから
+    // - 更新可能なトライ構造だから
+    kana_trie: Mutex<CedarwoodKanaTrie>,
 
     unigram_user_stats: UniGramUserStats,
     bigram_user_stats: BiGramUserStats,
@@ -98,13 +100,29 @@ impl UserData {
             }
         };
 
-        let kana_trie = match CrawdadKanaTrie::load(kana_trie_path) {
-            Ok(trie) => trie,
-            Err(err) => {
-                warn!("Cannot load kana trie: {} {}", kana_trie_path, err);
-                CrawdadKanaTrie::default()
-            }
-        };
+        // let kana_trie = match CedarwoodKanaTrie::load(kana_trie_path) {
+        //     Ok(trie) => trie,
+        //     Err(err) => {
+        //         warn!("Cannot load kana trie: {} {}", kana_trie_path, err);
+        //         CedarwoodKanaTrie::default()
+        //     }
+        // };
+
+        // cedarwood トライを構築する。
+        // キャッシュせずに動的に構築する方向性。
+        let t1 = SystemTime::now();
+        let yomis = unigram_user_stats
+            .word_count
+            .keys()
+            .filter_map(|it| it.split_once('/'))
+            .map(|(_, yomi)| yomi.to_string())
+            .collect::<Vec<_>>();
+        let kana_trie = CedarwoodKanaTrie::build(yomis);
+        let t2 = SystemTime::now();
+        info!(
+            "Built kana trie in {}msec",
+            t2.duration_since(t1).unwrap().as_millis()
+        );
 
         UserData {
             unigram_user_stats,
@@ -122,6 +140,21 @@ impl UserData {
     pub fn record_entries(&mut self, kanji_kanas: &[String]) {
         self.unigram_user_stats.record_entries(kanji_kanas);
         self.bigram_user_stats.record_entries(kanji_kanas);
+
+        let kana_trie = self.kana_trie.get_mut().unwrap();
+        for kanji_kanas in kanji_kanas {
+            let Some((_, yomi)) = kanji_kanas.split_once('/') else {
+                continue
+            };
+            if kana_trie.contains(yomi) {
+                trace!("Skip word: {}", yomi);
+                continue;
+            }
+            trace!("Record word to kana_trie: {}", yomi);
+            kana_trie.update(yomi);
+        }
+
+        self.need_save = true;
     }
 
     pub fn write_user_stats_file(&self) -> Result<()> {
@@ -132,6 +165,8 @@ impl UserData {
         if let Some(bigram_path) = &self.bigram_path {
             write_user_stats_file(bigram_path, &self.bigram_user_stats.word_count)?;
         }
+        // ↓ TODO ここ更新しないと意味ない
+        // self.need_save = false;
         Ok(())
     }
 
