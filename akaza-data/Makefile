@@ -42,7 +42,7 @@ work/aozora_bunko/vibrato-ipadic/_SUCCESS: src/corpus_reader/aozora_bunko.rs wor
 	cargo run --release -- tokenize-aozora-bunko-vibrato-ipadic work/vibrato/ipadic-mecab-2_7_0/system.dic aozorabunko_text/cards/ work/aozora_bunko/vibrato-ipadic/ -vv
 
 work/vibrato-ipadic.wfreq: work/jawiki/vibrato-ipadic/_SUCCESS src/subcmd/wfreq.rs work/aozora_bunko/vibrato-ipadic/_SUCCESS
-	cargo run --release -- wfreq work/jawiki/vibrato-ipadic/ work/aozora_bunko/vibrato-ipadic/ work/vibrato-ipadic.wfreq -vvv
+	cargo run --release -- wfreq work/jawiki/vibrato-ipadic/ work/aozora_bunko/vibrato-ipadic/ corpus/ work/vibrato-ipadic.wfreq -vvv
 
 # threshold が 16 なのはヒューリスティックなパラメータ設定による。
 # vocab ファイルを作る意味は、辞書の作成のためだけなので、わざわざ作らなくてもよいかもしれない。
@@ -73,12 +73,29 @@ work/jawiki/lindera-ipadic.vocab: work/jawiki/lindera-ipadic.wfreq src/subcmd/vo
 
 # 統計的仮名かな漢字変換のためのモデル作成処理
 
-data/stats-vibrato-unigram.trie: work/vibrato-ipadic.wfreq
-	cargo run --release -- make-stats-system-unigram-lm work/vibrato-ipadic.wfreq data/stats-vibrato-unigram.trie
+work/stats-vibrato-unigram.raw.trie: work/vibrato-ipadic.wfreq
+	cargo run --release -- make-stats-system-unigram-lm work/vibrato-ipadic.wfreq work/stats-vibrato-unigram.raw.trie
 
-data/stats-vibrato-bigram.trie: data/stats-vibrato-unigram.trie data/stats-vibrato-unigram.trie src/subcmd/make_stats_system_bigram_lm.rs
-	cargo run --release -- make-stats-system-bigram-lm --threshold=3 work/jawiki/vibrato-ipadic/ \
-		data/stats-vibrato-unigram.trie data/stats-vibrato-bigram.trie
+work/stats-vibrato-bigram.raw.trie: work/stats-vibrato-unigram.raw.trie work/stats-vibrato-unigram.raw.trie src/subcmd/make_stats_system_bigram_lm.rs work/aozora_bunko/vibrato-ipadic/_SUCCESS
+	cargo run --release -- make-stats-system-bigram-lm --threshold=3 \
+		--corpus-dirs work/jawiki/vibrato-ipadic/ \
+		--corpus-dirs work/aozora_bunko/vibrato-ipadic/ \
+		work/stats-vibrato-unigram.raw.trie work/stats-vibrato-bigram.raw.trie
+
+data/stats-vibrato-bigram.trie: work/stats-vibrato-bigram.raw.trie work/stats-vibrato-unigram.raw.trie src/subcmd/learn_corpus.rs corpus/must.txt corpus/should.txt corpus/may.txt data/system_dict.trie data/single_term.trie
+	cargo run --release -- learn-corpus \
+		--delta=0.5 \
+		--may-epochs=10 \
+		--should-epochs=100 \
+		--must-epochs=10000 \
+		corpus/may.txt \
+		corpus/should.txt \
+		corpus/must.txt \
+		work/stats-vibrato-unigram.raw.trie work/stats-vibrato-bigram.raw.trie \
+		data/stats-vibrato-unigram.trie data/stats-vibrato-bigram.trie \
+		-v
+
+data/stats-vibrato-unigram.trie: data/stats-vibrato-bigram.trie
 
 # -------------------------------------------------------------------------
 
