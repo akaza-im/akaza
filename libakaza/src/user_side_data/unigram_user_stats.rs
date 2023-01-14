@@ -1,14 +1,15 @@
 use std::collections::HashMap;
 
-// 加算スムージング用の定数。
-const ALPHA: f32 = 0.00001;
+use crate::cost::calc_cost;
 
 #[derive(Default)]
 pub(crate) struct UniGramUserStats {
     /// ユニーク単語数
-    unique_words: u32, // C
+    unique_words: u32,
+    // C
     /// 総単語出現数
-    total_words: u32, // V
+    total_words: u32,
+    // V
     /// その単語の出現頻度。「漢字/かな」がキー。
     pub(crate) word_count: HashMap<String, u32>,
 }
@@ -35,10 +36,7 @@ impl UniGramUserStats {
             return None;
         };
 
-        Some(-f32::log10(
-            ((*count as f32) + ALPHA)
-                / ((self.unique_words as f32) + ALPHA * (self.total_words as f32)),
-        ))
+        Some(calc_cost(*count, self.unique_words, self.total_words))
     }
 
     pub(crate) fn record_entries(&mut self, kanji_kanas: &[String]) {

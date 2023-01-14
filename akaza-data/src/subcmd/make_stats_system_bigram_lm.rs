@@ -6,15 +6,14 @@ use std::path::{Path, PathBuf};
 use anyhow::Result;
 use anyhow::{anyhow, Context};
 use chrono::Local;
+use libakaza::cost::calc_cost;
 use log::info;
 use rayon::prelude::*;
 
+use crate::utils::get_file_list;
 use libakaza::lm::base::{SystemBigramLM, SystemUnigramLM};
 use libakaza::lm::system_bigram::{MarisaSystemBigramLM, MarisaSystemBigramLMBuilder};
 use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
-
-use crate::subcmd::make_stats_system_unigram_lm::calc_score;
-use crate::utils::get_file_list;
 
 pub fn make_stats_system_bigram_lm(
     threshold: u32,
@@ -99,7 +98,7 @@ pub fn make_stats_system_bigram_lm(
         let c = merged.values().sum();
         // 単語の種類数
         let v = merged.keys().count();
-        let default_edge_cost = calc_score(0, c, v);
+        let default_edge_cost = calc_cost(0, c, v as u32);
         builder.set_default_edge_cost(default_edge_cost);
         info!("Default score for 0: {}", default_edge_cost);
     }
@@ -121,7 +120,10 @@ fn make_score_map(threshold: u32, wordcnt: &HashMap<(i32, i32), u32>) -> HashMap
     wordcnt
         .iter()
         .filter(|(_word, cnt)| *cnt > &threshold)
-        .map(|(word, cnt)| (*word, calc_score(*cnt, c, v)))
+        .map(|(word, cnt)| {
+            let n_words = *cnt;
+            (*word, calc_cost(n_words, c, v as u32))
+        })
         .collect::<HashMap<_, _>>()
 }
 

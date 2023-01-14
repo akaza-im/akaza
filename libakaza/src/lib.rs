@@ -3,6 +3,7 @@
 extern crate core;
 
 pub mod corpus;
+pub mod cost;
 pub mod engine;
 pub mod extend_clause;
 pub mod graph;

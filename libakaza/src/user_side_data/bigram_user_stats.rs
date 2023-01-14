@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-const ALPHA: f32 = 0.00001;
+use crate::cost::calc_cost;
 
 #[derive(Default)]
 pub(crate) struct BiGramUserStats {
@@ -36,10 +36,7 @@ impl BiGramUserStats {
         let Some(count) = self.word_count.get(key.as_str()) else {
             return None;
         };
-        Some(-f32::log10(
-            ((*count as f32) + ALPHA)
-                / ((self.unique_words as f32) + ALPHA + (self.total_words as f32)),
-        ))
+        Some(calc_cost(*count, self.unique_words, self.total_words))
     }
 
     pub(crate) fn record_entries(&mut self, kanjis: &[String]) {
