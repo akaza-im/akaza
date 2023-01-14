@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use anyhow::Result;
 use anyhow::{anyhow, Context};
 use chrono::Local;
+use libakaza::cost::calc_cost;
 use log::info;
 use rayon::prelude::*;
 
