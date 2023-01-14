@@ -14,6 +14,7 @@ pub fn check(yomi: &str, expected: Option<String>, user_data: bool) -> anyhow::R
         info!("Enabled user data");
         let user_data = UserData::load_from_default_path()?;
         builder.user_data(Arc::new(Mutex::new(user_data)));
+        builder.load_user_config(true);
     }
     let engine = builder.build()?;
     let lattice = engine.to_lattice(yomi, None)?;

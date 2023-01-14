@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -12,6 +12,7 @@ use log::trace;
 use libakaza::kana_kanji_dict::KanaKanjiDictBuilder;
 use libakaza::romkan::RomKanConverter;
 use libakaza::skk::ari2nasi::Ari2Nasi;
+use libakaza::skk::merge_skkdict::merge_skkdict;
 
 use crate::utils::copy_snapshot;
 
@@ -246,37 +247,6 @@ fn validate_dict(dict: HashMap<String, Vec<String>>) -> Result<HashMap<String, V
         }
     }
     Ok(dict)
-}
-
-fn merge_skkdict(dicts: Vec<HashMap<String, Vec<String>>>) -> BTreeMap<String, Vec<String>> {
-    let mut result: BTreeMap<String, Vec<String>> = BTreeMap::new();
-
-    // 取りうるキーをリストアップする
-    let mut keys: HashSet<String> = HashSet::new();
-    for dic in &dicts {
-        for key in dic.keys() {
-            keys.insert(key.to_string());
-        }
-    }
-
-    // それぞれのキーについて、候補をリストアップする
-    for key in keys {
-        let mut kanjis: Vec<String> = Vec::new();
-
-        for dic in &dicts {
-            if let Some(kkk) = dic.get(&key.to_string()) {
-                for k in kkk {
-                    if !kanjis.contains(k) {
-                        kanjis.push(k.clone());
-                    }
-                }
-            }
-        }
-
-        result.insert(key, kanjis);
-    }
-
-    result
 }
 
 fn make_trie_dict(txtfile: &String, triefile: &String) -> Result<()> {

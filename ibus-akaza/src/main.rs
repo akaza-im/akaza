@@ -105,6 +105,7 @@ fn main() -> Result<()> {
         let akaza =
             BigramWordViterbiEngineBuilder::new("/home/tokuhirom/dev/akaza/akaza-data/data")
                 .user_data(user_data.clone())
+                .load_user_config(true)
                 .build()?;
         let mut ac = AkazaContext::new(akaza);
         let new_sys_time = SystemTime::now();

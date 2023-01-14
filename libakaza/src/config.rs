@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::BufReader;
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct Config {
     pub dicts: Vec<DictConfig>,
 }
@@ -23,11 +23,12 @@ impl Config {
     }
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct DictConfig {
-    path: String,
-    encoding: String,
-    dict_type: String,
+    pub path: String,
+    /// Default: UTF-8
+    pub encoding: Option<String>,
+    pub dict_type: String,
 }
 
 #[cfg(test)]
