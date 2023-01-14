@@ -61,20 +61,20 @@ impl WordNode {
     }
     pub fn new(
         start_pos: i32,
-        kanji: &str,
+        surface: &str,
         yomi: &str,
         word_id_and_score: Option<(i32, f32)>,
     ) -> WordNode {
         assert!(
-            !kanji.is_empty(),
+            !surface.is_empty(),
             "Kanji shouldn't be empty: {}/{}",
-            kanji,
+            surface,
             yomi
         );
 
         WordNode {
             start_pos,
-            surface: kanji.to_string(),
+            surface: surface.to_string(),
             yomi: yomi.to_string(),
             cost: 0_f32,
             word_id_and_score,

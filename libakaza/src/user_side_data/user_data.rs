@@ -3,10 +3,10 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
-use crate::graph::graph_resolver::Candidate;
 use anyhow::Result;
 use log::{debug, info, warn};
 
+use crate::graph::graph_resolver::Candidate;
 use crate::graph::word_node::WordNode;
 use crate::kana_trie::base::KanaTrie;
 use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
@@ -170,13 +170,63 @@ impl UserData {
         Ok(())
     }
 
-    pub fn get_unigram_cost(&self, kanji: &str, yomi: &str) -> Option<f32> {
-        self.unigram_user_stats
-            .get_cost(format!("{}/{}", kanji, yomi))
+    pub fn get_unigram_cost(&self, node: &WordNode) -> Option<f32> {
+        self.unigram_user_stats.get_cost(node.key())
     }
 
     pub fn get_bigram_cost(&self, node1: &WordNode, node2: &WordNode) -> Option<f32> {
         self.bigram_user_stats
             .get_cost(node1.key().as_str(), node2.key().as_str())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use log::LevelFilter;
+
+    #[test]
+    fn test_record_entries() {
+        let _ = env_logger::builder()
+            .filter_level(LevelFilter::Trace)
+            .is_test(true)
+            .try_init();
+
+        let mut user_data = UserData::default();
+        let cost1 = user_data.get_unigram_cost(&WordNode::new(
+            0,
+            "アグリゲーション",
+            "あぐりげーしょん",
+            None,
+        ));
+        assert_eq!(cost1, None);
+        user_data.record_entries(&[Candidate::new(
+            "あぐりげーしょん",
+            "アグリゲーション",
+            0_f32,
+        )]);
+        let cost2 = user_data
+            .get_unigram_cost(&WordNode::new(
+                0,
+                "アグリゲーション",
+                "あぐりげーしょん",
+                None,
+            ))
+            .unwrap();
+        user_data.record_entries(&[Candidate::new(
+            "あぐりげーしょん",
+            "アグリゲーション",
+            0_f32,
+        )]);
+        let cost3 = user_data
+            .get_unigram_cost(&WordNode::new(
+                0,
+                "アグリゲーション",
+                "あぐりげーしょん",
+                None,
+            ))
+            .unwrap();
+        info!("{}, {}", cost2, cost3);
+        assert!(cost2 > cost3);
     }
 }
