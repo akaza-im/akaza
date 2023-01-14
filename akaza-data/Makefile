@@ -6,7 +6,8 @@ DESTDIR ?=
 all: data/stats-vibrato-bigram.trie \
 	 data/stats-vibrato-bigram.trie \
 	 data/single_term.trie \
-	 data/system_dict.trie
+	 data/system_dict.trie \
+	 data/kana.trie
 
 # -------------------------------------------------------------------------
 
