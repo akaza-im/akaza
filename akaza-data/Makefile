@@ -76,8 +76,10 @@ work/jawiki/lindera-ipadic.vocab: work/jawiki/lindera-ipadic.wfreq src/subcmd/vo
 work/stats-vibrato-unigram.raw.trie: work/vibrato-ipadic.wfreq
 	cargo run --release -- make-stats-system-unigram-lm work/vibrato-ipadic.wfreq work/stats-vibrato-unigram.raw.trie
 
-work/stats-vibrato-bigram.raw.trie: work/stats-vibrato-unigram.raw.trie work/stats-vibrato-unigram.raw.trie src/subcmd/make_stats_system_bigram_lm.rs
-	cargo run --release -- make-stats-system-bigram-lm --threshold=3 work/jawiki/vibrato-ipadic/ \
+work/stats-vibrato-bigram.raw.trie: work/stats-vibrato-unigram.raw.trie work/stats-vibrato-unigram.raw.trie src/subcmd/make_stats_system_bigram_lm.rs work/aozora_bunko/vibrato-ipadic/_SUCCESS
+	cargo run --release -- make-stats-system-bigram-lm --threshold=3 \
+		--corpus-dirs work/jawiki/vibrato-ipadic/ \
+		--corpus-dirs work/aozora_bunko/vibrato-ipadic/ \
 		data/stats-vibrato-unigram.trie work/stats-vibrato-bigram.raw.trie
 
 data/stats-vibrato-bigram.trie: work/stats-vibrato-bigram.raw.trie work/stats-vibrato-unigram.raw.trie src/subcmd/learn_corpus.rs corpus/must.txt corpus/should.txt corpus/may.txt

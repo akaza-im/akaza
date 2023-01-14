@@ -17,7 +17,7 @@ use crate::utils::get_file_list;
 
 pub fn make_stats_system_bigram_lm(
     threshold: u32,
-    corpus_dir: &String,
+    corpus_dirs: &Vec<String>,
     unigram_trie_file: &str,
     bigram_trie_file: &str,
 ) -> Result<()> {
@@ -36,7 +36,13 @@ pub fn make_stats_system_bigram_lm(
         .collect::<HashMap<_, _>>();
 
     // 次に、コーパスをスキャンして bigram を読み取る。
-    let file_list = get_file_list(Path::new(corpus_dir))?;
+    let mut file_list: Vec<PathBuf> = Vec::new();
+    for corpus_dir in corpus_dirs {
+        let list = get_file_list(Path::new(corpus_dir))?;
+        for x in list {
+            file_list.push(x)
+        }
+    }
     let results = file_list
         .par_iter()
         .map(|src| count_bigram(src, &unigram_map))
