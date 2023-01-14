@@ -80,7 +80,7 @@ work/stats-vibrato-bigram.raw.trie: work/stats-vibrato-unigram.raw.trie work/sta
 	cargo run --release -- make-stats-system-bigram-lm --threshold=3 \
 		--corpus-dirs work/jawiki/vibrato-ipadic/ \
 		--corpus-dirs work/aozora_bunko/vibrato-ipadic/ \
-		data/stats-vibrato-unigram.trie work/stats-vibrato-bigram.raw.trie
+		work/stats-vibrato-unigram.raw.trie work/stats-vibrato-bigram.raw.trie
 
 data/stats-vibrato-bigram.trie: work/stats-vibrato-bigram.raw.trie work/stats-vibrato-unigram.raw.trie src/subcmd/learn_corpus.rs corpus/must.txt corpus/should.txt corpus/may.txt
 	cargo run --release -- learn-corpus \

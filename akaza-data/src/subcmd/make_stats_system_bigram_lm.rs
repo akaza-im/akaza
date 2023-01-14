@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use anyhow::{anyhow, Context};
+use chrono::Local;
 use log::info;
 use rayon::prelude::*;
 
@@ -34,6 +35,10 @@ pub fn make_stats_system_bigram_lm(
         .iter()
         .map(|(key, (word_id, _cost))| (key.clone(), *word_id))
         .collect::<HashMap<_, _>>();
+    let reverse_unigram_map = unigram_map
+        .iter()
+        .map(|(key, word_id)| (*word_id, key.to_string()))
+        .collect::<HashMap<_, _>>();
 
     // 次に、コーパスをスキャンして bigram を読み取る。
     let mut file_list: Vec<PathBuf> = Vec::new();
@@ -49,6 +54,7 @@ pub fn make_stats_system_bigram_lm(
         .collect::<Vec<_>>();
 
     // 集計した結果をマージする
+    info!("Merging");
     let mut merged: HashMap<(i32, i32), u32> = HashMap::new();
     for result in results {
         let result = result?;
@@ -60,7 +66,27 @@ pub fn make_stats_system_bigram_lm(
     // スコアを計算する
     let scoremap = make_score_map(threshold, &merged);
 
+    // dump bigram text file.
+    let dumpfname = format!(
+        "work/dump/bigram-{}.txt",
+        Local::now().format("%Y%m%d-%H%M%S")
+    );
+    println!("Dump to text file: {}", dumpfname);
+    let mut file = File::create(dumpfname)?;
+    for ((word_id1, word_id2), cnt) in &merged {
+        let Some(word1) = reverse_unigram_map.get(word_id1) else {
+            continue
+        };
+        let Some(word2) = reverse_unigram_map.get(word_id2) else {
+            continue
+        };
+        if *cnt > 16 {
+            file.write_fmt(format_args!("{}\t{}\t{}\n", cnt, word1, word2))?;
+        }
+    }
+
     // 結果を書き込む
+    info!("Generating trie file");
     let mut builder = MarisaSystemBigramLMBuilder::default();
     for ((word_id1, word_id2), score) in scoremap {
         builder.add(word_id1, word_id2, score);
@@ -77,6 +103,7 @@ pub fn make_stats_system_bigram_lm(
         builder.set_default_edge_cost(default_edge_cost);
         info!("Default score for 0: {}", default_edge_cost);
     }
+    info!("Writing {}", bigram_trie_file);
     builder.save(bigram_trie_file)?;
 
     validation(unigram_trie_file, bigram_trie_file)?;
@@ -112,6 +139,8 @@ fn count_bigram(
         if words.len() < 2 {
             continue;
         }
+        // スライドしながらよんでいくので、同じ単語を二回ひかなくていいように
+        // 調整する
         let word_ids = words
             .iter()
             .map(|word| unigram_lm.get(&word.to_string()))
@@ -124,6 +153,13 @@ fn count_bigram(
             let Some(word_id2) = word_ids[i + 1] else {
                 continue;
             };
+            // info!(
+            //     "Register {}={}/{}={}",
+            //     words[i],
+            //     word_id1,
+            //     words[i + 1],
+            //     word_id2
+            // );
             *map.entry((*word_id1, *word_id2)).or_insert(0) += 1;
         }
     }
