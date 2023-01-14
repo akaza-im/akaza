@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
 use chrono::Local;
+use libakaza::cost::calc_cost;
 use log::info;
 
 use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLMBuilder;
@@ -38,10 +39,10 @@ pub fn make_stats_system_unigram_lm(srcpath: &str, dstpath: &str) -> anyhow::Res
     let c = wordcnt.values().sum();
     // 単語の種類数
     let v = wordcnt.keys().count();
-    builder.set_default_cost_for_short(calc_score(1, c, v));
-    builder.set_default_cost(calc_score(0, c, v));
-    info!("Score for word count 1: {}", calc_score(1, c, v));
-    info!("Score for word count 0: {}", calc_score(0, c, v));
+    builder.set_default_cost_for_short(calc_cost(1, c, v as u32));
+    builder.set_default_cost(calc_cost(0, c, v as u32));
+    info!("Score for word count 1: {}", calc_cost(1, c, v as u32));
+    info!("Score for word count 0: {}", calc_cost(0, c, v as u32));
 
     println!("Writing {}", dstpath);
     builder.save(dstpath)?;
@@ -103,13 +104,11 @@ fn make_score_map(wordcnt: &HashMap<String, u32>) -> HashMap<String, f32> {
     let v = wordcnt.keys().count();
     wordcnt
         .iter()
-        .map(|(word, cnt)| (word.clone(), calc_score(*cnt, c, v)))
+        .map(|(word, cnt)| {
+            let n_words = *cnt;
+            (word.clone(), calc_cost(n_words, c, v as u32))
+        })
         .collect::<HashMap<_, _>>()
-}
-
-pub fn calc_score(n_words: u32, c: u32, v: usize) -> f32 {
-    let alpha = 0.00001;
-    -f32::log10(((n_words as f32) + alpha) / ((c as f32) + alpha * (v as f32)))
 }
 
 fn parse_wfreq(src_file: &str, threshold: u32) -> anyhow::Result<HashMap<String, u32>> {
