@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::cost::calc_cost;
+use crate::graph::graph_resolver::Candidate;
 
 #[derive(Default)]
 pub(crate) struct BiGramUserStats {
@@ -39,21 +40,21 @@ impl BiGramUserStats {
         Some(calc_cost(*count, self.unique_words, self.total_words))
     }
 
-    pub(crate) fn record_entries(&mut self, kanjis: &[String]) {
-        if kanjis.len() < 2 {
+    pub(crate) fn record_entries(&mut self, candidates: &[Candidate]) {
+        if candidates.len() < 2 {
             return;
         }
 
         // bigram
-        for i in 1..kanjis.len() {
-            let Some(kanji1) = kanjis.get(i - 1) else {
+        for i in 1..candidates.len() {
+            let Some(candidate1) = candidates.get(i - 1) else {
                 continue;
             };
-            let Some(kanji2) = kanjis.get(i) else {
+            let Some(candidate2) = candidates.get(i) else {
                 continue;
             };
 
-            let key = kanji1.clone() + "\t" + kanji2;
+            let key = candidate1.key() + "\t" + candidate2.key().as_str();
             if let Some(cnt) = self.word_count.get(&key) {
                 self.word_count.insert(key, cnt + 1);
             } else {

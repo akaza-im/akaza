@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::cost::calc_cost;
+use crate::graph::graph_resolver::Candidate;
 
 #[derive(Default)]
 pub(crate) struct UniGramUserStats {
@@ -39,12 +40,13 @@ impl UniGramUserStats {
         Some(calc_cost(*count, self.unique_words, self.total_words))
     }
 
-    pub(crate) fn record_entries(&mut self, kanji_kanas: &[String]) {
-        for kanji_kana in kanji_kanas {
-            if let Some(i) = self.word_count.get(kanji_kana) {
-                self.word_count.insert(kanji_kana.clone(), i + 1);
+    pub(crate) fn record_entries(&mut self, candidates: &[Candidate]) {
+        for candidate in candidates {
+            let key = candidate.key();
+            if let Some(i) = self.word_count.get(&key) {
+                self.word_count.insert(key, i + 1);
             } else {
-                self.word_count.insert(kanji_kana.clone(), 1);
+                self.word_count.insert(key, 1);
                 self.unique_words += 1;
             }
             self.total_words += 1;

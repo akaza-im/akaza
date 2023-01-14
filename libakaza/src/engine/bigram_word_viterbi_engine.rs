@@ -63,8 +63,8 @@ pub struct BigramWordViterbiEngine<U: SystemUnigramLM, B: SystemBigramLM> {
 }
 
 impl<U: SystemUnigramLM, B: SystemBigramLM> HenkanEngine for BigramWordViterbiEngine<U, B> {
-    fn learn(&mut self, surface_kanas: &[String]) {
-        self.user_data.lock().unwrap().record_entries(surface_kanas);
+    fn learn(&mut self, candidates: &[Candidate]) {
+        self.user_data.lock().unwrap().record_entries(candidates);
     }
 
     fn convert(
