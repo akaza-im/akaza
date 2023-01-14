@@ -58,7 +58,7 @@ mod tests {
             "わた".to_string(),
             "わし".to_string(),
             "ほげほげ".to_string(),
-        ])?;
+        ]);
         assert_eq!(
             trie.common_prefix_search("わたしのきもち"),
             vec!("わた", "わたし")
