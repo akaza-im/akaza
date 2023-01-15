@@ -9,7 +9,7 @@ use log::info;
 use regex::Regex;
 
 use crate::dict::merge_dict::merge_dict;
-use crate::skk::ari2nasi::Ari2Nasi;
+use crate::dict::skk::ari2nasi::Ari2Nasi;
 
 enum ParserState {
     OkuriAri,

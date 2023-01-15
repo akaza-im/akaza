@@ -10,7 +10,7 @@ mod tests {
     use kelp::{hira2kata, ConvOption};
     use regex::Regex;
 
-    use libakaza::skk::skkdict::{parse_skkdict, read_skkdict};
+    use libakaza::dict::skk::read::{parse_skkdict, read_skkdict};
 
     /// そうは読まないでしょ、というような読み方のものをいくつか登録しておく。
     /// (このテストは kytea が読み間違えなくなったら通る)

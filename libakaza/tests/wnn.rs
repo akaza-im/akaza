@@ -6,6 +6,7 @@ mod tests {
 
     use anyhow::Result;
     use encoding_rs::UTF_8;
+    use libakaza::dict::skk::read::read_skkdict;
     use log::LevelFilter;
 
     use libakaza::engine::base::HenkanEngine;
@@ -15,7 +16,6 @@ mod tests {
     use libakaza::graph::graph_resolver::Candidate;
     use libakaza::lm::system_bigram::MarisaSystemBigramLM;
     use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
-    use libakaza::skk::skkdict::read_skkdict;
 
     fn load_akaza() -> Result<BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>>
     {

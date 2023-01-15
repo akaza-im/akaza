@@ -9,7 +9,7 @@ use log::{error, info};
 
 use crate::config::DictConfig;
 use crate::dict::merge_dict::merge_dict;
-use crate::skk::skkdict::read_skkdict;
+use crate::dict::skk::read::read_skkdict;
 
 pub fn load_dicts(dict_configs: &Vec<DictConfig>) -> Result<HashMap<String, Vec<String>>> {
     let mut dicts: Vec<HashMap<String, Vec<String>>> = Vec::new();

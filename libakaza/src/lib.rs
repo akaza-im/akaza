@@ -13,7 +13,6 @@ pub mod kana;
 pub mod kana_trie;
 pub mod lm;
 pub mod romkan;
-pub mod skk;
 mod tinylisp;
 pub mod trie;
 pub mod user_side_data;

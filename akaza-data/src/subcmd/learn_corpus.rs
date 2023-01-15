@@ -8,6 +8,7 @@ use encoding_rs::UTF_8;
 use log::{debug, info};
 
 use libakaza::corpus::{read_corpus_file, FullAnnotationCorpus};
+use libakaza::dict::skk::read::read_skkdict;
 use libakaza::graph::graph_builder::GraphBuilder;
 use libakaza::graph::graph_resolver::GraphResolver;
 use libakaza::graph::segmenter::Segmenter;
@@ -17,7 +18,6 @@ use libakaza::lm::on_memory::on_memory_system_bigram_lm::OnMemorySystemBigramLM;
 use libakaza::lm::on_memory::on_memory_system_unigram_lm::OnMemorySystemUnigramLM;
 use libakaza::lm::system_bigram::{MarisaSystemBigramLM, MarisaSystemBigramLMBuilder};
 use libakaza::lm::system_unigram_lm::{MarisaSystemUnigramLM, MarisaSystemUnigramLMBuilder};
-use libakaza::skk::skkdict::read_skkdict;
 use libakaza::user_side_data::user_data::UserData;
 
 struct LearningService {

@@ -25,8 +25,8 @@ mod system_dict {
     use anyhow::{bail, Context};
 
     use libakaza::corpus::read_corpus_file;
-    use libakaza::dict::write::write_skk_dict;
-    use libakaza::skk::skkdict::read_skkdict;
+    use libakaza::dict::skk::read::read_skkdict;
+    use libakaza::dict::skk::write::write_skk_dict;
 
     use super::*;
 
