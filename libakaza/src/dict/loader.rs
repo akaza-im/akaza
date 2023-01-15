@@ -8,7 +8,7 @@ use encoding_rs::{EUC_JP, UTF_8};
 use log::{error, info};
 
 use crate::config::DictConfig;
-use crate::skk::merge_skkdict::merge_skkdict;
+use crate::dict::merge_dict::merge_dict;
 use crate::skk::skkdict::read_skkdict;
 
 pub fn load_dicts(dict_configs: &Vec<DictConfig>) -> Result<HashMap<String, Vec<String>>> {
@@ -26,8 +26,7 @@ pub fn load_dicts(dict_configs: &Vec<DictConfig>) -> Result<HashMap<String, Vec<
             }
         }
     }
-    // TODO merge_skkdict は merge_dict とかに名前を変えたい
-    Ok(merge_skkdict(dicts))
+    Ok(merge_dict(dicts))
 }
 
 pub fn load_dict(dict: &DictConfig) -> Result<HashMap<String, Vec<String>>> {

@@ -4,14 +4,14 @@ use std::io::Write;
 
 use log::info;
 
-use crate::skk::merge_skkdict::merge_skkdict;
+use crate::dict::merge_dict::merge_dict;
 
 pub fn write_skk_dict(
     ofname: &str,
     dicts: Vec<HashMap<String, Vec<String>>>,
 ) -> anyhow::Result<()> {
     info!("Writing {}", ofname);
-    let merged_dict = merge_skkdict(dicts);
+    let merged_dict = merge_dict(dicts);
     {
         let mut wfp = File::create(ofname)?;
         wfp.write_all(";; okuri-ari entries.\n".as_bytes())?;

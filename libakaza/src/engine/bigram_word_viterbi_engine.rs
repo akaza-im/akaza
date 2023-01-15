@@ -10,6 +10,7 @@ use log::{info, warn};
 
 use crate::config::Config;
 use crate::dict::loader::load_dicts;
+use crate::dict::merge_dict::merge_dict;
 use crate::engine::base::HenkanEngine;
 use crate::graph::graph_builder::GraphBuilder;
 use crate::graph::graph_resolver::{Candidate, GraphResolver};
@@ -20,7 +21,6 @@ use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 use crate::lm::system_bigram::MarisaSystemBigramLM;
 use crate::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use crate::romkan::RomKanConverter;
-use crate::skk::merge_skkdict::merge_skkdict;
 use crate::user_side_data::user_data::UserData;
 
 pub struct SystemDataLoader {
@@ -208,12 +208,12 @@ impl BigramWordViterbiEngineBuilder {
             (dicts, single_term, kana_trie)
         };
         let dict = if let Some(dd) = &self.dicts {
-            merge_skkdict(vec![dict, dd.clone()])
+            merge_dict(vec![dict, dd.clone()])
         } else {
             dict
         };
         let single_term = if let Some(dd) = &self.single_term {
-            merge_skkdict(vec![single_term, dd.clone()])
+            merge_dict(vec![single_term, dd.clone()])
         } else {
             single_term
         };

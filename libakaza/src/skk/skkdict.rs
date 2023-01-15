@@ -8,8 +8,8 @@ use encoding_rs::Encoding;
 use log::info;
 use regex::Regex;
 
+use crate::dict::merge_dict::merge_dict;
 use crate::skk::ari2nasi::Ari2Nasi;
-use crate::skk::merge_skkdict::merge_skkdict;
 
 enum ParserState {
     OkuriAri,
@@ -77,7 +77,7 @@ pub fn parse_skkdict(src: &str) -> Result<HashMap<String, Vec<String>>> {
 
     let ari2nasi = Ari2Nasi::default();
     let ari = ari2nasi.ari2nasi(&ari)?;
-    Ok(merge_skkdict(vec![ari, nasi]))
+    Ok(merge_dict(vec![ari, nasi]))
 }
 
 #[cfg(test)]

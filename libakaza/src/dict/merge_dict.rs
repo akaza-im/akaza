@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-pub fn merge_skkdict(dicts: Vec<HashMap<String, Vec<String>>>) -> HashMap<String, Vec<String>> {
+pub fn merge_dict(dicts: Vec<HashMap<String, Vec<String>>>) -> HashMap<String, Vec<String>> {
     let mut result: HashMap<String, Vec<String>> = HashMap::new();
 
     for dict in dicts {
@@ -20,8 +20,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_merge_skkdict() {
-        let got = merge_skkdict(vec![
+    fn test_merge_dict() {
+        let got = merge_dict(vec![
             HashMap::from([("ご".to_string(), vec!["語".to_string()])]),
             HashMap::from([
                 ("ご".to_string(), vec!["後".to_string(), "碁".to_string()]),
