@@ -14,7 +14,7 @@ use crate::skk::skkdict::read_skkdict;
 pub fn load_dicts(dict_configs: &Vec<DictConfig>) -> Result<HashMap<String, Vec<String>>> {
     let mut dicts: Vec<HashMap<String, Vec<String>>> = Vec::new();
     for dict_config in dict_configs {
-        match load_dict(&dict_config) {
+        match load_dict(dict_config) {
             Ok(dict) => {
                 // TODO 辞書をうまく使う
                 dicts.push(dict);

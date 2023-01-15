@@ -73,7 +73,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> GraphBuilder<U, B> {
                     for kanji in kanjis {
                         let node = WordNode::new(
                             (end_pos - segmented_yomi.len()) as i32,
-                            &kanji,
+                            kanji,
                             segmented_yomi,
                             self.system_unigram_lm
                                 .find((kanji.to_string() + "/" + segmented_yomi).as_str()),
@@ -106,7 +106,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> GraphBuilder<U, B> {
                         for surface in surfaces {
                             let node = WordNode::new(
                                 (end_pos - segmented_yomi.len()) as i32,
-                                &surface,
+                                surface,
                                 segmented_yomi,
                                 self.system_unigram_lm
                                     .find((surface.to_string() + "/" + segmented_yomi).as_str()),

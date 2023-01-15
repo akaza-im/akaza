@@ -5,7 +5,7 @@ pub fn merge_skkdict(dicts: Vec<HashMap<String, Vec<String>>>) -> HashMap<String
 
     for dict in dicts {
         for (yomi, kanjis) in dict {
-            let target = result.entry(yomi).or_insert(Vec::new());
+            let target = result.entry(yomi).or_default();
             for kanji in kanjis {
                 target.push(kanji);
             }
