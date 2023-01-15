@@ -3,6 +3,8 @@ name: Generate the model file
 on:
   push:
     branches: [ master ]
+    tags:
+      - 'v*'
 
 jobs:
   build:
