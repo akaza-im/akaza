@@ -75,6 +75,8 @@ struct MakeSystemDictArgs {
 /// 変換精度を評価する
 #[derive(Debug, clap::Args)]
 struct EvaluateArgs {
+    #[arg(long)]
+    load_user_config: bool,
     /// コーパスが格納されているディレクトリ
     corpus_dir: String,
     /// 評価に利用するシステムデータのディレクトリ
@@ -204,7 +206,9 @@ fn main() -> anyhow::Result<()> {
         Commands::MakeSystemDict(opt) => {
             make_system_dict(&opt.txt_file, Some(opt.vocab_file.as_str()), opt.corpus)
         }
-        Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, &opt.system_data_dir),
+        Commands::Evaluate(opt) => {
+            evaluate(&opt.corpus_dir, &opt.system_data_dir, opt.load_user_config)
+        }
         Commands::Check(opt) => check(&opt.yomi, opt.expected, opt.user_data),
         Commands::LearnCorpus(opts) => learn_corpus(
             opts.delta,
