@@ -1,10 +1,14 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::path::Path;
 use std::time::SystemTime;
 
 use anyhow::Context;
+use encoding_rs::{EUC_JP, UTF_8};
 use log::info;
 
+use libakaza::dict::merge_dict::merge_dict;
+use libakaza::dict::skk::read::read_skkdict;
 use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 
@@ -44,7 +48,11 @@ impl SaigenRitsu {
 /// にのっている評価方法を採用。
 ///
 /// なぜこうしているかというと、mozc の論文にのっている BLEU を使用する方式より実装が楽だからです!
-pub fn evaluate(corpus_dir: &String, system_data_dir: &str) -> anyhow::Result<()> {
+pub fn evaluate(
+    corpus_dir: &String,
+    system_data_dir: &str,
+    load_user_config: bool,
+) -> anyhow::Result<()> {
     /*
     # corpus.0.txt デバッグ用のファイル
     # corpus.1.txt メイン(候補割り当ても含む)
@@ -62,7 +70,14 @@ pub fn evaluate(corpus_dir: &String, system_data_dir: &str) -> anyhow::Result<()
         "corpus.5.txt",
     ];
 
-    let akaza = BigramWordViterbiEngineBuilder::new(system_data_dir, None, None).build()?;
+    let dicts = merge_dict(vec![
+        read_skkdict(Path::new("skk-dev-dict/SKK-JISYO.L"), EUC_JP)?,
+        read_skkdict(Path::new("data/SKK-JISYO.akaza"), UTF_8)?,
+    ]);
+
+    let akaza = BigramWordViterbiEngineBuilder::new(system_data_dir, Some(dicts), None)
+        .load_user_config(load_user_config)
+        .build()?;
 
     let mut good_cnt = 0;
     let mut bad_cnt = 0;
