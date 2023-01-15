@@ -160,13 +160,12 @@ impl Segmenter {
 
 #[cfg(test)]
 mod tests {
-    use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
-
     use super::*;
+    use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 
     #[test]
     fn test_simple() {
-        let kana_trie = MarisaKanaTrie::build(vec![
+        let kana_trie = CedarwoodKanaTrie::build(vec![
             "わたし".to_string(),
             "わた".to_string(),
             "し".to_string(),
@@ -185,7 +184,7 @@ mod tests {
 
     #[test]
     fn test_without_kanatrie() {
-        let kana_trie = MarisaKanaTrie::build(vec![]);
+        let kana_trie = CedarwoodKanaTrie::build(vec![]);
 
         let segmenter = Segmenter::new(vec![Arc::new(Mutex::new(kana_trie))]);
         let graph = segmenter.build("わたし", None);
@@ -204,7 +203,7 @@ mod tests {
         // env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "info");
         // env_logger::builder().is_test(true).try_init()?;
 
-        let kana_trie = MarisaKanaTrie::build(Vec::from([
+        let kana_trie = CedarwoodKanaTrie::build(Vec::from([
             "わたし".to_string(),
             "わた".to_string(),
             "わ".to_string(),

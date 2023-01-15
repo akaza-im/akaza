@@ -31,18 +31,9 @@ TODO: 書き直し
 * ここの足切りラインを大きくすると変換精度は高まるが、生成データがでかくなる。
 * 現在は、「ペパボ」が入るという理由で 16 回以上登場したものとしている。
 
-### system_language_model.trie
-
-a. bin/dumpngram.py で、vocab と text から、jawiki.1gram.json/jawiki.2gram.json を生成する。
-b. json から system_language_model.trie を生成する。
-
-### system_dict.trie
-
-a. system_dict.trie を jawiki.vocab から生成する。
-
 ## 生成されるデータ
 
-### system_language_model.trie
+### stats-vibrato-bigram.trie, stats-vibrato-unigram.trie
 
 marisa-trie 形式のデータです。1gram, 2gram のデータが素直に格納されています。
 

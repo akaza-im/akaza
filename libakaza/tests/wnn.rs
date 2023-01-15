@@ -2,6 +2,7 @@
 #[cfg(feature = "it")]
 mod tests {
     use std::collections::vec_deque::VecDeque;
+    use std::path::Path;
 
     use anyhow::Result;
     use log::LevelFilter;
@@ -17,6 +18,7 @@ mod tests {
     fn load_akaza() -> Result<BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>>
     {
         let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/../akaza-data/data/";
+        assert!(Path::new(datadir.as_str()).exists());
         BigramWordViterbiEngineBuilder::new(datadir.as_str()).build()
     }
 

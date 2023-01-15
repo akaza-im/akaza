@@ -12,6 +12,7 @@ use std::io::BufReader;
 #[derive(Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct Config {
     pub dicts: Vec<DictConfig>,
+    pub single_term: Option<Vec<DictConfig>>,
 }
 
 impl Config {

@@ -148,8 +148,7 @@ mod tests {
 
     use crate::graph::graph_builder::GraphBuilder;
     use crate::graph::segmenter::{SegmentationResult, Segmenter};
-    use crate::kana_kanji_dict::{KanaKanjiDict, KanaKanjiDictBuilder};
-    use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
+    use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
     use crate::lm::system_bigram::MarisaSystemBigramLMBuilder;
     use crate::lm::system_unigram_lm::MarisaSystemUnigramLMBuilder;
     use crate::user_side_data::user_data::UserData;
@@ -160,7 +159,7 @@ mod tests {
     fn test_resolver() -> Result<()> {
         let _ = env_logger::builder().is_test(true).try_init();
 
-        let kana_trie = MarisaKanaTrie::build(Vec::from([
+        let kana_trie = CedarwoodKanaTrie::build(Vec::from([
             "abc".to_string(),
             "ab".to_string(),
             "c".to_string(),
@@ -178,8 +177,6 @@ mod tests {
 
         // -1  0  1  2
         // BOS a  b  c
-        let dict_builder = KanaKanjiDictBuilder::default();
-        let dict = dict_builder.build();
         let system_unigram_lm = MarisaSystemUnigramLMBuilder::default()
             .set_default_cost(20_f32)
             .set_default_cost_for_short(19_f32)
@@ -189,7 +186,7 @@ mod tests {
             .build()?;
         let user_data = UserData::default();
         let graph_builder = GraphBuilder::new_with_default_score(
-            dict,
+            HashMap::new(),
             Default::default(),
             Arc::new(Mutex::new(user_data)),
             Rc::new(system_unigram_lm),
@@ -208,7 +205,7 @@ mod tests {
     fn test_kana_kanji() -> Result<()> {
         let _ = env_logger::builder().is_test(true).try_init();
 
-        let kana_trie = MarisaKanaTrie::build(Vec::from([
+        let kana_trie = CedarwoodKanaTrie::build(Vec::from([
             "わたし".to_string(),
             "わた".to_string(),
             "し".to_string(),
@@ -224,12 +221,13 @@ mod tests {
             ]))
         );
 
-        let mut dict_builder = KanaKanjiDictBuilder::default();
-        dict_builder.add("わたし", "私/渡し");
+        let dict = HashMap::from([(
+            "わたし".to_string(),
+            vec!["私".to_string(), "渡し".to_string()],
+        )]);
 
         let yomi = "わたし".to_string();
 
-        let dict = dict_builder.build();
         let mut system_unigram_lm_builder = MarisaSystemUnigramLMBuilder::default();
         let system_unigram_lm = system_unigram_lm_builder
             .set_default_cost(19_f32)
@@ -243,7 +241,7 @@ mod tests {
         user_data.record_entries(&[Candidate::new("わたし", "私", 0_f32)]);
         let graph_builder = GraphBuilder::new_with_default_score(
             dict,
-            KanaKanjiDict::default(),
+            HashMap::new(),
             Arc::new(Mutex::new(user_data)),
             Rc::new(system_unigram_lm),
             Rc::new(system_bigram_lm),

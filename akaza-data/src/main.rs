@@ -7,8 +7,7 @@ use crate::subcmd::dump_bigram_dict::dump_bigram_dict;
 use crate::subcmd::dump_unigram_dict::dump_unigram_dict;
 use crate::subcmd::evaluate::evaluate;
 use crate::subcmd::learn_corpus::learn_corpus;
-use crate::subcmd::make_dict::{make_single_term, make_system_dict};
-use crate::subcmd::make_kana_trie::make_kana_trie;
+use crate::subcmd::make_dict::make_system_dict;
 use crate::subcmd::make_stats_system_bigram_lm::make_stats_system_bigram_lm;
 use crate::subcmd::make_stats_system_unigram_lm::make_stats_system_unigram_lm;
 use crate::subcmd::tokenize::{
@@ -48,11 +47,9 @@ enum Commands {
     Vocab(VocabArgs),
     #[clap(arg_required_else_help = true)]
     MakeSystemDict(MakeSystemDictArgs),
-    MakeSingleTerm(MakeSingleTermArgs),
     #[clap(arg_required_else_help = true)]
     MakeStatsSystemBigramLM(MakeStatsSystemBigramLMArgs),
     MakeStatsSystemUnigramLM(MakeStatsSystemUnigramLMArgs),
-    MakeKanaTrie(MakeKanaTrieArgs),
 
     #[clap(arg_required_else_help = true)]
     Evaluate(EvaluateArgs),
@@ -73,15 +70,6 @@ struct MakeSystemDictArgs {
     vocab_file: String,
     /// デバッグのための中間テキストファイル
     txt_file: String,
-    /// 出力先のトライが格納されるファイル
-    trie_file: String,
-}
-
-/// 単項辞書を作成する
-#[derive(Debug, clap::Args)]
-struct MakeSingleTermArgs {
-    txt_file: String,
-    trie_file: String,
 }
 
 /// 変換精度を評価する
@@ -179,13 +167,6 @@ struct MakeStatsSystemBigramLMArgs {
     bigram_trie_file: String,
 }
 
-/// かなトライを作成する
-#[derive(Debug, clap::Args)]
-struct MakeKanaTrieArgs {
-    system_dict_file: String,
-    trie_file: String,
-}
-
 /// ユニグラム辞書ファイルをダンプする
 #[derive(Debug, clap::Args)]
 struct DumpUnigramDictArgs {
@@ -220,13 +201,9 @@ fn main() -> anyhow::Result<()> {
         .init();
 
     match args.command {
-        Commands::MakeSystemDict(opt) => make_system_dict(
-            &opt.txt_file,
-            &opt.trie_file,
-            Some(opt.vocab_file.as_str()),
-            opt.corpus,
-        ),
-        Commands::MakeSingleTerm(opt) => make_single_term(&opt.txt_file, &opt.trie_file),
+        Commands::MakeSystemDict(opt) => {
+            make_system_dict(&opt.txt_file, Some(opt.vocab_file.as_str()), opt.corpus)
+        }
         Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, &opt.system_data_dir),
         Commands::Check(opt) => check(&opt.yomi, opt.expected, opt.user_data),
         Commands::LearnCorpus(opts) => learn_corpus(
@@ -274,9 +251,6 @@ fn main() -> anyhow::Result<()> {
         ),
         Commands::MakeStatsSystemUnigramLM(opt) => {
             make_stats_system_unigram_lm(opt.src_file.as_str(), opt.dst_file.as_str())
-        }
-        Commands::MakeKanaTrie(opt) => {
-            make_kana_trie(opt.system_dict_file.as_str(), opt.trie_file.as_str())
         }
         Commands::DumpUnigramDict(opt) => dump_unigram_dict(opt.dict.as_str()),
         Commands::DumpBigramDict(opt) => {

@@ -1,39 +1,30 @@
 use std::collections::vec_deque::VecDeque;
 use std::collections::HashMap;
 use std::ops::Range;
-use std::path::Path;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
-use anyhow::{bail, Result};
-use encoding_rs::{EUC_JP, UTF_8};
-use log::{error, info, warn};
+use anyhow::Result;
+use log::{info, warn};
 
-use crate::config::{Config, DictConfig};
+use crate::config::Config;
+use crate::dict::loader::load_dicts;
 use crate::engine::base::HenkanEngine;
 use crate::graph::graph_builder::GraphBuilder;
 use crate::graph::graph_resolver::{Candidate, GraphResolver};
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::Segmenter;
-use crate::kana_kanji_dict::KanaKanjiDict;
 use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
-use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 use crate::lm::system_bigram::MarisaSystemBigramLM;
 use crate::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use crate::romkan::RomKanConverter;
-use crate::skk::ari2nasi::Ari2Nasi;
-use crate::skk::merge_skkdict::merge_skkdict;
-use crate::skk::skkdict::read_skkdict;
 use crate::user_side_data::user_data::UserData;
 
 pub struct SystemDataLoader {
     pub system_unigram_lm: MarisaSystemUnigramLM,
     pub system_bigram_lm: MarisaSystemBigramLM,
-    pub system_kana_kanji_dict: KanaKanjiDict,
-    pub system_single_term_dict: KanaKanjiDict,
-    pub system_kana_trie: MarisaKanaTrie,
 }
 
 impl SystemDataLoader {
@@ -45,19 +36,9 @@ impl SystemDataLoader {
             (system_data_dir.to_string() + "/stats-vibrato-bigram.trie").as_str(),
         )?;
 
-        let system_kana_kanji_dict =
-            KanaKanjiDict::load((system_data_dir.to_string() + "/system_dict.trie").as_str())?;
-        let system_single_term_dict =
-            KanaKanjiDict::load((system_data_dir.to_string() + "/single_term.trie").as_str())?;
-        let system_kana_trie =
-            MarisaKanaTrie::load((system_data_dir.to_string() + "/kana.trie").as_str())?;
-
         Ok(SystemDataLoader {
             system_unigram_lm,
             system_bigram_lm,
-            system_kana_kanji_dict,
-            system_single_term_dict,
-            system_kana_trie,
         })
     }
 }
@@ -81,7 +62,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> HenkanEngine for BigramWordViterbiEn
         &self,
         yomi: &str,
         force_ranges: Option<&[Range<usize>]>,
-    ) -> anyhow::Result<Vec<VecDeque<Candidate>>> {
+    ) -> Result<Vec<VecDeque<Candidate>>> {
         // 先頭が大文字なケースと、URL っぽい文字列のときは変換処理を実施しない。
         if (!yomi.is_empty()
             && yomi.chars().next().unwrap().is_ascii_uppercase()
@@ -192,14 +173,15 @@ impl BigramWordViterbiEngineBuilder {
             Arc::new(Mutex::new(UserData::default()))
         };
 
-        {
+        // このへんごちゃごちゃしすぎ。
+        let (dict, kana_trie) = {
             let t1 = SystemTime::now();
             let config = if self.load_user_config {
                 self.load_config()?
             } else {
                 Config::default()
             };
-            let dicts = self.load_dicts(config)?;
+            let dicts = load_dicts(config)?;
             // 次に、辞書を元に、トライを作成していく。
             let yomis = dicts.keys();
             let mut kana_trie = CedarwoodKanaTrie::default();
@@ -211,16 +193,17 @@ impl BigramWordViterbiEngineBuilder {
                 "Loaded configuration in {}msec.",
                 t2.duration_since(t1).unwrap().as_millis()
             );
-        }
+            (dicts, kana_trie)
+        };
 
         let segmenter = Segmenter::new(vec![
-            Arc::new(Mutex::new(system_data_loader.system_kana_trie)),
+            Arc::new(Mutex::new(kana_trie)),
             user_data.lock().unwrap().kana_trie.clone(),
         ]);
 
         let graph_builder = GraphBuilder::new_with_default_score(
-            system_data_loader.system_kana_kanji_dict,
-            system_data_loader.system_single_term_dict,
+            dict,
+            HashMap::new(),
             user_data.clone(),
             Rc::new(system_data_loader.system_unigram_lm),
             Rc::new(system_data_loader.system_bigram_lm),
@@ -239,7 +222,7 @@ impl BigramWordViterbiEngineBuilder {
         })
     }
 
-    fn load_config(&self) -> anyhow::Result<Config> {
+    fn load_config(&self) -> Result<Config> {
         let basedir = xdg::BaseDirectories::with_prefix("akaza")?;
         let configfile = basedir.get_config_file("config.yml");
         let config = match Config::load_from_file(configfile.to_str().unwrap()) {
@@ -259,69 +242,5 @@ impl BigramWordViterbiEngineBuilder {
             config
         );
         Ok(config)
-    }
-
-    pub fn load_dicts(&self, config: Config) -> Result<HashMap<String, Vec<String>>> {
-        let mut dicts: Vec<HashMap<String, Vec<String>>> = Vec::new();
-        for dict in config.dicts {
-            match self.load_dict(&dict) {
-                Ok(dict) => {
-                    // TODO 辞書をうまく使う
-                    dicts.push(dict);
-                }
-                Err(err) => {
-                    error!("Cannot load {:?}. {}", dict, err);
-                    // 一顧の辞書の読み込みに失敗しても、他の辞書は読み込むべきなので
-                    // 処理は続行する
-                }
-            }
-        }
-        Ok(merge_skkdict(dicts))
-    }
-
-    pub fn load_dict(&self, dict: &DictConfig) -> Result<HashMap<String, Vec<String>>> {
-        info!(
-            "Loading dictionary: {} {:?} {}",
-            dict.path, dict.encoding, dict.dict_type
-        );
-        let encoding = match &dict.encoding {
-            Some(encoding) => match encoding.to_ascii_lowercase().as_str() {
-                "euc-jp" | "euc_jp" => EUC_JP,
-                "utf-8" => UTF_8,
-                _ => {
-                    bail!(
-                        "Unknown enconding in configuration: {} for {}",
-                        encoding,
-                        dict.path
-                    )
-                }
-            },
-            None => UTF_8,
-        };
-
-        match dict.dict_type.as_str() {
-            "skk" => {
-                let t1 = SystemTime::now();
-                let (ari, nasi) = read_skkdict(Path::new(dict.path.as_str()), encoding)?;
-                let ari2nasi = Ari2Nasi::default();
-                let ari = ari2nasi.ari2nasi(&ari)?;
-                let merged = merge_skkdict(vec![ari, nasi]);
-                let t2 = SystemTime::now();
-                info!(
-                    "Loaded {}: {} entries in {} msec",
-                    dict.path,
-                    merged.len(),
-                    t2.duration_since(t1).unwrap().as_millis()
-                );
-                Ok(merged)
-            }
-            _ => {
-                bail!(
-                    "Unknown dictionary type: {} for {}",
-                    dict.dict_type,
-                    dict.path
-                );
-            }
-        }
     }
 }
