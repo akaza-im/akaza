@@ -11,6 +11,7 @@ use anyhow::Result;
 use clap::Parser;
 use log::{error, info, warn};
 
+use crate::config::AKAZA_DATA_DIR;
 use ibus_sys::core::ibus_main;
 use ibus_sys::engine::IBusEngine;
 use ibus_sys::glib::{gchar, guint};
@@ -21,6 +22,7 @@ use crate::context::AkazaContext;
 use crate::wrapper_bindings::{ibus_akaza_init, ibus_akaza_set_callback};
 
 mod commands;
+mod config;
 mod context;
 mod input_mode;
 mod keymap;
@@ -101,15 +103,10 @@ fn main() -> Result<()> {
     unsafe {
         let sys_time = SystemTime::now();
         let user_data = load_user_data();
-        // TODO fix path
-        let akaza = BigramWordViterbiEngineBuilder::new(
-            "/home/tokuhirom/dev/akaza/akaza-data/data",
-            None,
-            None,
-        )
-        .user_data(user_data.clone())
-        .load_user_config(true)
-        .build()?;
+        let akaza = BigramWordViterbiEngineBuilder::new(AKAZA_DATA_DIR, None, None)
+            .user_data(user_data.clone())
+            .load_user_config(true)
+            .build()?;
         let mut ac = AkazaContext::new(akaza);
         let new_sys_time = SystemTime::now();
         let difference = new_sys_time.duration_since(sys_time)?;
