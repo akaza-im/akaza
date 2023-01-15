@@ -125,6 +125,10 @@ mod system_dict {
                 // 全角空白はいってるのはおかしい
                 continue;
             }
+            if yomi.is_empty() {
+                // よみがないのはおかしい。
+                continue;
+            }
             words.push((yomi.to_string(), surface.to_string()));
         }
         Ok(grouping_words(words))
@@ -133,6 +137,9 @@ mod system_dict {
 
 fn validate_dict(dict: HashMap<String, Vec<String>>) -> Result<HashMap<String, Vec<String>>> {
     for (kana, surfaces) in dict.iter() {
+        if kana.is_empty() {
+            bail!("Kana must not be empty: {:?}", surfaces);
+        }
         let kana_cnt = kana.chars().count();
         for surface in surfaces {
             if surface.is_empty() {

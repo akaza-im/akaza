@@ -9,7 +9,7 @@ use libakaza::user_side_data::user_data::UserData;
 pub fn check(yomi: &str, expected: Option<String>, user_data: bool) -> anyhow::Result<()> {
     let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/data/";
 
-    let mut builder = BigramWordViterbiEngineBuilder::new(&datadir);
+    let mut builder = BigramWordViterbiEngineBuilder::new(&datadir, None, None);
     if user_data {
         info!("Enabled user data");
         let user_data = UserData::load_from_default_path()?;

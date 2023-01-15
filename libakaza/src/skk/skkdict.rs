@@ -71,6 +71,7 @@ pub fn parse_skkdict(src: &str) -> Result<HashMap<String, Vec<String>>> {
             .map(|s| comment_regex.replace(s, "").to_string())
             .filter(|it| !it.is_empty())
             .collect();
+        assert!(!yomi.is_empty(), "yomi must not empty: line={}", line);
         target.insert(yomi.to_string(), surfaces);
     }
 

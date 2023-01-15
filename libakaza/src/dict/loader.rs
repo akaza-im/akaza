@@ -7,20 +7,20 @@ use anyhow::Result;
 use encoding_rs::{EUC_JP, UTF_8};
 use log::{error, info};
 
-use crate::config::{Config, DictConfig};
+use crate::config::DictConfig;
 use crate::skk::merge_skkdict::merge_skkdict;
 use crate::skk::skkdict::read_skkdict;
 
-pub fn load_dicts(config: Config) -> Result<HashMap<String, Vec<String>>> {
+pub fn load_dicts(dict_configs: &Vec<DictConfig>) -> Result<HashMap<String, Vec<String>>> {
     let mut dicts: Vec<HashMap<String, Vec<String>>> = Vec::new();
-    for dict in config.dicts {
-        match load_dict(&dict) {
+    for dict_config in dict_configs {
+        match load_dict(&dict_config) {
             Ok(dict) => {
                 // TODO 辞書をうまく使う
                 dicts.push(dict);
             }
             Err(err) => {
-                error!("Cannot load {:?}. {}", dict, err);
+                error!("Cannot load {:?}. {}", dict_config, err);
                 // 一顧の辞書の読み込みに失敗しても、他の辞書は読み込むべきなので
                 // 処理は続行する
             }

@@ -20,6 +20,7 @@ use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 use crate::lm::system_bigram::MarisaSystemBigramLM;
 use crate::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use crate::romkan::RomKanConverter;
+use crate::skk::merge_skkdict::merge_skkdict;
 use crate::user_side_data::user_data::UserData;
 
 pub struct SystemDataLoader {
@@ -139,19 +140,29 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> BigramWordViterbiEngine<U, B> {
 
 pub struct BigramWordViterbiEngineBuilder {
     system_data_dir: String,
-    load_user_config: bool,
     user_data: Option<Arc<Mutex<UserData>>>,
+    load_user_config: bool,
+    dicts: Option<HashMap<String, Vec<String>>>,
+    single_term: Option<HashMap<String, Vec<String>>>,
 }
 
 impl BigramWordViterbiEngineBuilder {
-    pub fn new(system_data_dir: &str) -> BigramWordViterbiEngineBuilder {
+    pub fn new(
+        system_data_dir: &str,
+        dicts: Option<HashMap<String, Vec<String>>>,
+        single_term: Option<HashMap<String, Vec<String>>>,
+    ) -> BigramWordViterbiEngineBuilder {
         BigramWordViterbiEngineBuilder {
             system_data_dir: system_data_dir.to_string(),
-            load_user_config: false,
             user_data: None,
+            load_user_config: false,
+            dicts,
+            single_term,
         }
     }
 
+    // TODO: ユーザー設定を読むかどうかの責任は、Engine ではなく EngineFactory 的なクラスを用意して
+    // 責務を移管する。
     pub fn load_user_config(&mut self, load_user_config: bool) -> &mut Self {
         self.load_user_config = load_user_config;
         self
@@ -173,28 +184,47 @@ impl BigramWordViterbiEngineBuilder {
             Arc::new(Mutex::new(UserData::default()))
         };
 
-        // このへんごちゃごちゃしすぎ。
-        let (dict, kana_trie) = {
+        // TODO このへんごちゃごちゃしすぎ。
+        let (dict, single_term, mut kana_trie) = {
             let t1 = SystemTime::now();
             let config = if self.load_user_config {
                 self.load_config()?
             } else {
                 Config::default()
             };
-            let dicts = load_dicts(config)?;
+            let dicts = load_dicts(&config.dicts)?;
+            let single_term = if let Some(st) = &config.single_term {
+                load_dicts(st)?
+            } else {
+                HashMap::new()
+            };
             // 次に、辞書を元に、トライを作成していく。
-            let yomis = dicts.keys();
-            let mut kana_trie = CedarwoodKanaTrie::default();
-            for yomi in yomis {
-                kana_trie.update(yomi.as_str());
-            }
+            let kana_trie = CedarwoodKanaTrie::default();
             let t2 = SystemTime::now();
             info!(
                 "Loaded configuration in {}msec.",
                 t2.duration_since(t1).unwrap().as_millis()
             );
-            (dicts, kana_trie)
+            (dicts, single_term, kana_trie)
         };
+        let dict = if let Some(dd) = &self.dicts {
+            merge_skkdict(vec![dict, dd.clone()])
+        } else {
+            dict
+        };
+        let single_term = if let Some(dd) = &self.single_term {
+            merge_skkdict(vec![single_term, dd.clone()])
+        } else {
+            single_term
+        };
+        for yomi in dict.keys() {
+            assert!(!yomi.is_empty());
+            kana_trie.update(yomi.as_str());
+        }
+        for yomi in single_term.keys() {
+            assert!(!yomi.is_empty());
+            kana_trie.update(yomi.as_str());
+        }
 
         let segmenter = Segmenter::new(vec![
             Arc::new(Mutex::new(kana_trie)),
@@ -203,7 +233,7 @@ impl BigramWordViterbiEngineBuilder {
 
         let graph_builder = GraphBuilder::new_with_default_score(
             dict,
-            HashMap::new(),
+            single_term,
             user_data.clone(),
             Rc::new(system_data_loader.system_unigram_lm),
             Rc::new(system_data_loader.system_bigram_lm),
