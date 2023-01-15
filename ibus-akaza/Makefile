@@ -2,8 +2,9 @@ PREFIX ?= /usr
 SYSCONFDIR ?= /etc
 DATADIR ?= $(PREFIX)/share
 DESTDIR ?=
+AKAZA_DATA_DIR ?= $(DATADIR)/akaza/
 
-all: akaza.xml
+all: akaza.xml config.h src/config.rs
 
 #   ibus_akaza/config.py: ibus_akaza/config.py.in
 #   	sed -e "s:@SYSCONFDIR@:$(SYSCONFDIR):g" \
@@ -11,15 +12,25 @@ all: akaza.xml
 #   		-e "s:@DICTIONARYDIR@:$(DESTDIR)/$(DATADIR)/ibus-akaza/dictionary:g" \
 #   		$< > $@
 
+src/config.rs: src/config.rs.in
+	sed \
+	    -e "s:@AKAZA_DATA_DIR@:$(AKAZA_DATA_DIR):g" \
+	    -e "s:@DATADIR@:$(DATADIR)/:g" $< > $@
+
+
+config.h: config.h.in
+	sed \
+	    -e "s:@DATADIR@:$(DATADIR)/:g" $< > $@
+
 akaza.xml: akaza.xml.in
 	sed \
 	    -e "s:@BINARY@:$(PREFIX)/bin/ibus-akaza:g" \
-	    -e "s:@DATADIR@:$(DATADIR)/ibus-akaza/:g" $< > $@
+	    -e "s:@DATADIR@:$(DATADIR)/:g" $< > $@
 
 akaza-debug.xml: akaza.xml.in
 	sed \
 	    -e "s:@BINARY@:${PWD}/ibus-akaza-debug.sh:g" \
-	    -e "s:@DATADIR@:$(DATADIR)/ibus-akaza/:g" $< > $@
+	    -e "s:@DATADIR@:$(DATADIR)/:g" $< > $@
 
 install: akaza.xml
 	cargo install --path=. --root=$(PREFIX)

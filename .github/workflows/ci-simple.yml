@@ -29,6 +29,9 @@ jobs:
     - name: make test data
       run: |
         cd akaza-data/ && make test-data
+    - name: make some configuration files for ibus-akaza
+      run: |
+        cd ibus-akaza/ && make
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable

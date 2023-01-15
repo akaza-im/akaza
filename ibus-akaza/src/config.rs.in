@@ -1,0 +1,1 @@
+pub const AKAZA_DATA_DIR: &str = "@AKAZA_DATA_DIR@";
