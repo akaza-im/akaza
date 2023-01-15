@@ -4,14 +4,15 @@ use std::path::Path;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
+use encoding_rs::UTF_8;
 use log::{debug, info};
 
 use libakaza::corpus::{read_corpus_file, FullAnnotationCorpus};
+use libakaza::dict::skk::read::read_skkdict;
 use libakaza::graph::graph_builder::GraphBuilder;
 use libakaza::graph::graph_resolver::GraphResolver;
 use libakaza::graph::segmenter::Segmenter;
-use libakaza::kana_kanji_dict::KanaKanjiDict;
-use libakaza::kana_trie::marisa_kana_trie::MarisaKanaTrie;
+use libakaza::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 use libakaza::lm::base::{SystemBigramLM, SystemUnigramLM};
 use libakaza::lm::on_memory::on_memory_system_bigram_lm::OnMemorySystemBigramLM;
 use libakaza::lm::on_memory::on_memory_system_unigram_lm::OnMemorySystemUnigramLM;
@@ -28,11 +29,10 @@ struct LearningService {
 
 impl LearningService {
     pub fn new(src_unigram: &str, src_bigram: &str, corpuses: &[&str]) -> anyhow::Result<Self> {
-        let system_kana_kanji_dict = KanaKanjiDict::load("data/system_dict.trie")?;
-        let all_yomis = system_kana_kanji_dict.all_yomis().unwrap();
-        let system_kana_trie = MarisaKanaTrie::build(all_yomis);
+        let system_kana_kanji_dict = read_skkdict(Path::new("data/SKK-JISYO.akaza"), UTF_8)?;
+        let all_yomis = system_kana_kanji_dict.keys().cloned().collect::<Vec<_>>();
+        let system_kana_trie = CedarwoodKanaTrie::build(all_yomis);
         let segmenter = Segmenter::new(vec![Arc::new(Mutex::new(system_kana_trie))]);
-        let system_single_term_dict = KanaKanjiDict::load("data/single_term.trie")?;
 
         info!("unigram source file: {}", src_unigram);
         let src_system_unigram_lm = MarisaSystemUnigramLM::load(src_unigram)?;
@@ -79,7 +79,7 @@ impl LearningService {
 
         let graph_builder = GraphBuilder::new(
             system_kana_kanji_dict,
-            system_single_term_dict,
+            HashMap::default(),
             Arc::new(Mutex::new(UserData::default())),
             system_unigram_lm.clone(),
             system_bigram_lm.clone(),

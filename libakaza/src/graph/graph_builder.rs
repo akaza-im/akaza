@@ -1,5 +1,5 @@
 use std::collections::btree_map::BTreeMap;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
@@ -9,13 +9,12 @@ use log::trace;
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::SegmentationResult;
 use crate::graph::word_node::WordNode;
-use crate::kana_kanji_dict::KanaKanjiDict;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 use crate::user_side_data::user_data::UserData;
 
 pub struct GraphBuilder<U: SystemUnigramLM, B: SystemBigramLM> {
-    system_kana_kanji_dict: KanaKanjiDict,
-    system_single_term_dict: KanaKanjiDict,
+    system_kana_kanji_dict: HashMap<String, Vec<String>>,
+    system_single_term_dict: HashMap<String, Vec<String>>,
     user_data: Arc<Mutex<UserData>>,
     system_unigram_lm: Rc<U>,
     system_bigram_lm: Rc<B>,
@@ -23,8 +22,8 @@ pub struct GraphBuilder<U: SystemUnigramLM, B: SystemBigramLM> {
 
 impl<U: SystemUnigramLM, B: SystemBigramLM> GraphBuilder<U, B> {
     pub fn new(
-        system_kana_kanji_dict: KanaKanjiDict,
-        system_single_term_dict: KanaKanjiDict,
+        system_kana_kanji_dict: HashMap<String, Vec<String>>,
+        system_single_term_dict: HashMap<String, Vec<String>>,
         user_data: Arc<Mutex<UserData>>,
         system_unigram_lm: Rc<U>,
         system_bigram_lm: Rc<B>,
@@ -39,8 +38,8 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> GraphBuilder<U, B> {
     }
 
     pub fn new_with_default_score(
-        system_kana_kanji_dict: KanaKanjiDict,
-        system_single_term_dict: KanaKanjiDict,
+        system_kana_kanji_dict: HashMap<String, Vec<String>>,
+        system_single_term_dict: HashMap<String, Vec<String>>,
         user_data: Arc<Mutex<UserData>>,
         system_unigram_lm: Rc<U>,
         system_bigram_lm: Rc<B>,
@@ -70,11 +69,11 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> GraphBuilder<U, B> {
                 let mut seen: HashSet<String> = HashSet::new();
 
                 // 漢字に変換した結果もあれば insert する。
-                if let Some(kanjis) = self.system_kana_kanji_dict.find(segmented_yomi) {
+                if let Some(kanjis) = self.system_kana_kanji_dict.get(segmented_yomi) {
                     for kanji in kanjis {
                         let node = WordNode::new(
                             (end_pos - segmented_yomi.len()) as i32,
-                            &kanji,
+                            kanji,
                             segmented_yomi,
                             self.system_unigram_lm
                                 .find((kanji.to_string() + "/" + segmented_yomi).as_str()),
@@ -103,11 +102,11 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> GraphBuilder<U, B> {
 
                 // 変換範囲が全体になっていれば single term 辞書を利用する。
                 if segmented_yomi == yomi {
-                    if let Some(surfaces) = self.system_single_term_dict.find(yomi) {
+                    if let Some(surfaces) = self.system_single_term_dict.get(yomi) {
                         for surface in surfaces {
                             let node = WordNode::new(
                                 (end_pos - segmented_yomi.len()) as i32,
-                                &surface,
+                                surface,
                                 segmented_yomi,
                                 self.system_unigram_lm
                                     .find((surface.to_string() + "/" + segmented_yomi).as_str()),
@@ -130,7 +129,6 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> GraphBuilder<U, B> {
 
 #[cfg(test)]
 mod tests {
-    use crate::kana_kanji_dict::KanaKanjiDictBuilder;
     use crate::lm::system_bigram::MarisaSystemBigramLMBuilder;
     use crate::lm::system_unigram_lm::MarisaSystemUnigramLMBuilder;
 
@@ -139,8 +137,8 @@ mod tests {
     #[test]
     fn test_single_term() -> anyhow::Result<()> {
         let graph_builder = GraphBuilder::new_with_default_score(
-            KanaKanjiDict::default(),
-            KanaKanjiDictBuilder::default().add("すし", "🍣").build(),
+            HashMap::new(),
+            HashMap::from([("すし".to_string(), vec!["🍣".to_string()])]),
             Arc::new(Mutex::new(UserData::default())),
             Rc::new(
                 MarisaSystemUnigramLMBuilder::default()
@@ -172,8 +170,8 @@ mod tests {
     #[test]
     fn test_default_terms() -> anyhow::Result<()> {
         let graph_builder = GraphBuilder::new_with_default_score(
-            KanaKanjiDict::default(),
-            KanaKanjiDictBuilder::default().build(),
+            HashMap::new(),
+            HashMap::new(),
             Arc::new(Mutex::new(UserData::default())),
             Rc::new(
                 MarisaSystemUnigramLMBuilder::default()
@@ -202,8 +200,8 @@ mod tests {
     #[test]
     fn test_default_terms_duplicated() -> anyhow::Result<()> {
         let graph_builder = GraphBuilder::new_with_default_score(
-            KanaKanjiDictBuilder::default().add("す", "す/ス").build(),
-            KanaKanjiDictBuilder::default().build(),
+            HashMap::from([("す".to_string(), vec!["す".to_string(), "ス".to_string()])]),
+            HashMap::new(),
             Arc::new(Mutex::new(UserData::default())),
             Rc::new(
                 MarisaSystemUnigramLMBuilder::default()

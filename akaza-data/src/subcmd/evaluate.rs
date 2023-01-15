@@ -62,7 +62,7 @@ pub fn evaluate(corpus_dir: &String, system_data_dir: &str) -> anyhow::Result<()
         "corpus.5.txt",
     ];
 
-    let akaza = BigramWordViterbiEngineBuilder::new(system_data_dir).build()?;
+    let akaza = BigramWordViterbiEngineBuilder::new(system_data_dir, None, None).build()?;
 
     let mut good_cnt = 0;
     let mut bad_cnt = 0;

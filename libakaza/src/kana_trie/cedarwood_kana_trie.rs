@@ -34,6 +34,7 @@ impl CedarwoodKanaTrie {
     }
 
     pub fn update(&mut self, key: &str) {
+        assert!(!key.is_empty());
         self.cedar.update(key, self.words.len() as i32);
         self.words.push(key.to_string());
     }

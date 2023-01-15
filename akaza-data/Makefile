@@ -5,9 +5,7 @@ DESTDIR ?=
 
 all: data/stats-vibrato-bigram.trie \
 	 data/stats-vibrato-bigram.trie \
-	 data/single_term.trie \
-	 data/system_dict.trie \
-	 data/kana.trie
+	 data/SKK-JISYO.akaza
 
 # -------------------------------------------------------------------------
 
@@ -83,7 +81,7 @@ work/stats-vibrato-bigram.raw.trie: work/stats-vibrato-unigram.raw.trie work/sta
 		--corpus-dirs work/aozora_bunko/vibrato-ipadic/ \
 		work/stats-vibrato-unigram.raw.trie work/stats-vibrato-bigram.raw.trie
 
-data/stats-vibrato-bigram.trie: work/stats-vibrato-bigram.raw.trie work/stats-vibrato-unigram.raw.trie src/subcmd/learn_corpus.rs corpus/must.txt corpus/should.txt corpus/may.txt data/system_dict.trie data/single_term.trie
+data/stats-vibrato-bigram.trie: work/stats-vibrato-bigram.raw.trie work/stats-vibrato-unigram.raw.trie src/subcmd/learn_corpus.rs corpus/must.txt corpus/should.txt corpus/may.txt data/SKK-JISYO.akaza
 	cargo run --release -- learn-corpus \
 		--delta=0.5 \
 		--may-epochs=10 \
@@ -100,37 +98,17 @@ data/stats-vibrato-unigram.trie: data/stats-vibrato-bigram.trie
 
 # -------------------------------------------------------------------------
 
-# システム辞書の構築。現在は SKK の辞書などに加えて work/vibrato-ipadic.vocab の語彙を混ぜている。
-# さらに、コーパスファイルに書かれている辞書の内容も入れている。
-#
-# 辞書の元になるvocab ファイルについては、ブレが少ない辞書ベースの形態素解析エンジンを利用した方が良いと思う。
-# kytea だと素頓狂な読み方を錬成することがある。
+# システム辞書の構築。dict/SKK-JISYO.akaza、コーパスに書かれている語彙および work/vibrato-ipadic.vocab にある語彙。
+# から、SKK-JISYO.L に含まれる語彙を除いたものが登録されている。
 
-# そして、そもそもテキストファイル生成フェーズとバイナリ生成フェーズにわける意味があまりないかもしれない。
-
-# work/system_dict.txt, work/single_term.txt を生成しているのは、辞書のデバッグのため。
-
-data/single_term.trie: src/subcmd/make_dict.rs
-	cargo run --release -- make-single-term \
-		work/single_term.txt \
-		data/single_term.trie \
-		-vvv
-
-data/system_dict.trie: work/vibrato-ipadic.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_dict.rs  corpus/must.txt corpus/should.txt corpus/may.txt
+data/SKK-JISYO.akaza: work/vibrato-ipadic.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_dict.rs  corpus/must.txt corpus/should.txt corpus/may.txt
 	cargo run --release -- make-system-dict \
 		--corpus corpus/must.txt \
 		--corpus corpus/should.txt \
 		--corpus corpus/may.txt \
 		work/vibrato-ipadic.vocab \
-		work/system_dict.txt \
-		data/system_dict.trie \
+		data/SKK-JISYO.akaza \
 		-vvv
-
-data/kana.trie: data/system_dict.trie
-	cargo run --release -- make-kana-trie \
-		data/system_dict.trie \
-		data/kana.trie \
-		-v
 
 # -------------------------------------------------------------------------
 

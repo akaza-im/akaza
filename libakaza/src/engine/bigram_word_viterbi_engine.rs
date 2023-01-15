@@ -1,17 +1,22 @@
 use std::collections::vec_deque::VecDeque;
+use std::collections::HashMap;
 use std::ops::Range;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
+use std::time::SystemTime;
 
 use anyhow::Result;
+use log::{info, warn};
 
+use crate::config::Config;
+use crate::dict::loader::load_dicts;
+use crate::dict::merge_dict::merge_dict;
 use crate::engine::base::HenkanEngine;
 use crate::graph::graph_builder::GraphBuilder;
 use crate::graph::graph_resolver::{Candidate, GraphResolver};
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::Segmenter;
-use crate::kana_kanji_dict::KanaKanjiDict;
-use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
+use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 use crate::lm::system_bigram::MarisaSystemBigramLM;
 use crate::lm::system_unigram_lm::MarisaSystemUnigramLM;
@@ -21,9 +26,6 @@ use crate::user_side_data::user_data::UserData;
 pub struct SystemDataLoader {
     pub system_unigram_lm: MarisaSystemUnigramLM,
     pub system_bigram_lm: MarisaSystemBigramLM,
-    pub system_kana_kanji_dict: KanaKanjiDict,
-    pub system_single_term_dict: KanaKanjiDict,
-    pub system_kana_trie: MarisaKanaTrie,
 }
 
 impl SystemDataLoader {
@@ -35,19 +37,9 @@ impl SystemDataLoader {
             (system_data_dir.to_string() + "/stats-vibrato-bigram.trie").as_str(),
         )?;
 
-        let system_kana_kanji_dict =
-            KanaKanjiDict::load((system_data_dir.to_string() + "/system_dict.trie").as_str())?;
-        let system_single_term_dict =
-            KanaKanjiDict::load((system_data_dir.to_string() + "/single_term.trie").as_str())?;
-        let system_kana_trie =
-            MarisaKanaTrie::load((system_data_dir.to_string() + "/kana.trie").as_str())?;
-
         Ok(SystemDataLoader {
             system_unigram_lm,
             system_bigram_lm,
-            system_kana_kanji_dict,
-            system_single_term_dict,
-            system_kana_trie,
         })
     }
 }
@@ -71,7 +63,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> HenkanEngine for BigramWordViterbiEn
         &self,
         yomi: &str,
         force_ranges: Option<&[Range<usize>]>,
-    ) -> anyhow::Result<Vec<VecDeque<Candidate>>> {
+    ) -> Result<Vec<VecDeque<Candidate>>> {
         // 先頭が大文字なケースと、URL っぽい文字列のときは変換処理を実施しない。
         if (!yomi.is_empty()
             && yomi.chars().next().unwrap().is_ascii_uppercase()
@@ -149,14 +141,31 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> BigramWordViterbiEngine<U, B> {
 pub struct BigramWordViterbiEngineBuilder {
     system_data_dir: String,
     user_data: Option<Arc<Mutex<UserData>>>,
+    load_user_config: bool,
+    dicts: Option<HashMap<String, Vec<String>>>,
+    single_term: Option<HashMap<String, Vec<String>>>,
 }
 
 impl BigramWordViterbiEngineBuilder {
-    pub fn new(system_data_dir: &str) -> BigramWordViterbiEngineBuilder {
+    pub fn new(
+        system_data_dir: &str,
+        dicts: Option<HashMap<String, Vec<String>>>,
+        single_term: Option<HashMap<String, Vec<String>>>,
+    ) -> BigramWordViterbiEngineBuilder {
         BigramWordViterbiEngineBuilder {
             system_data_dir: system_data_dir.to_string(),
             user_data: None,
+            load_user_config: false,
+            dicts,
+            single_term,
         }
+    }
+
+    // TODO: ユーザー設定を読むかどうかの責任は、Engine ではなく EngineFactory 的なクラスを用意して
+    // 責務を移管する。
+    pub fn load_user_config(&mut self, load_user_config: bool) -> &mut Self {
+        self.load_user_config = load_user_config;
+        self
     }
 
     pub fn user_data(&mut self, user_data: Arc<Mutex<UserData>>) -> &mut Self {
@@ -175,14 +184,56 @@ impl BigramWordViterbiEngineBuilder {
             Arc::new(Mutex::new(UserData::default()))
         };
 
+        // TODO このへんごちゃごちゃしすぎ。
+        let (dict, single_term, mut kana_trie) = {
+            let t1 = SystemTime::now();
+            let config = if self.load_user_config {
+                self.load_config()?
+            } else {
+                Config::default()
+            };
+            let dicts = load_dicts(&config.dicts)?;
+            let single_term = if let Some(st) = &config.single_term {
+                load_dicts(st)?
+            } else {
+                HashMap::new()
+            };
+            // 次に、辞書を元に、トライを作成していく。
+            let kana_trie = CedarwoodKanaTrie::default();
+            let t2 = SystemTime::now();
+            info!(
+                "Loaded configuration in {}msec.",
+                t2.duration_since(t1).unwrap().as_millis()
+            );
+            (dicts, single_term, kana_trie)
+        };
+        let dict = if let Some(dd) = &self.dicts {
+            merge_dict(vec![dict, dd.clone()])
+        } else {
+            dict
+        };
+        let single_term = if let Some(dd) = &self.single_term {
+            merge_dict(vec![single_term, dd.clone()])
+        } else {
+            single_term
+        };
+        for yomi in dict.keys() {
+            assert!(!yomi.is_empty());
+            kana_trie.update(yomi.as_str());
+        }
+        for yomi in single_term.keys() {
+            assert!(!yomi.is_empty());
+            kana_trie.update(yomi.as_str());
+        }
+
         let segmenter = Segmenter::new(vec![
-            Arc::new(Mutex::new(system_data_loader.system_kana_trie)),
+            Arc::new(Mutex::new(kana_trie)),
             user_data.lock().unwrap().kana_trie.clone(),
         ]);
 
         let graph_builder = GraphBuilder::new_with_default_score(
-            system_data_loader.system_kana_kanji_dict,
-            system_data_loader.system_single_term_dict,
+            dict,
+            single_term,
             user_data.clone(),
             Rc::new(system_data_loader.system_unigram_lm),
             Rc::new(system_data_loader.system_bigram_lm),
@@ -199,5 +250,27 @@ impl BigramWordViterbiEngineBuilder {
             romkan_converter,
             user_data,
         })
+    }
+
+    fn load_config(&self) -> Result<Config> {
+        let basedir = xdg::BaseDirectories::with_prefix("akaza")?;
+        let configfile = basedir.get_config_file("config.yml");
+        let config = match Config::load_from_file(configfile.to_str().unwrap()) {
+            Ok(config) => config,
+            Err(err) => {
+                warn!(
+                    "Cannot load configuration file: {} {}",
+                    configfile.to_string_lossy(),
+                    err
+                );
+                return Ok(Config::default());
+            }
+        };
+        info!(
+            "Loaded config file: {}, {:?}",
+            configfile.to_string_lossy(),
+            config
+        );
+        Ok(config)
     }
 }

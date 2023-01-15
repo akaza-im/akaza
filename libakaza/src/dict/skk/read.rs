@@ -1,13 +1,15 @@
-use encoding_rs::Encoding;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
 
+use anyhow::{Context, Result};
+use encoding_rs::Encoding;
 use log::info;
 use regex::Regex;
 
-type SkkDictParsedData = HashMap<String, Vec<String>>;
+use crate::dict::merge_dict::merge_dict;
+use crate::dict::skk::ari2nasi::Ari2Nasi;
 
 enum ParserState {
     OkuriAri,
@@ -17,8 +19,8 @@ enum ParserState {
 pub fn read_skkdict(
     path: &Path,
     encoding: &'static Encoding,
-) -> anyhow::Result<(SkkDictParsedData, SkkDictParsedData)> {
-    let file = File::open(path)?;
+) -> Result<HashMap<String, Vec<String>>> {
+    let file = File::open(path).with_context(|| path.to_string_lossy().to_string())?;
     let mut buf: Vec<u8> = Vec::new();
     BufReader::new(file).read_to_end(&mut buf)?;
     let (decoded, _, _) = encoding.decode(buf.as_slice());
@@ -29,26 +31,25 @@ pub fn read_skkdict(
 /**
  * SKK 辞書をパースします。
  */
-pub fn parse_skkdict(src: &str) -> anyhow::Result<(SkkDictParsedData, SkkDictParsedData)> {
-    let mut ari: SkkDictParsedData = HashMap::new();
-    let mut nasi: SkkDictParsedData = HashMap::new();
+pub fn parse_skkdict(src: &str) -> Result<HashMap<String, Vec<String>>> {
+    let mut ari: HashMap<String, Vec<String>> = HashMap::new();
+    let mut nasi: HashMap<String, Vec<String>> = HashMap::new();
     let mut target = &mut ari;
 
     let comment_regex = Regex::new(";.*")?;
 
     for line in src.lines() {
-        let line: &str = line.trim();
-        if line.contains(";; okuri-ari entries.") {
-            target = &mut ari;
-            continue;
-        }
-        if line.contains(";; okuri-nasi entries.") {
-            target = &mut nasi;
-            continue;
-        }
-        if line.contains(";;") {
-            // skip comment
-            continue;
+        if line.starts_with(";;") {
+            if line.contains(";; okuri-ari entries.") {
+                target = &mut ari;
+                continue;
+            } else if line.contains(";; okuri-nasi entries.") {
+                target = &mut nasi;
+                continue;
+            } else {
+                // skip comment
+                continue;
+            }
         }
         if line.is_empty() {
             // skip empty line
@@ -70,10 +71,13 @@ pub fn parse_skkdict(src: &str) -> anyhow::Result<(SkkDictParsedData, SkkDictPar
             .map(|s| comment_regex.replace(s, "").to_string())
             .filter(|it| !it.is_empty())
             .collect();
+        assert!(!yomi.is_empty(), "yomi must not empty: line={}", line);
         target.insert(yomi.to_string(), surfaces);
     }
 
-    Ok((ari, nasi))
+    let ari2nasi = Ari2Nasi::default();
+    let ari = ari2nasi.ari2nasi(&ari)?;
+    Ok(merge_dict(vec![ari, nasi]))
 }
 
 #[cfg(test)]
@@ -82,6 +86,7 @@ mod tests {
     use std::io::{BufReader, Read};
 
     use anyhow::Context;
+    use encoding_rs::EUC_JP;
 
     use super::*;
 
@@ -92,8 +97,18 @@ mod tests {
         let file = File::open(&dictpath).with_context(|| format!("path={}", &dictpath))?;
         let mut buf = String::new();
         BufReader::new(file).read_to_string(&mut buf)?;
-        let (_, nasi) = parse_skkdict(buf.as_str())?;
-        assert_eq!(*nasi.get("ぶかわ").unwrap(), vec!["武川".to_string()]);
+        let dict = parse_skkdict(buf.as_str())?;
+        assert_eq!(*dict.get("ぶかわ").unwrap(), vec!["武川".to_string()]);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_skk_l() -> anyhow::Result<()> {
+        let dictpath =
+            env!("CARGO_MANIFEST_DIR").to_string() + "/../akaza-data/skk-dev-dict/SKK-JISYO.L";
+        let dict = read_skkdict(Path::new(dictpath.as_str()), EUC_JP)?;
+        assert!(!dict.is_empty());
 
         Ok(())
     }
@@ -104,9 +119,9 @@ mod tests {
     fn missing_trailing_slash() -> anyhow::Result<()> {
         let src = ";; okuri-nasi entries.\n\
             sars-cov /severe acute respiratory syndrome coronavirus/SARSコロナウイルス";
-        let (_, nasi) = parse_skkdict(src)?;
+        let dict = parse_skkdict(src)?;
         assert_eq!(
-            *nasi.get("sars-cov").unwrap(),
+            *dict.get("sars-cov").unwrap(),
             vec![
                 "severe acute respiratory syndrome coronavirus".to_string(),
                 "SARSコロナウイルス".to_string(),
@@ -122,9 +137,9 @@ mod tests {
         let src = ";; okuri-nasi entries.\n\
             せみころん /; [Semicolon]/\n\
             お /尾/\n";
-        let (_, nasi) = parse_skkdict(src)?;
-        assert_eq!(*nasi.get("せみころん").unwrap(), Vec::<String>::new());
-        assert_eq!(*nasi.get("お").unwrap(), vec!["尾".to_string(),]);
+        let dict = parse_skkdict(src)?;
+        assert_eq!(*dict.get("せみころん").unwrap(), Vec::<String>::new());
+        assert_eq!(*dict.get("お").unwrap(), vec!["尾".to_string()]);
 
         Ok(())
     }

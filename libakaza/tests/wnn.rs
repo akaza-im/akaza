@@ -2,8 +2,11 @@
 #[cfg(feature = "it")]
 mod tests {
     use std::collections::vec_deque::VecDeque;
+    use std::path::Path;
 
     use anyhow::Result;
+    use encoding_rs::UTF_8;
+    use libakaza::dict::skk::read::read_skkdict;
     use log::LevelFilter;
 
     use libakaza::engine::base::HenkanEngine;
@@ -17,7 +20,27 @@ mod tests {
     fn load_akaza() -> Result<BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>>
     {
         let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/../akaza-data/data/";
-        BigramWordViterbiEngineBuilder::new(datadir.as_str()).build()
+        assert!(Path::new(datadir.as_str()).exists());
+        BigramWordViterbiEngineBuilder::new(
+            datadir.as_str(),
+            Some(read_skkdict(
+                Path::new(
+                    (env!("CARGO_MANIFEST_DIR").to_string()
+                        + "/../akaza-data/data/SKK-JISYO.akaza")
+                        .as_str(),
+                ),
+                UTF_8,
+            )?),
+            Some(read_skkdict(
+                Path::new(
+                    (env!("CARGO_MANIFEST_DIR").to_string()
+                        + "/../akaza-data/skk-dev-dict/SKK-JISYO.emoji")
+                        .as_str(),
+                ),
+                UTF_8,
+            )?),
+        )
+        .build()
     }
 
     struct Tester {
