@@ -31,6 +31,12 @@ extern "C" {
     ) -> *mut IBusProperty;
 
     pub fn ibus_property_set_sub_props(prop: *mut IBusProperty, prop_list: *mut IBusPropList);
+
+    pub fn ibus_property_set_state(prop: *mut IBusProperty, state: IBusPropState);
+
+    pub fn ibus_property_set_label(prop: *mut IBusProperty, label: *mut IBusText);
+
+    pub fn ibus_property_set_symbol(prop: *mut IBusProperty, symbol: *mut IBusText);
 }
 
 #[repr(C)]
