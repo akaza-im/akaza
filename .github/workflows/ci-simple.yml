@@ -25,26 +25,17 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install ibus libgirepository1.0-dev libmarisa-dev cmake clang libibus-1.0-dev
+        sudo apt-get install ibus libgirepository1.0-dev libmarisa-dev clang libibus-1.0-dev
     - name: make test data
       run: |
         cd akaza-data/ && make test-data
     - name: make some configuration files for ibus-akaza
       run: |
         cd ibus-akaza/ && make
-    - uses: actions-rs/toolchain@v1
+    - uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: stable
-        components: rustfmt, clippy
-    - uses: actions-rs/cargo@v1
-      with:
-        command: fmt
-        args: --all -- --check
-    - uses: actions-rs/cargo@v1
-      with:
-        command: clippy
-        args: -- -D warnings
-    - uses: actions-rs/cargo@v1
-      with:
-        command: test
+          components: clippy, rustfmt
+    - run: cargo fmt --all --check
+    - run: cargo clippy -- -D warnings
+    - run: cargo test
 
