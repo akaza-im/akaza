@@ -1,5 +1,15 @@
 ---
 dicts:
-  - path: /usr/share/skk/SKK-JISYO.okinawa
+  - path: /usr/share/akaza/SKK-JISYO.akaza
+    encoding: utf-8
+    dict_type: skk
+  - path: /usr/share/skk/SKK-JISYO.L
     encoding: euc-jp
+    dict_type: skk
+  - path: /usr/share/skk/SKK-JISYO.jinmei
+    encoding: euc-jp
+    dict_type: skk
+single_term:
+  - path: /usr/share/akaza/SKK-JISYO.dynamic
+    encoding: utf-8
     dict_type: skk

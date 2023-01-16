@@ -51,25 +51,34 @@ akaza-data の生成には wikipedia の全データの展開および解析が�
 
 ### config.yml
 
-**この機能は現在未実装です**
-
-XDG の設定ファイルディレクトリ以下、通常であれば `$HOME/.config/ibus-akaza/config.yml` に設定ファイルを書くことができます。
+XDG の設定ファイルディレクトリ以下、通常であれば `$HOME/.config/akaza/config.yml` に設定ファイルを書くことができます。
 
 設定可能な項目は以下のもの。
 
-* ローマ字変換テーブルの上書き
 * ユーザー辞書の設定
 
 サンプルの設定は以下のような感じになります。
+akaza が提供しているシステム辞書は偏りがすごくあるので、SKK-JISYO.L を読み込むことをおすすめします。たとえば以下のように設定すると良いでしょう。
 
-    # ライブ変換モード
-    live_conversion: True
-    romaji:        # ローマ字変換テーブル
-      la: ら
-    user_dicts:    # ユーザー辞書の設定
-      - path: /home/tokuhirom/dotfiles/skk/SKK-JISYO.tokuhirom
+    ---
+    dicts:
+      - path: /usr/share/akaza/SKK-JISYO.akaza
         encoding: utf-8
+        dict_type: skk
+      - path: /usr/share/skk/SKK-JISYO.L
+        encoding: euc-jp
+        dict_type: skk
+      - path: /usr/share/skk/SKK-JISYO.jinmei
+        encoding: euc-jp
+        dict_type: skk
+    single_term:
+      - path: /usr/share/akaza/SKK-JISYO.dynamic
+        encoding: utf-8
+        dict_type: skk
 
+akaza に付属する SKK-JISYO.dyanmic を利用すると、「きょう」を変換すると、今日の日付がでるという機能が利用可能です。
+
+ローマ字変換テーブルの変更などもここでできるようにしたいと思っていますが、 _未実装_ です。
 
 ## THANKS TO
 
