@@ -14,7 +14,7 @@ mod tests {
 
     #[test]
     fn test_load() {
-        let path = datadir() + "/stats-vibrato-unigram.trie";
+        let path = datadir() + "/unigram.model";
         let lm = MarisaSystemUnigramLM::load(&path).unwrap();
         let (id, score) = lm.find("私/わたし").unwrap();
         assert!(id > 0);

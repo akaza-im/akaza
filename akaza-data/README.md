@@ -33,7 +33,7 @@ TODO: 書き直し
 
 ## 生成されるデータ
 
-### stats-vibrato-bigram.trie, stats-vibrato-unigram.trie
+### bigram.model, unigram.model
 
 marisa-trie 形式のデータです。1gram, 2gram のデータが素直に格納されています。
 

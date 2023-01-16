@@ -5,11 +5,9 @@ use std::ops::Range;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
-use std::time::SystemTime;
 
 use anyhow::{bail, Result};
 use encoding_rs::UTF_8;
-use log::{info, warn};
 
 use crate::config::Config;
 use crate::dict::loader::load_dicts;
@@ -124,20 +122,15 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> BigramWordViterbiEngine<U, B> {
 pub struct BigramWordViterbiEngineBuilder {
     user_data: Option<Arc<Mutex<UserData>>>,
     load_user_config: bool,
-    dicts: Option<HashMap<String, Vec<String>>>,
-    single_term: Option<HashMap<String, Vec<String>>>,
+    pub config: Config,
 }
 
 impl BigramWordViterbiEngineBuilder {
-    pub fn new(
-        dicts: Option<HashMap<String, Vec<String>>>,
-        single_term: Option<HashMap<String, Vec<String>>>,
-    ) -> BigramWordViterbiEngineBuilder {
+    pub fn new(config: Config) -> BigramWordViterbiEngineBuilder {
         BigramWordViterbiEngineBuilder {
             user_data: None,
             load_user_config: false,
-            dicts,
-            single_term,
+            config,
         }
     }
 
@@ -157,13 +150,13 @@ impl BigramWordViterbiEngineBuilder {
         &self,
     ) -> Result<BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>> {
         let system_unigram_lm = MarisaSystemUnigramLM::load(
-            Self::try_load("stats-vibrato-unigram.trie")?
+            Self::try_load("unigram.model")?
                 .to_string_lossy()
                 .to_string()
                 .as_str(),
         )?;
         let system_bigram_lm = MarisaSystemBigramLM::load(
-            Self::try_load("stats-vibrato-bigram.trie")?
+            Self::try_load("bigram.model")?
                 .to_string_lossy()
                 .to_string()
                 .as_str(),
@@ -176,40 +169,17 @@ impl BigramWordViterbiEngineBuilder {
             Arc::new(Mutex::new(UserData::default()))
         };
 
-        // TODO このへんごちゃごちゃしすぎ。
-        let (dict, single_term, mut kana_trie) = {
-            let t1 = SystemTime::now();
-            let config = if self.load_user_config {
-                self.load_config()?
-            } else {
-                Config::default()
-            };
-            let dicts = load_dicts(&config.dicts)?;
-            let dicts = merge_dict(vec![system_dict, dicts]);
-            let single_term = if let Some(st) = &config.single_term {
-                load_dicts(st)?
-            } else {
-                HashMap::new()
-            };
-            // 次に、辞書を元に、トライを作成していく。
-            let kana_trie = CedarwoodKanaTrie::default();
-            let t2 = SystemTime::now();
-            info!(
-                "Loaded configuration in {}msec.",
-                t2.duration_since(t1).unwrap().as_millis()
-            );
-            (dicts, single_term, kana_trie)
-        };
-        let dict = if let Some(dd) = &self.dicts {
-            merge_dict(vec![dict, dd.clone()])
+        let dict = load_dicts(&self.config.dicts)?;
+        let dict = merge_dict(vec![system_dict, dict]);
+
+        let single_term = if let Some(st) = &&self.config.single_term {
+            load_dicts(st)?
         } else {
-            dict
+            HashMap::new()
         };
-        let single_term = if let Some(dd) = &self.single_term {
-            merge_dict(vec![single_term, dd.clone()])
-        } else {
-            single_term
-        };
+
+        // 辞書を元に、トライを作成していく。
+        let mut kana_trie = CedarwoodKanaTrie::default();
         for yomi in dict.keys() {
             assert!(!yomi.is_empty());
             kana_trie.update(yomi.as_str());
@@ -243,28 +213,6 @@ impl BigramWordViterbiEngineBuilder {
             romkan_converter,
             user_data,
         })
-    }
-
-    fn load_config(&self) -> Result<Config> {
-        let basedir = xdg::BaseDirectories::with_prefix("akaza")?;
-        let configfile = basedir.get_config_file("config.yml");
-        let config = match Config::load_from_file(configfile.to_str().unwrap()) {
-            Ok(config) => config,
-            Err(err) => {
-                warn!(
-                    "Cannot load configuration file: {} {}",
-                    configfile.to_string_lossy(),
-                    err
-                );
-                return Ok(Config::default());
-            }
-        };
-        info!(
-            "Loaded config file: {}, {:?}",
-            configfile.to_string_lossy(),
-            config
-        );
-        Ok(config)
     }
 
     pub fn try_load(file_name: &str) -> Result<PathBuf> {

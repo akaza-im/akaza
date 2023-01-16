@@ -5,6 +5,8 @@ dicts:
     encoding: euc-jp
     dict_type: skk
  */
+use anyhow::Result;
+use log::{info, warn};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::BufReader;
@@ -16,10 +18,32 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn load_from_file(path: &str) -> anyhow::Result<Config> {
+    pub fn load_from_file(path: &str) -> anyhow::Result<Self> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
         let config: Config = serde_yaml::from_reader(reader)?;
+        Ok(config)
+    }
+
+    pub fn load() -> Result<Self> {
+        let basedir = xdg::BaseDirectories::with_prefix("akaza")?;
+        let configfile = basedir.get_config_file("config.yml");
+        let config = match Config::load_from_file(configfile.to_str().unwrap()) {
+            Ok(config) => config,
+            Err(err) => {
+                warn!(
+                    "Cannot load configuration file: {} {}",
+                    configfile.to_string_lossy(),
+                    err
+                );
+                return Ok(Config::default());
+            }
+        };
+        info!(
+            "Loaded config file: {}, {:?}",
+            configfile.to_string_lossy(),
+            config
+        );
         Ok(config)
     }
 }

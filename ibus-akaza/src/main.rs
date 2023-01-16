@@ -14,6 +14,7 @@ use log::{error, info, warn};
 use ibus_sys::core::ibus_main;
 use ibus_sys::engine::IBusEngine;
 use ibus_sys::glib::{gchar, guint};
+use libakaza::config::Config;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 use libakaza::user_side_data::user_data::UserData;
 
@@ -101,7 +102,7 @@ fn main() -> Result<()> {
     unsafe {
         let sys_time = SystemTime::now();
         let user_data = load_user_data();
-        let akaza = BigramWordViterbiEngineBuilder::new(None, None)
+        let akaza = BigramWordViterbiEngineBuilder::new(Config::load()?)
             .user_data(user_data.clone())
             .load_user_config(true)
             .build()?;

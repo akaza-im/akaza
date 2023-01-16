@@ -1,14 +1,11 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::path::Path;
 use std::time::SystemTime;
 
 use anyhow::Context;
-use encoding_rs::{EUC_JP, UTF_8};
 use log::info;
 
-use libakaza::dict::merge_dict::merge_dict;
-use libakaza::dict::skk::read::read_skkdict;
+use libakaza::config::{Config, DictConfig};
 use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 
@@ -66,14 +63,23 @@ pub fn evaluate(corpus_dir: &String, load_user_config: bool) -> anyhow::Result<(
         "corpus.5.txt",
     ];
 
-    let dicts = merge_dict(vec![
-        read_skkdict(Path::new("skk-dev-dict/SKK-JISYO.L"), EUC_JP)?,
-        read_skkdict(Path::new("data/SKK-JISYO.akaza"), UTF_8)?,
-    ]);
-
-    let akaza = BigramWordViterbiEngineBuilder::new(Some(dicts), None)
-        .load_user_config(load_user_config)
-        .build()?;
+    let akaza = BigramWordViterbiEngineBuilder::new(Config {
+        dicts: vec![
+            DictConfig {
+                dict_type: "skk".to_string(),
+                encoding: Some("euc-jp".to_string()),
+                path: "skk-dev-dict/SKK-JISYO.L".to_string(),
+            },
+            DictConfig {
+                dict_type: "skk".to_string(),
+                encoding: Some("utf-8".to_string()),
+                path: "data/SKK-JISYO.akaza".to_string(),
+            },
+        ],
+        single_term: None,
+    })
+    .load_user_config(load_user_config)
+    .build()?;
 
     let mut good_cnt = 0;
     let mut bad_cnt = 0;

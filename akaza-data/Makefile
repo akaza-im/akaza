@@ -3,8 +3,8 @@ DATADIR ?= $(PREFIX)/share
 DESTDIR ?=
 
 
-all: data/stats-vibrato-bigram.trie \
-	 data/stats-vibrato-bigram.trie \
+all: data/bigram.model \
+	 data/bigram.model \
 	 data/SKK-JISYO.akaza
 
 # -------------------------------------------------------------------------
@@ -81,7 +81,7 @@ work/stats-vibrato-bigram.raw.trie: work/stats-vibrato-unigram.raw.trie work/sta
 		--corpus-dirs work/aozora_bunko/vibrato-ipadic/ \
 		work/stats-vibrato-unigram.raw.trie work/stats-vibrato-bigram.raw.trie
 
-data/stats-vibrato-bigram.trie: work/stats-vibrato-bigram.raw.trie work/stats-vibrato-unigram.raw.trie src/subcmd/learn_corpus.rs corpus/must.txt corpus/should.txt corpus/may.txt data/SKK-JISYO.akaza
+data/bigram.model: work/stats-vibrato-bigram.raw.trie work/stats-vibrato-unigram.raw.trie src/subcmd/learn_corpus.rs corpus/must.txt corpus/should.txt corpus/may.txt data/SKK-JISYO.akaza
 	cargo run --release -- learn-corpus \
 		--delta=0.5 \
 		--may-epochs=10 \
@@ -91,10 +91,10 @@ data/stats-vibrato-bigram.trie: work/stats-vibrato-bigram.raw.trie work/stats-vi
 		corpus/should.txt \
 		corpus/must.txt \
 		work/stats-vibrato-unigram.raw.trie work/stats-vibrato-bigram.raw.trie \
-		data/stats-vibrato-unigram.trie data/stats-vibrato-bigram.trie \
+		data/unigram.model data/bigram.model \
 		-v
 
-data/stats-vibrato-unigram.trie: data/stats-vibrato-bigram.trie
+data/unigram.model: data/bigram.model
 
 # -------------------------------------------------------------------------
 
