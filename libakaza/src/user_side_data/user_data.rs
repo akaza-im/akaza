@@ -6,7 +6,7 @@ use std::time::SystemTime;
 use anyhow::Result;
 use log::{debug, info, warn};
 
-use crate::graph::graph_resolver::Candidate;
+use crate::graph::candidate::Candidate;
 use crate::graph::word_node::WordNode;
 use crate::kana_trie::base::KanaTrie;
 use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
@@ -156,7 +156,13 @@ impl UserData {
 
     pub fn write_user_stats_file(&mut self) -> Result<()> {
         if self.need_save {
-            info!("Saving user stats file");
+            info!(
+                "Saving user stats file: unigram={:?},{}, bigram={:?},{}",
+                self.unigram_path,
+                self.unigram_user_stats.word_count.len(),
+                self.bigram_path,
+                self.bigram_user_stats.word_count.len(),
+            );
             if let Some(unigram_path) = &self.unigram_path {
                 write_user_stats_file(unigram_path, &self.unigram_user_stats.word_count)?;
             }

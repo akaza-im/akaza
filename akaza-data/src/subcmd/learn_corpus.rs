@@ -124,7 +124,7 @@ impl LearningService {
             .graph_builder
             .construct(yomi.as_str(), segmentation_result);
         let got = graph_resolver.resolve(&lattice)?;
-        let terms: Vec<String> = got.iter().map(|f| f[0].kanji.clone()).collect();
+        let terms: Vec<String> = got.iter().map(|f| f[0].surface.clone()).collect();
         let result = terms.join("");
 
         println!("{}", result);

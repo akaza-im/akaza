@@ -38,7 +38,7 @@ use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, IBusTe
 use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngine;
 use libakaza::extend_clause::{extend_left, extend_right};
-use libakaza::graph::graph_resolver::Candidate;
+use libakaza::graph::candidate::Candidate;
 use libakaza::lm::system_bigram::MarisaSystemBigramLM;
 use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use libakaza::romkan::RomKanConverter;
@@ -523,13 +523,12 @@ impl AkazaContext {
     pub(crate) fn build_string(&self) -> String {
         let mut result = String::new();
         for (clauseid, nodes) in self.clauses.iter().enumerate() {
-            // TODO lisp をひょうかする
             let idex = if let Some(i) = self.node_selected.get(&clauseid) {
                 *i
             } else {
                 0
             };
-            result += &nodes[idex].kanji;
+            result += &nodes[idex].surface_with_dynamic();
         }
         result
     }
@@ -573,8 +572,7 @@ impl AkazaContext {
         if !self.clauses.is_empty() {
             // lookup table に候補を詰め込んでいく。
             for node in &self.clauses[self.current_clause] {
-                // TODO lisp
-                let candidate = &node.kanji;
+                let candidate = &node.surface_with_dynamic();
                 self.lookup_table.append_candidate(candidate.to_ibus_text());
             }
         }
@@ -614,7 +612,11 @@ impl AkazaContext {
                     text.len() as guint,
                 ),
             );
-            let bgstart: u32 = self.clauses.iter().map(|c| (c[0].kanji).len() as u32).sum();
+            let bgstart: u32 = self
+                .clauses
+                .iter()
+                .map(|c| (c[0].surface).len() as u32)
+                .sum();
             // 背景色を設定する。
             ibus_attr_list_append(
                 preedit_attrs,
@@ -622,7 +624,7 @@ impl AkazaContext {
                     IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND,
                     0x00333333,
                     bgstart,
-                    bgstart + (current_node.kanji.len() as u32),
+                    bgstart + (current_node.surface.len() as u32),
                 ),
             );
             let preedit_text = text.to_ibus_text();

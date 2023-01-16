@@ -1,35 +1,14 @@
 use std::collections::vec_deque::VecDeque;
 use std::collections::HashMap;
 
+use crate::graph::candidate::Candidate;
 use anyhow::Context;
+
 use log::trace;
 
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::word_node::WordNode;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
-
-#[derive(Debug, Clone)]
-pub struct Candidate {
-    pub kanji: String,
-    pub yomi: String,
-    pub cost: f32,
-}
-
-impl Candidate {
-    pub(crate) fn key(&self) -> String {
-        self.kanji.to_string() + "/" + self.yomi.as_str()
-    }
-}
-
-impl Candidate {
-    pub fn new(yomi: &str, surface: &str, cost: f32) -> Candidate {
-        Candidate {
-            yomi: yomi.to_string(),
-            kanji: surface.to_string(),
-            cost,
-        }
-    }
-}
 
 /**
  * Segmenter により分割されたかな表現から、グラフを構築する。
@@ -114,7 +93,7 @@ impl GraphResolver {
                             && alt_node != &node
                     })
                     .map(|f| Candidate {
-                        kanji: f.surface.clone(),
+                        surface: f.surface.clone(),
                         yomi: f.yomi.clone(),
                         cost: *costmap.get(f).unwrap(),
                     })
@@ -123,7 +102,7 @@ impl GraphResolver {
                     .make_contiguous()
                     .sort_by(|a, b| a.cost.partial_cmp(&b.cost).unwrap());
                 candidates.push_front(Candidate {
-                    kanji: node.surface.clone(),
+                    surface: node.surface.clone(),
                     yomi: node.yomi.clone(),
                     cost: *costmap.get(node).unwrap(),
                 });
@@ -195,7 +174,7 @@ mod tests {
         let lattice = graph_builder.construct("abc", graph);
         let resolver = GraphResolver::default();
         let got = resolver.resolve(&lattice)?;
-        let terms: Vec<String> = got.iter().map(|f| f[0].kanji.clone()).collect();
+        let terms: Vec<String> = got.iter().map(|f| f[0].surface.clone()).collect();
         let result = terms.join("");
         assert_eq!(result, "abc");
         Ok(())
@@ -254,7 +233,7 @@ mod tests {
         //     .unwrap();
         let resolver = GraphResolver::default();
         let got = resolver.resolve(&lattice)?;
-        let terms: Vec<String> = got.iter().map(|f| f[0].kanji.clone()).collect();
+        let terms: Vec<String> = got.iter().map(|f| f[0].surface.clone()).collect();
         let result = terms.join("");
         assert_eq!(result, "私");
         Ok(())

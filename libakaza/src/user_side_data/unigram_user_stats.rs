@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::cost::calc_cost;
-use crate::graph::graph_resolver::Candidate;
+use crate::graph::candidate::Candidate;
 
 #[derive(Default)]
 pub(crate) struct UniGramUserStats {

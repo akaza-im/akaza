@@ -111,7 +111,7 @@ pub fn evaluate(corpus_dir: &String, load_user_config: bool) -> anyhow::Result<(
             let t2 = SystemTime::now();
             let elapsed = t2.duration_since(t1)?;
 
-            let terms: Vec<String> = result.iter().map(|f| f[0].kanji.clone()).collect();
+            let terms: Vec<String> = result.iter().map(|f| f[0].surface.clone()).collect();
             let got = terms.join("");
 
             // 最長共通部分列を算出。

@@ -1,7 +1,7 @@
 use std::collections::vec_deque::VecDeque;
 use std::ops::Range;
 
-use crate::graph::graph_resolver::Candidate;
+use crate::graph::candidate::Candidate;
 
 // 現状維持するための文節データを返します。
 fn keep_current(clauses: &[VecDeque<Candidate>]) -> Vec<Range<usize>> {

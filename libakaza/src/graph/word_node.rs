@@ -4,7 +4,7 @@ use std::hash::{Hash, Hasher};
 #[derive(Debug, Clone)]
 pub struct WordNode {
     pub start_pos: i32,
-    /// 漢字
+    /// 表層。
     pub surface: String,
     /// 読み仮名
     pub yomi: String,
