@@ -92,6 +92,14 @@ impl AozoraBunkoProcessor {
             return Ok(());
         }
 
+        if src.contains("creativecommons.org") {
+            info!(
+                "Skipping {} due to creativecommons.org",
+                ifname.to_string_lossy()
+            );
+            return Ok(());
+        }
+
         // 「旧字、旧仮名で書かれた作品を、現代表記にあらためる際の作業指針」
         // について言及している文書はスキップする。
         //
