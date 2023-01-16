@@ -3,6 +3,7 @@
 extern crate core;
 
 pub mod config;
+pub mod consonant;
 pub mod corpus;
 pub mod cost;
 pub mod dict;

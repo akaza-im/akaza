@@ -75,44 +75,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> BigramWordViterbiEngine<U, B> {
         // ローマ字からひらがなへの変換をする。
         let yomi = self.romkan_converter.to_hiragana(yomi);
 
-        /*
-            TODO: C++ 版 akaza では子音を先に取り除いておいて、あとからまたくっつけるという処理をしていたようだが、
-            これをやる意味が今はわからないので一旦あとまわし。
-
-                // 子音だが、N は NN だと「ん」になるので処理しない。
-        std::string consonant;
-        {
-            std::wregex trailing_consonant(cnv.from_bytes(R"(^(.*?)([qwrtypsdfghjklzxcvbm]+)$)"));
-            std::wsmatch sm;
-            if (std::regex_match(whiragana, sm, trailing_consonant)) {
-                hiragana = cnv.to_bytes(sm.str(1));
-                consonant = cnv.to_bytes(sm.str(2));
-                D(std::cout << "CONSONANT=" << consonant << std::endl);
-            }
-        }
-
-        Graph graph = graphResolver_->graph_construct(cnv.from_bytes(hiragana), forceSelectedClauses);
-        graphResolver_->fill_cost(graph);
-        D(graph.dump());
-        std::vector<std::vector<std::shared_ptr<akaza::Node>>> nodes = graphResolver_->find_nbest(graph);
-        if (consonant.empty()) {
-            return nodes;
-        } else {
-            D(std::cout << " Adding Consonant=" << consonant << std::endl);
-            nodes.push_back({{
-                                     akaza::create_node(
-                                             graphResolver_->system_unigram_lm_,
-                                             src.size(),
-                                             cnv.from_bytes(consonant),
-                                             cnv.from_bytes(consonant)
-                                     )
-                             }});
-            return nodes;
-        }
-             */
-
-        let self1 = &self.segmenter;
-        let segmentation_result = self1.build(yomi.as_str(), force_ranges);
+        let segmentation_result = &self.segmenter.build(yomi.as_str(), force_ranges);
         let lattice = self
             .graph_builder
             .construct(yomi.as_str(), segmentation_result);

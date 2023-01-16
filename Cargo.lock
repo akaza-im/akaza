@@ -727,6 +727,7 @@ dependencies = [
  "kelp",
  "libakaza",
  "log",
+ "regex",
  "tempfile",
 ]
 

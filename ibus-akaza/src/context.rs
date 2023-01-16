@@ -35,6 +35,7 @@ use ibus_sys::property::{
     IBusProperty,
 };
 use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, IBusText, StringExt};
+use libakaza::consonant::ConsonantSuffixExtractor;
 use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngine;
 use libakaza::extend_clause::{extend_left, extend_right};
@@ -89,6 +90,7 @@ pub struct AkazaContext {
     prop_list: *mut IBusPropList,
     pub input_mode_prop: *mut IBusProperty,
     pub prop_dict: HashMap<String, *mut IBusProperty>,
+    pub consonant_suffix_extractor: ConsonantSuffixExtractor,
 }
 
 impl AkazaContext {
@@ -186,6 +188,7 @@ impl AkazaContext {
             prop_list,
             input_mode_prop,
             prop_dict,
+            consonant_suffix_extractor: ConsonantSuffixExtractor::default(),
         }
     }
 
@@ -663,7 +666,7 @@ impl AkazaContext {
 
     /// (yomi, surface)
     pub fn make_preedit_word(&self) -> (String, String) {
-        let mut preedit = self.preedit.clone();
+        let preedit = self.preedit.clone();
         // 先頭文字が大文字な場合は、そのまま返す。
         // "IME" などと入力された場合は、それをそのまま返すようにする。
         if !preedit.is_empty() && preedit.chars().next().unwrap().is_ascii_uppercase() {
@@ -674,31 +677,25 @@ impl AkazaContext {
         // hogena となったら "ほげな"
         // hogenn となったら "ほげん" と表示する必要があるため。
         // 「ん」と一旦表示された後に「な」に変化したりすると気持ち悪く感じる。
-        let suffix = if preedit.ends_with('n') && !preedit.ends_with("nn") {
-            let (i, _) = preedit.char_indices().last().unwrap();
-            preedit = preedit[0..i].to_string();
-            "n"
-        } else {
-            ""
-        };
+        let (preedit, suffix) = self.consonant_suffix_extractor.extract(preedit.as_str());
 
         let yomi = self.romkan.to_hiragana(preedit.as_str());
         let surface = yomi.clone();
         if self.input_mode == INPUT_MODE_KATAKANA {
             (
-                yomi.to_string() + suffix,
-                hira2kata(yomi.as_str(), ConvOption::default()) + suffix,
+                yomi.to_string() + suffix.as_str(),
+                hira2kata(yomi.as_str(), ConvOption::default()) + suffix.as_str(),
             )
         } else if self.input_mode == INPUT_MODE_HALFWIDTH_KATAKANA {
             (
-                yomi.to_string() + suffix,
+                yomi.to_string() + suffix.as_str(),
                 z2h(
                     hira2kata(yomi.as_str(), ConvOption::default()).as_str(),
                     ConvOption::default(),
-                ) + suffix,
+                ) + suffix.as_str(),
             )
         } else {
-            (yomi + suffix, surface + suffix)
+            (yomi + suffix.as_str(), surface + suffix.as_str())
         }
 
         /*

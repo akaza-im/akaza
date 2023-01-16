@@ -171,7 +171,7 @@ mod tests {
             Rc::new(system_unigram_lm),
             Rc::new(system_bigram_lm),
         );
-        let lattice = graph_builder.construct("abc", graph);
+        let lattice = graph_builder.construct("abc", &graph);
         let resolver = GraphResolver::default();
         let got = resolver.resolve(&lattice)?;
         let terms: Vec<String> = got.iter().map(|f| f[0].surface.clone()).collect();
@@ -225,7 +225,7 @@ mod tests {
             Rc::new(system_unigram_lm),
             Rc::new(system_bigram_lm),
         );
-        let lattice = graph_builder.construct(&yomi, graph);
+        let lattice = graph_builder.construct(&yomi, &graph);
         // dot -Tpng -o /tmp/lattice.png /tmp/lattice.dot && open /tmp/lattice.png
         // File::create("/tmp/lattice.dot")
         //     .unwrap()
