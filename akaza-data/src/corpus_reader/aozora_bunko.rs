@@ -93,7 +93,10 @@ impl AozoraBunkoProcessor {
         }
 
         if src.contains("creativecommons.org") {
-            info!("Skipping {} due to creativecommons.org", ifname.to_string_lossy());
+            info!(
+                "Skipping {} due to creativecommons.org",
+                ifname.to_string_lossy()
+            );
             return Ok(());
         }
 
