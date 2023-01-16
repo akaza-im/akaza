@@ -11,7 +11,7 @@ anyhow = "1.0.68"
 log = "0.4.17"
 libakaza = { path = "../libakaza" }
 env_logger = "0.10.0"
-clap = { version = "4.0.32", features = ["derive"] }
+clap = { version = "4.1.1", features = ["derive"] }
 clap-verbosity-flag = "2.0.0"
 encoding_rs = "0.8.31"
 regex = "1"
