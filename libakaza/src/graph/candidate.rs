@@ -1,4 +1,5 @@
-use chrono::{DateTime, Local};
+#[allow(unused_imports)]
+use chrono::{DateTime, Local, TimeZone};
 
 #[derive(Debug, Clone)]
 pub struct Candidate {
