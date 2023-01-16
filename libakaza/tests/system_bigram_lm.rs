@@ -17,13 +17,13 @@ mod tests {
 
     fn load_unigram() -> anyhow::Result<MarisaSystemUnigramLM> {
         let datadir = datadir();
-        let path = datadir + "/stats-vibrato-unigram.trie";
+        let path = datadir + "/unigram.model";
         MarisaSystemUnigramLM::load(&path)
     }
 
     fn load_bigram() -> MarisaSystemBigramLM {
         let datadir = datadir();
-        let path = datadir + "/stats-vibrato-bigram.trie";
+        let path = datadir + "/bigram.model";
 
         MarisaSystemBigramLM::load(&path).unwrap()
     }

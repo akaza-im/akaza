@@ -150,13 +150,13 @@ impl BigramWordViterbiEngineBuilder {
         &self,
     ) -> Result<BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>> {
         let system_unigram_lm = MarisaSystemUnigramLM::load(
-            Self::try_load("stats-vibrato-unigram.trie")?
+            Self::try_load("unigram.model")?
                 .to_string_lossy()
                 .to_string()
                 .as_str(),
         )?;
         let system_bigram_lm = MarisaSystemBigramLM::load(
-            Self::try_load("stats-vibrato-bigram.trie")?
+            Self::try_load("bigram.model")?
                 .to_string_lossy()
                 .to_string()
                 .as_str(),
