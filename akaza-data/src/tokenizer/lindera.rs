@@ -33,7 +33,6 @@ impl LinderaTokenizer {
             dictionary,
             user_dictionary,
             mode: Mode::Normal,
-            with_details: true,
         };
 
         // create tokenizer
@@ -51,9 +50,9 @@ impl AkazaTokenizer for LinderaTokenizer {
 
         // 取り扱いやすい中間表現に変更する
         let mut intermediates: Vec<IntermediateToken> = Vec::new();
-        for token in tokens {
-            let details = token.details.unwrap();
-            let surface = token.text;
+        for mut token in tokens {
+            let details = token.get_details().unwrap().iter().map(|f| f.to_string()).collect::<Vec<_>>();
+            let surface = token.get_text();
 
             let yomi = if details.len() > 7 {
                 details[7].to_string()
