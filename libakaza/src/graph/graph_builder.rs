@@ -53,7 +53,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> GraphBuilder<U, B> {
         )
     }
 
-    pub fn construct(&self, yomi: &str, words_ends_at: SegmentationResult) -> LatticeGraph<U, B> {
+    pub fn construct(&self, yomi: &str, words_ends_at: &SegmentationResult) -> LatticeGraph<U, B> {
         // このグラフのインデクスは単語の終了位置。
         let mut graph: BTreeMap<i32, Vec<WordNode>> = BTreeMap::new();
         graph.insert(0, vec![WordNode::create_bos()]);
@@ -155,7 +155,7 @@ mod tests {
         let yomi = "すし";
         let got = graph_builder.construct(
             yomi,
-            SegmentationResult::new(BTreeMap::from([(6, vec!["すし".to_string()])])),
+            &SegmentationResult::new(BTreeMap::from([(6, vec!["すし".to_string()])])),
         );
         let nodes = got.node_list(6).unwrap();
         let got_surfaces: Vec<String> = nodes.iter().map(|f| f.surface.to_string()).collect();
@@ -188,7 +188,7 @@ mod tests {
         let yomi = "す";
         let got = graph_builder.construct(
             yomi,
-            SegmentationResult::new(BTreeMap::from([(3, vec!["す".to_string()])])),
+            &SegmentationResult::new(BTreeMap::from([(3, vec!["す".to_string()])])),
         );
         let nodes = got.node_list(3).unwrap();
         let got_surfaces: Vec<String> = nodes.iter().map(|f| f.surface.to_string()).collect();
@@ -218,7 +218,7 @@ mod tests {
         let yomi = "す";
         let got = graph_builder.construct(
             yomi,
-            SegmentationResult::new(BTreeMap::from([(3, vec!["す".to_string()])])),
+            &SegmentationResult::new(BTreeMap::from([(3, vec!["す".to_string()])])),
         );
         let nodes = got.node_list(3).unwrap();
         let got_surfaces: Vec<String> = nodes.iter().map(|f| f.surface.to_string()).collect();
