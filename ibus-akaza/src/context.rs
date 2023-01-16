@@ -528,6 +528,13 @@ impl AkazaContext {
             } else {
                 0
             };
+            if idex >= nodes.len() {
+                // 発生しないはずだが、発生している。。なぜだろう?
+                panic!(
+                    "[BUG] self.node_selected and self.clauses missmatch: {:?}, {:?}",
+                    self.node_selected, self.clauses,
+                )
+            }
             result += &nodes[idex].surface_with_dynamic();
         }
         result
