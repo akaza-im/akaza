@@ -48,11 +48,7 @@ impl SaigenRitsu {
 /// にのっている評価方法を採用。
 ///
 /// なぜこうしているかというと、mozc の論文にのっている BLEU を使用する方式より実装が楽だからです!
-pub fn evaluate(
-    corpus_dir: &String,
-    system_data_dir: &str,
-    load_user_config: bool,
-) -> anyhow::Result<()> {
+pub fn evaluate(corpus_dir: &String, load_user_config: bool) -> anyhow::Result<()> {
     /*
     # corpus.0.txt デバッグ用のファイル
     # corpus.1.txt メイン(候補割り当ても含む)
@@ -75,7 +71,7 @@ pub fn evaluate(
         read_skkdict(Path::new("data/SKK-JISYO.akaza"), UTF_8)?,
     ]);
 
-    let akaza = BigramWordViterbiEngineBuilder::new(system_data_dir, Some(dicts), None)
+    let akaza = BigramWordViterbiEngineBuilder::new(Some(dicts), None)
         .load_user_config(load_user_config)
         .build()?;
 
