@@ -113,7 +113,7 @@ data/SKK-JISYO.akaza: work/vibrato-ipadic.vocab jawiki-kana-kanji-dict/SKK-JISYO
 # -------------------------------------------------------------------------
 
 evaluate:
-	cargo run --release evaluate anthy-corpus data -v
+	AKAZA_DATA_DIR=data/ cargo run --release evaluate anthy-corpus -v
 
 # -------------------------------------------------------------------------
 
