@@ -7,7 +7,9 @@ pub fn merge_dict(dicts: Vec<HashMap<String, Vec<String>>>) -> HashMap<String, V
         for (yomi, kanjis) in dict {
             let target = result.entry(yomi).or_default();
             for kanji in kanjis {
-                target.push(kanji);
+                if !target.contains(&kanji) {
+                    target.push(kanji);
+                }
             }
         }
     }
@@ -37,6 +39,18 @@ mod tests {
                 ),
                 ("お".to_string(), vec!["緒".to_string()])
             ])
+        );
+    }
+
+    #[test]
+    fn test_merge_dict_dedup() {
+        let got = merge_dict(vec![
+            HashMap::from([("ご".to_string(), vec!["語".to_string()])]),
+            HashMap::from([("ご".to_string(), vec!["語".to_string(), "碁".to_string()])]),
+        ]);
+        assert_eq!(
+            got,
+            HashMap::from([("ご".to_string(), vec!["語".to_string(), "碁".to_string()]),])
         );
     }
 }
