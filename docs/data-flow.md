@@ -4,29 +4,26 @@
 
 ここで、language model とは日本語における単語の発現確率のことを指す。
 
-akaza では、基本的に wikipedia 日本語版のデータをもとに単語の発現確率及び 2gram での発現確率を求めている。
+akaza では、基本的に wikipedia 日本語版および青空文庫のデータをもとに単語の発現確率及び 2gram での発現確率を求めている。
 
-わかちがき処理及びよみがな処理には kytea を利用している。
-
-wikipedia を利用しているのは、日本語のコーパスとしてフリーで再利用可能なものが他に見当たらないからであって、他に良いものがあれば追加したい。
+わかちがき処理及びよみがな処理には vibrato+ipadic を利用している。
 
 ```mermaid
 graph TD
     wikipedia --> wikipedia.xml.bz2
-    -- bunzip2 -->latest-pages-articles.xml
-    -- wikiextractor --> extracted
-    -- kytea --> annotated
-    -- text2wfreq --> jawiki.wfreq
-    -- wfreq2vocab --> jawiki.vocab
-    jawiki.vocab --> dumpngram[/dumpngram/]
-    extracted --> dumpngram[/dumpngram/]
-    --> ngram.txt
-    ngram.txt --> jawiki.mergeed-1gram.txt
-    ngram.txt --> jawiki.mergeed-2gram.txt
-
-    jawiki.mergeed-1gram.txt -- akaza-make-system-lm --> stats-kytea-lm_v2_1gram.trie
-    jawiki.mergeed-2gram.txt -- akaza-make-system-lm --> stats-kytea-lm_v2_2gram.trie
-    stats-kytea-lm_v2_1gram.trie -- akaza-make-system-lm --> stats-kytea-lm_v2_2gram.trie
+    -- bunzip2 --> wikipedia.xml
+    -- wikiextractor --> extracted/
+    -- vibrato --> tokenized/
+    aozora_bunko --> vibrato --> tokenized/
+    tokenized/ --> wfreq
+    wfreq --> vocab
+    tokenized/ --> bigram.raw
+    wfreq --> unigram.raw
+    corpus/ --> learn-corpus
+    bigram.raw --> learn-corpus
+    unigram.raw --> learn-corpus
+    learn-corpus --> unigram.model
+    learn-corpus --> bigram.model
 ```
 
 ## システム辞書
@@ -38,16 +35,10 @@ graph TD
 
 ```mermaid
 graph TD
-    SKK-JISYO.L --> system-dict
-    SKK-JISYO.jinmei --> system-dict
-    SKK-JISYO.station --> system-dict
-    jawiki-kana-kanji-dict --> SKK-JISYO.jawiki --> system-dict
-    SKK-JISYO.akaza --> system-dict
-    system-dict -- akaza-make-binary-dict--> stats-kytea-system_dict.trie
-
-    SKK-JISYO.emoji --> single-term-dict
-    SKK-JISYO.zipcode --> single-term-dict
-    single-term-dict -- akaza-make-binary-dict--> stats-kytea-single_term.trie
+    corpus/*.txt --> system-dict
+    work/vibrato-ipadic.vocab --> system-dict
+    dict/SKK-JISYO.akaza --> system-dict
+    system-dict -- make-system-dict--> data/SKK-JISYO.akaza
 ```
 
 ## ユーザー言語モデル
