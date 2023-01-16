@@ -1,23 +1,29 @@
 use std::fs::File;
 use std::io::Write;
-use std::path::Path;
 use std::sync::{Arc, Mutex};
 
-use encoding_rs::{EUC_JP, UTF_8};
 use log::info;
 
-use libakaza::dict::merge_dict::merge_dict;
-use libakaza::dict::skk::read::read_skkdict;
+use libakaza::config::{Config, DictConfig};
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 use libakaza::user_side_data::user_data::UserData;
 
 pub fn check(yomi: &str, expected: Option<String>, user_data: bool) -> anyhow::Result<()> {
-    let dict = merge_dict(vec![
-        read_skkdict(Path::new("skk-dev-dict/SKK-JISYO.L"), EUC_JP)?,
-        read_skkdict(Path::new("data/SKK-JISYO.akaza"), UTF_8)?,
-    ]);
-
-    let mut builder = BigramWordViterbiEngineBuilder::new(Some(dict), None);
+    let mut builder = BigramWordViterbiEngineBuilder::new(Config {
+        dicts: vec![
+            DictConfig {
+                dict_type: "skk".to_string(),
+                encoding: Some("euc-jp".to_string()),
+                path: "skk-dev-dict/SKK-JISYO.L".to_string(),
+            },
+            DictConfig {
+                dict_type: "skk".to_string(),
+                encoding: Some("utf-8".to_string()),
+                path: "data/SKK-JISYO.akaza".to_string(),
+            },
+        ],
+        single_term: None,
+    });
     if user_data {
         info!("Enabled user data");
         let user_data = UserData::load_from_default_path()?;

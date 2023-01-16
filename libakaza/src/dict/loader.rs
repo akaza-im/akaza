@@ -20,7 +20,7 @@ pub fn load_dicts(dict_configs: &Vec<DictConfig>) -> Result<HashMap<String, Vec<
                 dicts.push(dict);
             }
             Err(err) => {
-                error!("Cannot load {:?}. {}", dict_config, err);
+                error!("Cannot load dictionary: {:?}. {}", dict_config, err);
                 // 一顧の辞書の読み込みに失敗しても、他の辞書は読み込むべきなので
                 // 処理は続行する
             }

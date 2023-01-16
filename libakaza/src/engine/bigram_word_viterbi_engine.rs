@@ -5,11 +5,9 @@ use std::ops::Range;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
-use std::time::SystemTime;
 
 use anyhow::{bail, Result};
 use encoding_rs::UTF_8;
-use log::{info, warn};
 
 use crate::config::Config;
 use crate::dict::loader::load_dicts;
@@ -124,20 +122,15 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> BigramWordViterbiEngine<U, B> {
 pub struct BigramWordViterbiEngineBuilder {
     user_data: Option<Arc<Mutex<UserData>>>,
     load_user_config: bool,
-    dicts: Option<HashMap<String, Vec<String>>>,
-    single_term: Option<HashMap<String, Vec<String>>>,
+    pub config: Config,
 }
 
 impl BigramWordViterbiEngineBuilder {
-    pub fn new(
-        dicts: Option<HashMap<String, Vec<String>>>,
-        single_term: Option<HashMap<String, Vec<String>>>,
-    ) -> BigramWordViterbiEngineBuilder {
+    pub fn new(config: Config) -> BigramWordViterbiEngineBuilder {
         BigramWordViterbiEngineBuilder {
             user_data: None,
             load_user_config: false,
-            dicts,
-            single_term,
+            config,
         }
     }
 
@@ -176,29 +169,13 @@ impl BigramWordViterbiEngineBuilder {
             Arc::new(Mutex::new(UserData::default()))
         };
 
-        let config = if self.load_user_config {
-            self.load_config()?
-        } else {
-            Config::default()
-        };
-
-        let dict = load_dicts(&config.dicts)?;
+        let dict = load_dicts(&self.config.dicts)?;
         let dict = merge_dict(vec![system_dict, dict]);
-        let dict = if let Some(dd) = &self.dicts {
-            merge_dict(vec![dict, dd.clone()])
-        } else {
-            dict
-        };
 
-        let single_term = if let Some(st) = &config.single_term {
+        let single_term = if let Some(st) = &&self.config.single_term {
             load_dicts(st)?
         } else {
             HashMap::new()
-        };
-        let single_term = if let Some(dd) = &self.single_term {
-            merge_dict(vec![single_term, dd.clone()])
-        } else {
-            single_term
         };
 
         // 辞書を元に、トライを作成していく。
@@ -236,28 +213,6 @@ impl BigramWordViterbiEngineBuilder {
             romkan_converter,
             user_data,
         })
-    }
-
-    fn load_config(&self) -> Result<Config> {
-        let basedir = xdg::BaseDirectories::with_prefix("akaza")?;
-        let configfile = basedir.get_config_file("config.yml");
-        let config = match Config::load_from_file(configfile.to_str().unwrap()) {
-            Ok(config) => config,
-            Err(err) => {
-                warn!(
-                    "Cannot load configuration file: {} {}",
-                    configfile.to_string_lossy(),
-                    err
-                );
-                return Ok(Config::default());
-            }
-        };
-        info!(
-            "Loaded config file: {}, {:?}",
-            configfile.to_string_lossy(),
-            config
-        );
-        Ok(config)
     }
 
     pub fn try_load(file_name: &str) -> Result<PathBuf> {

@@ -6,10 +6,9 @@ mod tests {
     use std::path::Path;
 
     use anyhow::Result;
-    use encoding_rs::UTF_8;
-    use libakaza::dict::skk::read::read_skkdict;
     use log::LevelFilter;
 
+    use libakaza::config::{Config, DictConfig};
     use libakaza::engine::base::HenkanEngine;
     use libakaza::engine::bigram_word_viterbi_engine::{
         BigramWordViterbiEngine, BigramWordViterbiEngineBuilder,
@@ -23,24 +22,28 @@ mod tests {
         let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/../akaza-data/data/";
         assert!(Path::new(datadir.as_str()).exists());
         env::set_var("AKAZA_DATA_DIR", datadir);
-        BigramWordViterbiEngineBuilder::new(
-            Some(read_skkdict(
-                Path::new(
-                    (env!("CARGO_MANIFEST_DIR").to_string()
-                        + "/../akaza-data/data/SKK-JISYO.akaza")
-                        .as_str(),
-                ),
-                UTF_8,
-            )?),
-            Some(read_skkdict(
-                Path::new(
-                    (env!("CARGO_MANIFEST_DIR").to_string()
-                        + "/../akaza-data/skk-dev-dict/SKK-JISYO.emoji")
-                        .as_str(),
-                ),
-                UTF_8,
-            )?),
-        )
+        BigramWordViterbiEngineBuilder::new(Config {
+            dicts: vec![
+                DictConfig {
+                    dict_type: "skk".to_string(),
+                    encoding: Some("euc-jp".to_string()),
+                    path: (env!("CARGO_MANIFEST_DIR").to_string()
+                        + "/../akaza-data/skk-dev-dict/SKK-JISYO.L"),
+                },
+                DictConfig {
+                    dict_type: "skk".to_string(),
+                    encoding: Some("utf-8".to_string()),
+                    path: (env!("CARGO_MANIFEST_DIR").to_string()
+                        + "/../akaza-data/data/SKK-JISYO.akaza"),
+                },
+            ],
+            single_term: Some(vec![DictConfig {
+                dict_type: "skk".to_string(),
+                encoding: Some("utf-8".to_string()),
+                path: (env!("CARGO_MANIFEST_DIR").to_string()
+                    + "/../akaza-data/skk-dev-dict/SKK-JISYO.emoji"),
+            }]),
+        })
         .build()
     }
 
@@ -83,7 +86,7 @@ mod tests {
     #[test]
     fn test_sushi() -> Result<()> {
         let _ = env_logger::builder()
-            .filter_level(LevelFilter::Trace)
+            .filter_level(LevelFilter::Info)
             .is_test(true)
             .try_init();
 
