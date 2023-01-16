@@ -13,7 +13,7 @@ mod tests {
     use libakaza::engine::bigram_word_viterbi_engine::{
         BigramWordViterbiEngine, BigramWordViterbiEngineBuilder,
     };
-    use libakaza::graph::graph_resolver::Candidate;
+    use libakaza::graph::candidate::Candidate;
     use libakaza::lm::system_bigram::MarisaSystemBigramLM;
     use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 

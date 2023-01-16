@@ -38,7 +38,7 @@ use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, IBusTe
 use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngine;
 use libakaza::extend_clause::{extend_left, extend_right};
-use libakaza::graph::graph_resolver::Candidate;
+use libakaza::graph::candidate::Candidate;
 use libakaza::lm::system_bigram::MarisaSystemBigramLM;
 use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use libakaza::romkan::RomKanConverter;

@@ -1,7 +1,7 @@
 use std::collections::vec_deque::VecDeque;
 use std::ops::Range;
 
-use crate::graph::graph_resolver::Candidate;
+use crate::graph::candidate::Candidate;
 
 pub trait HenkanEngine {
     fn learn(&mut self, candidates: &[Candidate]);

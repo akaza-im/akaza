@@ -6,7 +6,7 @@ use std::time::SystemTime;
 use anyhow::Result;
 use log::{debug, info, warn};
 
-use crate::graph::graph_resolver::Candidate;
+use crate::graph::candidate::Candidate;
 use crate::graph::word_node::WordNode;
 use crate::kana_trie::base::KanaTrie;
 use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
