@@ -31,23 +31,15 @@ impl InputMode {
 }
 
 pub const INPUT_MODE_ALNUM: InputMode =
-    InputMode::new("InputMode.Alphanumeric", 0, "_A", "Alphanumeric (C-S-;)");
+    InputMode::new("InputMode.Alphanumeric", 0, "_A", "アルファベット (C-S-;)");
 pub const INPUT_MODE_HIRAGANA: InputMode =
-    InputMode::new("InputMode.Hiragana", 1, "あ", "Hiragana (C-S-j)");
+    InputMode::new("InputMode.Hiragana", 1, "あ", "ひらがな (C-S-j)");
 pub const INPUT_MODE_KATAKANA: InputMode =
-    InputMode::new("InputMode.Katakana", 2, "ア", "Katakana (C-S-K)");
-pub const INPUT_MODE_HALFWIDTH_KATAKANA: InputMode = InputMode::new(
-    "InputMode.HalfWidthKatakana",
-    3,
-    "_ｱ",
-    "Half-width Katakana",
-);
-pub const INPUT_MODE_FULLWIDTH_ALNUM: InputMode = InputMode::new(
-    "InputMode.FullWidthAlnum",
-    4,
-    "Ａ",
-    "Full-width Alphanumeric (C-S-l)",
-);
+    InputMode::new("InputMode.Katakana", 2, "ア", "カタカナ (C-S-K)");
+pub const INPUT_MODE_HALFWIDTH_KATAKANA: InputMode =
+    InputMode::new("InputMode.HalfWidthKatakana", 3, "_ｱ", "半角カタカナ");
+pub const INPUT_MODE_FULLWIDTH_ALNUM: InputMode =
+    InputMode::new("InputMode.FullWidthAlnum", 4, "Ａ", "全角カタカナ (C-S-l)");
 
 const _ALL_INPUT_MODE: [InputMode; 5] = [
     INPUT_MODE_ALNUM,

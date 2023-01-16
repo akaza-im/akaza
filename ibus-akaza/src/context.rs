@@ -22,7 +22,7 @@ use ibus_sys::core::{
 use ibus_sys::engine::{
     ibus_engine_commit_text, ibus_engine_hide_preedit_text, ibus_engine_register_properties,
     ibus_engine_update_auxiliary_text, ibus_engine_update_lookup_table,
-    ibus_engine_update_preedit_text, IBusEngine,
+    ibus_engine_update_preedit_text, ibus_engine_update_property, IBusEngine,
 };
 use ibus_sys::engine::{ibus_engine_hide_auxiliary_text, ibus_engine_hide_lookup_table};
 use ibus_sys::glib::{g_object_ref_sink, gchar, gpointer};
@@ -30,7 +30,8 @@ use ibus_sys::glib::{gboolean, guint};
 use ibus_sys::lookup_table::IBusLookupTable;
 use ibus_sys::prop_list::{ibus_prop_list_append, ibus_prop_list_new, IBusPropList};
 use ibus_sys::property::{
-    ibus_property_new, ibus_property_set_sub_props, IBusPropState_PROP_STATE_CHECKED,
+    ibus_property_new, ibus_property_set_label, ibus_property_set_state,
+    ibus_property_set_sub_props, ibus_property_set_symbol, IBusPropState_PROP_STATE_CHECKED,
     IBusPropState_PROP_STATE_UNCHECKED, IBusPropType_PROP_TYPE_MENU, IBusPropType_PROP_TYPE_RADIO,
     IBusProperty,
 };
@@ -88,7 +89,9 @@ pub struct AkazaContext {
     /// シフト+右 or シフト+左で
     force_selected_clause: Vec<Range<usize>>,
     prop_list: *mut IBusPropList,
+    /// input mode のメニューの親プロパティ。
     pub input_mode_prop: *mut IBusProperty,
+    /// メニューの input mode ごとのメニュープロパティたち。
     pub prop_dict: HashMap<String, *mut IBusProperty>,
     pub consonant_suffix_extractor: ConsonantSuffixExtractor,
 }
@@ -168,9 +171,10 @@ impl AkazaContext {
     pub(crate) fn new(
         akaza: BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
     ) -> Self {
-        let (input_mode_prop, prop_list, prop_dict) = Self::init_props();
+        let input_mode = INPUT_MODE_HIRAGANA;
+        let (input_mode_prop, prop_list, prop_dict) = Self::init_props(input_mode);
         AkazaContext {
-            input_mode: INPUT_MODE_HIRAGANA,
+            input_mode,
             cursor_pos: 0,
             preedit: String::new(),
             //         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
@@ -193,7 +197,11 @@ impl AkazaContext {
     }
 
     /// タスクメニューからポップアップして選べるメニューを構築する。
-    pub fn init_props() -> (
+    ///
+    /// * `initial_input_mode`: 初期状態の input_mode
+    pub fn init_props(
+        initial_input_mode: InputMode,
+    ) -> (
         *mut IBusProperty,
         *mut IBusPropList,
         HashMap<String, *mut IBusProperty>,
@@ -205,7 +213,7 @@ impl AkazaContext {
             let input_mode_prop = g_object_ref_sink(ibus_property_new(
                 "InputMode\0".as_ptr() as *const gchar,
                 IBusPropType_PROP_TYPE_MENU,
-                "Input mode (あ)".to_ibus_text(),
+                format!("入力モード: {}", initial_input_mode.symbol).to_ibus_text(),
                 "\0".as_ptr() as *const gchar,
                 "Switch input mode".to_ibus_text(),
                 to_gboolean(true),
@@ -226,7 +234,11 @@ impl AkazaContext {
                     std::ptr::null_mut() as *mut IBusText,
                     to_gboolean(true),
                     to_gboolean(true),
-                    IBusPropState_PROP_STATE_UNCHECKED,
+                    if input_mode.mode_code == initial_input_mode.mode_code {
+                        IBusPropState_PROP_STATE_CHECKED
+                    } else {
+                        IBusPropState_PROP_STATE_UNCHECKED
+                    },
                     std::ptr::null_mut() as *mut IBusPropList,
                 ) as gpointer) as *mut IBusProperty;
                 prop_map.insert(input_mode.prop_name.to_string(), prop);
@@ -422,19 +434,26 @@ impl AkazaContext {
         // 変換候補をいったんコミットする。
         self.commit_candidate(engine);
 
-        // TODO update menu prop
+        // メニューの親項目のラベルを変更したい。
+        unsafe {
+            ibus_property_set_symbol(self.input_mode_prop, input_mode.symbol.to_ibus_text());
+            ibus_property_set_label(
+                self.input_mode_prop,
+                format!("入力モード: {}", input_mode.symbol).to_ibus_text(),
+            );
+            ibus_engine_update_property(engine, self.input_mode_prop);
+        }
 
-        /*
-        label = _("Input mode (%s)") % mode.symbol
-        prop = self.input_mode_prop
-        prop.set_symbol(IBus.Text.new_from_string(mode.symbol))
-        prop.set_label(IBus.Text.new_from_string(label))
-        self.update_property(prop)
+        // 有効化する input mode のメニュー項目にチェックを入れる。
+        let Some(property) = self.prop_dict.get(input_mode.prop_name) else {
+            panic!("Unknown input mode: {:?}", input_mode);
+        };
+        unsafe {
+            ibus_property_set_state(*property, IBusPropState_PROP_STATE_CHECKED);
+            ibus_engine_update_property(engine, *property);
+        }
 
-        self.__prop_dict[mode.prop_name].set_state(IBus.PropState.CHECKED)
-        self.update_property(self.__prop_dict[mode.prop_name])
-         */
-
+        // 実際に input_mode を設定する
         self.input_mode = *input_mode;
     }
 
