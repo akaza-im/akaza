@@ -176,40 +176,33 @@ impl BigramWordViterbiEngineBuilder {
             Arc::new(Mutex::new(UserData::default()))
         };
 
-        // TODO このへんごちゃごちゃしすぎ。
-        let (dict, single_term, mut kana_trie) = {
-            let t1 = SystemTime::now();
-            let config = if self.load_user_config {
-                self.load_config()?
-            } else {
-                Config::default()
-            };
-            let dicts = load_dicts(&config.dicts)?;
-            let dicts = merge_dict(vec![system_dict, dicts]);
-            let single_term = if let Some(st) = &config.single_term {
-                load_dicts(st)?
-            } else {
-                HashMap::new()
-            };
-            // 次に、辞書を元に、トライを作成していく。
-            let kana_trie = CedarwoodKanaTrie::default();
-            let t2 = SystemTime::now();
-            info!(
-                "Loaded configuration in {}msec.",
-                t2.duration_since(t1).unwrap().as_millis()
-            );
-            (dicts, single_term, kana_trie)
+        let config = if self.load_user_config {
+            self.load_config()?
+        } else {
+            Config::default()
         };
+
+        let dict = load_dicts(&config.dicts)?;
+        let dict = merge_dict(vec![system_dict, dict]);
         let dict = if let Some(dd) = &self.dicts {
             merge_dict(vec![dict, dd.clone()])
         } else {
             dict
+        };
+
+        let single_term = if let Some(st) = &config.single_term {
+            load_dicts(st)?
+        } else {
+            HashMap::new()
         };
         let single_term = if let Some(dd) = &self.single_term {
             merge_dict(vec![single_term, dd.clone()])
         } else {
             single_term
         };
+
+        // 辞書を元に、トライを作成していく。
+        let mut kana_trie = CedarwoodKanaTrie::default();
         for yomi in dict.keys() {
             assert!(!yomi.is_empty());
             kana_trie.update(yomi.as_str());
