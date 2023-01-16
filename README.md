@@ -62,9 +62,6 @@ akaza が提供しているシステム辞書は偏りがすごくあるので�
 
     ---
     dicts:
-      - path: /usr/share/akaza/SKK-JISYO.akaza
-        encoding: utf-8
-        dict_type: skk
       - path: /usr/share/skk/SKK-JISYO.L
         encoding: euc-jp
         dict_type: skk

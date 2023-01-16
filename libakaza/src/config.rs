@@ -63,11 +63,11 @@ mod tests {
     #[test]
     fn test_load() -> anyhow::Result<()> {
         let config = Config::load_from_file("../config.sample.yml")?;
-        assert_eq!(config.dicts.len(), 1);
+        assert_eq!(config.dicts.len(), 2);
         assert_eq!(
             config.dicts[0],
             DictConfig {
-                path: "/usr/share/skk/SKK-JISYO.okinawa".to_string(),
+                path: "/usr/share/skk/SKK-JISYO.L".to_string(),
                 encoding: Some("euc-jp".to_string()),
                 dict_type: "skk".to_string()
             }
