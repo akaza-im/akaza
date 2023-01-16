@@ -26,7 +26,7 @@ impl VibratoTokenizer {
 
         // ユーザー辞書として jawiki-kana-kanji-dict を使うと
         // 変な単語を間違って覚えることがあるので、
-        // トーカナイズフェーズからは外す
+        // トーカナイズフェーズには入れないこと。
         if let Some(user_dict) = user_dict {
             info!("Loading user dictionary: {}", user_dict);
             dict = dict

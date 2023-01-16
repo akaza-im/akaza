@@ -51,25 +51,6 @@ work/vibrato-ipadic.vocab: work/vibrato-ipadic.wfreq src/subcmd/vocab.rs
 
 # -------------------------------------------------------------------------
 
-# Lindera によるトーカナイズ
-
-# 以下のようにすれば、ユーザー辞書を追加可能。ただし、jawiki-kana-kanji-dict は wikipedia から生成しているため誤爆もあるので、ここでは使わないほうが良さそう。
-# -u jawiki-kana-kanji-dict/lindera-userdic.bin
-
-work/jawiki/lindera-ipadic/_SUCCESS: src/subcmd/tokenize.rs jawiki-kana-kanji-dict/mecab-userdic.csv src/corpus_reader/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS
-	cargo run --release -- tokenize-lindera-ipadic work/jawiki/extracted/ work/jawiki/lindera-ipadic/ -vvv
-
-work/jawiki/lindera-ipadic.wfreq: work/jawiki/lindera-ipadic/_SUCCESS src/subcmd/wfreq.rs
-	cargo run --release -- wfreq work/jawiki/lindera-ipadic/ work/jawiki/lindera-ipadic.wfreq -vvv
-
-# threshold が 16 なのは、ヒューリスティックなパラメータ設定による。
-# 調整の余地あり。
-work/jawiki/lindera-ipadic.vocab: work/jawiki/lindera-ipadic.wfreq src/subcmd/vocab.rs
-	cargo run --release -- vocab --threshold 16 work/jawiki/lindera-ipadic.wfreq work/jawiki/lindera-ipadic.vocab -vvv
-
-
-# -------------------------------------------------------------------------
-
 # 統計的仮名かな漢字変換のためのモデル作成処理
 
 work/stats-vibrato-unigram.raw.trie: work/vibrato-ipadic.wfreq
@@ -101,7 +82,7 @@ data/unigram.model: data/bigram.model
 # システム辞書の構築。dict/SKK-JISYO.akaza、コーパスに書かれている語彙および work/vibrato-ipadic.vocab にある語彙。
 # から、SKK-JISYO.L に含まれる語彙を除いたものが登録されている。
 
-data/SKK-JISYO.akaza: work/vibrato-ipadic.vocab jawiki-kana-kanji-dict/SKK-JISYO.jawiki dict/SKK-JISYO.akaza src/subcmd/make_dict.rs  corpus/must.txt corpus/should.txt corpus/may.txt
+data/SKK-JISYO.akaza: work/vibrato-ipadic.vocab dict/SKK-JISYO.akaza src/subcmd/make_dict.rs  corpus/must.txt corpus/should.txt corpus/may.txt
 	cargo run --release -- make-system-dict \
 		--corpus corpus/must.txt \
 		--corpus corpus/should.txt \
