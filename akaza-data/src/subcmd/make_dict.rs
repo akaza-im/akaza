@@ -4,7 +4,7 @@ use std::io::prelude::*;
 use std::path::Path;
 
 use anyhow::{bail, Result};
-use encoding_rs::{EUC_JP, UTF_8};
+use encoding_rs::UTF_8;
 use log::info;
 
 use crate::utils::copy_snapshot;
@@ -35,19 +35,18 @@ mod system_dict {
         vocab_file_path: Option<&str>,
         corpus_files: Vec<String>,
     ) -> Result<()> {
-        // TODO vocab, corpus, dict/SKK-JISYO.akaza から辞書を生成するようにして、
-        //      SKK-JISYO.L に含まれる語彙を削る、というようなロジックにしたい。
-        let dictionary_sources = [
-            // 先の方が優先される
-            ("skk-dev-dict/SKK-JISYO.L", EUC_JP),
-            ("dict/SKK-JISYO.akaza", UTF_8),
-        ];
+        // vocab, corpus, dict/SKK-JISYO.akaza から辞書を生成する
         let mut dicts = Vec::new();
 
-        for (path, encoding) in dictionary_sources {
-            let dict = read_skkdict(Path::new(path), encoding)?;
-            dicts.push(validate_dict(cleanup_dict(&dict)).with_context(|| path.to_string())?);
-        }
+        // SKK-JISYO.akaza を読む
+        dicts.push(
+            validate_dict(cleanup_dict(&read_skkdict(
+                Path::new("dict/SKK-JISYO.akaza"),
+                UTF_8,
+            )?))
+            .with_context(|| "dict/SKK-JISYO.akaza".to_string())?,
+        );
+        // vocab ファイルを読む
         if let Some(vocab_file_path) = vocab_file_path {
             info!("Using vocab file: {}", vocab_file_path);
             dicts.push(
@@ -55,6 +54,7 @@ mod system_dict {
                     .with_context(|| "make_vocab_dict".to_string())?,
             );
         }
+        // コーパスからも語彙を追加する
         dicts.push(
             validate_dict(make_corpus_dict(corpus_files)?)
                 .with_context(|| "make_corpus_dict".to_string())?,
