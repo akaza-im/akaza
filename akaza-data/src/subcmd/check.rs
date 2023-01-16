@@ -40,7 +40,7 @@ pub fn check(yomi: &str, expected: Option<String>, user_data: bool) -> anyhow::R
     }
 
     let got = engine.resolve(&lattice)?;
-    let terms: Vec<String> = got.iter().map(|f| f[0].kanji.clone()).collect();
+    let terms: Vec<String> = got.iter().map(|f| f[0].surface.clone()).collect();
     let result = terms.join("/");
     println!("{}", result);
 

@@ -2,6 +2,7 @@ use std::collections::vec_deque::VecDeque;
 use std::collections::HashMap;
 
 use anyhow::Context;
+use chrono::{DateTime, Local};
 use log::trace;
 
 use crate::graph::lattice_graph::LatticeGraph;
@@ -10,14 +11,14 @@ use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 
 #[derive(Debug, Clone)]
 pub struct Candidate {
-    pub kanji: String,
+    pub surface: String,
     pub yomi: String,
     pub cost: f32,
 }
 
 impl Candidate {
     pub(crate) fn key(&self) -> String {
-        self.kanji.to_string() + "/" + self.yomi.as_str()
+        self.surface.to_string() + "/" + self.yomi.as_str()
     }
 }
 
@@ -25,9 +26,51 @@ impl Candidate {
     pub fn new(yomi: &str, surface: &str, cost: f32) -> Candidate {
         Candidate {
             yomi: yomi.to_string(),
-            kanji: surface.to_string(),
+            surface: surface.to_string(),
             cost,
         }
+    }
+
+    /// 動的なエントリーも考慮した上での surface を得る。
+    pub fn surface_with_dynamic(&self) -> String {
+        if self.surface.starts_with("(*(*(") {
+            match self.surface.as_str() {
+                "(*(*(TODAY-HYPHEN" => now().format("%Y-%m-%d").to_string(),
+                "(*(*(TODAY-SLASH" => now().format("%Y/%m/%d").to_string(),
+                "(*(*(TODAY-KANJI" => now().format("%Y年%m月%d日").to_string(),
+                "(*(*(NOW-KANJI" => now().format("%H時%M分").to_string(),
+                _ => "不明な動的変換: ".to_string() + self.surface.as_str(),
+            }
+        } else {
+            self.surface.to_string()
+        }
+    }
+}
+
+#[cfg(not(test))]
+fn now() -> DateTime<Local> {
+    Local::now()
+}
+
+#[cfg(test)]
+fn now() -> DateTime<Local> {
+    Local.with_ymd_and_hms(2023, 1, 16, 15, 14, 16).unwrap()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dynamic() {
+        fn test(surface: &str) -> String {
+            WordNode::new(0, surface, "きょう", None).surface_with_dynamic()
+        }
+
+        assert_eq!(test("(*(*(TODAY-HYPHEN"), "2023-01-16");
+        assert_eq!(test("(*(*(TODAY-SLASH"), "2023/01/16");
+        assert_eq!(test("(*(*(TODAY-KANJI"), "2023年01月16日");
+        assert_eq!(test("(*(*(NOW-KANJI"), "15時14分");
     }
 }
 
@@ -114,7 +157,7 @@ impl GraphResolver {
                             && alt_node != &node
                     })
                     .map(|f| Candidate {
-                        kanji: f.surface.clone(),
+                        surface: f.surface.clone(),
                         yomi: f.yomi.clone(),
                         cost: *costmap.get(f).unwrap(),
                     })
@@ -123,7 +166,7 @@ impl GraphResolver {
                     .make_contiguous()
                     .sort_by(|a, b| a.cost.partial_cmp(&b.cost).unwrap());
                 candidates.push_front(Candidate {
-                    kanji: node.surface.clone(),
+                    surface: node.surface.clone(),
                     yomi: node.yomi.clone(),
                     cost: *costmap.get(node).unwrap(),
                 });
@@ -195,7 +238,7 @@ mod tests {
         let lattice = graph_builder.construct("abc", graph);
         let resolver = GraphResolver::default();
         let got = resolver.resolve(&lattice)?;
-        let terms: Vec<String> = got.iter().map(|f| f[0].kanji.clone()).collect();
+        let terms: Vec<String> = got.iter().map(|f| f[0].surface.clone()).collect();
         let result = terms.join("");
         assert_eq!(result, "abc");
         Ok(())
@@ -254,7 +297,7 @@ mod tests {
         //     .unwrap();
         let resolver = GraphResolver::default();
         let got = resolver.resolve(&lattice)?;
-        let terms: Vec<String> = got.iter().map(|f| f[0].kanji.clone()).collect();
+        let terms: Vec<String> = got.iter().map(|f| f[0].surface.clone()).collect();
         let result = terms.join("");
         assert_eq!(result, "私");
         Ok(())

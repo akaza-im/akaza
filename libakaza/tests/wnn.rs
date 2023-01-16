@@ -60,7 +60,7 @@ mod tests {
 
         fn test(&self, yomi: &str, kanji: &str) -> Result<()> {
             let got1 = &self.akaza.convert(yomi, None)?;
-            let terms: Vec<String> = got1.iter().map(|f| f[0].kanji.clone()).collect();
+            let terms: Vec<String> = got1.iter().map(|f| f[0].surface.clone()).collect();
             let got = terms.join("");
             assert_eq!(got, kanji);
             Ok(())
@@ -77,7 +77,7 @@ mod tests {
         let yomi = "ご";
         let got: Vec<VecDeque<Candidate>> = load_akaza()?.convert(yomi, None)?;
         assert_eq!(&got[0][0].yomi, "ご");
-        let words: Vec<String> = got[0].iter().map(|x| x.kanji.to_string()).collect();
+        let words: Vec<String> = got[0].iter().map(|x| x.surface.to_string()).collect();
         assert!(words.contains(&"語".to_string()));
         // assert_eq!(got, kanji);
         Ok(())
@@ -93,7 +93,7 @@ mod tests {
         let yomi = "すし";
         let got: Vec<VecDeque<Candidate>> = load_akaza()?.convert(yomi, None)?;
         assert_eq!(&got[0][0].yomi, "すし");
-        let words: Vec<String> = got[0].iter().map(|x| x.kanji.to_string()).collect();
+        let words: Vec<String> = got[0].iter().map(|x| x.surface.to_string()).collect();
         assert!(words.contains(&"🍣".to_string()));
         // assert_eq!(got, kanji);
         Ok(())
