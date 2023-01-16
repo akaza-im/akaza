@@ -34,6 +34,10 @@ jobs:
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
+    - name: make some configuration files for ibus-akaza
+      run: |
+        cd ibus-akaza/ && make
+    - uses: actions-rs/toolchain@v1
     - name: download wikipedia data
       run: |
         cd akaza-data/ && make work/jawiki/jawiki-latest-pages-articles.xml.bz2
