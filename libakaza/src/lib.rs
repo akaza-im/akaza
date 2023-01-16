@@ -17,5 +17,3 @@ mod tinylisp;
 pub mod trie;
 pub mod user_side_data;
 
-// ↓ TODO: これは不要
-const UNKNOWN_WORD_ID: i32 = -1;
