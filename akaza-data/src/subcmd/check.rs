@@ -12,14 +12,12 @@ use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder
 use libakaza::user_side_data::user_data::UserData;
 
 pub fn check(yomi: &str, expected: Option<String>, user_data: bool) -> anyhow::Result<()> {
-    let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/data/";
-
     let dict = merge_dict(vec![
         read_skkdict(Path::new("skk-dev-dict/SKK-JISYO.L"), EUC_JP)?,
         read_skkdict(Path::new("data/SKK-JISYO.akaza"), UTF_8)?,
     ]);
 
-    let mut builder = BigramWordViterbiEngineBuilder::new(&datadir, Some(dict), None);
+    let mut builder = BigramWordViterbiEngineBuilder::new(Some(dict), None);
     if user_data {
         info!("Enabled user data");
         let user_data = UserData::load_from_default_path()?;

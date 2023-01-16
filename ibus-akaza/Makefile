@@ -4,18 +4,13 @@ DATADIR ?= $(PREFIX)/share
 DESTDIR ?=
 AKAZA_DATA_DIR ?= $(DATADIR)/akaza/
 
-all: akaza.xml config.h src/config.rs
+all: akaza.xml config.h
 
 #   ibus_akaza/config.py: ibus_akaza/config.py.in
 #   	sed -e "s:@SYSCONFDIR@:$(SYSCONFDIR):g" \
 #   		-e "s:@MODELDIR@:$(DESTDIR)/$(DATADIR)/akaza-data/:g" \
 #   		-e "s:@DICTIONARYDIR@:$(DESTDIR)/$(DATADIR)/ibus-akaza/dictionary:g" \
 #   		$< > $@
-
-src/config.rs: src/config.rs.in
-	sed \
-	    -e "s:@AKAZA_DATA_DIR@:$(AKAZA_DATA_DIR):g" \
-	    -e "s:@DATADIR@:$(DATADIR)/:g" $< > $@
 
 
 config.h: config.h.in

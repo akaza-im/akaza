@@ -1,16 +1,20 @@
 use std::collections::vec_deque::VecDeque;
 use std::collections::HashMap;
+use std::env;
 use std::ops::Range;
+use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
+use encoding_rs::UTF_8;
 use log::{info, warn};
 
 use crate::config::Config;
 use crate::dict::loader::load_dicts;
 use crate::dict::merge_dict::merge_dict;
+use crate::dict::skk::read::read_skkdict;
 use crate::engine::base::HenkanEngine;
 use crate::graph::graph_builder::GraphBuilder;
 use crate::graph::graph_resolver::{Candidate, GraphResolver};
@@ -22,27 +26,6 @@ use crate::lm::system_bigram::MarisaSystemBigramLM;
 use crate::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use crate::romkan::RomKanConverter;
 use crate::user_side_data::user_data::UserData;
-
-pub struct SystemDataLoader {
-    pub system_unigram_lm: MarisaSystemUnigramLM,
-    pub system_bigram_lm: MarisaSystemBigramLM,
-}
-
-impl SystemDataLoader {
-    pub fn load(system_data_dir: &str) -> Result<SystemDataLoader> {
-        let system_unigram_lm = MarisaSystemUnigramLM::load(
-            (system_data_dir.to_string() + "/stats-vibrato-unigram.trie").as_str(),
-        )?;
-        let system_bigram_lm = MarisaSystemBigramLM::load(
-            (system_data_dir.to_string() + "/stats-vibrato-bigram.trie").as_str(),
-        )?;
-
-        Ok(SystemDataLoader {
-            system_unigram_lm,
-            system_bigram_lm,
-        })
-    }
-}
 
 /// バイグラムのビタビベースかな漢字変換エンジンです。
 /// 単語バイグラムを採用しています。
@@ -139,7 +122,6 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> BigramWordViterbiEngine<U, B> {
 }
 
 pub struct BigramWordViterbiEngineBuilder {
-    system_data_dir: String,
     user_data: Option<Arc<Mutex<UserData>>>,
     load_user_config: bool,
     dicts: Option<HashMap<String, Vec<String>>>,
@@ -148,12 +130,10 @@ pub struct BigramWordViterbiEngineBuilder {
 
 impl BigramWordViterbiEngineBuilder {
     pub fn new(
-        system_data_dir: &str,
         dicts: Option<HashMap<String, Vec<String>>>,
         single_term: Option<HashMap<String, Vec<String>>>,
     ) -> BigramWordViterbiEngineBuilder {
         BigramWordViterbiEngineBuilder {
-            system_data_dir: system_data_dir.to_string(),
             user_data: None,
             load_user_config: false,
             dicts,
@@ -176,7 +156,19 @@ impl BigramWordViterbiEngineBuilder {
     pub fn build(
         &self,
     ) -> Result<BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>> {
-        let system_data_loader = SystemDataLoader::load(self.system_data_dir.as_str())?;
+        let system_unigram_lm = MarisaSystemUnigramLM::load(
+            Self::try_load("stats-vibrato-unigram.trie")?
+                .to_string_lossy()
+                .to_string()
+                .as_str(),
+        )?;
+        let system_bigram_lm = MarisaSystemBigramLM::load(
+            Self::try_load("stats-vibrato-bigram.trie")?
+                .to_string_lossy()
+                .to_string()
+                .as_str(),
+        )?;
+        let system_dict = read_skkdict(Self::try_load("SKK-JISYO.akaza")?.as_path(), UTF_8)?;
 
         let user_data = if let Some(d) = &self.user_data {
             d.clone()
@@ -193,6 +185,7 @@ impl BigramWordViterbiEngineBuilder {
                 Config::default()
             };
             let dicts = load_dicts(&config.dicts)?;
+            let dicts = merge_dict(vec![system_dict, dicts]);
             let single_term = if let Some(st) = &config.single_term {
                 load_dicts(st)?
             } else {
@@ -235,8 +228,8 @@ impl BigramWordViterbiEngineBuilder {
             dict,
             single_term,
             user_data.clone(),
-            Rc::new(system_data_loader.system_unigram_lm),
-            Rc::new(system_data_loader.system_bigram_lm),
+            Rc::new(system_unigram_lm),
+            Rc::new(system_bigram_lm),
         );
 
         let graph_resolver = GraphResolver::default();
@@ -272,5 +265,36 @@ impl BigramWordViterbiEngineBuilder {
             config
         );
         Ok(config)
+    }
+
+    pub fn try_load(file_name: &str) -> Result<PathBuf> {
+        if cfg!(test) {
+            let path = Path::new(env!("CARGO_MANIFEST_DIR"));
+            let path = path.join("../akaza-data/data/").join(file_name);
+            if path.exists() {
+                Ok(path)
+            } else {
+                bail!("There's no {} for testing.", path.to_string_lossy(),)
+            }
+        } else if let Ok(dir) = env::var("AKAZA_DATA_DIR") {
+            let dir = Path::new(dir.as_str());
+            let file = dir.join(file_name);
+            if file.exists() {
+                Ok(file)
+            } else {
+                bail!(
+                    "There's no {} in AKAZA_DATA_DIR({:?})",
+                    file.to_string_lossy(),
+                    dir,
+                )
+            }
+        } else {
+            let path = xdg::BaseDirectories::with_prefix("akaza")?.find_data_file(file_name);
+            if let Some(path) = path {
+                Ok(path)
+            } else {
+                bail!("There's no {} in XDG_DATA_DIRS", file_name)
+            }
+        }
     }
 }

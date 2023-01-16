@@ -2,6 +2,7 @@
 #[cfg(feature = "it")]
 mod tests {
     use std::collections::vec_deque::VecDeque;
+    use std::env;
     use std::path::Path;
 
     use anyhow::Result;
@@ -21,8 +22,8 @@ mod tests {
     {
         let datadir = env!("CARGO_MANIFEST_DIR").to_string() + "/../akaza-data/data/";
         assert!(Path::new(datadir.as_str()).exists());
+        env::set_var("AKAZA_DATA_DIR", datadir);
         BigramWordViterbiEngineBuilder::new(
-            datadir.as_str(),
             Some(read_skkdict(
                 Path::new(
                     (env!("CARGO_MANIFEST_DIR").to_string()
