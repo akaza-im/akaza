@@ -38,8 +38,12 @@ pub const INPUT_MODE_KATAKANA: InputMode =
     InputMode::new("InputMode.Katakana", 2, "ア", "カタカナ (C-S-K)");
 pub const INPUT_MODE_HALFWIDTH_KATAKANA: InputMode =
     InputMode::new("InputMode.HalfWidthKatakana", 3, "_ｱ", "半角カタカナ");
-pub const INPUT_MODE_FULLWIDTH_ALNUM: InputMode =
-    InputMode::new("InputMode.FullWidthAlnum", 4, "Ａ", "全角カタカナ (C-S-l)");
+pub const INPUT_MODE_FULLWIDTH_ALNUM: InputMode = InputMode::new(
+    "InputMode.FullWidthAlnum",
+    4,
+    "Ａ",
+    "全角アルファベット (C-S-l)",
+);
 
 const _ALL_INPUT_MODE: [InputMode; 5] = [
     INPUT_MODE_ALNUM,

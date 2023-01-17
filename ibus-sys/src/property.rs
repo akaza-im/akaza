@@ -37,6 +37,8 @@ extern "C" {
     pub fn ibus_property_set_label(prop: *mut IBusProperty, label: *mut IBusText);
 
     pub fn ibus_property_set_symbol(prop: *mut IBusProperty, symbol: *mut IBusText);
+
+    pub fn ibus_property_set_icon(prop: *mut IBusProperty, icon: *const gchar);
 }
 
 #[repr(C)]
