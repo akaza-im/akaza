@@ -401,7 +401,7 @@ impl AkazaContext {
                 .convert(self.preedit.as_str(), Some(&self.force_selected_clause))
                 .unwrap()
                 .iter()
-                .map(|f| f.get(0).unwrap().surface_with_dynamic().to_string())
+                .map(|f| f.get(0).unwrap().surface_with_dynamic())
                 .collect::<Vec<_>>();
             let auxiliary_text = segments.join("").as_str().to_ibus_text();
             ibus_text_set_attributes(auxiliary_text, ibus_attr_list_new());
