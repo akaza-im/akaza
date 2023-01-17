@@ -10,6 +10,7 @@ pub mod dict;
 pub mod engine;
 pub mod extend_clause;
 pub mod graph;
+pub mod input_style;
 pub mod kana;
 pub mod kana_trie;
 pub mod lm;

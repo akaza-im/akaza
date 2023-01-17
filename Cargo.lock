@@ -39,7 +39,6 @@ dependencies = [
  "rayon",
  "regex",
  "tempfile",
- "time 0.3.17",
  "vibrato",
  "walkdir",
 ]

@@ -77,6 +77,10 @@ akaza に付属する SKK-JISYO.dynamic を利用すると、「きょう」を�
 
 ローマ字変換テーブルの変更などもここでできるようにしたいと思っていますが、 _未実装_ です。
 
+↓ かな入力したい場合は以下のように設定してください。
+
+    input_style: Kana
+
 ## THANKS TO
 
 * [ibus-uniemoji](https://github.com/salty-horse/ibus-uniemoji) を参考に初期の実装を行いました。
