@@ -199,7 +199,7 @@ impl AkazaContext {
             prop_dict,
             consonant_suffix_extractor: ConsonantSuffixExtractor::default(),
             input_style_mapper: InputStyleMapper::default(),
-            input_style: input_style,
+            input_style,
         }
     }
 
