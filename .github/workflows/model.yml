@@ -48,11 +48,16 @@ jobs:
     - name: evaluate the model
       run: |
         cd akaza-data/ && make evaluate
+    - name: Create model package
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        cd akaza-data/data/ && tar czvf ../../akaza-data.tar.gz ./*
     - name: Release
-      uses: fnkr/github-action-ghr@v1
+      uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       env:
-        GHR_COMPRESS: gz
-        GHR_PATH: akaza-data/data/
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        files: akaza-data.tar.gz
+        generate_release_notes: true
 
