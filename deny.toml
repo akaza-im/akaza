@@ -1,0 +1,13 @@
+[licenses]
+allow-osi-fsf-free = "either"
+copyleft = "deny"
+
+[advisories]
+ignore = [
+    "RUSTSEC-2021-0145", # atty: dev deps
+    "RUSTSEC-2021-0139", # ansi_term: dev deps
+]
+
+unmaintained = "deny"
+unsound = "deny"
+yanked = "deny"
