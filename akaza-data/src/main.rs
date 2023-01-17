@@ -12,9 +12,7 @@ use crate::subcmd::learn_corpus::learn_corpus;
 use crate::subcmd::make_dict::make_system_dict;
 use crate::subcmd::make_stats_system_bigram_lm::make_stats_system_bigram_lm;
 use crate::subcmd::make_stats_system_unigram_lm::make_stats_system_unigram_lm;
-use crate::subcmd::tokenize::{
-    tokenize_aozora_bunko_vibrato_ipadic, tokenize_lindera_ipadic, tokenize_vibrato_ipadic,
-};
+use crate::subcmd::tokenize::{tokenize_aozora_bunko_vibrato_ipadic, tokenize_vibrato_ipadic};
 use crate::subcmd::vocab::vocab;
 use crate::subcmd::wfreq::wfreq;
 
@@ -41,7 +39,6 @@ struct Args {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    TokenizeLinderaIpadic(TokenizeLinderaIpadicArgs),
     TokenizeVibratoIpadic(TokenizeVibratoIpadicArgs),
     // ↓これは最終的には↑と統合予定
     TokenizeAozoraBunkoVibratoIpadic(TokenizeVibratoIpadicArgs),
@@ -113,15 +110,6 @@ struct LearnCorpusArgs {
     src_bigram: String,
     dst_unigram: String,
     dst_bigram: String,
-}
-
-/// コーパスを形態素解析機でトーカナイズする
-#[derive(Debug, clap::Args)]
-struct TokenizeLinderaIpadicArgs {
-    #[arg(short, long)]
-    user_dict: Option<String>,
-    src_dir: String,
-    dst_dir: String,
 }
 
 /// コーパスを形態素解析機でトーカナイズする
@@ -226,9 +214,6 @@ fn main() -> anyhow::Result<()> {
             opts.dst_unigram.as_str(),
             opts.dst_bigram.as_str(),
         ),
-        Commands::TokenizeLinderaIpadic(opt) => {
-            tokenize_lindera_ipadic(opt.user_dict, opt.src_dir.as_str(), opt.dst_dir.as_str())
-        }
         Commands::TokenizeVibratoIpadic(opt) => tokenize_vibrato_ipadic(
             opt.system_dict,
             opt.user_dict,
