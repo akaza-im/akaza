@@ -393,7 +393,19 @@ impl AkazaContext {
                 preedit_text,
                 surface.len() as guint,
                 !surface.is_empty() as gboolean,
-            )
+            );
+
+            // auxiliary_text での表示を行う。
+            let segments = self
+                .engine
+                .convert(self.preedit.as_str(), Some(&self.force_selected_clause))
+                .unwrap()
+                .iter()
+                .map(|f| f.get(0).unwrap().surface_with_dynamic().to_string())
+                .collect::<Vec<_>>();
+            let auxiliary_text = segments.join("").as_str().to_ibus_text();
+            ibus_text_set_attributes(auxiliary_text, ibus_attr_list_new());
+            ibus_engine_update_auxiliary_text(engine, auxiliary_text, to_gboolean(true));
         }
 
         /*
