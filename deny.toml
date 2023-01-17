@@ -1,0 +1,14 @@
+[licenses]
+allow-osi-fsf-free = "either"
+copyleft = "deny"
+
+[advisories]
+ignore = [
+    "RUSTSEC-2020-0071", # chrono 経由の依存で、chrono では該当 API つかってない https://github.com/chronotope/chrono/blob/main/deny.toml
+    "RUSTSEC-2021-0145", # atty: dev deps
+    "RUSTSEC-2021-0139", # ansi_term: dev deps
+]
+
+unmaintained = "deny"
+unsound = "deny"
+yanked = "deny"
