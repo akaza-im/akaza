@@ -20,7 +20,21 @@ impl ConsonantSuffixExtractor {
     /// "めny" を ("め", "ny") に分解する。
     // (preedit, suffix) の形で返す。
     pub fn extract(&self, src: &str) -> (String, String) {
-        if src.ends_with("nn") {
+        if
+        // nn は「ん」で確定されている。
+        src.ends_with("nn")
+            // 矢印などはのこった子音じゃない。
+            || src.ends_with("zh")
+            || src.ends_with("zj")
+            || src.ends_with("zk")
+            || src.ends_with("zl")
+            || src.ends_with("z[")
+            || src.ends_with("z]")
+            || src.ends_with("z-")
+            || src.ends_with("z.")
+            || src.ends_with("z,")
+            || src.ends_with("z/")
+        {
             (src.to_string(), "".to_string())
         } else if let Some(p) = self.pattern.captures(src) {
             (
