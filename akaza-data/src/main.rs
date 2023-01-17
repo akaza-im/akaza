@@ -1,3 +1,5 @@
+extern crate core;
+
 use std::io::Write;
 
 use clap::{Parser, Subcommand};
@@ -67,6 +69,8 @@ enum Commands {
 struct MakeSystemDictArgs {
     #[arg(short, long)]
     corpus: Vec<String>,
+    #[arg(short, long)]
+    unidic: String,
     vocab_file: String,
     /// デバッグのための中間テキストファイル
     txt_file: String,
@@ -201,9 +205,12 @@ fn main() -> anyhow::Result<()> {
         .init();
 
     match args.command {
-        Commands::MakeSystemDict(opt) => {
-            make_system_dict(&opt.txt_file, Some(opt.vocab_file.as_str()), opt.corpus)
-        }
+        Commands::MakeSystemDict(opt) => make_system_dict(
+            &opt.txt_file,
+            Some(opt.vocab_file.as_str()),
+            opt.corpus,
+            opt.unidic,
+        ),
         Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, opt.load_user_config),
         Commands::Check(opt) => check(&opt.yomi, opt.expected, opt.user_data),
         Commands::LearnCorpus(opts) => learn_corpus(
