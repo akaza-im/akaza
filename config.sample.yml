@@ -10,3 +10,6 @@ single_term:
   - path: /usr/share/akaza/SKK-JISYO.dynamic
     encoding: utf-8
     dict_type: skk
+
+# 入力スタイルを仮名入力にしたい場合は以下の行をコメント外す。
+# input_style: Kana

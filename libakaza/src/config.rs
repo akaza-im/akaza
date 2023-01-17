@@ -5,6 +5,7 @@ dicts:
     encoding: euc-jp
     dict_type: skk
  */
+use crate::input_style::InputStyle;
 use anyhow::Result;
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
@@ -15,6 +16,8 @@ use std::io::BufReader;
 pub struct Config {
     pub dicts: Vec<DictConfig>,
     pub single_term: Option<Vec<DictConfig>>,
+    #[serde(default = "InputStyle::default")]
+    pub input_style: InputStyle,
 }
 
 impl Config {

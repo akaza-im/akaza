@@ -41,6 +41,8 @@ use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngine;
 use libakaza::extend_clause::{extend_left, extend_right};
 use libakaza::graph::candidate::Candidate;
+use libakaza::input_style::InputStyle::Kana;
+use libakaza::input_style::{InputStyle, InputStyleMapper};
 use libakaza::lm::system_bigram::MarisaSystemBigramLM;
 use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use libakaza::romkan::RomKanConverter;
@@ -94,6 +96,8 @@ pub struct AkazaContext {
     /// メニューの input mode ごとのメニュープロパティたち。
     pub prop_dict: HashMap<String, *mut IBusProperty>,
     pub consonant_suffix_extractor: ConsonantSuffixExtractor,
+    input_style_mapper: InputStyleMapper,
+    input_style: InputStyle,
 }
 
 impl AkazaContext {
@@ -170,6 +174,7 @@ impl AkazaContext {
 impl AkazaContext {
     pub(crate) fn new(
         akaza: BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
+        input_style: InputStyle,
     ) -> Self {
         let input_mode = INPUT_MODE_HIRAGANA;
         let (input_mode_prop, prop_list, prop_dict) = Self::init_props(input_mode);
@@ -193,6 +198,8 @@ impl AkazaContext {
             input_mode_prop,
             prop_dict,
             consonant_suffix_extractor: ConsonantSuffixExtractor::default(),
+            input_style_mapper: InputStyleMapper::default(),
+            input_style: input_style,
         }
     }
 
@@ -314,7 +321,14 @@ impl AkazaContext {
                     }
 
                     // Append the character to preedit string.
-                    self.preedit.push(char::from_u32(keyval).unwrap());
+                    let ch = char::from_u32(keyval).unwrap();
+                    if self.input_style == Kana {
+                        self.preedit = self
+                            .input_style_mapper
+                            .kana_input_jis_x_6002(self.preedit.to_string(), ch);
+                    } else {
+                        self.preedit.push(ch);
+                    }
                     self.cursor_pos += 1;
 
                     // And update the display status.

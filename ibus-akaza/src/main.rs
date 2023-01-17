@@ -102,11 +102,12 @@ fn main() -> Result<()> {
     unsafe {
         let sys_time = SystemTime::now();
         let user_data = load_user_data();
+        let config = Config::load()?;
         let akaza = BigramWordViterbiEngineBuilder::new(Config::load()?)
             .user_data(user_data.clone())
             .load_user_config(true)
             .build()?;
-        let mut ac = AkazaContext::new(akaza);
+        let mut ac = AkazaContext::new(akaza, config.input_style);
         let new_sys_time = SystemTime::now();
         let difference = new_sys_time.duration_since(sys_time)?;
         info!(
