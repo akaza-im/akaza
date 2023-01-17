@@ -14,8 +14,9 @@ pub fn make_system_dict(
     txt_file: &str,
     vocab_file_path: Option<&str>,
     corpus_files: Vec<String>,
+    unidic_file: String,
 ) -> Result<()> {
-    system_dict::make_system_dict(txt_file, vocab_file_path, corpus_files)?;
+    system_dict::make_system_dict(txt_file, vocab_file_path, corpus_files, unidic_file)?;
     Ok(())
 }
 
@@ -23,6 +24,9 @@ mod system_dict {
     use std::io::BufReader;
 
     use anyhow::{bail, Context};
+    use kelp::{kata2hira, ConvOption};
+    use log::trace;
+    use regex::Regex;
 
     use libakaza::corpus::read_corpus_file;
     use libakaza::dict::skk::read::read_skkdict;
@@ -34,6 +38,7 @@ mod system_dict {
         txt_file: &str,
         vocab_file_path: Option<&str>,
         corpus_files: Vec<String>,
+        unidic_file: String,
     ) -> Result<()> {
         // vocab, corpus, dict/SKK-JISYO.akaza から辞書を生成する
         let mut dicts = Vec::new();
@@ -59,8 +64,25 @@ mod system_dict {
             validate_dict(make_corpus_dict(corpus_files)?)
                 .with_context(|| "make_corpus_dict".to_string())?,
         );
+        // unidic からも語彙を追加する
+        dicts.push(
+            validate_dict(make_unidic_dict(unidic_file)?)
+                .with_context(|| "make_corpus_dict".to_string())?,
+        );
         write_skk_dict(txt_file, dicts)?;
         copy_snapshot(Path::new(txt_file))?;
+        post_validate(txt_file)?;
+        Ok(())
+    }
+
+    /// 出来上がった辞書が問題ない品質かを確認する
+    fn post_validate(path: &str) -> Result<()> {
+        let dict = read_skkdict(Path::new(path), UTF_8)?;
+        for key in ["あぐりげーしょん"] {
+            if !dict.contains_key(key) {
+                bail!("Missing key in dict: {}", key);
+            }
+        }
         Ok(())
     }
 
@@ -132,6 +154,40 @@ mod system_dict {
             words.push((yomi.to_string(), surface.to_string()));
         }
         Ok(grouping_words(words))
+    }
+
+    // あぐりげーしょん、などのカタカナ語を unidic から拾う。
+    fn make_unidic_dict(path: String) -> anyhow::Result<HashMap<String, Vec<String>>> {
+        let file = File::open(path)?;
+        let mut dict = HashMap::new();
+        let katakana_pattern = Regex::new(r#"^\p{wb=Katakana}+"#)?;
+        for line in BufReader::new(file).lines() {
+            let line = line?;
+            let csv = line.split(',').collect::<Vec<_>>();
+            if csv.len() < 10 {
+                trace!("Incomplete line: {:?}", line);
+                continue;
+            }
+
+            // コストは低い方がよく出てくるもの。
+            let surface = csv[0];
+            let _cost = csv[2];
+            let _hinshi = csv[4];
+            let _subhinshi = csv[5];
+            let yomi = csv[10];
+
+            if katakana_pattern.is_match(surface)
+                && katakana_pattern.is_match(yomi)
+                && surface == yomi
+            {
+                dict.insert(
+                    kata2hira(surface, ConvOption::default()),
+                    vec![yomi.to_string()],
+                );
+            }
+        }
+        info!("Got {} entries from unidic", dict.len());
+        Ok(dict)
     }
 }
 

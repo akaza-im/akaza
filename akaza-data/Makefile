@@ -23,6 +23,18 @@ work/jawiki/extracted/_SUCCESS: work/jawiki/jawiki-latest-pages-articles.xml
 	touch work/jawiki/extracted/_SUCCESS
 
 # -------------------------------------------------------------------------
+#  Unidic の処理
+# -------------------------------------------------------------------------
+
+work/unidic/unidic.zip:
+	mkdir -p work/unidic/
+	wget --no-verbose --no-clobber -O work/unidic/unidic.zip https://clrd.ninjal.ac.jp/unidic_archive/csj/3.1.1/unidic-csj-3.1.1.zip
+
+work/unidic/lex_3_1.csv: work/unidic/unidic.zip
+	unzip -D -o -j work/unidic/unidic.zip -d work/unidic/
+	touch work/unidic/lex_3_1.csv
+
+# -------------------------------------------------------------------------
 
 # Vibrato トーカナイズ
 
@@ -82,11 +94,12 @@ data/unigram.model: data/bigram.model
 # システム辞書の構築。dict/SKK-JISYO.akaza、コーパスに書かれている語彙および work/vibrato-ipadic.vocab にある語彙。
 # から、SKK-JISYO.L に含まれる語彙を除いたものが登録されている。
 
-data/SKK-JISYO.akaza: work/vibrato-ipadic.vocab dict/SKK-JISYO.akaza src/subcmd/make_dict.rs  corpus/must.txt corpus/should.txt corpus/may.txt
+data/SKK-JISYO.akaza: work/vibrato-ipadic.vocab dict/SKK-JISYO.akaza src/subcmd/make_dict.rs  corpus/must.txt corpus/should.txt corpus/may.txt work/unidic/lex_3_1.csv
 	cargo run --release -- make-system-dict \
 		--corpus corpus/must.txt \
 		--corpus corpus/should.txt \
 		--corpus corpus/may.txt \
+		--unidic work/unidic/lex_3_1.csv \
 		work/vibrato-ipadic.vocab \
 		data/SKK-JISYO.akaza \
 		-vvv

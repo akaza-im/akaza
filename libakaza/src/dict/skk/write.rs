@@ -16,7 +16,10 @@ pub fn write_skk_dict(
         let mut wfp = File::create(ofname)?;
         wfp.write_all(";; okuri-ari entries.\n".as_bytes())?;
         wfp.write_all(";; okuri-nasi entries.\n".as_bytes())?;
-        for (yomi, kanjis) in merged_dict.iter() {
+        let mut keys = merged_dict.keys().collect::<Vec<_>>();
+        keys.sort();
+        for yomi in keys {
+            let kanjis = merged_dict.get(yomi).unwrap();
             assert!(!yomi.is_empty(), "yomi must not be empty: {:?}", kanjis);
             let kanjis = kanjis.join("/");
             wfp.write_fmt(format_args!("{} /{}/\n", yomi, kanjis))?;
