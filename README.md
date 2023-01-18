@@ -49,8 +49,9 @@ Rust で書いています。
 ibus-akaza をインストールしてください。
 
     sudo rustup install stable
-    cd ibus-akaza && make && sudo make install
+    sudo make install
     ibus restart
+    ibus engine akaza
 
 ## 設定方法
 
@@ -84,7 +85,7 @@ akaza に付属する SKK-JISYO.dynamic を利用すると、「きょう」を�
 
 ↓ かな入力したい場合は以下のように設定してください。
 
-    input_style: Kana
+    romkan: kana
 
 ## THANKS TO
 

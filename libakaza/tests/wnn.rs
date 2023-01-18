@@ -14,7 +14,6 @@ mod tests {
         BigramWordViterbiEngine, BigramWordViterbiEngineBuilder,
     };
     use libakaza::graph::candidate::Candidate;
-    use libakaza::input_style::InputStyle;
     use libakaza::lm::system_bigram::MarisaSystemBigramLM;
     use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 
@@ -44,7 +43,7 @@ mod tests {
                 path: (env!("CARGO_MANIFEST_DIR").to_string()
                     + "/../akaza-data/skk-dev-dict/SKK-JISYO.emoji"),
             }]),
-            input_style: InputStyle::Romaji,
+            romkan: None,
         })
         .build()
     }

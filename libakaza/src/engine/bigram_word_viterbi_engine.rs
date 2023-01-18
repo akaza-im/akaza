@@ -168,7 +168,13 @@ impl BigramWordViterbiEngineBuilder {
 
         let graph_resolver = GraphResolver::default();
 
-        let romkan_converter = RomKanConverter::new();
+        let mapping_name = self
+            .config
+            .romkan
+            .clone()
+            .unwrap_or_else(|| "default".to_string());
+        let mapping_name = mapping_name.as_str();
+        let romkan_converter = RomKanConverter::new(mapping_name)?;
 
         Ok(BigramWordViterbiEngine {
             graph_builder,

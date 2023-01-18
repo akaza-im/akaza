@@ -8,7 +8,6 @@ use log::info;
 use libakaza::config::{Config, DictConfig};
 use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
-use libakaza::input_style::InputStyle::Romaji;
 
 #[derive(Default)]
 struct SaigenRitsu {
@@ -78,7 +77,7 @@ pub fn evaluate(corpus_dir: &String, load_user_config: bool) -> anyhow::Result<(
             },
         ],
         single_term: None,
-        input_style: Romaji,
+        romkan: None,
     })
     .load_user_config(load_user_config)
     .build()?;

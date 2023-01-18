@@ -27,7 +27,7 @@ akaza-debug.xml: akaza.xml.in
 	    -e "s:@BINARY@:${PWD}/ibus-akaza-debug.sh:g" \
 	    -e "s:@DATADIR@:$(DATADIR)/:g" $< > $@
 
-install: akaza.xml
+install: akaza.xml config.h
 	cargo install --path=. --root=$(PREFIX)
 
 	install -m 0644 akaza.svg $(DESTDIR)$(DATADIR)/ibus-akaza
