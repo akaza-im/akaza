@@ -4,7 +4,7 @@
     <name>org.freedesktop.IBus.Akaza</name>
     <description>Akaza - kana kanji converter</description>
     <version>0.0.1</version>
-    <license>GPL</license>
+    <license>MIT</license>
     <author>Tokuhiro Matsuno &lt;tokuhirom@gmail.com&gt;</author>
     <homepage>https://github.com/tokuhirom/ibus-akaza</homepage>
     <exec>@BINARY@ --ibus</exec>
@@ -15,7 +15,7 @@
             <longname>akaza</longname>
             <description>Akaza - Kana Kanji Converter</description>
             <language>ja</language>
-            <license>GPL</license>
+            <license>MIT</license>
             <author>Tokuhiro Matsuno &lt;tokuhirom@gmail.com&gt;</author>
             <icon>@DATADIR@/ibus-akaza/akaza.svg</icon>
             <icon_prop_key>InputMode</icon_prop_key>
@@ -23,7 +23,7 @@
             <layout_variant></layout_variant>
             <layout_option></layout_option>
             <hotkeys></hotkeys>
-            <symbol>昆</symbol>
+            <symbol>藜</symbol>
             <setup></setup>
             <version></version>
             <textdomain></textdomain>
