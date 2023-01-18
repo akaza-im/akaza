@@ -55,6 +55,9 @@ keys:
     key: [Down, KP_Down]
     command: cursor_down
   - states: [Conversion]
+    key: [Right, KP_Right]
+    command: cursor_right
+  - states: [Conversion]
     key: [Left, KP_Left]
     command: cursor_left
   - states: [Conversion]
