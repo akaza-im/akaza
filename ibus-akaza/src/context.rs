@@ -171,9 +171,7 @@ impl AkazaContext {
         let romkan = RomKanConverter::new(
             config
                 .romkan
-                .clone()
-                .unwrap_or("default".to_string())
-                .to_string()
+                .unwrap_or_else(|| "default".to_string())
                 .as_str(),
         )?;
 
