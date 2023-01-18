@@ -107,7 +107,7 @@ data/SKK-JISYO.akaza: work/vibrato-ipadic.vocab dict/SKK-JISYO.akaza src/subcmd/
 # -------------------------------------------------------------------------
 
 evaluate:
-	AKAZA_DATA_DIR=data/ cargo run --release evaluate anthy-corpus -v
+	AKAZA_ROMKAN_DIR=../romkan/ AKAZA_DATA_DIR=data/ cargo run --release evaluate anthy-corpus -v
 
 # -------------------------------------------------------------------------
 
