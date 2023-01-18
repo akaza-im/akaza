@@ -1,0 +1,22 @@
+---
+extends: default
+mapping:
+  dwu: どぅ
+  kwa: くぁ
+  lka: ヵ
+  lke: ヶ
+  ltu: っ
+  ltsu: っ
+  lwa: ゎ
+  tha: てゃ
+  tsa: つぁ
+  tsi: つぃ
+  tse: つぇ
+  tso: つぉ
+  twu: とぅ
+  wye: ゑ
+  wyi: ゐ
+  xye: ぇ
+  yi: い
+  zya: null
+  /: ・

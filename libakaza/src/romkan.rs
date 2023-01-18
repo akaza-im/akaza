@@ -8,11 +8,10 @@ use log::info;
 use regex::{Captures, Regex};
 use serde::{Deserialize, Serialize};
 
-// TODO libkkc みたいにマッピングの継承機能とかあっても良さそう。
-// 継承機能作る場合は、"extends" とかをキーワードにしたい。
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct RomKanConfig {
-    mapping: HashMap<String, String>,
+    mapping: HashMap<String, Option<String>>,
+    extends: Option<String>,
 }
 
 fn load_romkan_map(name: &str) -> anyhow::Result<HashMap<String, String>> {
@@ -30,7 +29,30 @@ fn load_romkan_map(name: &str) -> anyhow::Result<HashMap<String, String>> {
     let got: RomKanConfig = serde_yaml::from_reader(BufReader::new(
         File::open(&pathstr).with_context(|| pathstr)?,
     ))?;
-    Ok(got.mapping)
+
+    if let Some(parent) = got.extends {
+        // 継承しているので親を読み込む。
+        // 再帰的な処理になる。
+        let mut parent = load_romkan_map(parent.as_str())?;
+
+        for (k, v) in got.mapping {
+            if let Some(v) = v {
+                parent.insert(k, v);
+            } else {
+                parent.remove(&k);
+            }
+        }
+
+        Ok(parent)
+    } else {
+        // 継承していないのでそのまま。
+        Ok(got
+            .mapping
+            .iter()
+            .filter(|(_, v)| v.is_some())
+            .map(|(k, v)| (k.clone(), v.clone().unwrap()))
+            .collect())
+    }
 }
 
 pub struct RomKanConverter {
@@ -161,6 +183,17 @@ mod tests {
             let got = romkan.remove_last_char(src);
             assert_eq!(got, expected);
         }
+        Ok(())
+    }
+
+    #[test]
+    fn test_atok() -> anyhow::Result<()> {
+        let converter = RomKanConverter::new("atok")?;
+        assert_eq!(converter.to_hiragana("aiu"), "あいう");
+        // zya が null で上書きされて消えてる
+        assert_eq!(converter.to_hiragana("zya"), "zや");
+        // 追加したぶんが効いてる
+        assert_eq!(converter.to_hiragana("tso"), "つぉ");
         Ok(())
     }
 }
