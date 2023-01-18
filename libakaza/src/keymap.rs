@@ -1,9 +1,10 @@
-use anyhow::Context;
-use log::info;
-use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
+
+use anyhow::Context;
+use log::info;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Keymap {
@@ -49,7 +50,6 @@ impl Keymap {
 
 #[cfg(test)]
 mod tests {
-    use crate::keymap::KeyState::Conversion;
     use std::fs::File;
     use std::io::BufReader;
 
