@@ -7,6 +7,7 @@ pub mod core;
 pub mod engine;
 pub mod glib;
 pub mod ibus_key;
+pub mod keys;
 pub mod lookup_table;
 pub mod prop_list;
 pub mod property;

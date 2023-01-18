@@ -11,6 +11,7 @@ pub mod engine;
 pub mod extend_clause;
 pub mod graph;
 pub mod kana_trie;
+pub mod keymap;
 pub mod lm;
 pub mod romkan;
 pub mod trie;

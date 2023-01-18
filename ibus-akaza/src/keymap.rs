@@ -1,21 +1,14 @@
 use std::collections::HashMap;
+use std::ffi::CString;
 
-use log::trace;
+use anyhow::bail;
+use log::{error, info, trace};
 
 use ibus_sys::core::{IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_SHIFT_MASK};
-use ibus_sys::ibus_key::{
-    IBUS_KEY_BackSpace, IBUS_KEY_Down, IBUS_KEY_Escape, IBUS_KEY_Hangul, IBUS_KEY_Hangul_Hanja,
-    IBUS_KEY_Henkan, IBUS_KEY_KP_Down, IBUS_KEY_KP_Enter, IBUS_KEY_KP_Left, IBUS_KEY_KP_Page_Down,
-    IBUS_KEY_KP_Page_Up, IBUS_KEY_KP_Right, IBUS_KEY_KP_Up, IBUS_KEY_Left, IBUS_KEY_Muhenkan,
-    IBUS_KEY_Page_Down, IBUS_KEY_Page_Up, IBUS_KEY_Return, IBUS_KEY_Right, IBUS_KEY_Up,
-    IBUS_KEY_colon, IBUS_KEY_h, IBUS_KEY_j, IBUS_KEY_k, IBUS_KEY_l, IBUS_KEY_space, IBUS_KEY_0,
-    IBUS_KEY_1, IBUS_KEY_2, IBUS_KEY_3, IBUS_KEY_4, IBUS_KEY_5, IBUS_KEY_6, IBUS_KEY_7, IBUS_KEY_8,
-    IBUS_KEY_9, IBUS_KEY_F10, IBUS_KEY_F6, IBUS_KEY_F7, IBUS_KEY_F8, IBUS_KEY_F9, IBUS_KEY_KP_0,
-    IBUS_KEY_KP_1, IBUS_KEY_KP_2, IBUS_KEY_KP_3, IBUS_KEY_KP_4, IBUS_KEY_KP_5, IBUS_KEY_KP_6,
-    IBUS_KEY_KP_7, IBUS_KEY_KP_8, IBUS_KEY_KP_9,
-};
-
-use crate::context::KeyState;
+use ibus_sys::glib::guint;
+use ibus_sys::ibus_key::IBUS_KEY_VoidSymbol;
+use ibus_sys::keys::ibus_keyval_from_name;
+use libakaza::keymap::{KeyState, Keymap};
 
 #[derive(Hash, PartialEq)]
 struct KeyPattern {
@@ -36,260 +29,109 @@ impl KeyPattern {
     }
 }
 
-struct KeyMapBuilder {
-    keymap: HashMap<KeyPattern, String>,
-}
-
-impl KeyMapBuilder {
-    fn new() -> Self {
-        KeyMapBuilder {
-            keymap: HashMap::new(),
-        }
-    }
-
-    fn insert(&mut self, key_states: &[KeyState], keyvals: &[u32], modifier: u32, func_name: &str) {
-        trace!(
-            "INSERT KEY: {:?} {:?} {:?} {:?}",
-            key_states,
-            keyvals,
-            modifier,
-            func_name
-        );
-        for key_state in key_states {
-            for keyval in keyvals {
-                self.keymap.insert(
-                    KeyPattern::new(*key_state, *keyval, modifier),
-                    func_name.to_string(),
-                );
-            }
-        }
-    }
-}
-
 pub struct KeyMap {
     keymap: HashMap<KeyPattern, String>,
 }
 
 impl KeyMap {
-    pub(crate) fn new() -> Self {
-        let mut builder = KeyMapBuilder::new();
+    /// - first: modifier
+    /// - second: keyval
+    /// ただし、keyval が不明なものの場合は IBUS_KEY_VoidSymbol になる。
+    fn split_key(key: &str) -> anyhow::Result<(u32, u32)> {
+        fn p(s: &str) -> guint {
+            let cs = CString::new(s.to_string()).unwrap();
+            unsafe { ibus_keyval_from_name(cs.as_ptr()) }
+        }
 
+        let mut modifier = 0_u32;
+        if key.contains('-') {
+            let keys = key.split('-').collect::<Vec<_>>();
+            for m in &keys[0..keys.len() - 1] {
+                match *m {
+                    "C" => {
+                        modifier |= IBusModifierType_IBUS_CONTROL_MASK;
+                    }
+                    "S" => {
+                        modifier |= IBusModifierType_IBUS_SHIFT_MASK;
+                    }
+                    _ => {
+                        bail!("Unknown modifier in keymap: {}", key);
+                    }
+                }
+            }
+
+            Ok((modifier, p(keys[keys.len() - 1])))
+        } else {
+            Ok((0, p(key)))
+        }
+    }
+
+    pub(crate) fn new() -> anyhow::Result<Self> {
         // TODO use IBus.Hotkey
 
-        // 入力モードの切り替え
-        builder.insert(
-            &[
-                KeyState::Composition,
-                KeyState::PreComposition,
-                KeyState::Conversion,
-            ],
-            &[IBUS_KEY_j],
-            IBusModifierType_IBUS_SHIFT_MASK | IBusModifierType_IBUS_CONTROL_MASK,
-            "set_input_mode_hiragana",
-        );
-        builder.insert(
-            &[
-                KeyState::Composition,
-                KeyState::PreComposition,
-                KeyState::Conversion,
-            ],
-            &[IBUS_KEY_Henkan, IBUS_KEY_Hangul],
-            0,
-            "set_input_mode_hiragana",
-        );
-        builder.insert(
-            &[
-                KeyState::Composition,
-                KeyState::PreComposition,
-                KeyState::Conversion,
-            ],
-            &[IBUS_KEY_Muhenkan, IBUS_KEY_Hangul_Hanja],
-            0,
-            "set_input_mode_alnum",
-        );
-        builder.insert(
-            &[
-                KeyState::Composition,
-                KeyState::PreComposition,
-                KeyState::Conversion,
-            ],
-            &[IBUS_KEY_colon],
-            IBusModifierType_IBUS_SHIFT_MASK | IBusModifierType_IBUS_CONTROL_MASK,
-            "set_input_mode_alnum",
-        );
-        builder.insert(
-            &[
-                KeyState::Composition,
-                KeyState::PreComposition,
-                KeyState::Conversion,
-            ],
-            &[IBUS_KEY_l],
-            IBusModifierType_IBUS_SHIFT_MASK | IBusModifierType_IBUS_CONTROL_MASK,
-            "set_input_mode_fullwidth_alnum",
-        );
-        builder.insert(
-            &[
-                KeyState::Composition,
-                KeyState::PreComposition,
-                KeyState::Conversion,
-            ],
-            &[IBUS_KEY_k],
-            IBusModifierType_IBUS_SHIFT_MASK | IBusModifierType_IBUS_CONTROL_MASK,
-            "set_input_mode_katakana",
-        );
+        let keymap = Keymap::load("default")?;
+        let mut mapping: HashMap<KeyPattern, String> = HashMap::new();
 
-        // basic operations.
-        builder.insert(
-            &[KeyState::Composition],
-            &[IBUS_KEY_space],
-            0,
-            "update_candidates",
-        );
-        builder.insert(&[KeyState::Conversion], &[IBUS_KEY_space], 0, "cursor_down");
-
-        builder.insert(
-            &[KeyState::Conversion, KeyState::Composition],
-            &[IBUS_KEY_BackSpace],
-            0,
-            "erase_character_before_cursor",
-        );
-        builder.insert(
-            &[KeyState::Conversion, KeyState::Composition],
-            &[IBUS_KEY_h],
-            IBusModifierType_IBUS_CONTROL_MASK,
-            "erase_character_before_cursor",
-        );
-        builder.insert(
-            &[KeyState::Conversion],
-            &[IBUS_KEY_Return, IBUS_KEY_KP_Enter],
-            0,
-            "commit_candidate",
-        );
-        builder.insert(
-            &[KeyState::Composition],
-            &[IBUS_KEY_Return, IBUS_KEY_KP_Enter],
-            0,
-            "commit_preedit",
-        );
-
-        builder.insert(
-            &[KeyState::Conversion, KeyState::Composition],
-            &[IBUS_KEY_Escape],
-            0,
-            "escape",
-        );
-
-        builder.insert(
-            &[KeyState::Conversion],
-            &[IBUS_KEY_Up, IBUS_KEY_KP_Up],
-            0,
-            "cursor_up",
-        );
-        builder.insert(
-            &[KeyState::Conversion],
-            &[IBUS_KEY_Down, IBUS_KEY_KP_Down],
-            0,
-            "cursor_down",
-        );
-        builder.insert(
-            &[KeyState::Conversion],
-            &[IBUS_KEY_Right, IBUS_KEY_KP_Right],
-            0,
-            "cursor_right",
-        );
-        builder.insert(
-            &[KeyState::Conversion],
-            &[IBUS_KEY_Left, IBUS_KEY_KP_Left],
-            0,
-            "cursor_left",
-        );
-
-        builder.insert(
-            &[KeyState::Conversion],
-            &[IBUS_KEY_Right, IBUS_KEY_KP_Right],
-            IBusModifierType_IBUS_SHIFT_MASK,
-            "extend_clause_right",
-        );
-        builder.insert(
-            &[KeyState::Conversion],
-            &[IBUS_KEY_Left, IBUS_KEY_KP_Left],
-            IBusModifierType_IBUS_SHIFT_MASK,
-            "extend_clause_left",
-        );
-
-        // 後から文字タイプを指定する
-        builder.insert(
-            &[KeyState::Composition, KeyState::Conversion],
-            &[IBUS_KEY_F6],
-            0,
-            "convert_to_full_hiragana",
-        );
-        builder.insert(
-            &[KeyState::Composition, KeyState::Conversion],
-            &[IBUS_KEY_F7],
-            0,
-            "convert_to_full_katakana",
-        );
-        builder.insert(
-            &[KeyState::Composition, KeyState::Conversion],
-            &[IBUS_KEY_F8],
-            0,
-            "convert_to_half_katakana",
-        );
-        builder.insert(
-            &[KeyState::Composition, KeyState::Conversion],
-            &[IBUS_KEY_F9],
-            0,
-            "convert_to_full_romaji",
-        );
-        builder.insert(
-            &[KeyState::Composition, KeyState::Conversion],
-            &[IBUS_KEY_F10],
-            0,
-            "convert_to_half_romaji",
-        );
-
-        builder.insert(
-            &[KeyState::Conversion],
-            &[IBUS_KEY_KP_Page_Up, IBUS_KEY_Page_Up],
-            0,
-            "page_up",
-        );
-        builder.insert(
-            &[KeyState::Conversion],
-            &[IBUS_KEY_KP_Page_Down, IBUS_KEY_Page_Down],
-            0,
-            "page_down",
-        );
-
-        let mut num = |keyvals: &[u32], n: i32| {
-            // fn insert(&mut self, key_states: &[KeyState], keyvals: &[u32], modifier: u32, func_name: &str) {
-            builder.insert(
-                &[KeyState::Conversion],
-                keyvals,
-                0,
-                format!("press_number_{}", n).as_str(),
-            )
-        };
-        num(&[IBUS_KEY_1, IBUS_KEY_KP_1], 1);
-        num(&[IBUS_KEY_2, IBUS_KEY_KP_2], 2);
-        num(&[IBUS_KEY_3, IBUS_KEY_KP_3], 3);
-        num(&[IBUS_KEY_4, IBUS_KEY_KP_4], 4);
-        num(&[IBUS_KEY_5, IBUS_KEY_KP_5], 5);
-        num(&[IBUS_KEY_6, IBUS_KEY_KP_6], 6);
-        num(&[IBUS_KEY_7, IBUS_KEY_KP_7], 7);
-        num(&[IBUS_KEY_8, IBUS_KEY_KP_8], 8);
-        num(&[IBUS_KEY_9, IBUS_KEY_KP_9], 9);
-        num(&[IBUS_KEY_0, IBUS_KEY_KP_0], 0);
-
-        KeyMap {
-            keymap: builder.keymap,
+        for kc in keymap.keys {
+            for key in &kc.key {
+                let (modifier, keyval) = Self::split_key(key.as_str())?;
+                if keyval == IBUS_KEY_VoidSymbol {
+                    error!("Unknown key symbol: {} {:?}", key, kc);
+                    continue;
+                }
+                info!("Insert: {} {} {} {:?}", modifier, keyval, key, kc);
+                for state in &kc.states {
+                    mapping.insert(
+                        KeyPattern::new(*state, keyval, modifier),
+                        kc.command.clone(),
+                    );
+                }
+            }
         }
+
+        Ok(KeyMap { keymap: mapping })
     }
 
     pub fn get(&self, key_state: &KeyState, keyval: u32, modifier: u32) -> Option<&String> {
         trace!("MODIFIER: {}", modifier);
         self.keymap
             .get(&KeyPattern::new(*key_state, keyval, modifier))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use ibus_sys::ibus_key::{IBUS_KEY_Right, IBUS_KEY_h};
+
+    use super::*;
+
+    #[test]
+    fn test_c_h() -> anyhow::Result<()> {
+        let (modifier, keyval) = KeyMap::split_key("C-h")?;
+        assert_eq!(modifier, IBusModifierType_IBUS_CONTROL_MASK);
+        assert_eq!(keyval, IBUS_KEY_h);
+        info!("Key: C-h, {}, {}", modifier, keyval);
+        Ok(())
+    }
+
+    #[test]
+    fn test_c_s_h() -> anyhow::Result<()> {
+        let (modifier, keyval) = KeyMap::split_key("C-S-h")?;
+        assert_eq!(
+            modifier,
+            IBusModifierType_IBUS_CONTROL_MASK | IBusModifierType_IBUS_SHIFT_MASK
+        );
+        assert_eq!(keyval, IBUS_KEY_h);
+        info!("Key: C-S-h, {}, {}", modifier, keyval);
+        Ok(())
+    }
+
+    #[test]
+    fn test_shift() -> anyhow::Result<()> {
+        let (modifier, keyval) = KeyMap::split_key("S-Right")?;
+        assert_eq!(modifier, IBusModifierType_IBUS_SHIFT_MASK);
+        assert_eq!(keyval, IBUS_KEY_Right);
+        info!("Key: S-Right, {}, {}", modifier, keyval);
+        Ok(())
     }
 }
