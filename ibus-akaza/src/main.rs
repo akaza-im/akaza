@@ -107,7 +107,7 @@ fn main() -> Result<()> {
             .user_data(user_data.clone())
             .load_user_config(true)
             .build()?;
-        let mut ac = AkazaContext::new(akaza, config.input_style);
+        let mut ac = AkazaContext::new(akaza, config);
         let new_sys_time = SystemTime::now();
         let difference = new_sys_time.duration_since(sys_time)?;
         info!(

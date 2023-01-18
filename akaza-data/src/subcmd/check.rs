@@ -6,7 +6,6 @@ use log::info;
 
 use libakaza::config::{Config, DictConfig};
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
-use libakaza::input_style::InputStyle::Romaji;
 use libakaza::user_side_data::user_data::UserData;
 
 pub fn check(yomi: &str, expected: Option<String>, user_data: bool) -> anyhow::Result<()> {
@@ -24,7 +23,7 @@ pub fn check(yomi: &str, expected: Option<String>, user_data: bool) -> anyhow::R
             },
         ],
         single_term: None,
-        input_style: Romaji,
+        romkan: None,
     });
     if user_data {
         info!("Enabled user data");
