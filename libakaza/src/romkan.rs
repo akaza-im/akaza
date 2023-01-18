@@ -16,7 +16,7 @@ pub struct RomKanConfig {
 }
 
 fn load_romkan_map(name: &str) -> anyhow::Result<HashMap<String, String>> {
-    let pathstr: String = if cfg!(test) {
+    let pathstr: String = if cfg!(test) || cfg!(feature = "it") {
         format!("{}/../romkan/{}.yml", env!("CARGO_MANIFEST_DIR"), name)
     } else if let Ok(env) = env::var("AKAZA_ROMKAN_DIR") {
         format!("{}/{}.yml", env, name)
