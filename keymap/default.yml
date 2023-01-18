@@ -1,0 +1,121 @@
+---
+keys:
+  # 入力モードの切り替え
+  - states: [Composition, PreComposition, Conversion]
+    key: [C-S-j]
+    command: set_input_mode_hiragana
+  - states: [Composition, PreComposition, Conversion]
+    key: [Henkan]
+    command: set_input_mode_hiragana
+  - states: [Composition, PreComposition, Conversion]
+    key: [Hangul]
+    command: set_input_mode_hiragana
+  - states: [Composition, PreComposition, Conversion]
+    key: [Muhenkan]
+    command: set_input_mode_alnum
+  - states: [Composition, PreComposition, Conversion]
+    key: [Hangul_Hanja]
+    command: set_input_mode_alnum
+  - states: [Composition, PreComposition, Conversion]
+    key: [C-S-colon]
+    command: set_input_mode_alnum
+  - states: [Composition, PreComposition, Conversion]
+    key: [C-S-l]
+    command: set_input_mode_fullwidth_alnum
+  - states: [Composition, PreComposition, Conversion]
+    key: [C-S-k]
+    command: set_input_mode_katakana
+  
+  # 基本的な操作
+  - states: [Composition]
+    key: [space]
+    command: update_candidates
+  - states: [Conversion]
+    key: [space]
+    command: cursor_down
+  - states: [Conversion, Composition]
+    key: [BackSpace]
+    command: erase_character_before_cursor
+  - states: [Conversion, Composition]
+    key: [C-h]
+    command: erase_character_before_cursor
+  - states: [Conversion]
+    key: [Return, KP_Enter]
+    command: commit_candidate
+  - states: [Composition]
+    key: [Return, KP_Enter]
+    command: commit_preedit
+  - states: [Conversion, Composition]
+    key: [Escape]
+    command: escape
+  - states: [Conversion]
+    key: [Up, KP_Up]
+    command: cursor_up
+  - states: [Conversion]
+    key: [Down, KP_Down]
+    command: cursor_down
+  - states: [Conversion]
+    key: [Left, KP_Left]
+    command: cursor_left
+  - states: [Conversion]
+    key: [S-Right, S-KP_Right]
+    command: extend_clause_right
+  - states: [Conversion]
+    key: [S-Left, S-KP_Left]
+    command: extend_clause_left
+  - states: [Composition, Conversion]
+    key: [Page_Up, KP_Page_Up]
+    command : page_up
+  - states: [Composition, Conversion]
+    key: [Page_Down, KP_Page_Down]
+    command : page_down
+
+  # あとから文字タイプを指定する
+  - states: [Composition, Conversion]
+    key: [F6]
+    command: convert_to_full_hiragana
+  - states: [Composition, Conversion]
+    key: [F7]
+    command : convert_to_full_katakana
+  - states: [Composition, Conversion]
+    key: [F8]
+    command : convert_to_half_katakana
+  - states: [Composition, Conversion]
+    key: [F9]
+    command : convert_to_full_romaji
+  - states: [Composition, Conversion]
+    key: [F10]
+    command : convert_to_half_romaji
+
+  # 数字キーによる選択
+  - states: [Conversion]
+    key: [1, KP_1]
+    command : press_number_1
+  - states: [Conversion]
+    key: [2, KP_2]
+    command : press_number_2
+  - states: [Conversion]
+    key: [3, KP_3]
+    command : press_number_3
+  - states: [Conversion]
+    key: [4, KP_4]
+    command : press_number_4
+  - states: [Conversion]
+    key: [5, KP_5]
+    command : press_number_5
+  - states: [Conversion]
+    key: [6, KP_6]
+    command : press_number_6
+  - states: [Conversion]
+    key: [7, KP_7]
+    command : press_number_7
+  - states: [Conversion]
+    key: [8, KP_8]
+    command : press_number_8
+  - states: [Conversion]
+    key: [9, KP_9]
+    command : press_number_9
+  - states: [Conversion]
+    key: [0, KP_0]
+    command : press_number_0
+

@@ -42,6 +42,7 @@ use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngine;
 use libakaza::extend_clause::{extend_left, extend_right};
 use libakaza::graph::candidate::Candidate;
+use libakaza::keymap::KeyState;
 use libakaza::lm::system_bigram::MarisaSystemBigramLM;
 use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use libakaza::romkan::RomKanConverter;
@@ -52,16 +53,6 @@ use crate::input_mode::{
     INPUT_MODE_HIRAGANA, INPUT_MODE_KATAKANA,
 };
 use crate::keymap::KeyMap;
-
-#[derive(Debug, Hash, PartialEq, Copy, Clone)]
-pub enum KeyState {
-    // 何も入力されていない状態。
-    PreComposition,
-    // 変換処理に入る前。ひらがなを入力している段階。
-    Composition,
-    // 変換中
-    Conversion,
-}
 
 #[repr(C)]
 pub struct AkazaContext {
@@ -189,7 +180,7 @@ impl AkazaContext {
             is_invalidate: false,
             cursor_moved: false,
             node_selected: HashMap::new(),
-            keymap: KeyMap::new(),
+            keymap: KeyMap::new()?,
             force_selected_clause: Vec::new(),
             prop_list,
             input_mode_prop,

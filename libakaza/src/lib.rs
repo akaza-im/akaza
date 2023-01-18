@@ -15,3 +15,4 @@ pub mod lm;
 pub mod romkan;
 pub mod trie;
 pub mod user_side_data;
+pub mod keymap;
