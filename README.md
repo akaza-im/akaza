@@ -5,6 +5,8 @@ Yet another kana-kanji-converter on IBus, written in Rust.
 統計的かな漢字変換による日本語IMEです。
 Rust で書いています。
 
+**現在、開発途中のプロダクトです。非互換の変更が予告なくはいります**
+
 ## モチベーション
 
 いじりやすくて **ある程度** UIが使いやすいかな漢字変換があったら面白いなと思ったので作ってみています。
@@ -32,20 +34,23 @@ Rust で書いています。
 
 * rust
 
+### Supported environment
+
+* Linux 6.0 以上
+* ibus 1.5 以上
+
 ## Install 方法
+
+モデルファイルをダウンロードして展開してください。
+
+    mkdir /usr/share/akaza/
+    curl -L https://github.com/tokuhirom/akaza/releases/download/<<VERSION>>/akaza-data.tar.gz | tar xzv --strip-components=1 -C /usr/share/akaza/
 
 ibus-akaza をインストールしてください。
 
-    cd akaza-data/ && make && sudo make install
-    cargo install --path ibus-akaza/
-    sudo rustup stable
+    sudo rustup install stable
     cd ibus-akaza && make && sudo make install
     ibus restart
-
-**注意**
-
-akaza-data の生成には wikipedia の全データの展開および解析が走るので 1時間ぐらいはかかりますしディスク容量も 100GB ぐらいは余裕が必要です。
-生成されたモデルデータを github actions で構築してファイルをリリースできるようにしたいと思っています。が、まだできてません。
 
 ## 設定方法
 
