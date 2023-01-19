@@ -25,6 +25,7 @@ mod commands;
 mod context;
 mod input_mode;
 mod keymap;
+mod ui;
 mod wrapper_bindings;
 
 unsafe extern "C" fn process_key_event(

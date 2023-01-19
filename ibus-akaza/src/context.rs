@@ -53,6 +53,7 @@ use crate::input_mode::{
     INPUT_MODE_HIRAGANA, INPUT_MODE_KATAKANA,
 };
 use crate::keymap::KeyMap;
+use crate::ui::prop_controller::PropController;
 
 #[repr(C)]
 pub struct AkazaContext {
@@ -61,6 +62,7 @@ pub struct AkazaContext {
     romkan: RomKanConverter,
     command_map: HashMap<&'static str, IbusAkazaCommand>,
     engine: BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
+    consonant_suffix_extractor: ConsonantSuffixExtractor,
 
     // ==== 現在の入力状態を保持 ====
     input_mode: InputMode,
@@ -78,12 +80,7 @@ pub struct AkazaContext {
 
     // ==== UI 関連 ====
     lookup_table: IBusLookupTable,
-    prop_list: *mut IBusPropList,
-    /// input mode のメニューの親プロパティ。
-    input_mode_prop: *mut IBusProperty,
-    /// メニューの input mode ごとのメニュープロパティたち。
-    prop_dict: HashMap<String, *mut IBusProperty>,
-    consonant_suffix_extractor: ConsonantSuffixExtractor,
+    prop_controller: PropController,
 }
 
 impl AkazaContext {
@@ -163,7 +160,6 @@ impl AkazaContext {
         config: Config,
     ) -> Result<Self> {
         let input_mode = INPUT_MODE_HIRAGANA;
-        let (input_mode_prop, prop_list, prop_dict) = Self::init_props(input_mode);
         let romkan = RomKanConverter::new(
             config
                 .romkan
@@ -187,66 +183,9 @@ impl AkazaContext {
             node_selected: HashMap::new(),
             keymap: KeyMap::new()?,
             force_selected_clause: Vec::new(),
-            prop_list,
-            input_mode_prop,
-            prop_dict,
+            prop_controller: PropController::new(input_mode)?,
             consonant_suffix_extractor: ConsonantSuffixExtractor::default(),
         })
-    }
-
-    /// タスクメニューからポップアップして選べるメニューを構築する。
-    ///
-    /// * `initial_input_mode`: 初期状態の input_mode
-    pub fn init_props(
-        initial_input_mode: InputMode,
-    ) -> (
-        *mut IBusProperty,
-        *mut IBusPropList,
-        HashMap<String, *mut IBusProperty>,
-    ) {
-        unsafe {
-            let prop_list =
-                g_object_ref_sink(ibus_prop_list_new() as gpointer) as *mut IBusPropList;
-
-            let input_mode_prop = g_object_ref_sink(ibus_property_new(
-                "InputMode\0".as_ptr() as *const gchar,
-                IBusPropType_PROP_TYPE_MENU,
-                format!("入力モード: {}", initial_input_mode.symbol).to_ibus_text(),
-                "\0".as_ptr() as *const gchar,
-                "Switch input mode".to_ibus_text(),
-                to_gboolean(true),
-                to_gboolean(true),
-                IBusPropState_PROP_STATE_UNCHECKED,
-                std::ptr::null_mut() as *mut IBusPropList,
-            ) as gpointer) as *mut IBusProperty;
-            ibus_prop_list_append(prop_list, input_mode_prop);
-
-            let props = g_object_ref_sink(ibus_prop_list_new() as gpointer) as *mut IBusPropList;
-            let mut prop_map: HashMap<String, *mut IBusProperty> = HashMap::new();
-            for input_mode in get_all_input_modes() {
-                let prop = g_object_ref_sink(ibus_property_new(
-                    (input_mode.prop_name.to_string() + "\0").as_ptr() as *const gchar,
-                    IBusPropType_PROP_TYPE_RADIO,
-                    input_mode.label.to_ibus_text(),
-                    "\0".as_ptr() as *const gchar,
-                    std::ptr::null_mut() as *mut IBusText,
-                    to_gboolean(true),
-                    to_gboolean(true),
-                    if input_mode.mode_code == initial_input_mode.mode_code {
-                        IBusPropState_PROP_STATE_CHECKED
-                    } else {
-                        IBusPropState_PROP_STATE_UNCHECKED
-                    },
-                    std::ptr::null_mut() as *mut IBusPropList,
-                ) as gpointer) as *mut IBusProperty;
-                prop_map.insert(input_mode.prop_name.to_string(), prop);
-                ibus_prop_list_append(props, prop);
-            }
-
-            ibus_property_set_sub_props(input_mode_prop, props);
-
-            (input_mode_prop, prop_list, prop_map)
-        }
     }
 }
 
@@ -433,24 +372,7 @@ impl AkazaContext {
         // 変換候補をいったんコミットする。
         self.commit_candidate(engine);
 
-        // メニューの親項目のラベルを変更したい。
-        unsafe {
-            ibus_property_set_symbol(self.input_mode_prop, input_mode.symbol.to_ibus_text());
-            ibus_property_set_label(
-                self.input_mode_prop,
-                format!("入力モード: {}", input_mode.symbol).to_ibus_text(),
-            );
-            ibus_engine_update_property(engine, self.input_mode_prop);
-        }
-
-        // 有効化する input mode のメニュー項目にチェックを入れる。
-        let Some(property) = self.prop_dict.get(input_mode.prop_name) else {
-            panic!("Unknown input mode: {:?}", input_mode);
-        };
-        unsafe {
-            ibus_property_set_state(*property, IBusPropState_PROP_STATE_CHECKED);
-            ibus_engine_update_property(engine, *property);
-        }
+        self.prop_controller.set_input_mode(input_mode, engine);
 
         // 実際に input_mode を設定する
         self.input_mode = *input_mode;
@@ -827,9 +749,7 @@ impl AkazaContext {
 
     pub fn do_focus_in(&mut self, engine: *mut IBusEngine) {
         trace!("do_focus_in");
-        unsafe {
-            ibus_engine_register_properties(engine, self.prop_list);
-        }
+        self.prop_controller.do_focus_in(engine);
     }
 
     /// convert selected word/characters to full-width hiragana (standard hiragana): ホワイト → ほわいと
