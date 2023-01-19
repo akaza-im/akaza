@@ -88,7 +88,7 @@ impl WordcntUnigram {
         // 単語の種類数
         let v = map.keys().count();
 
-        let default_cost = calc_cost(1, c, v as u32);
+        let default_cost = calc_cost(0, c, v as u32);
         let default_cost_for_short = calc_cost(1, c, v as u32);
 
         Ok(WordcntUnigram {
