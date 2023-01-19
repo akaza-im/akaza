@@ -18,6 +18,9 @@ pub struct Config {
     /// ローマ字かな変換テーブルの指定
     /// "default", "kana", etc.
     pub romkan: Option<String>,
+    /// キーマップテーブルの指定
+    /// "default", "atok", etc.
+    pub keymap: Option<String>,
 }
 
 impl Config {

@@ -180,7 +180,7 @@ impl AkazaContext {
             is_invalidate: false,
             cursor_moved: false,
             node_selected: HashMap::new(),
-            keymap: KeyMap::new()?,
+            keymap: KeyMap::new(config.keymap)?,
             force_selected_clause: Vec::new(),
             prop_list,
             input_mode_prop,

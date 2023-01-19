@@ -66,10 +66,10 @@ impl KeyMap {
         }
     }
 
-    pub(crate) fn new() -> anyhow::Result<Self> {
+    pub(crate) fn new(keymap_name: &str) -> anyhow::Result<Self> {
         // TODO use IBus.Hotkey
 
-        let keymap = Keymap::load("default")?;
+        let keymap = Keymap::load(keymap_name)?;
         let mut mapping: HashMap<KeyPattern, String> = HashMap::new();
 
         for kc in keymap.keys {
