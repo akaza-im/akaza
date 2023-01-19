@@ -47,13 +47,29 @@ work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.
 	tar -xmzf work/vibrato/ipadic-mecab-2_7_0.tar.gz -C work/vibrato/
 
 work/jawiki/vibrato-ipadic/_SUCCESS: src/subcmd/tokenize.rs mecab-user-dict.csv src/corpus_reader/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS work/vibrato/ipadic-mecab-2_7_0/system.dic
-	cargo run --release -- tokenize-vibrato-ipadic --user-dict=mecab-user-dict.csv work/vibrato/ipadic-mecab-2_7_0/system.dic work/jawiki/extracted work/jawiki/vibrato-ipadic/ -vvv
+	cargo run --release -- tokenize \
+		--reader=jawiki \
+		--user-dict=mecab-user-dict.csv \
+		--system-dict=work/vibrato/ipadic-mecab-2_7_0/system.dic \
+		work/jawiki/extracted \
+		work/jawiki/vibrato-ipadic/ \
+		-vvv
 
 work/aozora_bunko/vibrato-ipadic/_SUCCESS: src/corpus_reader/aozora_bunko.rs work/vibrato/ipadic-mecab-2_7_0/system.dic
-	cargo run --release -- tokenize-aozora-bunko-vibrato-ipadic work/vibrato/ipadic-mecab-2_7_0/system.dic aozorabunko_text/cards/ work/aozora_bunko/vibrato-ipadic/ -vv
+	cargo run --release -- tokenize \
+		--reader=aozora_bunko \
+		--user-dict=mecab-user-dict.csv \
+		--system-dict=work/vibrato/ipadic-mecab-2_7_0/system.dic \
+		aozorabunko_text/cards/ \
+		work/aozora_bunko/vibrato-ipadic/ \
+		-vv
 
 work/vibrato-ipadic.wfreq: work/jawiki/vibrato-ipadic/_SUCCESS src/subcmd/wfreq.rs work/aozora_bunko/vibrato-ipadic/_SUCCESS
-	cargo run --release -- wfreq work/jawiki/vibrato-ipadic/ work/aozora_bunko/vibrato-ipadic/ corpus/ work/vibrato-ipadic.wfreq -vvv
+	cargo run --release -- wfreq \
+		--src-dir=work/jawiki/vibrato-ipadic/ \
+		--src-dir=work/aozora_bunko/vibrato-ipadic/ \
+		--src-dir=corpus/ \
+		work/vibrato-ipadic.wfreq -vvv
 
 # threshold が 16 なのはヒューリスティックなパラメータ設定による。
 # vocab ファイルを作る意味は、辞書の作成のためだけなので、わざわざ作らなくてもよいかもしれない。
@@ -66,10 +82,12 @@ work/vibrato-ipadic.vocab: work/vibrato-ipadic.wfreq src/subcmd/vocab.rs
 # 統計的仮名かな漢字変換のためのモデル作成処理
 
 work/stats-vibrato-unigram.wordcnt.trie: work/vibrato-ipadic.wfreq
-	cargo run --release -- make-stats-system-unigram-lm work/vibrato-ipadic.wfreq work/stats-vibrato-unigram.wordcnt.trie
+	cargo run --release -- wordcnt-unigram \
+ 		work/vibrato-ipadic.wfreq \
+ 		work/stats-vibrato-unigram.wordcnt.trie
 
 work/stats-vibrato-bigram.wordcnt.trie: work/stats-vibrato-unigram.wordcnt.trie work/stats-vibrato-unigram.wordcnt.trie src/subcmd/make_stats_system_bigram_lm.rs work/aozora_bunko/vibrato-ipadic/_SUCCESS
-	cargo run --release -- make-stats-system-bigram-lm --threshold=3 \
+	cargo run --release -- wordcnt-bigram --threshold=3 \
 		--corpus-dirs work/jawiki/vibrato-ipadic/ \
 		--corpus-dirs work/aozora_bunko/vibrato-ipadic/ \
 		work/stats-vibrato-unigram.wordcnt.trie work/stats-vibrato-bigram.wordcnt.trie
@@ -95,12 +113,12 @@ data/unigram.model: data/bigram.model
 # から、SKK-JISYO.L に含まれる語彙を除いたものが登録されている。
 
 data/SKK-JISYO.akaza: work/vibrato-ipadic.vocab dict/SKK-JISYO.akaza src/subcmd/make_dict.rs  corpus/must.txt corpus/should.txt corpus/may.txt work/unidic/lex_3_1.csv
-	cargo run --release -- make-system-dict \
+	cargo run --release -- make-dict \
 		--corpus corpus/must.txt \
 		--corpus corpus/should.txt \
 		--corpus corpus/may.txt \
 		--unidic work/unidic/lex_3_1.csv \
-		work/vibrato-ipadic.vocab \
+		--vocab work/vibrato-ipadic.vocab \
 		data/SKK-JISYO.akaza \
 		-vvv
 

@@ -11,7 +11,7 @@ use regex::Regex;
 use crate::utils::get_file_list;
 
 /// 単語の発生確率を数え上げる。
-pub fn wfreq(src_dirs: &Vec<&str>, dst_file: &str) -> anyhow::Result<()> {
+pub fn wfreq(src_dirs: &Vec<String>, dst_file: &str) -> anyhow::Result<()> {
     info!("wfreq: {:?} => {}", src_dirs, dst_file);
 
     let mut file_list: Vec<PathBuf> = Vec::new();
