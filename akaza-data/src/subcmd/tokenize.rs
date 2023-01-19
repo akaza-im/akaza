@@ -40,7 +40,7 @@ pub fn tokenize_aozora_bunko_vibrato_ipadic(
     Ok(())
 }
 
-pub fn tokenize_vibrato_ipadic(
+pub fn tokenize_jawiki_vibrato_ipadic(
     system_dict: String,
     user_dict: Option<String>,
     src_dir: &str,
