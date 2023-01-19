@@ -2,7 +2,7 @@
 
 ## What's this?
 
-System dictionary/language model package for Akaza.
+辞書および言語モデルの管理用のツールです。
 
 ## How to build this?
 
@@ -11,10 +11,15 @@ System dictionary/language model package for Akaza.
 
 ## Dependencies
 
+### Runtime Dependencies
+
 * wikiextractor
 * python3
-* rust
 * wget
+
+### Buildtime dependencies
+
+* rust
 
 ## How it works?
 
@@ -72,13 +77,4 @@ bigram entries:
       に追加する必要があります
     * このファイルには、明らかに必要な元号/国名などのみを追加してください。
     * 固有名詞などは、入れたとて Wikipedia 内での記述回数が少ないために、スコアがつかないので無意味です。
-
-## LICENSE
-
-生成データには GPL の SKK の辞書が含まれているので、GPL 扱い。
-これは、今後 SudachiDic か IPADIC か UniDic か何かをベースにするように変更するかもしれない。
-
-それ以外の Rust で書かれたコードベースなどは MIT License.
-
-## See also
 
