@@ -29,3 +29,9 @@ marisa-sys = { path = "../marisa-sys" }
 [features]
 # Integration test を有効化するフラグ
 it = []
+
+
+[[bin]]
+name = "akaza-data"
+path = "src/main.rs"
+
