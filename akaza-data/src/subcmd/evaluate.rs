@@ -78,6 +78,7 @@ pub fn evaluate(corpus_dir: &String, load_user_config: bool) -> anyhow::Result<(
         ],
         single_term: None,
         romkan: None,
+        keymap: None,
     })
     .load_user_config(load_user_config)
     .build()?;

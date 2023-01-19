@@ -66,10 +66,9 @@ impl KeyMap {
         }
     }
 
-    pub(crate) fn new(keymap_name: &str) -> anyhow::Result<Self> {
-        // TODO use IBus.Hotkey
-
-        let keymap = Keymap::load(keymap_name)?;
+    pub(crate) fn new(keymap_name: Option<String>) -> anyhow::Result<Self> {
+        let keymap_name = keymap_name.unwrap_or_else(|| "default".to_string());
+        let keymap = Keymap::load(keymap_name.as_str())?;
         let mut mapping: HashMap<KeyPattern, String> = HashMap::new();
 
         for kc in keymap.keys {

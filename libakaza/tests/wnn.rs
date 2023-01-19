@@ -44,6 +44,7 @@ mod tests {
                     + "/../akaza-data/skk-dev-dict/SKK-JISYO.emoji"),
             }]),
             romkan: None,
+            keymap: None,
         })
         .build()
     }
