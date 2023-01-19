@@ -66,10 +66,12 @@ work/vibrato-ipadic.vocab: work/vibrato-ipadic.wfreq src/subcmd/vocab.rs
 # 統計的仮名かな漢字変換のためのモデル作成処理
 
 work/stats-vibrato-unigram.wordcnt.trie: work/vibrato-ipadic.wfreq
-	cargo run --release -- make-stats-system-unigram-lm work/vibrato-ipadic.wfreq work/stats-vibrato-unigram.wordcnt.trie
+	cargo run --release -- wordcnt-unigram \
+ 		work/vibrato-ipadic.wfreq \
+ 		work/stats-vibrato-unigram.wordcnt.trie
 
 work/stats-vibrato-bigram.wordcnt.trie: work/stats-vibrato-unigram.wordcnt.trie work/stats-vibrato-unigram.wordcnt.trie src/subcmd/make_stats_system_bigram_lm.rs work/aozora_bunko/vibrato-ipadic/_SUCCESS
-	cargo run --release -- make-stats-system-bigram-lm --threshold=3 \
+	cargo run --release -- wordcnt-bigram --threshold=3 \
 		--corpus-dirs work/jawiki/vibrato-ipadic/ \
 		--corpus-dirs work/aozora_bunko/vibrato-ipadic/ \
 		work/stats-vibrato-unigram.wordcnt.trie work/stats-vibrato-bigram.wordcnt.trie
@@ -95,7 +97,7 @@ data/unigram.model: data/bigram.model
 # から、SKK-JISYO.L に含まれる語彙を除いたものが登録されている。
 
 data/SKK-JISYO.akaza: work/vibrato-ipadic.vocab dict/SKK-JISYO.akaza src/subcmd/make_dict.rs  corpus/must.txt corpus/should.txt corpus/may.txt work/unidic/lex_3_1.csv
-	cargo run --release -- make-system-dict \
+	cargo run --release -- make-dict \
 		--corpus corpus/must.txt \
 		--corpus corpus/should.txt \
 		--corpus corpus/may.txt \

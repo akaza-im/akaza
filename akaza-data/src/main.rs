@@ -50,11 +50,11 @@ enum Commands {
     Vocab(VocabArgs),
 
     #[clap(arg_required_else_help = true)]
-    MakeSystemDict(MakeSystemDictArgs),
+    MakeDict(MakeDictArgs),
 
+    WordcntUnigram(WordcntUnigramArgs),
     #[clap(arg_required_else_help = true)]
-    MakeStatsSystemBigramLM(MakeStatsSystemBigramLMArgs),
-    MakeStatsSystemUnigramLM(MakeStatsSystemUnigramLMArgs),
+    WordcntBigram(WordcntBigramArgs),
 
     LearnCorpus(LearnCorpusArgs),
 
@@ -109,7 +109,7 @@ struct VocabArgs {
 
 #[derive(Debug, clap::Args)]
 /// システム辞書ファイルを作成する。
-struct MakeSystemDictArgs {
+struct MakeDictArgs {
     #[arg(short, long)]
     corpus: Vec<String>,
     #[arg(short, long)]
@@ -121,14 +121,14 @@ struct MakeSystemDictArgs {
 
 /// ユニグラム言語モデルを作成する。
 #[derive(Debug, clap::Args)]
-struct MakeStatsSystemUnigramLMArgs {
+struct WordcntUnigramArgs {
     src_file: String,
     dst_file: String,
 }
 
 /// システム言語モデルを生成する。
 #[derive(Debug, clap::Args)]
-struct MakeStatsSystemBigramLMArgs {
+struct WordcntBigramArgs {
     #[arg(short, long)]
     threshold: u32,
     #[arg(long)]
@@ -231,19 +231,19 @@ fn main() -> anyhow::Result<()> {
             opt.dst_file.as_str(),
         ),
         Commands::Vocab(opt) => vocab(opt.src_file.as_str(), opt.dst_file.as_str(), opt.threshold),
-        Commands::MakeSystemDict(opt) => make_system_dict(
+        Commands::MakeDict(opt) => make_system_dict(
             &opt.txt_file,
             Some(opt.vocab_file.as_str()),
             opt.corpus,
             opt.unidic,
         ),
-        Commands::MakeStatsSystemBigramLM(opt) => make_stats_system_bigram_lm(
+        Commands::WordcntBigram(opt) => make_stats_system_bigram_lm(
             opt.threshold,
             &opt.corpus_dirs,
             &opt.unigram_trie_file,
             &opt.bigram_trie_file,
         ),
-        Commands::MakeStatsSystemUnigramLM(opt) => {
+        Commands::WordcntUnigram(opt) => {
             make_stats_system_unigram_lm(opt.src_file.as_str(), opt.dst_file.as_str())
         }
         Commands::LearnCorpus(opts) => learn_corpus(
