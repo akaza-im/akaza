@@ -47,10 +47,22 @@ work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.
 	tar -xmzf work/vibrato/ipadic-mecab-2_7_0.tar.gz -C work/vibrato/
 
 work/jawiki/vibrato-ipadic/_SUCCESS: src/subcmd/tokenize.rs mecab-user-dict.csv src/corpus_reader/wikipedia_extracted.rs work/jawiki/extracted/_SUCCESS work/vibrato/ipadic-mecab-2_7_0/system.dic
-	cargo run --release -- tokenize-vibrato-ipadic --user-dict=mecab-user-dict.csv work/vibrato/ipadic-mecab-2_7_0/system.dic work/jawiki/extracted work/jawiki/vibrato-ipadic/ -vvv
+	cargo run --release -- tokenize \
+		--reader=jawiki \
+		--user-dict=mecab-user-dict.csv \
+		--system-dict=work/vibrato/ipadic-mecab-2_7_0/system.dic \
+		work/jawiki/extracted \
+		work/jawiki/vibrato-ipadic/ \
+		-vvv
 
 work/aozora_bunko/vibrato-ipadic/_SUCCESS: src/corpus_reader/aozora_bunko.rs work/vibrato/ipadic-mecab-2_7_0/system.dic
-	cargo run --release -- tokenize-aozora-bunko-vibrato-ipadic work/vibrato/ipadic-mecab-2_7_0/system.dic aozorabunko_text/cards/ work/aozora_bunko/vibrato-ipadic/ -vv
+	cargo run --release -- tokenize \
+		--reader=aozora_bunko \
+		--user-dict=mecab-user-dict.csv \
+		--system-dict=work/vibrato/ipadic-mecab-2_7_0/system.dic \
+		aozorabunko_text/cards/ \
+		work/aozora_bunko/vibrato-ipadic/ \
+		-vv
 
 work/vibrato-ipadic.wfreq: work/jawiki/vibrato-ipadic/_SUCCESS src/subcmd/wfreq.rs work/aozora_bunko/vibrato-ipadic/_SUCCESS
 	cargo run --release -- wfreq \

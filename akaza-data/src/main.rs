@@ -12,9 +12,7 @@ use crate::subcmd::learn_corpus::learn_corpus;
 use crate::subcmd::make_dict::make_system_dict;
 use crate::subcmd::make_stats_system_bigram_lm::make_stats_system_bigram_lm;
 use crate::subcmd::make_stats_system_unigram_lm::make_stats_system_unigram_lm;
-use crate::subcmd::tokenize::{
-    tokenize_aozora_bunko_vibrato_ipadic, tokenize_jawiki_vibrato_ipadic,
-};
+use crate::subcmd::tokenize::tokenize;
 use crate::subcmd::vocab::vocab;
 use crate::subcmd::wfreq::wfreq;
 
@@ -42,9 +40,7 @@ struct Args {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    TokenizeVibratoIpadic(TokenizeVibratoIpadicArgs),
-    // ↓これは最終的には↑と統合予定
-    TokenizeAozoraBunkoVibratoIpadic(TokenizeAozoraBunkoVibratoIpadicArgs),
+    Tokenize(TokenizeArgs),
 
     Wfreq(WfreqArgs),
     Vocab(VocabArgs),
@@ -69,19 +65,12 @@ enum Commands {
 
 /// コーパスを形態素解析機でトーカナイズする
 #[derive(Debug, clap::Args)]
-struct TokenizeVibratoIpadicArgs {
+struct TokenizeArgs {
+    #[arg(short, long)]
+    reader: String,
     #[arg(short, long)]
     user_dict: Option<String>,
-    system_dict: String,
-    src_dir: String,
-    dst_dir: String,
-}
-
-/// コーパスを形態素解析機でトーカナイズする
-#[derive(Debug, clap::Args)]
-struct TokenizeAozoraBunkoVibratoIpadicArgs {
     #[arg(short, long)]
-    user_dict: Option<String>,
     system_dict: String,
     src_dir: String,
     dst_dir: String,
@@ -209,13 +198,8 @@ fn main() -> anyhow::Result<()> {
         .init();
 
     match args.command {
-        Commands::TokenizeVibratoIpadic(opt) => tokenize_jawiki_vibrato_ipadic(
-            opt.system_dict,
-            opt.user_dict,
-            opt.src_dir.as_str(),
-            opt.dst_dir.as_str(),
-        ),
-        Commands::TokenizeAozoraBunkoVibratoIpadic(opt) => tokenize_aozora_bunko_vibrato_ipadic(
+        Commands::Tokenize(opt) => tokenize(
+            opt.reader,
             opt.system_dict,
             opt.user_dict,
             opt.src_dir.as_str(),

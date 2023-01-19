@@ -1,14 +1,13 @@
-use encoding_rs::SHIFT_JIS;
-use std::fs;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
 
 use anyhow::Context;
+use encoding_rs::SHIFT_JIS;
 use log::info;
-
 use regex::{Regex, RegexBuilder};
-use walkdir::WalkDir;
+
+use crate::corpus_reader::base::CorpusReader;
 
 /// wikiextractor で処理したデータを取り扱うための処理
 pub struct AozoraBunkoProcessor {
@@ -54,12 +53,33 @@ impl AozoraBunkoProcessor {
         })
     }
 
-    pub fn process_file<F>(
-        &self,
-        ifname: &Path,
-        ofname: &Path,
-        annotate: &mut F,
-    ) -> anyhow::Result<()>
+    fn is_kyukana(&self, src: &str) -> bool {
+        self.kyukana_pattern.is_match(src)
+    }
+
+    fn remove_yomigana(&self, src: &str) -> String {
+        self.yomigana_pattern.replace_all(src, "").to_string()
+    }
+
+    fn remove_comment(&self, src: &str) -> String {
+        self.comment_pattern.replace_all(src, "").to_string()
+    }
+
+    fn strip_meta(&self, src: &str) -> String {
+        self.sokohon_pattern
+            .replace_all(
+                self.meta_separator_pattern
+                    .replace_all(src, "")
+                    .to_string()
+                    .as_str(),
+                "",
+            )
+            .to_string()
+    }
+}
+
+impl CorpusReader for AozoraBunkoProcessor {
+    fn process_file<F>(&self, ifname: &Path, ofname: &Path, annotate: &mut F) -> anyhow::Result<()>
     where
         F: FnMut(&str) -> anyhow::Result<String>,
     {
@@ -155,62 +175,6 @@ impl AozoraBunkoProcessor {
         let mut ofile = File::create(ofname)?;
         ofile.write_all(buf.as_bytes())?;
 
-        Ok(())
-    }
-
-    fn is_kyukana(&self, src: &str) -> bool {
-        self.kyukana_pattern.is_match(src)
-    }
-
-    fn remove_yomigana(&self, src: &str) -> String {
-        self.yomigana_pattern.replace_all(src, "").to_string()
-    }
-
-    fn remove_comment(&self, src: &str) -> String {
-        self.comment_pattern.replace_all(src, "").to_string()
-    }
-
-    fn strip_meta(&self, src: &str) -> String {
-        self.sokohon_pattern
-            .replace_all(
-                self.meta_separator_pattern
-                    .replace_all(src, "")
-                    .to_string()
-                    .as_str(),
-                "",
-            )
-            .to_string()
-    }
-
-    pub fn get_file_list(
-        &self,
-        src_dir: &Path,
-        dst_dir: &Path,
-    ) -> anyhow::Result<Vec<(String, String)>> {
-        let mut result: Vec<(String, String)> = Vec::new();
-
-        for src_file in WalkDir::new(src_dir)
-            .into_iter()
-            .filter_map(|file| file.ok())
-            .filter(|file| file.metadata().unwrap().is_file())
-        {
-            let src_path = src_file.path();
-            let dirname = src_path.parent().unwrap().file_name().unwrap();
-            fs::create_dir_all(dst_dir.join(dirname))?;
-            let output_file = dst_dir.join(dirname).join(src_path.file_name().unwrap());
-
-            result.push((
-                src_file.path().to_string_lossy().to_string(),
-                output_file.as_path().to_string_lossy().to_string(),
-            ));
-        }
-        Ok(result)
-    }
-
-    /// _SUCCESS ファイルを書く
-    pub fn write_success_file(&self, dst_dir: &Path) -> anyhow::Result<()> {
-        let mut success = File::create(dst_dir.join("_SUCCESS"))?;
-        success.write_all("DONE".as_bytes())?;
         Ok(())
     }
 }
