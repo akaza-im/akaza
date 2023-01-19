@@ -106,7 +106,7 @@ data/SKK-JISYO.akaza: work/vibrato-ipadic.vocab dict/SKK-JISYO.akaza src/subcmd/
 		--corpus corpus/should.txt \
 		--corpus corpus/may.txt \
 		--unidic work/unidic/lex_3_1.csv \
-		work/vibrato-ipadic.vocab \
+		--vocab work/vibrato-ipadic.vocab \
 		data/SKK-JISYO.akaza \
 		-vvv
 

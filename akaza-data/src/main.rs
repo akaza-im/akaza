@@ -112,7 +112,8 @@ struct MakeDictArgs {
     corpus: Vec<String>,
     #[arg(short, long)]
     unidic: String,
-    vocab_file: String,
+    #[arg(long)]
+    vocab: String,
     /// デバッグのための中間テキストファイル
     txt_file: String,
 }
@@ -224,7 +225,7 @@ fn main() -> anyhow::Result<()> {
         Commands::Vocab(opt) => vocab(opt.src_file.as_str(), opt.dst_file.as_str(), opt.threshold),
         Commands::MakeDict(opt) => make_system_dict(
             &opt.txt_file,
-            Some(opt.vocab_file.as_str()),
+            Some(opt.vocab.as_str()),
             opt.corpus,
             opt.unidic,
         ),
