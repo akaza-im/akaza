@@ -67,6 +67,31 @@ pub struct AkazaContext {
 }
 
 impl AkazaContext {
+    pub(crate) fn new(
+        akaza: BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
+        config: Config,
+    ) -> Result<Self> {
+        let input_mode = INPUT_MODE_HIRAGANA;
+        let romkan = RomKanConverter::new(
+            config
+                .romkan
+                .unwrap_or_else(|| "default".to_string())
+                .as_str(),
+        )?;
+
+        Ok(AkazaContext {
+            current_state: CurrentState::new(input_mode),
+            //         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
+            lookup_table: IBusLookupTable::new(10, 0, 1, 1),
+            romkan,
+            command_map: ibus_akaza_commands_map(),
+            engine: akaza,
+            keymap: KeyMap::new()?,
+            prop_controller: PropController::new(input_mode)?,
+            consonant_suffix_extractor: ConsonantSuffixExtractor::default(),
+        })
+    }
+
     /// Set props
     pub(crate) fn do_property_activate(
         &mut self,
@@ -132,33 +157,6 @@ impl AkazaContext {
             .select_candidate(self.lookup_table.get_cursor_pos() as usize);
 
         true
-    }
-}
-
-impl AkazaContext {
-    pub(crate) fn new(
-        akaza: BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
-        config: Config,
-    ) -> Result<Self> {
-        let input_mode = INPUT_MODE_HIRAGANA;
-        let romkan = RomKanConverter::new(
-            config
-                .romkan
-                .unwrap_or_else(|| "default".to_string())
-                .as_str(),
-        )?;
-
-        Ok(AkazaContext {
-            current_state: CurrentState::new(input_mode),
-            //         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
-            lookup_table: IBusLookupTable::new(10, 0, 1, 1),
-            romkan,
-            command_map: ibus_akaza_commands_map(),
-            engine: akaza,
-            keymap: KeyMap::new()?,
-            prop_controller: PropController::new(input_mode)?,
-            consonant_suffix_extractor: ConsonantSuffixExtractor::default(),
-        })
     }
 }
 
@@ -231,7 +229,7 @@ impl AkazaContext {
                     self.current_state.append_preedit(ch);
 
                     // And update the display status.
-                    self.update_preedit_text_before_henkan(engine);
+                    self.update_preedit_text_in_precomposition(engine);
                     return true;
                 }
             }
@@ -275,11 +273,11 @@ impl AkazaContext {
                     .set_preedit(self.romkan.remove_last_char(&self.current_state.preedit))
             }
             // 変換していないときのレンダリングをする。
-            self.update_preedit_text_before_henkan(engine);
+            self.update_preedit_text_in_precomposition(engine);
         }
     }
 
-    pub(crate) fn update_preedit_text_before_henkan(&mut self, engine: *mut IBusEngine) {
+    pub(crate) fn update_preedit_text_in_precomposition(&mut self, engine: *mut IBusEngine) {
         unsafe {
             if self.current_state.preedit.is_empty() {
                 ibus_engine_hide_preedit_text(engine);
@@ -309,26 +307,6 @@ impl AkazaContext {
                 !surface.is_empty() as gboolean,
             )
         }
-
-        /*
-           if len(self.preedit_string) == 0:
-               self.hide_preedit_text()
-               return
-
-           # 平仮名にする。
-           yomi, word = self._make_preedit_word()
-           self.clauses = [
-               [create_node(system_unigram_lm, 0, yomi, word)]
-           ]
-           self.current_clause = 0
-
-           preedit_attrs = IBus.AttrList()
-           preedit_attrs.append(IBus.Attribute.new(IBus.AttrType.UNDERLINE,
-                                                   IBus.AttrUnderline.SINGLE, 0, len(word)))
-           preedit_text = IBus.Text.new_from_string(word)
-           preedit_text.set_attributes(preedit_attrs)
-           self.update_preedit_text(text=preedit_text, cursor_pos=len(word), visible=(len(word) > 0))
-        */
     }
 }
 
@@ -404,25 +382,6 @@ impl AkazaContext {
             ibus_engine_hide_auxiliary_text(engine);
             ibus_engine_hide_preedit_text(engine);
         }
-
-        /*
-        def commit_string(self, text):
-            self.logger.info("commit_string.")
-
-            self.commit_text(IBus.Text.new_from_string(text))
-
-            self.preedit_string = ''
-            self.clauses = []
-            self.current_clause = 0
-            self.node_selected = {}
-            self.force_selected_clause = None
-
-            self.lookup_table.clear()
-            self.update_lookup_table(self.lookup_table, False)
-
-            self.hide_auxiliary_text()
-            self.hide_preedit_text()
-             */
     }
 
     pub fn commit_candidate(&mut self, engine: *mut IBusEngine) {
@@ -580,16 +539,6 @@ impl AkazaContext {
         } else {
             (yomi + suffix.as_str(), surface + suffix.as_str())
         }
-
-        /*
-            yomi = self.romkan.to_hiragana(self.preedit_string)
-            if self.input_mode == INPUT_MODE_KATAKANA:
-                return yomi, jaconv.hira2kata(yomi)
-            elif self.input_mode == INPUT_MODE_HALFWIDTH_KATAKANA:
-                return yomi, jaconv.z2h(jaconv.hira2kata(yomi))
-            else:
-                return yomi, yomi
-        */
     }
 
     /// 前の変換候補を選択する。
