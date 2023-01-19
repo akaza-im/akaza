@@ -89,10 +89,8 @@ struct TokenizeAozoraBunkoVibratoIpadicArgs {
 
 #[derive(Debug, clap::Args)]
 struct WfreqArgs {
-    // TODO vec に切り替えるべき
-    src_dir1: String,
-    src_dir2: String,
-    src_dir3: String,
+    #[arg(long)]
+    src_dir: Vec<String>,
     dst_file: String,
 }
 
@@ -222,14 +220,7 @@ fn main() -> anyhow::Result<()> {
             opt.src_dir.as_str(),
             opt.dst_dir.as_str(),
         ),
-        Commands::Wfreq(opt) => wfreq(
-            &vec![
-                opt.src_dir1.as_str(),
-                opt.src_dir2.as_str(),
-                opt.src_dir3.as_str(),
-            ],
-            opt.dst_file.as_str(),
-        ),
+        Commands::Wfreq(opt) => wfreq(&opt.src_dir, opt.dst_file.as_str()),
         Commands::Vocab(opt) => vocab(opt.src_file.as_str(), opt.dst_file.as_str(), opt.threshold),
         Commands::MakeDict(opt) => make_system_dict(
             &opt.txt_file,
