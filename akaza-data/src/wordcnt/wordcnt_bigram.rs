@@ -74,7 +74,7 @@ impl WordcntBigram {
         let map: HashMap<(i32, i32), u32> = Self::_to_map(&marisa);
 
         // 総出現単語数
-        let c = map.iter().map(|((_, _), cnt)| cnt.clone()).sum();
+        let c = map.iter().map(|((_, _), cnt)| *cnt).sum();
         // 単語の種類数
         let v = map.keys().count() as u32;
         let default_edge_cost = calc_cost(0, c, v);
