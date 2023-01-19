@@ -55,7 +55,8 @@ impl WordcntBigram {
     fn _to_map(marisa: &Marisa) -> HashMap<(i32, i32), u32> {
         let mut map: HashMap<(i32, i32), u32> = HashMap::new();
         marisa.predictive_search("".as_bytes(), |word, _id| {
-            if word.len() == 8 {
+            let p = word.len();
+            if word.len() == 10 {
                 let word_id1 = i32::from_le_bytes([word[0], word[1], word[2], 0]);
                 let word_id2 = i32::from_le_bytes([word[3], word[4], word[5], 0]);
                 let cost = u32::from_le_bytes([word[6], word[7], word[8], word[9]]);
@@ -122,7 +123,7 @@ impl SystemBigramLM for WordcntBigram {
     fn as_hash_map(&self) -> HashMap<(i32, i32), f32> {
         let mut map: HashMap<(i32, i32), f32> = HashMap::new();
         self.marisa.predictive_search("".as_bytes(), |word, _id| {
-            if word.len() == 8 {
+            if word.len() == 10 {
                 let word_id1 = i32::from_le_bytes([word[0], word[1], word[2], 0]);
                 let word_id2 = i32::from_le_bytes([word[3], word[4], word[5], 0]);
                 let cnt = u32::from_le_bytes([word[6], word[7], word[8], word[9]]);
@@ -131,5 +132,28 @@ impl SystemBigramLM for WordcntBigram {
             true
         });
         map
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::wordcnt::wordcnt_unigram::WordcntUnigram;
+    use tempfile::NamedTempFile;
+
+    #[test]
+    fn test_build() -> Result<()> {
+        let named_tmpfile = NamedTempFile::new().unwrap();
+        let tmpfile = named_tmpfile.path().to_str().unwrap().to_string();
+
+        let mut builder = WordcntBigramBuilder::default();
+        builder.add(4, 5, 29);
+        builder.add(8, 9, 32);
+        builder.save(tmpfile.as_str())?;
+
+        let bigram = WordcntBigram::load(tmpfile.as_str())?;
+        assert_eq!(bigram.to_cnt_map(), HashMap::from([]));
+
+        Ok(())
     }
 }

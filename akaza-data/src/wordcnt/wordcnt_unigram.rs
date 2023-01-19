@@ -17,8 +17,8 @@ pub struct WordcntUnigramBuilder {
 }
 
 impl WordcntUnigramBuilder {
-    pub fn add(&mut self, word: &str, score: u32) {
-        self.data.push((word.to_string(), score));
+    pub fn add(&mut self, word: &str, cnt: u32) {
+        self.data.push((word.to_string(), cnt));
     }
 
     pub fn keyset(&self) -> Keyset {
@@ -147,5 +147,48 @@ impl SystemUnigramLM for WordcntUnigram {
             true
         });
         map
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::NamedTempFile;
+
+    #[test]
+    fn test() -> anyhow::Result<()> {
+        let named_tmpfile = NamedTempFile::new().unwrap();
+        let tmpfile = named_tmpfile.path().to_str().unwrap().to_string();
+
+        let mut builder = WordcntUnigramBuilder::default();
+        builder.add("私/わたし", 3);
+        builder.add("彼/かれ", 42);
+        builder.save(tmpfile.as_str())?;
+
+        let wordcnt = WordcntUnigram::load(tmpfile.to_string().as_str())?;
+        assert_eq!(
+            wordcnt.to_count_hashmap(),
+            HashMap::from([
+                ("私/わたし".to_string(), (1_i32, 3_u32)),
+                ("彼/かれ".to_string(), (0_i32, 42_u32)),
+            ])
+        );
+        assert_eq!(wordcnt.c, 45); // 単語発生数
+        assert_eq!(wordcnt.v, 2); // ユニーク単語数
+        assert_eq!(wordcnt.get_default_cost(), 6.672098);
+        assert_eq!(wordcnt.get_default_cost_for_short(), 1.6720936);
+
+        assert_eq!(wordcnt.find("私/わたし"), Some((1_i32, 1.1949753)));
+        assert_eq!(wordcnt.find("彼/かれ"), Some((0_i32, 0.048848562)));
+
+        assert_eq!(
+            wordcnt.as_hash_map(),
+            HashMap::from([
+                ("私/わたし".to_string(), (1_i32, 1.1949753)),
+                ("彼/かれ".to_string(), (0_i32, 0.048848562)),
+            ])
+        );
+
+        Ok(())
     }
 }
