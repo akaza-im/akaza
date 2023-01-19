@@ -1,7 +1,6 @@
 use alloc::collections::vec_deque::VecDeque;
 use alloc::ffi::CString;
 use std::collections::HashMap;
-use std::ops::Range;
 
 use anyhow::Result;
 use kelp::{h2z, hira2kata, z2h, ConvOption};
@@ -19,28 +18,22 @@ use ibus_sys::core::{
     IBusModifierType_IBUS_MOD4_MASK, IBusModifierType_IBUS_MOD5_MASK,
     IBusModifierType_IBUS_RELEASE_MASK, IBusModifierType_IBUS_SHIFT_MASK,
 };
-use ibus_sys::engine::{
-    ibus_engine_commit_text, ibus_engine_hide_preedit_text, ibus_engine_register_properties,
-    ibus_engine_update_auxiliary_text, ibus_engine_update_lookup_table,
-    ibus_engine_update_preedit_text, ibus_engine_update_property, IBusEngine,
-};
+use ibus_sys::engine::ibus_engine_commit_text;
+use ibus_sys::engine::ibus_engine_hide_preedit_text;
+use ibus_sys::engine::ibus_engine_update_auxiliary_text;
+use ibus_sys::engine::ibus_engine_update_lookup_table;
+use ibus_sys::engine::ibus_engine_update_preedit_text;
+use ibus_sys::engine::IBusEngine;
 use ibus_sys::engine::{ibus_engine_hide_auxiliary_text, ibus_engine_hide_lookup_table};
-use ibus_sys::glib::{g_object_ref_sink, gchar, gpointer};
+use ibus_sys::glib::gchar;
 use ibus_sys::glib::{gboolean, guint};
 use ibus_sys::lookup_table::IBusLookupTable;
-use ibus_sys::prop_list::{ibus_prop_list_append, ibus_prop_list_new, IBusPropList};
-use ibus_sys::property::{
-    ibus_property_new, ibus_property_set_label, ibus_property_set_state,
-    ibus_property_set_sub_props, ibus_property_set_symbol, IBusPropState_PROP_STATE_CHECKED,
-    IBusPropState_PROP_STATE_UNCHECKED, IBusPropType_PROP_TYPE_MENU, IBusPropType_PROP_TYPE_RADIO,
-    IBusProperty,
-};
-use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, IBusText, StringExt};
+use ibus_sys::property::IBusPropState_PROP_STATE_CHECKED;
+use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, StringExt};
 use libakaza::config::Config;
 use libakaza::consonant::ConsonantSuffixExtractor;
 use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngine;
-use libakaza::extend_clause::{extend_left, extend_right};
 use libakaza::graph::candidate::Candidate;
 use libakaza::keymap::KeyState;
 use libakaza::lm::system_bigram::MarisaSystemBigramLM;
@@ -48,40 +41,57 @@ use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use libakaza::romkan::RomKanConverter;
 
 use crate::commands::{ibus_akaza_commands_map, IbusAkazaCommand};
+use crate::current_state::CurrentState;
 use crate::input_mode::{
-    get_all_input_modes, get_input_mode_from_prop_name, InputMode, INPUT_MODE_HALFWIDTH_KATAKANA,
-    INPUT_MODE_HIRAGANA, INPUT_MODE_KATAKANA,
+    get_input_mode_from_prop_name, InputMode, INPUT_MODE_HALFWIDTH_KATAKANA, INPUT_MODE_HIRAGANA,
+    INPUT_MODE_KATAKANA,
 };
 use crate::keymap::KeyMap;
+use crate::ui::prop_controller::PropController;
 
 #[repr(C)]
 pub struct AkazaContext {
-    pub(crate) input_mode: InputMode,
-    pub(crate) cursor_pos: i32,
-    pub(crate) preedit: String,
-    pub(crate) lookup_table: IBusLookupTable,
-    pub(crate) romkan: RomKanConverter,
+    // ==== 設定 ====
+    keymap: KeyMap,
+    romkan: RomKanConverter,
     command_map: HashMap<&'static str, IbusAkazaCommand>,
     engine: BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
-    clauses: Vec<VecDeque<Candidate>>,
-    // げんざいせんたくされているぶんせつ。
-    current_clause: usize,
-    is_invalidate: bool,
-    cursor_moved: bool,
-    // key は、clause 番号。value は、node の index。
-    node_selected: HashMap<usize, usize>,
-    keymap: KeyMap,
-    /// シフト+右 or シフト+左で
-    force_selected_clause: Vec<Range<usize>>,
-    prop_list: *mut IBusPropList,
-    /// input mode のメニューの親プロパティ。
-    pub input_mode_prop: *mut IBusProperty,
-    /// メニューの input mode ごとのメニュープロパティたち。
-    pub prop_dict: HashMap<String, *mut IBusProperty>,
-    pub consonant_suffix_extractor: ConsonantSuffixExtractor,
+    consonant_suffix_extractor: ConsonantSuffixExtractor,
+
+    // ==== 現在の入力状態を保持 ====
+    current_state: CurrentState,
+
+    // ==== UI 関連 ====
+    lookup_table: IBusLookupTable,
+    prop_controller: PropController,
 }
 
 impl AkazaContext {
+    pub(crate) fn new(
+        akaza: BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
+        config: Config,
+    ) -> Result<Self> {
+        let input_mode = INPUT_MODE_HIRAGANA;
+        let romkan = RomKanConverter::new(
+            config
+                .romkan
+                .unwrap_or_else(|| "default".to_string())
+                .as_str(),
+        )?;
+
+        Ok(AkazaContext {
+            current_state: CurrentState::new(input_mode),
+            //         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
+            lookup_table: IBusLookupTable::new(10, 0, 1, 1),
+            romkan,
+            command_map: ibus_akaza_commands_map(),
+            engine: akaza,
+            keymap: KeyMap::new()?,
+            prop_controller: PropController::new(input_mode)?,
+            consonant_suffix_extractor: ConsonantSuffixExtractor::default(),
+        })
+    }
+
     /// Set props
     pub(crate) fn do_property_activate(
         &mut self,
@@ -143,10 +153,8 @@ impl AkazaContext {
             return false;
         }
         self.lookup_table.set_cursor_pos(new_pos);
-        self.node_selected.insert(
-            self.current_clause,
-            self.lookup_table.get_cursor_pos() as usize,
-        );
+        self.current_state
+            .select_candidate(self.lookup_table.get_cursor_pos() as usize);
 
         true
     }
@@ -180,7 +188,7 @@ impl AkazaContext {
             is_invalidate: false,
             cursor_moved: false,
             node_selected: HashMap::new(),
-            keymap: KeyMap::new(config.keymap)?,
+            keymap: KeyMap::new()?,
             force_selected_clause: Vec::new(),
             prop_list,
             input_mode_prop,
@@ -290,7 +298,7 @@ impl AkazaContext {
             return self.run_callback_by_name(engine, callback.as_str());
         }
 
-        match self.input_mode.prop_name {
+        match self.current_state.input_mode.prop_name {
             "InputMode.Hiragana" | "InputMode.Katakana" | "InputMode.HalfWidthKatakana" => {
                 if modifiers
                     & (IBusModifierType_IBUS_CONTROL_MASK | IBusModifierType_IBUS_MOD1_MASK)
@@ -300,7 +308,10 @@ impl AkazaContext {
                 }
 
                 if ('!' as u32) <= keyval && keyval <= ('~' as u32) {
-                    trace!("Insert new character to preedit: '{}'", self.preedit);
+                    trace!(
+                        "Insert new character to preedit: '{}'",
+                        self.current_state.preedit
+                    );
                     if self.lookup_table.get_number_of_candidates() > 0 {
                         // 変換の途中に別の文字が入力された。よって、現在の preedit 文字列は確定させる。
                         self.commit_candidate(engine);
@@ -308,11 +319,10 @@ impl AkazaContext {
 
                     // Append the character to preedit string.
                     let ch = char::from_u32(keyval).unwrap();
-                    self.preedit.push(ch);
-                    self.cursor_pos += 1;
+                    self.current_state.append_preedit(ch);
 
                     // And update the display status.
-                    self.update_preedit_text_before_henkan(engine);
+                    self.update_preedit_text_in_precomposition(engine);
                     return true;
                 }
             }
@@ -335,7 +345,7 @@ impl AkazaContext {
                 }
             }
             _ => {
-                warn!("Unknown prop: {}", self.input_mode.prop_name);
+                warn!("Unknown prop: {}", self.current_state.input_mode.prop_name);
                 return false;
             }
         }
@@ -345,23 +355,24 @@ impl AkazaContext {
 
     pub(crate) fn erase_character_before_cursor(&mut self, engine: *mut IBusEngine) {
         unsafe {
-            if self.in_henkan_mode() {
+            if self.current_state.in_conversion() {
                 // 変換中の場合、無変換モードにもどす。
                 self.lookup_table.clear();
                 ibus_engine_hide_auxiliary_text(engine);
                 ibus_engine_hide_lookup_table(engine);
             } else {
                 // サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
-                self.preedit = self.romkan.remove_last_char(&self.preedit)
+                self.current_state
+                    .set_preedit(self.romkan.remove_last_char(&self.current_state.preedit))
             }
             // 変換していないときのレンダリングをする。
-            self.update_preedit_text_before_henkan(engine);
+            self.update_preedit_text_in_precomposition(engine);
         }
     }
 
-    pub(crate) fn update_preedit_text_before_henkan(&mut self, engine: *mut IBusEngine) {
+    pub(crate) fn update_preedit_text_in_precomposition(&mut self, engine: *mut IBusEngine) {
         unsafe {
-            if self.preedit.is_empty() {
+            if self.current_state.preedit.is_empty() {
                 ibus_engine_hide_preedit_text(engine);
                 return;
             }
@@ -389,26 +400,6 @@ impl AkazaContext {
                 !surface.is_empty() as gboolean,
             )
         }
-
-        /*
-           if len(self.preedit_string) == 0:
-               self.hide_preedit_text()
-               return
-
-           # 平仮名にする。
-           yomi, word = self._make_preedit_word()
-           self.clauses = [
-               [create_node(system_unigram_lm, 0, yomi, word)]
-           ]
-           self.current_clause = 0
-
-           preedit_attrs = IBus.AttrList()
-           preedit_attrs.append(IBus.Attribute.new(IBus.AttrType.UNDERLINE,
-                                                   IBus.AttrUnderline.SINGLE, 0, len(word)))
-           preedit_text = IBus.Text.new_from_string(word)
-           preedit_text.set_attributes(preedit_attrs)
-           self.update_preedit_text(text=preedit_text, cursor_pos=len(word), visible=(len(word) > 0))
-        */
     }
 }
 
@@ -428,27 +419,10 @@ impl AkazaContext {
         // 変換候補をいったんコミットする。
         self.commit_candidate(engine);
 
-        // メニューの親項目のラベルを変更したい。
-        unsafe {
-            ibus_property_set_symbol(self.input_mode_prop, input_mode.symbol.to_ibus_text());
-            ibus_property_set_label(
-                self.input_mode_prop,
-                format!("入力モード: {}", input_mode.symbol).to_ibus_text(),
-            );
-            ibus_engine_update_property(engine, self.input_mode_prop);
-        }
-
-        // 有効化する input mode のメニュー項目にチェックを入れる。
-        let Some(property) = self.prop_dict.get(input_mode.prop_name) else {
-            panic!("Unknown input mode: {:?}", input_mode);
-        };
-        unsafe {
-            ibus_property_set_state(*property, IBusPropState_PROP_STATE_CHECKED);
-            ibus_engine_update_property(engine, *property);
-        }
+        self.prop_controller.set_input_mode(input_mode, engine);
 
         // 実際に input_mode を設定する
-        self.input_mode = *input_mode;
+        self.current_state.set_input_mode(input_mode);
     }
 
     pub(crate) fn run_callback_by_name(
@@ -468,41 +442,29 @@ impl AkazaContext {
 
     pub(crate) fn get_key_state(&self) -> KeyState {
         // キー入力状態を返す。
-        if self.preedit.is_empty() {
+        if self.current_state.preedit.is_empty() {
             // 未入力状態。
             KeyState::PreComposition
-        } else if self.in_henkan_mode() {
+        } else if self.current_state.in_conversion() {
+            // 変換している状態。lookup table が表示されている状態
             KeyState::Conversion
         } else {
+            // preedit になにか入っていて、まだ変換を実施していない状態
             KeyState::Composition
         }
     }
 
-    pub fn in_henkan_mode(&self) -> bool {
-        self.lookup_table.get_number_of_candidates() > 0
-    }
-
     pub fn commit_string(&mut self, engine: *mut IBusEngine, text: &str) {
         unsafe {
-            self.cursor_moved = false;
-
-            if self.in_henkan_mode() {
+            if self.current_state.in_conversion() {
                 // 変換モードのときのみ学習を実施する
-                let mut targets: Vec<Candidate> = Vec::new();
-                for (i, candidates) in self.clauses.iter().enumerate() {
-                    let idx = self.node_selected.get(&i).unwrap_or(&0);
-                    targets.push(candidates[*idx].clone());
-                }
-                self.engine.learn(&targets);
+                self.engine
+                    .learn(self.current_state.get_first_candidates().as_slice());
             }
 
             ibus_engine_commit_text(engine, text.to_ibus_text());
 
-            self.preedit.clear();
-            self.clauses.clear();
-            self.current_clause = 0;
-            self.node_selected.clear();
-            self.force_selected_clause.clear();
+            self.current_state.clear();
 
             self.lookup_table.clear();
             self._update_lookup_table(engine);
@@ -510,74 +472,27 @@ impl AkazaContext {
             ibus_engine_hide_auxiliary_text(engine);
             ibus_engine_hide_preedit_text(engine);
         }
-
-        /*
-        def commit_string(self, text):
-            self.logger.info("commit_string.")
-
-            self.commit_text(IBus.Text.new_from_string(text))
-
-            self.preedit_string = ''
-            self.clauses = []
-            self.current_clause = 0
-            self.node_selected = {}
-            self.force_selected_clause = None
-
-            self.lookup_table.clear()
-            self.update_lookup_table(self.lookup_table, False)
-
-            self.hide_auxiliary_text()
-            self.hide_preedit_text()
-             */
     }
 
     pub fn commit_candidate(&mut self, engine: *mut IBusEngine) {
-        let s = self.build_string();
-        self.commit_string(engine, s.as_str());
-    }
-
-    pub(crate) fn build_string(&self) -> String {
-        let mut result = String::new();
-        for (clauseid, nodes) in self.clauses.iter().enumerate() {
-            let idex = if let Some(i) = self.node_selected.get(&clauseid) {
-                *i
-            } else {
-                0
-            };
-            if idex >= nodes.len() {
-                // 発生しないはずだが、発生している。。なぜだろう?
-                panic!(
-                    "[BUG] self.node_selected and self.clauses missmatch: {:?}, {:?}",
-                    self.node_selected, self.clauses,
-                )
-            }
-            result += &nodes[idex].surface_with_dynamic();
-        }
-        result
+        self.commit_string(engine, self.current_state.build_string().as_str());
     }
 
     pub(crate) fn update_candidates(&mut self, engine: *mut IBusEngine) {
         self._update_candidates(engine).unwrap();
-        self.current_clause = 0;
-        self.node_selected.clear();
+        self.current_state.clear_state();
     }
 
     fn _update_candidates(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        if self.preedit.is_empty() {
-            self.clauses = vec![]
+        if self.current_state.preedit.is_empty() {
+            self.current_state.set_clauses(vec![]);
         } else {
-            self.clauses = self
-                .engine
-                .convert(self.preedit.as_str(), Some(&self.force_selected_clause))?;
+            self.current_state.set_clauses(self.engine.convert(
+                self.current_state.preedit.as_str(),
+                Some(&self.current_state.force_selected_clause),
+            )?);
 
-            // [a][bc]
-            //    ^^^^
-            // 上記の様にフォーカスが当たっている時に extend_clause_left した場合
-            // 文節の数がもとより減ることがある。その場合は index error になってしまうので、
-            // current_clause を動かす。
-            if self.current_clause >= self.clauses.len() {
-                self.current_clause = self.clauses.len() - 1;
-            }
+            self.current_state.adjust_current_clause();
         }
         self.create_lookup_table();
         self.refresh(engine);
@@ -592,9 +507,9 @@ impl AkazaContext {
         self.lookup_table.clear();
 
         // 現在の未変換情報を元に、候補を算出していく。
-        if !self.clauses.is_empty() {
+        if !self.current_state.clauses.is_empty() {
             // lookup table に候補を詰め込んでいく。
-            for node in &self.clauses[self.current_clause] {
+            for node in &self.current_state.clauses[self.current_state.current_clause] {
                 let candidate = &node.surface_with_dynamic();
                 self.lookup_table.append_candidate(candidate.to_ibus_text());
             }
@@ -603,14 +518,14 @@ impl AkazaContext {
 
     fn refresh(&mut self, engine: *mut IBusEngine) {
         unsafe {
-            if self.clauses.is_empty() {
+            if self.current_state.clauses.is_empty() {
                 ibus_engine_hide_auxiliary_text(engine);
                 ibus_engine_hide_lookup_table(engine);
                 ibus_engine_hide_preedit_text(engine);
                 return;
             }
 
-            let current_clause = &self.clauses[self.current_clause];
+            let current_clause = &self.current_state.clauses[self.current_state.current_clause];
             let current_node = &(current_clause[0]);
 
             // -- auxiliary text(ポップアップしてるやつのほう)
@@ -620,10 +535,10 @@ impl AkazaContext {
             ibus_engine_update_auxiliary_text(
                 engine,
                 auxiliary_text,
-                to_gboolean(!self.preedit.is_empty()),
+                to_gboolean(!self.current_state.preedit.is_empty()),
             );
 
-            let text = self.build_string();
+            let text = self.current_state.build_string();
             let preedit_attrs = ibus_attr_list_new();
             // 全部に下線をひく。
             ibus_attr_list_append(
@@ -636,6 +551,7 @@ impl AkazaContext {
                 ),
             );
             let bgstart: u32 = self
+                .current_state
                 .clauses
                 .iter()
                 .map(|c| (c[0].surface).len() as u32)
@@ -661,7 +577,6 @@ impl AkazaContext {
 
             // 候補があれば、選択肢を表示させる。
             self._update_lookup_table(engine);
-            self.is_invalidate = false;
         }
     }
 
@@ -679,7 +594,7 @@ impl AkazaContext {
 
     /// (yomi, surface)
     pub fn make_preedit_word(&self) -> (String, String) {
-        let preedit = self.preedit.clone();
+        let preedit = self.current_state.preedit.clone();
         // 先頭文字が大文字な場合は、そのまま返す。
         // "IME" などと入力された場合は、それをそのまま返すようにする。
         if !preedit.is_empty() && preedit.chars().next().unwrap().is_ascii_uppercase() {
@@ -698,12 +613,12 @@ impl AkazaContext {
 
         let yomi = self.romkan.to_hiragana(preedit.as_str());
         let surface = yomi.clone();
-        if self.input_mode == INPUT_MODE_KATAKANA {
+        if self.current_state.input_mode == INPUT_MODE_KATAKANA {
             (
                 yomi.to_string() + suffix.as_str(),
                 hira2kata(yomi.as_str(), ConvOption::default()) + suffix.as_str(),
             )
-        } else if self.input_mode == INPUT_MODE_HALFWIDTH_KATAKANA {
+        } else if self.current_state.input_mode == INPUT_MODE_HALFWIDTH_KATAKANA {
             (
                 yomi.to_string() + suffix.as_str(),
                 z2h(
@@ -714,26 +629,13 @@ impl AkazaContext {
         } else {
             (yomi + suffix.as_str(), surface + suffix.as_str())
         }
-
-        /*
-            yomi = self.romkan.to_hiragana(self.preedit_string)
-            if self.input_mode == INPUT_MODE_KATAKANA:
-                return yomi, jaconv.hira2kata(yomi)
-            elif self.input_mode == INPUT_MODE_HALFWIDTH_KATAKANA:
-                return yomi, jaconv.z2h(jaconv.hira2kata(yomi))
-            else:
-                return yomi, yomi
-        */
     }
 
     /// 前の変換候補を選択する。
     pub(crate) fn cursor_up(&mut self, engine: *mut IBusEngine) {
         if self.lookup_table.cursor_up() {
-            self.node_selected.insert(
-                self.current_clause,
-                self.lookup_table.get_cursor_pos() as usize,
-            );
-            self.cursor_moved = true;
+            self.current_state
+                .select_candidate(self.lookup_table.get_cursor_pos() as usize);
             self.refresh(engine);
         }
     }
@@ -741,30 +643,43 @@ impl AkazaContext {
     /// 次の変換候補を選択する。
     pub fn cursor_down(&mut self, engine: *mut IBusEngine) {
         if self.lookup_table.cursor_down() {
-            self.node_selected.insert(
-                self.current_clause,
-                self.lookup_table.get_cursor_pos() as usize,
-            );
-            self.cursor_moved = true;
+            self.current_state
+                .select_candidate(self.lookup_table.get_cursor_pos() as usize);
             self.refresh(engine);
+        }
+    }
+
+    pub fn page_up(&mut self, engine: *mut IBusEngine) -> bool {
+        if self.lookup_table.page_up() {
+            self.current_state
+                .select_candidate(self.lookup_table.get_cursor_pos() as usize);
+            self.refresh(engine);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn page_down(&mut self, engine: *mut IBusEngine) -> bool {
+        if self.lookup_table.page_up() {
+            self.current_state
+                .select_candidate(self.lookup_table.get_cursor_pos() as usize);
+            self.refresh(engine);
+            true
+        } else {
+            false
         }
     }
 
     /// 選択する分節を右にずらす。
     pub(crate) fn cursor_right(&mut self, engine: *mut IBusEngine) {
         // 分節がない場合は、何もしない。
-        if self.clauses.is_empty() {
+        if self.current_state.clauses.is_empty() {
             return;
         }
 
-        // 既に一番右だった場合、一番左にいく。
-        if self.current_clause == self.clauses.len() - 1 {
-            self.current_clause = 0;
-        } else {
-            self.current_clause += 1;
-        }
+        self.current_state.select_right_clause();
 
-        self.cursor_moved = true;
         self.create_lookup_table();
 
         self.refresh(engine);
@@ -773,18 +688,12 @@ impl AkazaContext {
     /// 選択する分節を左にずらす。
     pub(crate) fn cursor_left(&mut self, engine: *mut IBusEngine) {
         // 分節がなければ何もしない
-        if self.clauses.is_empty() {
+        if self.current_state.clauses.is_empty() {
             return;
         }
 
-        // 既に一番左だった場合、一番右にいく
-        if self.current_clause == 0 {
-            self.current_clause = self.clauses.len() - 1
-        } else {
-            self.current_clause -= 1
-        }
+        self.current_state.select_left_clause();
 
-        self.cursor_moved = true;
         self.create_lookup_table();
 
         self.refresh(engine);
@@ -792,18 +701,17 @@ impl AkazaContext {
 
     /// 文節の選択範囲を右方向に広げる
     pub fn extend_clause_right(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        self.force_selected_clause = extend_right(&self.clauses, self.current_clause);
+        self.current_state.extend_right();
         self._update_candidates(engine)?;
-        self.node_selected.clear();
+        self.current_state.clear_state();
         Ok(())
     }
 
     /// 文節の選択範囲を左方向に広げる
     pub fn extend_clause_left(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        self.force_selected_clause = extend_left(&self.clauses, self.current_clause);
-
+        self.current_state.extend_left();
         self._update_candidates(engine)?;
-        self.node_selected.clear();
+        self.current_state.clear_state();
         Ok(())
     }
 
@@ -822,28 +730,26 @@ impl AkazaContext {
 
     pub fn do_focus_in(&mut self, engine: *mut IBusEngine) {
         trace!("do_focus_in");
-        unsafe {
-            ibus_engine_register_properties(engine, self.prop_list);
-        }
+        self.prop_controller.do_focus_in(engine);
     }
 
     /// convert selected word/characters to full-width hiragana (standard hiragana): ホワイト → ほわいと
     pub fn convert_to_full_hiragana(&mut self, engine: *mut IBusEngine) -> Result<()> {
         info!("Convert to full hiragana");
-        let hira = self.romkan.to_hiragana(self.preedit.as_str());
+        let hira = self.romkan.to_hiragana(self.current_state.preedit.as_str());
         self.convert_to_single(engine, hira.as_str(), hira.as_str())
     }
 
     /// convert to full-width katakana (standard katakana): ほわいと → ホワイト
     pub fn convert_to_full_katakana(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        let hira = self.romkan.to_hiragana(self.preedit.as_str());
+        let hira = self.romkan.to_hiragana(self.current_state.preedit.as_str());
         let kata = hira2kata(hira.as_str(), ConvOption::default());
         self.convert_to_single(engine, hira.as_str(), kata.as_str())
     }
 
     /// convert to half-width katakana (standard katakana): ほわいと → ﾎﾜｲﾄ
     pub fn convert_to_half_katakana(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        let hira = self.romkan.to_hiragana(self.preedit.as_str());
+        let hira = self.romkan.to_hiragana(self.current_state.preedit.as_str());
         let kata = z2h(
             hira2kata(hira.as_str(), ConvOption::default()).as_str(),
             ConvOption::default(),
@@ -854,9 +760,9 @@ impl AkazaContext {
     /// convert to full-width romaji, all-capitals, proper noun capitalization (latin script inside
     /// Japanese text): ホワイト → ｈｏｗａｉｔｏ → ＨＯＷＡＩＴＯ → Ｈｏｗａｉｔｏ
     pub fn convert_to_full_romaji(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        let hira = self.romkan.to_hiragana(self.preedit.as_str());
+        let hira = self.romkan.to_hiragana(self.current_state.preedit.as_str());
         let romaji = h2z(
-            &self.preedit,
+            &self.current_state.preedit,
             ConvOption {
                 kana: true,
                 digit: true,
@@ -870,9 +776,9 @@ impl AkazaContext {
     /// convert to half-width romaji, all-capitals, proper noun capitalization (latin script like
     /// standard English): ホワイト → howaito → HOWAITO → Howaito
     pub fn convert_to_half_romaji(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        let hira = self.romkan.to_hiragana(self.preedit.as_str());
+        let hira = self.romkan.to_hiragana(self.current_state.preedit.as_str());
         let romaji = z2h(
-            &self.preedit,
+            &self.current_state.preedit,
             ConvOption {
                 kana: true,
                 digit: true,
@@ -893,11 +799,9 @@ impl AkazaContext {
     ) -> Result<()> {
         // 候補を設定
         let candidate = Candidate::new(yomi, surface, 0_f32);
-        let clauses = vec![VecDeque::from([candidate])];
-        self.clauses = clauses;
-        self.current_clause = 0;
-        self.node_selected.clear();
-        self.force_selected_clause = vec![];
+        self.current_state
+            .set_clauses(vec![VecDeque::from([candidate])]);
+        self.current_state.clear_state();
 
         // ルックアップテーブルに候補を設定
         self.lookup_table.clear();
@@ -910,36 +814,8 @@ impl AkazaContext {
     }
 
     pub fn escape(&mut self, engine: *mut IBusEngine) {
-        trace!("escape: {}", self.preedit);
-        self.preedit.clear();
+        trace!("escape: {}", self.current_state.preedit);
+        self.current_state.clear();
         self.update_candidates(engine)
-    }
-
-    pub fn page_up(&mut self, engine: *mut IBusEngine) -> bool {
-        if self.lookup_table.page_up() {
-            self.node_selected.insert(
-                self.current_clause,
-                self.lookup_table.get_cursor_pos() as usize,
-            );
-            self.cursor_moved = true;
-            self.refresh(engine);
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn page_down(&mut self, engine: *mut IBusEngine) -> bool {
-        if self.lookup_table.page_up() {
-            self.node_selected.insert(
-                self.current_clause,
-                self.lookup_table.get_cursor_pos() as usize,
-            );
-            self.cursor_moved = true;
-            self.refresh(engine);
-            true
-        } else {
-            false
-        }
     }
 }

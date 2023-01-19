@@ -23,8 +23,10 @@ use crate::wrapper_bindings::{ibus_akaza_init, ibus_akaza_set_callback};
 
 mod commands;
 mod context;
+mod current_state;
 mod input_mode;
 mod keymap;
+mod ui;
 mod wrapper_bindings;
 
 unsafe extern "C" fn process_key_event(

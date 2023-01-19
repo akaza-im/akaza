@@ -20,7 +20,7 @@ pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaComman
     let mut register = |name: &'static str, cmd: IbusAkazaCommand| function_map.insert(name, cmd);
 
     register("commit_candidate", |context, engine| {
-        context.commit_string(engine, context.build_string().as_str());
+        context.commit_candidate(engine);
     });
     // 無変換状態では、ひらがなに変換してコミットします
     register("commit_preedit", |context, engine| {
