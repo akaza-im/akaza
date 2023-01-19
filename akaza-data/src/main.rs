@@ -20,6 +20,7 @@ mod corpus_reader;
 mod subcmd;
 mod tokenizer;
 mod utils;
+mod wordcnt;
 
 #[derive(Debug, Parser)]
 #[clap(
@@ -96,7 +97,7 @@ struct CheckArgs {
 #[derive(Debug, clap::Args)]
 struct LearnCorpusArgs {
     #[arg(short, long)]
-    delta: f32,
+    delta: u32,
     #[arg(long, default_value_t = 10)]
     may_epochs: i32,
     #[arg(long, default_value_t = 100)]

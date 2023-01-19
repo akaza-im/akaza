@@ -36,6 +36,7 @@ dependencies = [
  "lcs",
  "libakaza",
  "log",
+ "marisa-sys",
  "rayon",
  "regex",
  "tempfile",

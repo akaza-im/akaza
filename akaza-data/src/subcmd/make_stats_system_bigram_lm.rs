@@ -3,17 +3,18 @@ use std::fs::File;
 use std::io::{prelude::*, BufReader};
 use std::path::{Path, PathBuf};
 
+use anyhow::anyhow;
+use anyhow::Context;
 use anyhow::Result;
-use anyhow::{anyhow, Context};
 use chrono::Local;
-use libakaza::cost::calc_cost;
 use log::info;
 use rayon::prelude::*;
 
-use crate::utils::get_file_list;
 use libakaza::lm::base::{SystemBigramLM, SystemUnigramLM};
-use libakaza::lm::system_bigram::{MarisaSystemBigramLM, MarisaSystemBigramLMBuilder};
-use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
+
+use crate::utils::get_file_list;
+use crate::wordcnt::wordcnt_bigram::{WordcntBigram, WordcntBigramBuilder};
+use crate::wordcnt::wordcnt_unigram::WordcntUnigram;
 
 pub fn make_stats_system_bigram_lm(
     threshold: u32,
@@ -22,7 +23,7 @@ pub fn make_stats_system_bigram_lm(
     bigram_trie_file: &str,
 ) -> Result<()> {
     // まずは unigram の language model を読み込む
-    let unigram_lm = MarisaSystemUnigramLM::load(unigram_trie_file)?;
+    let unigram_lm = WordcntUnigram::load(unigram_trie_file)?;
     info!(
         "Unigram system lm: {} threshold={}",
         unigram_lm.num_keys(),
@@ -32,7 +33,7 @@ pub fn make_stats_system_bigram_lm(
     let unigram_map = unigram_lm
         .as_hash_map()
         .iter()
-        .map(|(key, (word_id, _cost))| (key.clone(), *word_id))
+        .map(|(key, (word_id, _))| (key.clone(), *word_id))
         .collect::<HashMap<_, _>>();
     let reverse_unigram_map = unigram_map
         .iter()
@@ -63,7 +64,11 @@ pub fn make_stats_system_bigram_lm(
     }
 
     // スコアを計算する
-    let scoremap = make_score_map(threshold, &merged);
+    let wordcnt = merged
+        .iter()
+        .filter(|(_, cnt)| **cnt > threshold)
+        .map(|((id1, id2), cnt)| ((*id1, *id2), *cnt))
+        .collect::<HashMap<(i32, i32), u32>>();
 
     // dump bigram text file.
     let dumpfname = format!(
@@ -74,10 +79,10 @@ pub fn make_stats_system_bigram_lm(
     let mut file = File::create(dumpfname)?;
     for ((word_id1, word_id2), cnt) in &merged {
         let Some(word1) = reverse_unigram_map.get(word_id1) else {
-            continue
+            continue;
         };
         let Some(word2) = reverse_unigram_map.get(word_id2) else {
-            continue
+            continue;
         };
         if *cnt > 16 {
             file.write_fmt(format_args!("{}\t{}\t{}\n", cnt, word1, word2))?;
@@ -86,21 +91,9 @@ pub fn make_stats_system_bigram_lm(
 
     // 結果を書き込む
     info!("Generating trie file");
-    let mut builder = MarisaSystemBigramLMBuilder::default();
-    for ((word_id1, word_id2), score) in scoremap {
-        builder.add(word_id1, word_id2, score);
-    }
-    {
-        // default edge cost の計算。
-        // 頻度0の単語として計算する
-
-        // 総出現単語数
-        let c = merged.values().sum();
-        // 単語の種類数
-        let v = merged.keys().count();
-        let default_edge_cost = calc_cost(0, c, v as u32);
-        builder.set_default_edge_cost(default_edge_cost);
-        info!("Default score for 0: {}", default_edge_cost);
+    let mut builder = WordcntBigramBuilder::default();
+    for ((word_id1, word_id2), cnt) in wordcnt {
+        builder.add(word_id1, word_id2, cnt);
     }
     info!("Writing {}", bigram_trie_file);
     builder.save(bigram_trie_file)?;
@@ -111,26 +104,10 @@ pub fn make_stats_system_bigram_lm(
     Ok(())
 }
 
-// unigram のロジックと一緒なのでまとめたい。
-fn make_score_map(threshold: u32, wordcnt: &HashMap<(i32, i32), u32>) -> HashMap<(i32, i32), f32> {
-    // 総出現単語数
-    let c = wordcnt.values().sum();
-    // 単語の種類数
-    let v = wordcnt.keys().count();
-    wordcnt
-        .iter()
-        .filter(|(_word, cnt)| *cnt > &threshold)
-        .map(|(word, cnt)| {
-            let n_words = *cnt;
-            (*word, calc_cost(n_words, c, v as u32))
-        })
-        .collect::<HashMap<_, _>>()
-}
-
 fn count_bigram(
     src: &PathBuf,
     unigram_lm: &HashMap<String, i32>,
-) -> anyhow::Result<HashMap<(i32, i32), u32>> {
+) -> Result<HashMap<(i32, i32), u32>> {
     info!("Counting {}", src.to_string_lossy());
     let file = File::open(src)?;
     let mut map: HashMap<(i32, i32), u32> = HashMap::new();
@@ -170,8 +147,8 @@ fn count_bigram(
 
 // 言語モデルファイルが正確に生成されたか確認を実施する
 fn validation(unigram_dst: &str, bigram_dst: &str) -> Result<()> {
-    let unigram = MarisaSystemUnigramLM::load(unigram_dst).unwrap();
-    let bigram = MarisaSystemBigramLM::load(bigram_dst).unwrap();
+    let unigram = WordcntUnigram::load(unigram_dst).unwrap();
+    let bigram = WordcntBigram::load(bigram_dst).unwrap();
 
     let word1 = "私/わたし";
 
