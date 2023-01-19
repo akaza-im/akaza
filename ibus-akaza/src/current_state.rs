@@ -70,6 +70,13 @@ impl CurrentState {
         self.clauses = clause;
     }
 
+    /// 変換しているときに backspace を入力した場合。
+    /// 変換候補をクリアして、Conversion から Composition 状態に戻る。
+    pub fn clear_clauses(&mut self) {
+        self.clauses.clear();
+        self.clear_state();
+    }
+
     pub fn get_first_candidates(&self) -> Vec<Candidate> {
         let mut targets: Vec<Candidate> = Vec::new();
         for (i, candidates) in self.clauses.iter().enumerate() {

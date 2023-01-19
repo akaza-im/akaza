@@ -265,6 +265,8 @@ impl AkazaContext {
             if self.current_state.in_conversion() {
                 // 変換中の場合、無変換モードにもどす。
                 self.lookup_table.clear();
+                // 変換候補をクリアする
+                self.current_state.clear_clauses();
                 ibus_engine_hide_auxiliary_text(engine);
                 ibus_engine_hide_lookup_table(engine);
             } else {
