@@ -1,7 +1,6 @@
+use alloc::ffi::CString;
 use std::collections::HashMap;
-use std::ffi::CString;
 
-use anyhow::bail;
 use log::{error, info, trace};
 
 use ibus_sys::core::{IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_SHIFT_MASK};
@@ -34,36 +33,9 @@ pub struct KeyMap {
 }
 
 impl KeyMap {
-    /// - first: modifier
-    /// - second: keyval
-    /// ただし、keyval が不明なものの場合は IBUS_KEY_VoidSymbol になる。
-    fn split_key(key: &str) -> anyhow::Result<(u32, u32)> {
-        fn p(s: &str) -> guint {
-            let cs = CString::new(s.to_string()).unwrap();
-            unsafe { ibus_keyval_from_name(cs.as_ptr()) }
-        }
-
-        let mut modifier = 0_u32;
-        if key.contains('-') {
-            let keys = key.split('-').collect::<Vec<_>>();
-            for m in &keys[0..keys.len() - 1] {
-                match *m {
-                    "C" => {
-                        modifier |= IBusModifierType_IBUS_CONTROL_MASK;
-                    }
-                    "S" => {
-                        modifier |= IBusModifierType_IBUS_SHIFT_MASK;
-                    }
-                    _ => {
-                        bail!("Unknown modifier in keymap: {}", key);
-                    }
-                }
-            }
-
-            Ok((modifier, p(keys[keys.len() - 1])))
-        } else {
-            Ok((0, p(key)))
-        }
+    fn to_ibus_key(s: &str) -> guint {
+        let cs = CString::new(s.to_string()).unwrap();
+        unsafe { ibus_keyval_from_name(cs.as_ptr()) }
     }
 
     pub(crate) fn new(keymap_name: Option<String>) -> anyhow::Result<Self> {
@@ -71,20 +43,23 @@ impl KeyMap {
         let keymap = Keymap::load(keymap_name.as_str())?;
         let mut mapping: HashMap<KeyPattern, String> = HashMap::new();
 
-        for kc in keymap.keys {
-            for key in &kc.key {
-                let (modifier, keyval) = Self::split_key(key.as_str())?;
-                if keyval == IBUS_KEY_VoidSymbol {
-                    error!("Unknown key symbol: {} {:?}", key, kc);
-                    continue;
-                }
-                info!("Insert: {} {} {} {:?}", modifier, keyval, key, kc);
-                for state in &kc.states {
-                    mapping.insert(
-                        KeyPattern::new(*state, keyval, modifier),
-                        kc.command.clone(),
-                    );
-                }
+        for (key_pattern, command) in keymap {
+            let key = &key_pattern.key;
+            let mut modifier = 0_u32;
+            if key_pattern.ctrl {
+                modifier |= IBusModifierType_IBUS_CONTROL_MASK;
+            }
+            if key_pattern.shift {
+                modifier |= IBusModifierType_IBUS_SHIFT_MASK;
+            }
+            let keyval = Self::to_ibus_key(key.as_str());
+            if keyval == IBUS_KEY_VoidSymbol {
+                error!("Unknown key symbol: {} {:?}", key, key_pattern);
+                continue;
+            }
+            info!("Insert: {} {} {} {:?}", modifier, keyval, key, key_pattern);
+            for state in &key_pattern.states {
+                mapping.insert(KeyPattern::new(*state, keyval, modifier), command.clone());
             }
         }
 
@@ -95,42 +70,5 @@ impl KeyMap {
         trace!("MODIFIER: {}", modifier);
         self.keymap
             .get(&KeyPattern::new(*key_state, keyval, modifier))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use ibus_sys::ibus_key::{IBUS_KEY_Right, IBUS_KEY_h};
-
-    use super::*;
-
-    #[test]
-    fn test_c_h() -> anyhow::Result<()> {
-        let (modifier, keyval) = KeyMap::split_key("C-h")?;
-        assert_eq!(modifier, IBusModifierType_IBUS_CONTROL_MASK);
-        assert_eq!(keyval, IBUS_KEY_h);
-        info!("Key: C-h, {}, {}", modifier, keyval);
-        Ok(())
-    }
-
-    #[test]
-    fn test_c_s_h() -> anyhow::Result<()> {
-        let (modifier, keyval) = KeyMap::split_key("C-S-h")?;
-        assert_eq!(
-            modifier,
-            IBusModifierType_IBUS_CONTROL_MASK | IBusModifierType_IBUS_SHIFT_MASK
-        );
-        assert_eq!(keyval, IBUS_KEY_h);
-        info!("Key: C-S-h, {}, {}", modifier, keyval);
-        Ok(())
-    }
-
-    #[test]
-    fn test_shift() -> anyhow::Result<()> {
-        let (modifier, keyval) = KeyMap::split_key("S-Right")?;
-        assert_eq!(modifier, IBusModifierType_IBUS_SHIFT_MASK);
-        assert_eq!(keyval, IBUS_KEY_Right);
-        info!("Key: S-Right, {}, {}", modifier, keyval);
-        Ok(())
     }
 }
