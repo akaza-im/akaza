@@ -151,7 +151,10 @@ mod tests {
         builder.save(tmpfile.as_str())?;
 
         let bigram = WordcntBigram::load(tmpfile.as_str())?;
-        assert_eq!(bigram.to_cnt_map(), HashMap::from([]));
+        assert_eq!(
+            bigram.to_cnt_map(),
+            HashMap::from([((4, 5), 29), ((8, 9), 32),])
+        );
 
         Ok(())
     }
