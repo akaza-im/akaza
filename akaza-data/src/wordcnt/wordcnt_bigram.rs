@@ -55,7 +55,6 @@ impl WordcntBigram {
     fn _to_map(marisa: &Marisa) -> HashMap<(i32, i32), u32> {
         let mut map: HashMap<(i32, i32), u32> = HashMap::new();
         marisa.predictive_search("".as_bytes(), |word, _id| {
-            let p = word.len();
             if word.len() == 10 {
                 let word_id1 = i32::from_le_bytes([word[0], word[1], word[2], 0]);
                 let word_id2 = i32::from_le_bytes([word[3], word[4], word[5], 0]);
@@ -137,9 +136,9 @@ impl SystemBigramLM for WordcntBigram {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::wordcnt::wordcnt_unigram::WordcntUnigram;
     use tempfile::NamedTempFile;
+
+    use super::*;
 
     #[test]
     fn test_build() -> Result<()> {
