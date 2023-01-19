@@ -86,7 +86,7 @@ impl AkazaContext {
             romkan,
             command_map: ibus_akaza_commands_map(),
             engine: akaza,
-            keymap: KeyMap::new()?,
+            keymap: KeyMap::new(config.keymap)?,
             prop_controller: PropController::new(input_mode)?,
             consonant_suffix_extractor: ConsonantSuffixExtractor::default(),
         })
