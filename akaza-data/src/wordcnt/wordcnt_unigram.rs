@@ -165,7 +165,7 @@ mod tests {
         builder.add("彼/かれ", 42);
         builder.save(tmpfile.as_str())?;
 
-        let wordcnt = WordcntUnigram::load(tmpfile.to_string().as_str())?;
+        let wordcnt = WordcntUnigram::load(tmpfile.as_str())?;
         assert_eq!(
             wordcnt.to_count_hashmap(),
             HashMap::from([
