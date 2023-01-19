@@ -56,13 +56,16 @@ use crate::keymap::KeyMap;
 
 #[repr(C)]
 pub struct AkazaContext {
-    pub(crate) input_mode: InputMode,
-    pub(crate) cursor_pos: i32,
-    pub(crate) preedit: String,
-    pub(crate) lookup_table: IBusLookupTable,
-    pub(crate) romkan: RomKanConverter,
+    // ==== 設定 ====
+    keymap: KeyMap,
+    romkan: RomKanConverter,
     command_map: HashMap<&'static str, IbusAkazaCommand>,
     engine: BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
+
+    // ==== 現在の入力状態を保持 ====
+    input_mode: InputMode,
+    cursor_pos: i32,
+    preedit: String,
     clauses: Vec<VecDeque<Candidate>>,
     // げんざいせんたくされているぶんせつ。
     current_clause: usize,
@@ -70,15 +73,17 @@ pub struct AkazaContext {
     cursor_moved: bool,
     // key は、clause 番号。value は、node の index。
     node_selected: HashMap<usize, usize>,
-    keymap: KeyMap,
-    /// シフト+右 or シフト+左で
+    /// シフト+右 or シフト+左で強制指定された範囲
     force_selected_clause: Vec<Range<usize>>,
+
+    // ==== UI 関連 ====
+    lookup_table: IBusLookupTable,
     prop_list: *mut IBusPropList,
     /// input mode のメニューの親プロパティ。
-    pub input_mode_prop: *mut IBusProperty,
+    input_mode_prop: *mut IBusProperty,
     /// メニューの input mode ごとのメニュープロパティたち。
-    pub prop_dict: HashMap<String, *mut IBusProperty>,
-    pub consonant_suffix_extractor: ConsonantSuffixExtractor,
+    prop_dict: HashMap<String, *mut IBusProperty>,
+    consonant_suffix_extractor: ConsonantSuffixExtractor,
 }
 
 impl AkazaContext {
