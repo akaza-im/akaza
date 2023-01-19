@@ -137,4 +137,10 @@ impl CurrentState {
     pub fn extend_left(&mut self) {
         self.force_selected_clause = extend_left(&self.clauses, self.current_clause);
     }
+
+    /// Conversion mode かどうかを判定する。
+    /// Conversion mode とは space キーを一回押したあとの状態です
+    pub fn in_conversion(&self) -> bool {
+        self.clauses.len() > 0
+    }
 }

@@ -262,7 +262,7 @@ impl AkazaContext {
 
     pub(crate) fn erase_character_before_cursor(&mut self, engine: *mut IBusEngine) {
         unsafe {
-            if self.in_henkan_mode() {
+            if self.current_state.in_conversion() {
                 // 変換中の場合、無変換モードにもどす。
                 self.lookup_table.clear();
                 ibus_engine_hide_auxiliary_text(engine);
@@ -352,21 +352,18 @@ impl AkazaContext {
         if self.current_state.preedit.is_empty() {
             // 未入力状態。
             KeyState::PreComposition
-        } else if self.in_henkan_mode() {
+        } else if self.current_state.in_conversion() {
+            // 変換している状態。lookup table が表示されている状態
             KeyState::Conversion
         } else {
+            // preedit になにか入っていて、まだ変換を実施していない状態
             KeyState::Composition
         }
     }
 
-    pub fn in_henkan_mode(&self) -> bool {
-        // この状態の取得を lookup_table からとっているのは妥当なんだろうか?
-        self.lookup_table.get_number_of_candidates() > 0
-    }
-
     pub fn commit_string(&mut self, engine: *mut IBusEngine, text: &str) {
         unsafe {
-            if self.in_henkan_mode() {
+            if self.current_state.in_conversion() {
                 // 変換モードのときのみ学習を実施する
                 self.engine
                     .learn(self.current_state.get_first_candidates().as_slice());
