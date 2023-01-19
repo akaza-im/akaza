@@ -230,8 +230,8 @@ mod tests {
     #[test]
     fn test_is_kyukana() -> anyhow::Result<()> {
         let runner = AozoraBunkoProcessor::new()?;
-        assert_eq!(runner.is_kyukana("小さな"), false);
-        assert_eq!(runner.is_kyukana("ヰ"), true);
+        assert!(!runner.is_kyukana("小さな"));
+        assert!(runner.is_kyukana("ヰ"));
         Ok(())
     }
 
@@ -246,10 +246,9 @@ mod tests {
         );
         assert_eq!(runner.strip_meta("HOGE\n底本：めためた"), "HOGE\n");
         assert_eq!(runner.strip_meta("HELLO"), "HELLO");
-        assert_eq!(
-            runner
-                .strip_meta(
-                    r#"百合子
+        assert!(!runner
+            .strip_meta(
+                r#"百合子
 
 -------------------------------------------------------
 【テキスト中に現れる記号について】
@@ -259,10 +258,8 @@ mod tests {
 -------------------------------------------------------
 
                                      "#
-                )
-                .contains("百合子"),
-            false
-        );
+            )
+            .contains("百合子"),);
         Ok(())
     }
 }

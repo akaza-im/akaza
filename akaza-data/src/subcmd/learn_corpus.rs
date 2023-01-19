@@ -7,6 +7,8 @@ use std::sync::{Arc, Mutex};
 use encoding_rs::UTF_8;
 use log::{debug, info};
 
+use crate::wordcnt::wordcnt_bigram::WordcntBigram;
+use crate::wordcnt::wordcnt_unigram::WordcntUnigram;
 use libakaza::corpus::{read_corpus_file, FullAnnotationCorpus};
 use libakaza::dict::skk::read::read_skkdict;
 use libakaza::graph::graph_builder::GraphBuilder;
@@ -16,7 +18,7 @@ use libakaza::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 use libakaza::lm::base::{SystemBigramLM, SystemUnigramLM};
 use libakaza::lm::on_memory::on_memory_system_bigram_lm::OnMemorySystemBigramLM;
 use libakaza::lm::on_memory::on_memory_system_unigram_lm::OnMemorySystemUnigramLM;
-use libakaza::lm::system_bigram::{MarisaSystemBigramLM, MarisaSystemBigramLMBuilder};
+use libakaza::lm::system_bigram::MarisaSystemBigramLMBuilder;
 use libakaza::lm::system_unigram_lm::{MarisaSystemUnigramLM, MarisaSystemUnigramLMBuilder};
 use libakaza::user_side_data::user_data::UserData;
 
@@ -35,8 +37,8 @@ impl LearningService {
         let segmenter = Segmenter::new(vec![Arc::new(Mutex::new(system_kana_trie))]);
 
         info!("unigram source file: {}", src_unigram);
-        let src_system_unigram_lm = MarisaSystemUnigramLM::load(src_unigram)?;
-        let mut unigram_map = src_system_unigram_lm.as_hash_map();
+        let src_system_unigram_lm = WordcntUnigram::load(src_unigram)?;
+        let mut unigram_map = src_system_unigram_lm.to_count_hashmap();
         // unigram trie に登録されていない単語を登録していく。
         {
             let mut max_id = *unigram_map
@@ -54,10 +56,7 @@ impl LearningService {
                                 node.key(),
                                 max_id + 1
                             );
-                            unigram_map.insert(
-                                node.key(),
-                                (max_id + 1, src_system_unigram_lm.get_default_cost()),
-                            );
+                            unigram_map.insert(node.key(), (max_id + 1, 1));
                             max_id += 1;
                         }
                     }
@@ -68,13 +67,17 @@ impl LearningService {
             Rc::new(RefCell::new(unigram_map)),
             src_system_unigram_lm.get_default_cost(),
             src_system_unigram_lm.get_default_cost_for_short(),
+            src_system_unigram_lm.c,
+            src_system_unigram_lm.v,
         ));
 
         info!("bigram source file: {}", src_bigram);
-        let src_system_bigram_lm = MarisaSystemBigramLM::load(src_bigram)?;
+        let src_system_bigram_lm = WordcntBigram::load(src_bigram)?;
         let system_bigram_lm = Rc::new(OnMemorySystemBigramLM::new(
-            Rc::new(RefCell::new(src_system_bigram_lm.as_hash_map())),
+            Rc::new(RefCell::new(src_system_bigram_lm.to_cnt_map())),
             src_system_bigram_lm.get_default_edge_cost(),
+            src_system_bigram_lm.c,
+            src_system_bigram_lm.v,
         ));
 
         let graph_builder = GraphBuilder::new(
@@ -93,7 +96,7 @@ impl LearningService {
         })
     }
 
-    pub fn try_learn(&self, epochs: i32, delta: f32, corpus: &str) -> anyhow::Result<()> {
+    pub fn try_learn(&self, epochs: i32, delta: u32, corpus: &str) -> anyhow::Result<()> {
         let corpuses = read_corpus_file(Path::new(corpus))?;
         for _ in 1..epochs {
             let mut ok_cnt = 0;
@@ -114,7 +117,7 @@ impl LearningService {
         Ok(())
     }
 
-    pub fn learn(&self, delta: f32, teacher: &FullAnnotationCorpus) -> anyhow::Result<bool> {
+    pub fn learn(&self, delta: u32, teacher: &FullAnnotationCorpus) -> anyhow::Result<bool> {
         let yomi = teacher.yomi();
         let surface = teacher.surface();
         let segmentation_result = self.segmenter.build(&yomi, None);
@@ -138,8 +141,8 @@ impl LearningService {
                     let key = teacher.nodes[i].key();
                     let (_, cost) = self
                         .system_unigram_lm
-                        .find(&key.to_string())
-                        .unwrap_or((-1, 0_f32));
+                        .find_cnt(&key.to_string())
+                        .unwrap_or((-1, 0_u32));
                     self.system_unigram_lm.update(key.as_str(), cost - delta);
                 }
             }
@@ -159,8 +162,8 @@ impl LearningService {
                     };
                     let v = self
                         .system_bigram_lm
-                        .get_edge_cost(word_id1, word_id2)
-                        .unwrap_or(0_f32);
+                        .get_edge_cnt(word_id1, word_id2)
+                        .unwrap_or(0_u32);
                     info!(
                         "Update bigram cost: {}={},{}={}, v={}",
                         key1, word_id1, key2, word_id2, v
@@ -247,7 +250,7 @@ impl LearningService {
 /// コーパスを元にした学習を行います。
 #[allow(clippy::too_many_arguments)]
 pub fn learn_corpus(
-    delta: f32,
+    delta: u32,
     may_epochs: i32,
     should_epochs: i32,
     must_epochs: i32,

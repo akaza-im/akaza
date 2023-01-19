@@ -3,11 +3,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
-use chrono::Local;
-use libakaza::cost::calc_cost;
-use log::info;
-
-use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLMBuilder;
+use crate::wordcnt::wordcnt_unigram::WordcntUnigramBuilder;
 
 /// 統計的かな漢字変換のためのユニグラムシステム言語モデルの作成
 ///
@@ -28,34 +24,13 @@ pub fn make_stats_system_unigram_lm(srcpath: &str, dstpath: &str) -> anyhow::Res
     homograph_hack(&mut wordcnt);
     score_hack(&mut wordcnt);
 
-    let scoremap = make_score_map(&wordcnt);
-
-    let mut builder = MarisaSystemUnigramLMBuilder::default();
-    for (word, score) in &scoremap {
+    let mut builder = WordcntUnigramBuilder::default();
+    for (word, score) in &wordcnt {
         builder.add(word.as_str(), *score);
     }
 
-    // 総出現単語数
-    let c = wordcnt.values().sum();
-    // 単語の種類数
-    let v = wordcnt.keys().count();
-    builder.set_default_cost_for_short(calc_cost(1, c, v as u32));
-    builder.set_default_cost(calc_cost(0, c, v as u32));
-    info!("Score for word count 1: {}", calc_cost(1, c, v as u32));
-    info!("Score for word count 0: {}", calc_cost(0, c, v as u32));
-
     println!("Writing {}", dstpath);
     builder.save(dstpath)?;
-
-    let dumpfname = format!(
-        "work/dump/unigram-{}.txt",
-        Local::now().format("%Y%m%d-%H%M%S")
-    );
-    println!("Dump to text file: {}", dumpfname);
-    let mut file = File::create(dumpfname)?;
-    for (word, score) in scoremap {
-        file.write_fmt(format_args!("{}\t{}\n", word, score))?;
-    }
 
     Ok(())
 }
@@ -95,20 +70,6 @@ fn score_hack(wordcnt: &mut HashMap<String, u32>) {
         };
         wordcnt.insert(a.to_string(), max(*a_score, b_score + 1));
     }
-}
-
-fn make_score_map(wordcnt: &HashMap<String, u32>) -> HashMap<String, f32> {
-    // 総出現単語数
-    let c = wordcnt.values().sum();
-    // 単語の種類数
-    let v = wordcnt.keys().count();
-    wordcnt
-        .iter()
-        .map(|(word, cnt)| {
-            let n_words = *cnt;
-            (word.clone(), calc_cost(n_words, c, v as u32))
-        })
-        .collect::<HashMap<_, _>>()
 }
 
 fn parse_wfreq(src_file: &str, threshold: u32) -> anyhow::Result<HashMap<String, u32>> {

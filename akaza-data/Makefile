@@ -65,25 +65,25 @@ work/vibrato-ipadic.vocab: work/vibrato-ipadic.wfreq src/subcmd/vocab.rs
 
 # 統計的仮名かな漢字変換のためのモデル作成処理
 
-work/stats-vibrato-unigram.raw.trie: work/vibrato-ipadic.wfreq
-	cargo run --release -- make-stats-system-unigram-lm work/vibrato-ipadic.wfreq work/stats-vibrato-unigram.raw.trie
+work/stats-vibrato-unigram.wordcnt.trie: work/vibrato-ipadic.wfreq
+	cargo run --release -- make-stats-system-unigram-lm work/vibrato-ipadic.wfreq work/stats-vibrato-unigram.wordcnt.trie
 
-work/stats-vibrato-bigram.raw.trie: work/stats-vibrato-unigram.raw.trie work/stats-vibrato-unigram.raw.trie src/subcmd/make_stats_system_bigram_lm.rs work/aozora_bunko/vibrato-ipadic/_SUCCESS
+work/stats-vibrato-bigram.wordcnt.trie: work/stats-vibrato-unigram.wordcnt.trie work/stats-vibrato-unigram.wordcnt.trie src/subcmd/make_stats_system_bigram_lm.rs work/aozora_bunko/vibrato-ipadic/_SUCCESS
 	cargo run --release -- make-stats-system-bigram-lm --threshold=3 \
 		--corpus-dirs work/jawiki/vibrato-ipadic/ \
 		--corpus-dirs work/aozora_bunko/vibrato-ipadic/ \
-		work/stats-vibrato-unigram.raw.trie work/stats-vibrato-bigram.raw.trie
+		work/stats-vibrato-unigram.wordcnt.trie work/stats-vibrato-bigram.wordcnt.trie
 
-data/bigram.model: work/stats-vibrato-bigram.raw.trie work/stats-vibrato-unigram.raw.trie src/subcmd/learn_corpus.rs corpus/must.txt corpus/should.txt corpus/may.txt data/SKK-JISYO.akaza
+data/bigram.model: work/stats-vibrato-bigram.wordcnt.trie work/stats-vibrato-unigram.wordcnt.trie src/subcmd/learn_corpus.rs corpus/must.txt corpus/should.txt corpus/may.txt data/SKK-JISYO.akaza
 	cargo run --release -- learn-corpus \
-		--delta=0.5 \
+		--delta=2000 \
 		--may-epochs=10 \
 		--should-epochs=100 \
 		--must-epochs=10000 \
 		corpus/may.txt \
 		corpus/should.txt \
 		corpus/must.txt \
-		work/stats-vibrato-unigram.raw.trie work/stats-vibrato-bigram.raw.trie \
+		work/stats-vibrato-unigram.wordcnt.trie work/stats-vibrato-bigram.wordcnt.trie \
 		data/unigram.model data/bigram.model \
 		-v
 
@@ -106,7 +106,7 @@ data/SKK-JISYO.akaza: work/vibrato-ipadic.vocab dict/SKK-JISYO.akaza src/subcmd/
 
 # -------------------------------------------------------------------------
 
-evaluate:
+evaluate: data/bigram.model
 	AKAZA_KEYMAP_DIR=../keymap/ AKAZA_ROMKAN_DIR=../romkan/ AKAZA_DATA_DIR=data/ cargo run --release evaluate anthy-corpus -v
 
 # -------------------------------------------------------------------------
