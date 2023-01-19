@@ -141,6 +141,6 @@ impl CurrentState {
     /// Conversion mode かどうかを判定する。
     /// Conversion mode とは space キーを一回押したあとの状態です
     pub fn in_conversion(&self) -> bool {
-        self.clauses.len() > 0
+        !self.clauses.is_empty()
     }
 }
