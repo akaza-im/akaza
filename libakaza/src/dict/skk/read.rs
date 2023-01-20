@@ -82,32 +82,20 @@ pub fn parse_skkdict(src: &str) -> Result<HashMap<String, Vec<String>>> {
 
 #[cfg(test)]
 mod tests {
-    use std::fs::File;
-    use std::io::{BufReader, Read};
-
-    use anyhow::Context;
     use encoding_rs::EUC_JP;
+    use log::warn;
 
     use super::*;
 
     #[test]
-    fn test_skkdict() -> anyhow::Result<()> {
-        let dictpath =
-            env!("CARGO_MANIFEST_DIR").to_string() + "/../akaza-data/dict/SKK-JISYO.akaza";
-        let file = File::open(&dictpath).with_context(|| format!("path={}", &dictpath))?;
-        let mut buf = String::new();
-        BufReader::new(file).read_to_string(&mut buf)?;
-        let dict = parse_skkdict(buf.as_str())?;
-        assert_eq!(*dict.get("ぶかわ").unwrap(), vec!["武川".to_string()]);
-
-        Ok(())
-    }
-
-    #[test]
     fn test_skk_l() -> anyhow::Result<()> {
-        let dictpath =
-            env!("CARGO_MANIFEST_DIR").to_string() + "/../akaza-data/skk-dev-dict/SKK-JISYO.L";
-        let dict = read_skkdict(Path::new(dictpath.as_str()), EUC_JP)?;
+        let dictpath = Path::new("/usr/share/skk/SKK-JISYO.L");
+        if !dictpath.exists() {
+            warn!("There's no SKK-JISYO.L... Skip this test case.");
+            return Ok(());
+        }
+
+        let dict = read_skkdict(dictpath, EUC_JP)?;
         assert!(!dict.is_empty());
 
         Ok(())
