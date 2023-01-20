@@ -160,8 +160,12 @@ struct CheckArgs {
 struct EvaluateArgs {
     #[arg(long)]
     load_user_config: bool,
-    /// コーパスが格納されているディレクトリ
-    corpus_dir: String,
+    #[arg(long)]
+    corpus: Vec<String>,
+    #[arg(long)]
+    utf8_dict: Vec<String>,
+    #[arg(long)]
+    eucjp_dict: Vec<String>,
 }
 
 /// ユニグラム辞書ファイルをダンプする
@@ -236,7 +240,12 @@ fn main() -> anyhow::Result<()> {
             opts.dst_bigram.as_str(),
         ),
         Commands::Check(opt) => check(&opt.yomi, opt.expected, opt.user_data),
-        Commands::Evaluate(opt) => evaluate(&opt.corpus_dir, opt.load_user_config),
+        Commands::Evaluate(opt) => evaluate(
+            &opt.corpus,
+            &opt.eucjp_dict,
+            &opt.utf8_dict,
+            opt.load_user_config,
+        ),
         Commands::DumpUnigramDict(opt) => dump_unigram_dict(opt.dict.as_str()),
         Commands::DumpBigramDict(opt) => {
             dump_bigram_dict(opt.unigram_file.as_str(), opt.bigram_file.as_str())

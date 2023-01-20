@@ -45,37 +45,31 @@ impl SaigenRitsu {
 /// にのっている評価方法を採用。
 ///
 /// なぜこうしているかというと、mozc の論文にのっている BLEU を使用する方式より実装が楽だからです!
-pub fn evaluate(corpus_dir: &String, load_user_config: bool) -> anyhow::Result<()> {
-    /*
-    # corpus.0.txt デバッグ用のファイル
-    # corpus.1.txt メイン(候補割り当ても含む)
-    # corpus.2.txt テストセットに対する入力
-    # corpus.3.txt メイン(もらいもの)
-    # corpus.4.txt 誤変換
-    # corpus.5.txt 出どころ不明
-        */
-    let files = [
-        "corpus.0.txt",
-        "corpus.1.txt",
-        "corpus.2.txt",
-        "corpus.3.txt",
-        "corpus.4.txt",
-        "corpus.5.txt",
-    ];
+pub fn evaluate(
+    corpus: &Vec<String>,
+    eucjp_dict: &Vec<String>,
+    utf8_dict: &Vec<String>,
+    load_user_config: bool,
+) -> anyhow::Result<()> {
+    let mut dicts: Vec<DictConfig> = Vec::new();
+    for path in eucjp_dict {
+        dicts.push(DictConfig {
+            dict_type: "skk".to_string(),
+            encoding: Some("euc-jp".to_string()),
+            path: path.clone(),
+        })
+    }
+
+    for path in utf8_dict {
+        dicts.push(DictConfig {
+            dict_type: "skk".to_string(),
+            encoding: Some("utf-8".to_string()),
+            path: path.clone(),
+        })
+    }
 
     let akaza = BigramWordViterbiEngineBuilder::new(Config {
-        dicts: vec![
-            DictConfig {
-                dict_type: "skk".to_string(),
-                encoding: Some("euc-jp".to_string()),
-                path: "skk-dev-dict/SKK-JISYO.L".to_string(),
-            },
-            DictConfig {
-                dict_type: "skk".to_string(),
-                encoding: Some("utf-8".to_string()),
-                path: "data/SKK-JISYO.akaza".to_string(),
-            },
-        ],
+        dicts,
         single_term: None,
         romkan: None,
         keymap: None,
@@ -91,9 +85,8 @@ pub fn evaluate(corpus_dir: &String, load_user_config: bool) -> anyhow::Result<(
 
     let mut saigen_ritsu = SaigenRitsu::default();
 
-    for file in files {
-        let fp = File::open(corpus_dir.to_string() + "/" + file)
-            .with_context(|| format!("File: {}/{}", corpus_dir, file))?;
+    for file in corpus {
+        let fp = File::open(file).with_context(|| format!("File: {}", file))?;
         for line in BufReader::new(fp).lines() {
             let line = line?;
             let line = line.trim();
