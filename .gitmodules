@@ -1,12 +1,6 @@
 [submodule "model/skk-dev-dict"]
 	path = model/skk-dev-dict
 	url = https://github.com/skk-dev/dict.git
-[submodule "akaza-data/skk-dev-dict"]
-	path = akaza-data/skk-dev-dict
-	url = https://github.com/skk-dev/dict.git
 [submodule "rx-sys/rx"]
 	path = rx-sys/rx
 	url = git@github.com:yt76/rx.git
-[submodule "akaza-data/aozorabunko_text"]
-	path = akaza-data/aozorabunko_text
-	url = git@github.com:aozorahack/aozorabunko_text.git
