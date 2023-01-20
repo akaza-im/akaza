@@ -11,7 +11,7 @@ pub struct ConsonantSuffixExtractor {
 
 impl Default for ConsonantSuffixExtractor {
     fn default() -> ConsonantSuffixExtractor {
-        let pattern = Regex::new("^(.*?)([qwrtypsdfghjklzxcvbmn]+)$").unwrap();
+        let pattern = Regex::new("^(.*?(?:nn)*)([qwrtypsdfghjklzxcvbmn]+)$").unwrap();
         ConsonantSuffixExtractor { pattern }
     }
 }
@@ -56,6 +56,14 @@ mod tests {
         let cse = ConsonantSuffixExtractor::default();
         assert_eq!(cse.extract("meny"), ("me".to_string(), "ny".to_string()));
         assert_eq!(cse.extract("menn"), ("menn".to_string(), "".to_string()));
-        assert_eq!(cse.extract("memo"), ("memo".to_string(), "".to_string()));
+        // うーんwwww の場合、 wwww が suffix であるべき
+        assert_eq!(
+            cse.extract("u-nnwwww"),
+            ("u-nn".to_string(), "wwww".to_string())
+        );
+        assert_eq!(
+            cse.extract("u-nnnnwwww"),
+            ("u-nnnn".to_string(), "wwww".to_string())
+        );
     }
 }
