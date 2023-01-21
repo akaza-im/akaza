@@ -1,17 +1,12 @@
 use std::collections::vec_deque::VecDeque;
-use std::collections::HashMap;
 use std::ops::Range;
-use std::path::Path;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
-use encoding_rs::UTF_8;
 
-use crate::config::Config;
-use crate::dict::loader::load_dicts;
-use crate::dict::merge_dict::merge_dict;
-use crate::dict::skk::read::read_skkdict;
+use crate::config::{Config, DictConfig};
+use crate::dict::loader::load_dicts_ex;
 use crate::engine::base::HenkanEngine;
 use crate::graph::candidate::Candidate;
 use crate::graph::graph_builder::GraphBuilder;
@@ -20,6 +15,7 @@ use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::Segmenter;
 use crate::kana_kanji::base::KanaKanjiDict;
 use crate::kana_kanji::hashmap_vec::HashmapVecKanaKanjiDict;
+use crate::kana_kanji::marisa_kana_kanji_dict::MarisaKanaKanjiDict;
 use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 use crate::lm::system_bigram::MarisaSystemBigramLM;
@@ -135,10 +131,7 @@ impl BigramWordViterbiEngineBuilder {
         let system_bigram_lm = MarisaSystemBigramLM::load(
             Self::try_load(&format!("{}/bigram.model", model_name))?.as_str(),
         )?;
-        let system_dict = read_skkdict(
-            Path::new(Self::try_load(&format!("{}/SKK-JISYO.akaza", model_name))?.as_str()),
-            UTF_8,
-        )?;
+        let system_dict = Self::try_load(&format!("{}/SKK-JISYO.akaza", model_name))?;
 
         let user_data = if let Some(d) = &self.user_data {
             d.clone()
@@ -146,22 +139,31 @@ impl BigramWordViterbiEngineBuilder {
             Arc::new(Mutex::new(UserData::default()))
         };
 
-        let dict = load_dicts(&self.config.dicts)?;
-        let dict = merge_dict(vec![system_dict, dict]);
+        let dict = {
+            let mut dicts = self
+                .config
+                .dicts
+                .iter()
+                .map(|it| *it.clone())
+                .collect::<Vec<_>>();
+            dicts.push(DictConfig {
+                path: system_dict,
+                dict_type: "skk".to_string(),
+                encoding: None,
+            });
 
-        let single_term = if let Some(st) = &&self.config.single_term {
-            load_dicts(st)?
-        } else {
-            HashMap::new()
+            load_dicts_ex(&dicts, "kana_kanji_cache.marisa")?
         };
+
+        let single_term = load_dicts_ex(&self.config.single_term, "single_term_cache.marisa")?;
 
         // 辞書を元に、トライを作成していく。
         let mut kana_trie = CedarwoodKanaTrie::default();
-        for yomi in dict.keys() {
+        for yomi in dict.yomis() {
             assert!(!yomi.is_empty());
             kana_trie.update(yomi.as_str());
         }
-        for yomi in single_term.keys() {
+        for yomi in single_term.yomis() {
             assert!(!yomi.is_empty());
             kana_trie.update(yomi.as_str());
         }
@@ -171,9 +173,13 @@ impl BigramWordViterbiEngineBuilder {
             user_data.lock().unwrap().kana_trie.clone(),
         ]);
 
-        let graph_builder = GraphBuilder::new_with_default_score(
-            HashmapVecKanaKanjiDict::new(dict),
-            HashmapVecKanaKanjiDict::new(single_term),
+        let graph_builder: GraphBuilder<
+            MarisaSystemUnigramLM,
+            MarisaSystemBigramLM,
+            MarisaKanaKanjiDict,
+        > = GraphBuilder::new_with_default_score(
+            dict,
+            single_term,
             user_data.clone(),
             Rc::new(system_unigram_lm),
             Rc::new(system_bigram_lm),

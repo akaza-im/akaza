@@ -14,7 +14,7 @@ use std::io::BufReader;
 #[derive(Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct Config {
     pub dicts: Vec<DictConfig>,
-    pub single_term: Option<Vec<DictConfig>>,
+    pub single_term: Vec<DictConfig>,
     /// ローマ字かな変換テーブルの指定
     /// "default", "kana", etc.
     pub romkan: Option<String>,
