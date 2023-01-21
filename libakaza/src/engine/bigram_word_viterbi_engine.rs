@@ -4,6 +4,7 @@ use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
+use log::info;
 
 use crate::config::{Config, DictConfig};
 use crate::dict::loader::load_dicts_ex;
@@ -14,7 +15,6 @@ use crate::graph::graph_resolver::GraphResolver;
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::Segmenter;
 use crate::kana_kanji::base::KanaKanjiDict;
-use crate::kana_kanji::hashmap_vec::HashmapVecKanaKanjiDict;
 use crate::kana_kanji::marisa_kana_kanji_dict::MarisaKanaKanjiDict;
 use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
@@ -113,11 +113,7 @@ impl BigramWordViterbiEngineBuilder {
     pub fn build(
         &self,
     ) -> Result<
-        BigramWordViterbiEngine<
-            MarisaSystemUnigramLM,
-            MarisaSystemBigramLM,
-            HashmapVecKanaKanjiDict,
-        >,
+        BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM, MarisaKanaKanjiDict>,
     > {
         let model_name = self
             .config
@@ -140,12 +136,7 @@ impl BigramWordViterbiEngineBuilder {
         };
 
         let dict = {
-            let mut dicts = self
-                .config
-                .dicts
-                .iter()
-                .map(|it| *it.clone())
-                .collect::<Vec<_>>();
+            let mut dicts = self.config.dicts.to_vec();
             dicts.push(DictConfig {
                 path: system_dict,
                 dict_type: "skk".to_string(),

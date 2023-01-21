@@ -8,8 +8,6 @@ use anyhow::{bail, Context};
 use encoding_rs::{EUC_JP, UTF_8};
 use log::{error, info};
 
-use marisa_sys::{Keyset, Marisa};
-
 use crate::config::DictConfig;
 use crate::dict::merge_dict::merge_dict;
 use crate::dict::skk::read::read_skkdict;
@@ -31,53 +29,34 @@ pub fn load_dicts_ex(
     // 更新が必要だったら、更新する。
     let max_dict_mtime = dict_configs
         .iter()
-        .map(|it| try_get_mtime(&it.path).unwrap_or_else(|_| 0_u64))
+        .map(|it| try_get_mtime(&it.path).unwrap_or(0_u64))
         .max()
-        .unwrap_or_else(|| 0_u64);
+        .unwrap_or(0_u64);
 
     // cache file のパスを得る
-
     let base_dirs = xdg::BaseDirectories::with_prefix("akaza")
         .with_context(|| "xdg directory with 'akaza' prefix")?;
-    let cache_path = base_dirs.get_cache_file(cache_name);
-    let cache_mtime =
-        try_get_mtime(cache_path.to_string_lossy().to_string().as_str()).unwrap_or_else(|_| 0_u64);
+    base_dirs.create_cache_directory("")?;
+    let cache_path = base_dirs
+        .get_cache_file(cache_name)
+        .to_string_lossy()
+        .to_string();
+    let cache_mtime = try_get_mtime(&cache_path).unwrap_or(0_u64);
 
     if cache_mtime >= max_dict_mtime {
-        info!(
-            "Cache is not fresh! {:?} => {}",
-            dict_configs,
-            cache_path.to_string_lossy()
-        );
-        Ok(MarisaKanaKanjiDict::load(
-            cache_path.to_string_lossy().to_string().as_str(),
-        )?)
-    } else {
-        info!(
-            "Cache is not fresh! {:?} => {}",
-            dict_configs,
-            cache_path.to_string_lossy()
-        );
-        let dicts = load_dicts(dict_configs)?;
-        let mut keyset = Keyset::default();
-        for (kana, surfaces) in dicts {
-            keyset.push_back(
-                [
-                    kana.as_bytes(),
-                    b"\xff", // seperator
-                    surfaces.join("/").as_bytes(),
-                ]
-                .concat()
-                .as_slice(),
-            );
+        info!("Cache is fresh! {:?} => {}", dict_configs, cache_path);
+        match MarisaKanaKanjiDict::load(cache_path.to_string().as_str()) {
+            Ok(dict) => return Ok(dict),
+            Err(err) => {
+                info!("Cannot load {:?}: {:?}", cache_path, err)
+            }
         }
-
-        let mut marisa = Marisa::default();
-        marisa.build(&keyset);
-
-        // キャッシュを更新する必要あり。
-        Ok(MarisaKanaKanjiDict::new(marisa))
     }
+
+    info!("Cache is not fresh! {:?} => {}", dict_configs, cache_path);
+    let dicts = load_dicts(dict_configs)?;
+
+    MarisaKanaKanjiDict::build(dicts, &cache_path)
 }
 
 pub fn load_dicts(dict_configs: &Vec<DictConfig>) -> Result<HashMap<String, Vec<String>>> {

@@ -35,7 +35,7 @@ use libakaza::consonant::ConsonantSuffixExtractor;
 use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngine;
 use libakaza::graph::candidate::Candidate;
-use libakaza::kana_kanji::hashmap_vec::HashmapVecKanaKanjiDict;
+use libakaza::kana_kanji::marisa_kana_kanji_dict::MarisaKanaKanjiDict;
 use libakaza::keymap::KeyState;
 use libakaza::lm::system_bigram::MarisaSystemBigramLM;
 use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
@@ -56,11 +56,8 @@ pub struct AkazaContext {
     keymap: KeyMap,
     romkan: RomKanConverter,
     command_map: HashMap<&'static str, IbusAkazaCommand>,
-    engine: BigramWordViterbiEngine<
-        MarisaSystemUnigramLM,
-        MarisaSystemBigramLM,
-        HashmapVecKanaKanjiDict,
-    >,
+    engine:
+        BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM, MarisaKanaKanjiDict>,
     consonant_suffix_extractor: ConsonantSuffixExtractor,
 
     // ==== 現在の入力状態を保持 ====
@@ -76,7 +73,7 @@ impl AkazaContext {
         akaza: BigramWordViterbiEngine<
             MarisaSystemUnigramLM,
             MarisaSystemBigramLM,
-            HashmapVecKanaKanjiDict,
+            MarisaKanaKanjiDict,
         >,
         config: Config,
     ) -> Result<Self> {

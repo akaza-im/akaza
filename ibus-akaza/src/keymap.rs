@@ -1,7 +1,7 @@
 use alloc::ffi::CString;
 use std::collections::HashMap;
 
-use log::{error, info, trace};
+use log::{error, trace};
 
 use ibus_sys::core::{IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_SHIFT_MASK};
 use ibus_sys::glib::guint;
@@ -57,7 +57,7 @@ impl KeyMap {
                 error!("Unknown key symbol: {} {:?}", key, key_pattern);
                 continue;
             }
-            info!("Insert: {} {} {} {:?}", modifier, keyval, key, key_pattern);
+            trace!("Insert: {} {} {} {:?}", modifier, keyval, key, key_pattern);
             for state in &key_pattern.states {
                 mapping.insert(KeyPattern::new(*state, keyval, modifier), command.clone());
             }

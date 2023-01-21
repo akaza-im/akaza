@@ -70,7 +70,7 @@ pub fn evaluate(
 
     let akaza = BigramWordViterbiEngineBuilder::new(Config {
         dicts,
-        single_term: None,
+        single_term: Default::default(),
         romkan: None,
         keymap: None,
         model: None,
