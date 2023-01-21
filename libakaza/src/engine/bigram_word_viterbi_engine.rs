@@ -4,7 +4,7 @@ use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
-use log::info;
+
 
 use crate::config::{Config, DictConfig};
 use crate::dict::loader::load_dicts_ex;

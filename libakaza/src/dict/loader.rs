@@ -45,7 +45,7 @@ pub fn load_dicts_ex(
 
     if cache_mtime >= max_dict_mtime {
         info!("Cache is fresh! {:?} => {}", dict_configs, cache_path);
-        match MarisaKanaKanjiDict::load(cache_path.to_string().as_str()) {
+        match MarisaKanaKanjiDict::load(cache_path.as_str()) {
             Ok(dict) => return Ok(dict),
             Err(err) => {
                 info!("Cannot load {:?}: {:?}", cache_path, err)
