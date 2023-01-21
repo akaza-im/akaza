@@ -18,6 +18,8 @@ use crate::graph::graph_builder::GraphBuilder;
 use crate::graph::graph_resolver::GraphResolver;
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::Segmenter;
+use crate::kana_kanji::base::KanaKanjiDict;
+use crate::kana_kanji::hashmap_vec::HashmapVecKanaKanjiDict;
 use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 use crate::lm::system_bigram::MarisaSystemBigramLM;
@@ -28,15 +30,17 @@ use crate::user_side_data::user_data::UserData;
 
 /// バイグラムのビタビベースかな漢字変換エンジンです。
 /// 単語バイグラムを採用しています。
-pub struct BigramWordViterbiEngine<U: SystemUnigramLM, B: SystemBigramLM> {
-    graph_builder: GraphBuilder<U, B>,
+pub struct BigramWordViterbiEngine<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> {
+    graph_builder: GraphBuilder<U, B, KD>,
     pub segmenter: Segmenter,
     pub graph_resolver: GraphResolver,
     romkan_converter: RomKanConverter,
     pub user_data: Arc<Mutex<UserData>>,
 }
 
-impl<U: SystemUnigramLM, B: SystemBigramLM> HenkanEngine for BigramWordViterbiEngine<U, B> {
+impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> HenkanEngine
+    for BigramWordViterbiEngine<U, B, KD>
+{
     fn learn(&mut self, candidates: &[Candidate]) {
         self.user_data.lock().unwrap().record_entries(candidates);
     }
@@ -62,7 +66,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> HenkanEngine for BigramWordViterbiEn
     }
 }
 
-impl<U: SystemUnigramLM, B: SystemBigramLM> BigramWordViterbiEngine<U, B> {
+impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> BigramWordViterbiEngine<U, B, KD> {
     pub fn resolve(&self, lattice: &LatticeGraph<U, B>) -> Result<Vec<VecDeque<Candidate>>> {
         self.graph_resolver.resolve(lattice)
     }
@@ -112,7 +116,13 @@ impl BigramWordViterbiEngineBuilder {
 
     pub fn build(
         &self,
-    ) -> Result<BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>> {
+    ) -> Result<
+        BigramWordViterbiEngine<
+            MarisaSystemUnigramLM,
+            MarisaSystemBigramLM,
+            HashmapVecKanaKanjiDict,
+        >,
+    > {
         let model_name = self
             .config
             .model
@@ -162,8 +172,8 @@ impl BigramWordViterbiEngineBuilder {
         ]);
 
         let graph_builder = GraphBuilder::new_with_default_score(
-            dict,
-            single_term,
+            HashmapVecKanaKanjiDict::new(dict),
+            HashmapVecKanaKanjiDict::new(single_term),
             user_data.clone(),
             Rc::new(system_unigram_lm),
             Rc::new(system_bigram_lm),

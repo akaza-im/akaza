@@ -127,6 +127,7 @@ mod tests {
 
     use crate::graph::graph_builder::GraphBuilder;
     use crate::graph::segmenter::{SegmentationResult, Segmenter};
+    use crate::kana_kanji::hashmap_vec::HashmapVecKanaKanjiDict;
     use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
     use crate::lm::system_bigram::MarisaSystemBigramLMBuilder;
     use crate::lm::system_unigram_lm::MarisaSystemUnigramLMBuilder;
@@ -165,8 +166,8 @@ mod tests {
             .build()?;
         let user_data = UserData::default();
         let graph_builder = GraphBuilder::new_with_default_score(
-            HashMap::new(),
-            Default::default(),
+            HashmapVecKanaKanjiDict::new(HashMap::new()),
+            HashmapVecKanaKanjiDict::new(Default::default()),
             Arc::new(Mutex::new(user_data)),
             Rc::new(system_unigram_lm),
             Rc::new(system_bigram_lm),
@@ -219,8 +220,8 @@ mod tests {
         // 私/わたし のスコアをガッと上げる。
         user_data.record_entries(&[Candidate::new("わたし", "私", 0_f32)]);
         let graph_builder = GraphBuilder::new_with_default_score(
-            dict,
-            HashMap::new(),
+            HashmapVecKanaKanjiDict::new(dict),
+            HashmapVecKanaKanjiDict::new(HashMap::new()),
             Arc::new(Mutex::new(user_data)),
             Rc::new(system_unigram_lm),
             Rc::new(system_bigram_lm),

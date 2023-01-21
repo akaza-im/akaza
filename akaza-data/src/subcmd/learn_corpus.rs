@@ -14,6 +14,7 @@ use libakaza::dict::skk::read::read_skkdict;
 use libakaza::graph::graph_builder::GraphBuilder;
 use libakaza::graph::graph_resolver::GraphResolver;
 use libakaza::graph::segmenter::Segmenter;
+use libakaza::kana_kanji::hashmap_vec::HashmapVecKanaKanjiDict;
 use libakaza::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 use libakaza::lm::base::{SystemBigramLM, SystemUnigramLM};
 use libakaza::lm::on_memory::on_memory_system_bigram_lm::OnMemorySystemBigramLM;
@@ -23,7 +24,8 @@ use libakaza::lm::system_unigram_lm::{MarisaSystemUnigramLM, MarisaSystemUnigram
 use libakaza::user_side_data::user_data::UserData;
 
 struct LearningService {
-    graph_builder: GraphBuilder<OnMemorySystemUnigramLM, OnMemorySystemBigramLM>,
+    graph_builder:
+        GraphBuilder<OnMemorySystemUnigramLM, OnMemorySystemBigramLM, HashmapVecKanaKanjiDict>,
     segmenter: Segmenter,
     system_unigram_lm: Rc<OnMemorySystemUnigramLM>,
     system_bigram_lm: Rc<OnMemorySystemBigramLM>,
@@ -81,8 +83,8 @@ impl LearningService {
         ));
 
         let graph_builder = GraphBuilder::new(
-            system_kana_kanji_dict,
-            HashMap::default(),
+            HashmapVecKanaKanjiDict::new(system_kana_kanji_dict),
+            HashmapVecKanaKanjiDict::new(HashMap::default()),
             Arc::new(Mutex::new(UserData::default())),
             system_unigram_lm.clone(),
             system_bigram_lm.clone(),
