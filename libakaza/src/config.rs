@@ -5,16 +5,17 @@ dicts:
     encoding: euc-jp
     dict_type: skk
  */
+use std::fs::File;
+use std::io::BufReader;
+
 use anyhow::Result;
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
-use std::fs::File;
-use std::io::BufReader;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct Config {
     pub dicts: Vec<DictConfig>,
-    pub single_term: Option<Vec<DictConfig>>,
+    pub single_term: Vec<DictConfig>,
     /// ローマ字かな変換テーブルの指定
     /// "default", "kana", etc.
     pub romkan: Option<String>,
@@ -57,7 +58,7 @@ impl Config {
     }
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Default, Clone)]
 pub struct DictConfig {
     pub path: String,
     /// Default: UTF-8
@@ -78,7 +79,7 @@ mod tests {
             DictConfig {
                 path: "/usr/share/skk/SKK-JISYO.L".to_string(),
                 encoding: Some("euc-jp".to_string()),
-                dict_type: "skk".to_string()
+                dict_type: "skk".to_string(),
             }
         );
         Ok(())

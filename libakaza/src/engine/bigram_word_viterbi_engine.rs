@@ -1,23 +1,20 @@
 use std::collections::vec_deque::VecDeque;
-use std::collections::HashMap;
 use std::ops::Range;
-use std::path::Path;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
-use encoding_rs::UTF_8;
 
-use crate::config::Config;
-use crate::dict::loader::load_dicts;
-use crate::dict::merge_dict::merge_dict;
-use crate::dict::skk::read::read_skkdict;
+use crate::config::{Config, DictConfig};
+use crate::dict::loader::load_dicts_ex;
 use crate::engine::base::HenkanEngine;
 use crate::graph::candidate::Candidate;
 use crate::graph::graph_builder::GraphBuilder;
 use crate::graph::graph_resolver::GraphResolver;
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::Segmenter;
+use crate::kana_kanji::base::KanaKanjiDict;
+use crate::kana_kanji::marisa_kana_kanji_dict::MarisaKanaKanjiDict;
 use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 use crate::lm::system_bigram::MarisaSystemBigramLM;
@@ -28,15 +25,17 @@ use crate::user_side_data::user_data::UserData;
 
 /// バイグラムのビタビベースかな漢字変換エンジンです。
 /// 単語バイグラムを採用しています。
-pub struct BigramWordViterbiEngine<U: SystemUnigramLM, B: SystemBigramLM> {
-    graph_builder: GraphBuilder<U, B>,
+pub struct BigramWordViterbiEngine<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> {
+    graph_builder: GraphBuilder<U, B, KD>,
     pub segmenter: Segmenter,
     pub graph_resolver: GraphResolver,
     romkan_converter: RomKanConverter,
     pub user_data: Arc<Mutex<UserData>>,
 }
 
-impl<U: SystemUnigramLM, B: SystemBigramLM> HenkanEngine for BigramWordViterbiEngine<U, B> {
+impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> HenkanEngine
+    for BigramWordViterbiEngine<U, B, KD>
+{
     fn learn(&mut self, candidates: &[Candidate]) {
         self.user_data.lock().unwrap().record_entries(candidates);
     }
@@ -62,7 +61,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> HenkanEngine for BigramWordViterbiEn
     }
 }
 
-impl<U: SystemUnigramLM, B: SystemBigramLM> BigramWordViterbiEngine<U, B> {
+impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> BigramWordViterbiEngine<U, B, KD> {
     pub fn resolve(&self, lattice: &LatticeGraph<U, B>) -> Result<Vec<VecDeque<Candidate>>> {
         self.graph_resolver.resolve(lattice)
     }
@@ -112,7 +111,9 @@ impl BigramWordViterbiEngineBuilder {
 
     pub fn build(
         &self,
-    ) -> Result<BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>> {
+    ) -> Result<
+        BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM, MarisaKanaKanjiDict>,
+    > {
         let model_name = self
             .config
             .model
@@ -125,10 +126,7 @@ impl BigramWordViterbiEngineBuilder {
         let system_bigram_lm = MarisaSystemBigramLM::load(
             Self::try_load(&format!("{}/bigram.model", model_name))?.as_str(),
         )?;
-        let system_dict = read_skkdict(
-            Path::new(Self::try_load(&format!("{}/SKK-JISYO.akaza", model_name))?.as_str()),
-            UTF_8,
-        )?;
+        let system_dict = Self::try_load(&format!("{}/SKK-JISYO.akaza", model_name))?;
 
         let user_data = if let Some(d) = &self.user_data {
             d.clone()
@@ -136,22 +134,26 @@ impl BigramWordViterbiEngineBuilder {
             Arc::new(Mutex::new(UserData::default()))
         };
 
-        let dict = load_dicts(&self.config.dicts)?;
-        let dict = merge_dict(vec![system_dict, dict]);
+        let dict = {
+            let mut dicts = self.config.dicts.to_vec();
+            dicts.push(DictConfig {
+                path: system_dict,
+                dict_type: "skk".to_string(),
+                encoding: None,
+            });
 
-        let single_term = if let Some(st) = &&self.config.single_term {
-            load_dicts(st)?
-        } else {
-            HashMap::new()
+            load_dicts_ex(&dicts, "kana_kanji_cache.marisa")?
         };
+
+        let single_term = load_dicts_ex(&self.config.single_term, "single_term_cache.marisa")?;
 
         // 辞書を元に、トライを作成していく。
         let mut kana_trie = CedarwoodKanaTrie::default();
-        for yomi in dict.keys() {
+        for yomi in dict.yomis() {
             assert!(!yomi.is_empty());
             kana_trie.update(yomi.as_str());
         }
-        for yomi in single_term.keys() {
+        for yomi in single_term.yomis() {
             assert!(!yomi.is_empty());
             kana_trie.update(yomi.as_str());
         }
@@ -161,7 +163,11 @@ impl BigramWordViterbiEngineBuilder {
             user_data.lock().unwrap().kana_trie.clone(),
         ]);
 
-        let graph_builder = GraphBuilder::new_with_default_score(
+        let graph_builder: GraphBuilder<
+            MarisaSystemUnigramLM,
+            MarisaSystemBigramLM,
+            MarisaKanaKanjiDict,
+        > = GraphBuilder::new_with_default_score(
             dict,
             single_term,
             user_data.clone(),

@@ -1,15 +1,63 @@
 use std::collections::HashMap;
+use std::fs::File;
 use std::path::Path;
 use std::time::SystemTime;
 
-use anyhow::bail;
 use anyhow::Result;
+use anyhow::{bail, Context};
 use encoding_rs::{EUC_JP, UTF_8};
 use log::{error, info};
 
 use crate::config::DictConfig;
 use crate::dict::merge_dict::merge_dict;
 use crate::dict::skk::read::read_skkdict;
+use crate::kana_kanji::marisa_kana_kanji_dict::MarisaKanaKanjiDict;
+
+fn try_get_mtime(path: &str) -> Result<u64> {
+    let file = File::open(path)?;
+    let metadata = file.metadata()?;
+    let mtime = metadata.modified()?;
+    let t = mtime.duration_since(SystemTime::UNIX_EPOCH)?;
+    Ok(t.as_secs())
+}
+
+pub fn load_dicts_ex(
+    dict_configs: &Vec<DictConfig>,
+    cache_name: &str,
+) -> Result<MarisaKanaKanjiDict> {
+    // さて、ここで、全部の依存先ファイルの mtime の max とキャッシュファイルの mtime の max を比較する
+    // 更新が必要だったら、更新する。
+    let max_dict_mtime = dict_configs
+        .iter()
+        .map(|it| try_get_mtime(&it.path).unwrap_or(0_u64))
+        .max()
+        .unwrap_or(0_u64);
+
+    // cache file のパスを得る
+    let base_dirs = xdg::BaseDirectories::with_prefix("akaza")
+        .with_context(|| "xdg directory with 'akaza' prefix")?;
+    base_dirs.create_cache_directory("")?;
+    let cache_path = base_dirs
+        .get_cache_file(cache_name)
+        .to_string_lossy()
+        .to_string();
+    let cache_mtime = try_get_mtime(&cache_path).unwrap_or(0_u64);
+
+    if cache_mtime >= max_dict_mtime {
+        info!("Cache is fresh! {:?} => {}", dict_configs, cache_path);
+        match MarisaKanaKanjiDict::load(cache_path.as_str()) {
+            Ok(dict) => return Ok(dict),
+            Err(err) => {
+                info!("Cannot load {:?}: {:?}", cache_path, err)
+            }
+        }
+    }
+
+    info!("Cache is not fresh! {:?} => {}", dict_configs, cache_path);
+    let dicts = load_dicts(dict_configs)?;
+
+    MarisaKanaKanjiDict::build(dicts, &cache_path)
+}
 
 pub fn load_dicts(dict_configs: &Vec<DictConfig>) -> Result<HashMap<String, Vec<String>>> {
     let mut dicts: Vec<HashMap<String, Vec<String>>> = Vec::new();

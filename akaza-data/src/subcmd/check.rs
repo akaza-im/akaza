@@ -14,7 +14,7 @@ pub fn check(yomi: &str, expected: Option<String>, user_data: bool) -> anyhow::R
             DictConfig {
                 dict_type: "skk".to_string(),
                 encoding: Some("euc-jp".to_string()),
-                path: "skk-dev-dict/SKK-JISYO.L".to_string(),
+                path: "/usr/share/skk/SKK-JISYO.L".to_string(),
             },
             DictConfig {
                 dict_type: "skk".to_string(),
@@ -22,7 +22,7 @@ pub fn check(yomi: &str, expected: Option<String>, user_data: bool) -> anyhow::R
                 path: "data/SKK-JISYO.akaza".to_string(),
             },
         ],
-        single_term: None,
+        single_term: Default::default(),
         romkan: None,
         keymap: None,
         model: None,

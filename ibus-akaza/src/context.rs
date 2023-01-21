@@ -35,6 +35,7 @@ use libakaza::consonant::ConsonantSuffixExtractor;
 use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngine;
 use libakaza::graph::candidate::Candidate;
+use libakaza::kana_kanji::marisa_kana_kanji_dict::MarisaKanaKanjiDict;
 use libakaza::keymap::KeyState;
 use libakaza::lm::system_bigram::MarisaSystemBigramLM;
 use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
@@ -55,7 +56,8 @@ pub struct AkazaContext {
     keymap: KeyMap,
     romkan: RomKanConverter,
     command_map: HashMap<&'static str, IbusAkazaCommand>,
-    engine: BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
+    engine:
+        BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM, MarisaKanaKanjiDict>,
     consonant_suffix_extractor: ConsonantSuffixExtractor,
 
     // ==== 現在の入力状態を保持 ====
@@ -68,7 +70,11 @@ pub struct AkazaContext {
 
 impl AkazaContext {
     pub(crate) fn new(
-        akaza: BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>,
+        akaza: BigramWordViterbiEngine<
+            MarisaSystemUnigramLM,
+            MarisaSystemBigramLM,
+            MarisaKanaKanjiDict,
+        >,
         config: Config,
     ) -> Result<Self> {
         let input_mode = INPUT_MODE_HIRAGANA;
