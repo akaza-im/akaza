@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use log::info;
+use log::trace;
 
 use marisa_sys::{Keyset, Marisa};
 
@@ -66,7 +66,7 @@ impl KanaKanjiDict for MarisaKanaKanjiDict {
             }
             false
         });
-        info!("Got result: {:?}, {:?}", kana, surfaces);
+        trace!("Got result: {:?}, {:?}", kana, surfaces);
         Some(surfaces)
     }
 }
