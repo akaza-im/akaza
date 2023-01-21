@@ -1,11 +1,12 @@
 use std::collections::HashMap;
-use std::env;
 use std::fs::File;
 use std::io::BufReader;
 
 use anyhow::{bail, Context, Result};
 use log::info;
 use serde::{Deserialize, Serialize};
+
+use crate::resource::detect_resource_path;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Keymap {
@@ -91,17 +92,8 @@ pub enum KeyState {
 }
 
 impl Keymap {
-    pub fn load(name: &str) -> anyhow::Result<HashMap<KeyPattern, String>> {
-        let pathstr: String = if cfg!(test) || cfg!(feature = "it") {
-            format!("{}/../keymap/{}.yml", env!("CARGO_MANIFEST_DIR"), name)
-        } else if let Ok(env) = env::var("AKAZA_KEYMAP_DIR") {
-            format!("{}/{}.yml", env, name)
-        } else {
-            let pathbuf = xdg::BaseDirectories::with_prefix("akaza")
-                .with_context(|| "Opening xdg directory with 'akaza' prefix")?
-                .get_config_file(format!("keymap/{}.yml", name));
-            pathbuf.to_string_lossy().to_string()
-        };
+    pub fn load(name: &str) -> Result<HashMap<KeyPattern, String>> {
+        let pathstr = detect_resource_path("keymap", "AKAZA_KEYMAP_DIR", &format!("{}.yml", name))?;
         info!("Load {}", pathstr);
         let got: Keymap = serde_yaml::from_reader(BufReader::new(
             File::open(&pathstr).with_context(|| pathstr)?,

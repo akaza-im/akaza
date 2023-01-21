@@ -25,6 +25,7 @@ pub fn check(yomi: &str, expected: Option<String>, user_data: bool) -> anyhow::R
         single_term: None,
         romkan: None,
         keymap: None,
+        model: None,
     });
     if user_data {
         info!("Enabled user data");

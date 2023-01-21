@@ -21,6 +21,9 @@ pub struct Config {
     /// キーマップテーブルの指定
     /// "default", "atok", etc.
     pub keymap: Option<String>,
+    /// Model の指定
+    /// "default", etc.
+    pub model: Option<String>,
 }
 
 impl Config {

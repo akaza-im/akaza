@@ -1,12 +1,11 @@
 use std::collections::vec_deque::VecDeque;
 use std::collections::HashMap;
-use std::env;
 use std::ops::Range;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use encoding_rs::UTF_8;
 
 use crate::config::Config;
@@ -23,6 +22,7 @@ use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 use crate::lm::system_bigram::MarisaSystemBigramLM;
 use crate::lm::system_unigram_lm::MarisaSystemUnigramLM;
+use crate::resource::detect_resource_path;
 use crate::romkan::RomKanConverter;
 use crate::user_side_data::user_data::UserData;
 
@@ -113,19 +113,22 @@ impl BigramWordViterbiEngineBuilder {
     pub fn build(
         &self,
     ) -> Result<BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>> {
+        let model_name = self
+            .config
+            .model
+            .clone()
+            .unwrap_or_else(|| "default".to_string());
+
         let system_unigram_lm = MarisaSystemUnigramLM::load(
-            Self::try_load("unigram.model")?
-                .to_string_lossy()
-                .to_string()
-                .as_str(),
+            Self::try_load(&format!("{}/unigram.model", model_name))?.as_str(),
         )?;
         let system_bigram_lm = MarisaSystemBigramLM::load(
-            Self::try_load("bigram.model")?
-                .to_string_lossy()
-                .to_string()
-                .as_str(),
+            Self::try_load(&format!("{}/bigram.model", model_name))?.as_str(),
         )?;
-        let system_dict = read_skkdict(Self::try_load("SKK-JISYO.akaza")?.as_path(), UTF_8)?;
+        let system_dict = read_skkdict(
+            Path::new(Self::try_load(&format!("{}/SKK-JISYO.akaza", model_name))?.as_str()),
+            UTF_8,
+        )?;
 
         let user_data = if let Some(d) = &self.user_data {
             d.clone()
@@ -185,34 +188,7 @@ impl BigramWordViterbiEngineBuilder {
         })
     }
 
-    pub fn try_load(file_name: &str) -> Result<PathBuf> {
-        if cfg!(test) {
-            let path = Path::new(env!("CARGO_MANIFEST_DIR"));
-            let path = path.join("../akaza-data/data/").join(file_name);
-            if path.exists() {
-                Ok(path)
-            } else {
-                bail!("There's no {} for testing.", path.to_string_lossy(),)
-            }
-        } else if let Ok(dir) = env::var("AKAZA_DATA_DIR") {
-            let dir = Path::new(dir.as_str());
-            let file = dir.join(file_name);
-            if file.exists() {
-                Ok(file)
-            } else {
-                bail!(
-                    "There's no {} in AKAZA_DATA_DIR({:?})",
-                    file.to_string_lossy(),
-                    dir,
-                )
-            }
-        } else {
-            let path = xdg::BaseDirectories::with_prefix("akaza")?.find_data_file(file_name);
-            if let Some(path) = path {
-                Ok(path)
-            } else {
-                bail!("There's no {} in XDG_DATA_DIRS", file_name)
-            }
-        }
+    fn try_load(name: &str) -> Result<String> {
+        detect_resource_path("model", "AKAZA_MODEL_DIR", name)
     }
 }

@@ -13,6 +13,7 @@ pub mod graph;
 pub mod kana_trie;
 pub mod keymap;
 pub mod lm;
+mod resource;
 pub mod romkan;
 pub mod trie;
 pub mod user_side_data;
