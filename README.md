@@ -107,6 +107,22 @@ Akaza は Keymap は `XDG_DATA_HOME` と `XDG_DATA_DIRS` からさがします�
 2. `/usr/local/share/akaza/romkan/{KEYMAP_NAME}.yml`
 3. `/usr/share/akaza/romkan/{KEYMAP_NAME}.yml`
 
+### model の設定
+
+model は複数のファイルからなります。
+
+- unigram.model
+- bigram.model
+- SKK-JISYO.akaza
+
+この切り替えは以下のようなところから読まれます。
+
+- `~/.local/share/akaza/model/{MODEL_NAME}/unigram.model`
+- `~/.local/share/akaza/model/{MODEL_NAME}/bigram.model`
+- `~/.local/share/akaza/model/{MODEL_NAME}/SKK-JISYO.akaza`
+
+keymap, romkan と同様に、`XDG_DATA_DIRS` から読むこともできます。
+
 ## FAQ
 
 ### 最近の言葉が変換できません/固有名詞が変換できません

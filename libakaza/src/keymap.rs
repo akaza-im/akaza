@@ -93,7 +93,7 @@ pub enum KeyState {
 
 impl Keymap {
     pub fn load(name: &str) -> Result<HashMap<KeyPattern, String>> {
-        let pathstr = detect_resource_path("keymap", "AKAZA_KEYMAP_DIR", name)?;
+        let pathstr = detect_resource_path("keymap", "AKAZA_KEYMAP_DIR", &format!("{}.yml", name))?;
         info!("Load {}", pathstr);
         let got: Keymap = serde_yaml::from_reader(BufReader::new(
             File::open(&pathstr).with_context(|| pathstr)?,

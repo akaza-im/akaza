@@ -113,12 +113,20 @@ impl BigramWordViterbiEngineBuilder {
     pub fn build(
         &self,
     ) -> Result<BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM>> {
-        let system_unigram_lm =
-            MarisaSystemUnigramLM::load(Self::try_load("unigram.model")?.as_str())?;
-        let system_bigram_lm =
-            MarisaSystemBigramLM::load(Self::try_load("bigram.model")?.as_str())?;
+        let model_name = self
+            .config
+            .model
+            .clone()
+            .unwrap_or_else(|| "default".to_string());
+
+        let system_unigram_lm = MarisaSystemUnigramLM::load(
+            Self::try_load(&format!("{}/unigram.model", model_name))?.as_str(),
+        )?;
+        let system_bigram_lm = MarisaSystemBigramLM::load(
+            Self::try_load(&format!("{}/bigram.model", model_name))?.as_str(),
+        )?;
         let system_dict = read_skkdict(
-            Path::new(Self::try_load("SKK-JISYO.akaza")?.as_str()),
+            Path::new(Self::try_load(&format!("{}/SKK-JISYO.akaza", model_name))?.as_str()),
             UTF_8,
         )?;
 

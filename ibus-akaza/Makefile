@@ -24,7 +24,7 @@ akaza.xml: akaza.xml.in
 
 akaza-debug.xml: akaza.xml.in
 	sed \
-	    -e "s:@BINARY@:${PWD}/ibus-akaza-debug.sh:g" \
+	    -e "s:@BINARY@:$(PWD)/ibus-akaza-debug.sh:g" \
 	    -e "s:@DATADIR@:$(DATADIR)/:g" $< > $@
 
 install: akaza.xml config.h
