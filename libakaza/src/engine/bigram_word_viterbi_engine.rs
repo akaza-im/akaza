@@ -5,7 +5,6 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
 
-
 use crate::config::{Config, DictConfig};
 use crate::dict::loader::load_dicts_ex;
 use crate::engine::base::HenkanEngine;
