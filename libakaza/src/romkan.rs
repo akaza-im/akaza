@@ -1,8 +1,8 @@
 use std::collections::HashMap;
-use std::env;
 use std::fs::File;
 use std::io::BufReader;
 
+use crate::resource;
 use anyhow::Context;
 use log::info;
 use regex::{Captures, Regex};
@@ -15,16 +15,7 @@ pub struct RomKanConfig {
 }
 
 fn load_romkan_map(name: &str) -> anyhow::Result<HashMap<String, String>> {
-    let pathstr: String = if cfg!(test) || cfg!(feature = "it") {
-        format!("{}/../romkan/{}.yml", env!("CARGO_MANIFEST_DIR"), name)
-    } else if let Ok(env) = env::var("AKAZA_ROMKAN_DIR") {
-        format!("{}/{}.yml", env, name)
-    } else {
-        let pathbuf = xdg::BaseDirectories::with_prefix("akaza")
-            .with_context(|| "Opening xdg directory with 'akaza' prefix")?
-            .get_config_file(format!("romkan/{}.yml", name));
-        pathbuf.to_string_lossy().to_string()
-    };
+    let pathstr = resource::detect_resource_path("romkan", "AKAZA_ROMKAN_DIR", name)?;
     info!("Load {}", pathstr);
     let got: RomKanConfig = serde_yaml::from_reader(BufReader::new(
         File::open(&pathstr).with_context(|| pathstr)?,

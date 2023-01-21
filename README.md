@@ -86,6 +86,27 @@ akaza に付属する SKK-JISYO.dynamic を利用すると、「きょう」を�
 
     romkan: kana
 
+### Keymap の設定
+
+
+Akaza は典型的には以下の順番で探します。
+
+1. `~/.local/share/akaza/keymap/{KEYMAP_NAME}.yml`
+2. `/usr/local/share/akaza/keymap/{KEYMAP_NAME}.yml`
+3. `/usr/share/akaza/keymap/{KEYMAP_NAME}.yml`
+
+このパスは、[XDG ユーザーディレクトリ](https://wiki.archlinux.jp/index.php/XDG_%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA) の仕様に基づいています。
+Akaza は Keymap は `XDG_DATA_HOME` と `XDG_DATA_DIRS` からさがします。
+`XDG_DATA_HOME` は設定していなければ `~/.local/share/` です。`XDGA_DATA_DIR` は設定していなければ `/usr/local/share:/usr/share/` です。
+
+### RomKan の設定
+
+ローマ字かなマップも同様のパスからさがします。
+
+1. `~/.local/share/akaza/romkan/{KEYMAP_NAME}.yml`
+2. `/usr/local/share/akaza/romkan/{KEYMAP_NAME}.yml`
+3. `/usr/share/akaza/romkan/{KEYMAP_NAME}.yml`
+
 ## FAQ
 
 ### 最近の言葉が変換できません/固有名詞が変換できません

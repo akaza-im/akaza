@@ -125,7 +125,7 @@ data/SKK-JISYO.akaza: work/vibrato-ipadic.vocab dict/SKK-JISYO.akaza src/subcmd/
 # -------------------------------------------------------------------------
 
 evaluate: data/bigram.model
-	AKAZA_KEYMAP_DIR=../keymap/ AKAZA_ROMKAN_DIR=../romkan/ AKAZA_DATA_DIR=data/ cargo run --release evaluate anthy-corpus -v
+	AKAZA_KEYMAP_DIR=../keymap/ AKAZA_ROMKAN_DIR=../romkan/ AKAZA_MODEL_DIR=data/ cargo run --release evaluate anthy-corpus -v
 
 # -------------------------------------------------------------------------
 
