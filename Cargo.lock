@@ -24,7 +24,7 @@ dependencies = [
 
 [[package]]
 name = "akaza-data"
-version = "0.1.0"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "chrono",
@@ -569,7 +569,7 @@ dependencies = [
 
 [[package]]
 name = "ibus-akaza"
-version = "0.1.0"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "cc",
@@ -586,7 +586,7 @@ dependencies = [
 
 [[package]]
 name = "ibus-sys"
-version = "0.1.0"
+version = "0.1.7"
 dependencies = [
  "log",
 ]
@@ -664,7 +664,7 @@ checksum = "70048d97b51d107a6cf295d42210d298f0eb7d37f0518b88c816a74b8ce15f41"
 
 [[package]]
 name = "libakaza"
-version = "0.1.0"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "cedarwood",
