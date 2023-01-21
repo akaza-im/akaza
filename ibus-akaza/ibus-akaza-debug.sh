@@ -8,7 +8,6 @@ umask 077
 exec 1>> ~/.ibus-akaza.log
 exec 2>&1
 
-export AKAZA_DATA_DIR="$BASEDIR/../akaza-data/data/"
 export AKAZA_ROMKAN_DIR="$BASEDIR/../romkan/"
 export AKAZA_KEYMAP_DIR="$BASEDIR/../keymap/"
 
