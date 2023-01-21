@@ -24,8 +24,3 @@ serde_yaml = "0.9.16"
 
 [build-dependencies]
 
-[features]
-default = []
-# Integration test を有効化するフラグ
-it = []
-

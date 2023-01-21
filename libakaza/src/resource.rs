@@ -3,7 +3,7 @@ use std::env;
 use anyhow::{bail, Context};
 
 pub fn detect_resource_path(base: &str, env_name: &str, name: &str) -> anyhow::Result<String> {
-    let pathstr: String = if cfg!(test) || cfg!(feature = "it") {
+    let pathstr: String = if cfg!(test) {
         format!("{}/../{}/{}", env!("CARGO_MANIFEST_DIR"), base, name)
     } else if let Ok(env) = env::var(env_name) {
         format!("{}/{}", env, name)
