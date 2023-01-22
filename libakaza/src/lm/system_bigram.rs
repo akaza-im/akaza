@@ -74,7 +74,7 @@ impl MarisaSystemBigramLMBuilder {
         })
     }
 
-    pub fn save(&self, ofname: &str) -> anyhow::Result<()> {
+    pub fn save(&self, ofname: &str) -> Result<()> {
         let mut marisa = Marisa::default();
         marisa.build(&self.keyset);
         marisa.save(ofname)?;
