@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use log::info;
-
 use crate::cost::calc_cost;
 use crate::graph::candidate::Candidate;
 
