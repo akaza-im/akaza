@@ -1,5 +1,6 @@
-use log::info;
 use std::collections::HashMap;
+
+use log::info;
 
 use crate::cost::calc_cost;
 use crate::graph::candidate::Candidate;
@@ -34,11 +35,9 @@ impl UniGramUserStats {
      */
     pub(crate) fn get_cost(&self, key: String) -> Option<f32> {
         let Some(count) = self.word_count.get(key.as_str()) else {
-            info!("Missing user's score!!! {:?}", key);
             return None;
         };
 
-        info!("Use user's score!!! {:?}", key);
         Some(calc_cost(*count, self.unique_words, self.total_words))
     }
 
