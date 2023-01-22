@@ -324,7 +324,7 @@ mod tests {
             .set_default_edge_cost(20_f32)
             .build()?;
         let user_data = UserData::default();
-        let graph_builder = GraphBuilder::new_with_default_score(
+        let graph_builder = GraphBuilder::new(
             HashmapVecKanaKanjiDict::new(HashMap::new()),
             HashmapVecKanaKanjiDict::new(Default::default()),
             Arc::new(Mutex::new(user_data)),
@@ -378,7 +378,7 @@ mod tests {
         let mut user_data = UserData::default();
         // 私/わたし のスコアをガッと上げる。
         user_data.record_entries(&[Candidate::new("わたし", "私", 0_f32)]);
-        let graph_builder = GraphBuilder::new_with_default_score(
+        let graph_builder = GraphBuilder::new(
             HashmapVecKanaKanjiDict::new(dict),
             HashmapVecKanaKanjiDict::new(HashMap::new()),
             Arc::new(Mutex::new(user_data)),
@@ -462,7 +462,7 @@ mod tests {
             Candidate::new("きた", "来た", 0_f32),
             // Candidate::new("かな", "かな", 0_f32),
         ]);
-        let graph_builder = GraphBuilder::new_with_default_score(
+        let graph_builder = GraphBuilder::new(
             HashmapVecKanaKanjiDict::new(dict),
             HashmapVecKanaKanjiDict::new(HashMap::new()),
             Arc::new(Mutex::new(user_data)),

@@ -166,7 +166,7 @@ impl BigramWordViterbiEngineBuilder {
             MarisaSystemUnigramLM,
             MarisaSystemBigramLM,
             MarisaKanaKanjiDict,
-        > = GraphBuilder::new_with_default_score(
+        > = GraphBuilder::new(
             dict,
             single_term,
             user_data.clone(),

@@ -38,22 +38,6 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> GraphBuilder<U, B
         }
     }
 
-    pub fn new_with_default_score(
-        system_kana_kanji_dict: KD,
-        system_single_term_dict: KD,
-        user_data: Arc<Mutex<UserData>>,
-        system_unigram_lm: Rc<U>,
-        system_bigram_lm: Rc<B>,
-    ) -> GraphBuilder<U, B, KD> {
-        Self::new(
-            system_kana_kanji_dict,
-            system_single_term_dict,
-            user_data,
-            system_unigram_lm,
-            system_bigram_lm,
-        )
-    }
-
     pub fn construct(&self, yomi: &str, words_ends_at: &SegmentationResult) -> LatticeGraph<U, B> {
         // このグラフのインデクスは単語の終了位置。
         let mut graph: BTreeMap<i32, Vec<WordNode>> = BTreeMap::new();
@@ -133,16 +117,17 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> GraphBuilder<U, B
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use crate::kana_kanji::hashmap_vec::HashmapVecKanaKanjiDict;
     use crate::lm::system_bigram::MarisaSystemBigramLMBuilder;
     use crate::lm::system_unigram_lm::MarisaSystemUnigramLMBuilder;
-    use std::collections::HashMap;
 
     use super::*;
 
     #[test]
     fn test_single_term() -> anyhow::Result<()> {
-        let graph_builder = GraphBuilder::new_with_default_score(
+        let graph_builder = GraphBuilder::new(
             HashmapVecKanaKanjiDict::new(HashMap::new()),
             HashmapVecKanaKanjiDict::new(HashMap::from([(
                 "すし".to_string(),
@@ -178,7 +163,7 @@ mod tests {
     // ひらがな、カタカナのエントリーが自動的に入るようにする。
     #[test]
     fn test_default_terms() -> anyhow::Result<()> {
-        let graph_builder = GraphBuilder::new_with_default_score(
+        let graph_builder = GraphBuilder::new(
             HashmapVecKanaKanjiDict::new(HashMap::new()),
             HashmapVecKanaKanjiDict::new(HashMap::new()),
             Arc::new(Mutex::new(UserData::default())),
@@ -208,7 +193,7 @@ mod tests {
     // ひらがな、カタカナがすでにかな漢字辞書から提供されている場合でも、重複させない。
     #[test]
     fn test_default_terms_duplicated() -> anyhow::Result<()> {
-        let graph_builder = GraphBuilder::new_with_default_score(
+        let graph_builder = GraphBuilder::new(
             HashmapVecKanaKanjiDict::new(HashMap::from([(
                 "す".to_string(),
                 vec!["す".to_string(), "ス".to_string()],
