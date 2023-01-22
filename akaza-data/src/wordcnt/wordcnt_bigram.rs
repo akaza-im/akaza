@@ -126,7 +126,10 @@ impl SystemBigramLM for WordcntBigram {
                 let word_id1 = i32::from_le_bytes([word[0], word[1], word[2], 0]);
                 let word_id2 = i32::from_le_bytes([word[3], word[4], word[5], 0]);
                 let cnt = u32::from_le_bytes([word[6], word[7], word[8], word[9]]);
-                map.insert((word_id1, word_id2), calc_cost(cnt, self.total_words, self.unique_words));
+                map.insert(
+                    (word_id1, word_id2),
+                    calc_cost(cnt, self.total_words, self.unique_words),
+                );
             }
             true
         });

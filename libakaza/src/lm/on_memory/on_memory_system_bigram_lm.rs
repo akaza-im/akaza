@@ -54,7 +54,12 @@ impl SystemBigramLM for OnMemorySystemBigramLM {
         self.map
             .borrow()
             .iter()
-            .map(|((id1, id2), cnt)| ((*id1, *id2), calc_cost(*cnt, self.total_words, self.unique_words)))
+            .map(|((id1, id2), cnt)| {
+                (
+                    (*id1, *id2),
+                    calc_cost(*cnt, self.total_words, self.unique_words),
+                )
+            })
             .collect()
     }
 }
