@@ -1,5 +1,5 @@
 use std::collections::vec_deque::VecDeque;
-use std::collections::HashMap;
+use std::collections::{BinaryHeap, HashMap};
 
 use crate::graph::candidate::Candidate;
 use anyhow::Context;
@@ -83,30 +83,17 @@ impl GraphResolver {
             if node.surface != "__EOS__" {
                 // 同一の開始位置、終了位置を持つものを集める。
                 let end_pos = node.start_pos + (node.yomi.len() as i32);
-                let mut candidates: VecDeque<Candidate> = lattice
+                let candidates: BinaryHeap<Candidate> = lattice
                     .node_list(end_pos)
                     .unwrap()
                     .iter()
-                    .filter(|alt_node| {
-                        alt_node.start_pos == node.start_pos
-                            && alt_node.yomi.len() == node.yomi.len()
-                            && alt_node != &node
-                    })
                     .map(|f| Candidate {
                         surface: f.surface.clone(),
                         yomi: f.yomi.clone(),
                         cost: *costmap.get(f).unwrap(),
                     })
                     .collect();
-                candidates
-                    .make_contiguous()
-                    .sort_by(|a, b| a.cost.partial_cmp(&b.cost).unwrap());
-                candidates.push_front(Candidate {
-                    surface: node.surface.clone(),
-                    yomi: node.yomi.clone(),
-                    cost: *costmap.get(node).unwrap(),
-                });
-                result.push(candidates);
+                result.push(VecDeque::from(candidates.into_sorted_vec()));
             }
             node = prevmap
                 .get(node)
