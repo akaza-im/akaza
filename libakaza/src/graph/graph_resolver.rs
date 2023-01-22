@@ -116,6 +116,7 @@ impl GraphResolver {
                 surface: f.surface.clone(),
                 yomi: f.yomi.clone(),
                 cost: *costmap.get(f).unwrap(),
+                compound_word: false,
             })
             .collect();
         strict_results.sort();
@@ -182,6 +183,7 @@ impl GraphResolver {
                 surface: cur_surface,
                 yomi: cur_yomi,
                 cost: tail_cost,
+                compound_word: true,
             });
             return;
         }

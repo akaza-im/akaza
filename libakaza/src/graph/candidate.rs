@@ -8,6 +8,8 @@ pub struct Candidate {
     pub surface: String,
     pub yomi: String,
     pub cost: f32,
+    /// 複合語か? 複合語だったら、true になるので、その場合は学習時にユーザー辞書に登録する必要がある。
+    pub compound_word: bool,
 }
 
 impl Eq for Candidate {}
@@ -36,6 +38,7 @@ impl Candidate {
             yomi: yomi.to_string(),
             surface: surface.to_string(),
             cost,
+            compound_word: false,
         }
     }
 
