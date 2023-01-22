@@ -42,10 +42,10 @@ impl FullAnnotationCorpus {
                 if surface.is_empty() {
                     bail!("Surface is empty: {}", src);
                 }
-                nodes.push(WordNode::new(start_pos, surface, yomi, None));
+                nodes.push(WordNode::new(start_pos, surface, yomi, None, false));
                 start_pos += yomi.len() as i32;
             } else {
-                nodes.push(WordNode::new(start_pos, word, word, None));
+                nodes.push(WordNode::new(start_pos, word, word, None, false));
                 start_pos += word.len() as i32;
             }
         }

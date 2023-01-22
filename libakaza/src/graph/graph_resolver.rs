@@ -1,7 +1,8 @@
+use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
 
 use anyhow::Context;
-use log::trace;
+use log::{info, trace};
 
 use crate::graph::candidate::Candidate;
 use crate::graph::lattice_graph::LatticeGraph;
@@ -83,9 +84,9 @@ impl GraphResolver {
             if node.surface != "__EOS__" {
                 // 同一の開始位置、終了位置を持つものを集める。
                 let end_pos = node.start_pos + (node.yomi.len() as i32);
-                let candidates: BinaryHeap<Candidate> =
-                    Self::get_candidates(node, lattice, &costmap, end_pos);
-                result.push(candidates.into_sorted_vec());
+                let candidates: Vec<Candidate> =
+                    self.get_candidates(node, lattice, &costmap, end_pos);
+                result.push(candidates);
             }
             node = prevmap
                 .get(node)
@@ -96,18 +97,19 @@ impl GraphResolver {
     }
 
     fn get_candidates<U: SystemUnigramLM, B: SystemBigramLM>(
+        &self,
         node: &WordNode,
         lattice: &LatticeGraph<U, B>,
         costmap: &HashMap<&WordNode, f32>,
         end_pos: i32,
-    ) -> BinaryHeap<Candidate> {
+    ) -> Vec<Candidate> {
         // end_pos で終わる単語を得る。
-        lattice
+        let mut strict_results: Vec<Candidate> = lattice
             .node_list(end_pos)
             .unwrap()
             .iter()
             .filter(|alt_node| {
-                alt_node.start_pos == node.start_pos // 同じ位置からはじまっている
+                alt_node.start_pos == node.start_pos // 同じ位置かそれより前から始まっている
                     && alt_node.yomi.len() == node.yomi.len() // 同じ長さの単語を得る
             })
             .map(|f| Candidate {
@@ -115,7 +117,159 @@ impl GraphResolver {
                 yomi: f.yomi.clone(),
                 cost: *costmap.get(f).unwrap(),
             })
-            .collect()
+            .collect();
+        strict_results.sort();
+
+        // もし、候補が著しく少ない場合は、その文節を分割する。
+        // 分割した場合の単語は strict_results に追加される。
+        // ここの閾値はめちゃくちゃヒューリスティックな値です。
+        // 北香那/きたかな/キタカナ のようなケースでも 3 例あるので、という指定。
+        // そのほか、ここより深い階層のハードコードされているものは、すべて、ヒューリスティック。
+        if strict_results.len() < 5 {
+            let mut candidates: Vec<Candidate> = Vec::new();
+            self.collect_breakdown_results(
+                &node.yomi,
+                node.yomi.len(),
+                node.start_pos,
+                &mut candidates,
+                String::new(),
+                String::new(),
+                lattice,
+                end_pos,
+                0,
+                &costmap,
+                0_f32,
+                None,
+            );
+            candidates.sort();
+            for x in candidates {
+                strict_results.push(x)
+            }
+        }
+
+        strict_results
+    }
+
+    /// - `tail_cost`: 末尾から辿った場合のコスト
+    #[allow(clippy::too_many_arguments)]
+    fn collect_breakdown_results<U: SystemUnigramLM, B: SystemBigramLM>(
+        &self,
+        node_yomi: &str,
+        required_len: usize,
+        min_start_pos: i32,
+        strict_results: &mut Vec<Candidate>,
+        cur_surface: String,
+        cur_yomi: String,
+        lattice: &LatticeGraph<U, B>,
+        end_pos: i32,
+        depth: i32,
+        cost_map: &&HashMap<&WordNode, f32>,
+        tail_cost: f32,
+        next_node: Option<&WordNode>,
+    ) {
+        if depth > 4 {
+            // depth が深過ぎたら諦める。
+            info!(
+                "collect_splited_results: too deep: node_yomi={:?}, cur_surface={:?}",
+                node_yomi, cur_surface
+            );
+            return;
+        }
+
+        if cur_yomi.len() == node_yomi.len() {
+            info!("Insert strict_results: {}/{}", cur_surface, cur_yomi);
+            strict_results.push(Candidate {
+                surface: cur_surface,
+                yomi: cur_yomi,
+                cost: tail_cost,
+            });
+            return;
+        }
+
+        let Some(targets) = lattice
+            .node_list(end_pos) else {
+            // 直前のノードはない場合ある。
+            return;
+        };
+        trace!("Targets: {:?}", targets);
+        let mut targets = targets
+            .iter()
+            .filter(|cur| {
+                // 単語の開始位置が、node の表示範囲内に収まっているもののみをリストアップする
+                min_start_pos <= cur.start_pos
+                    // 元々の候補と完全に一致しているものは除外。
+                    && cur.yomi != node_yomi
+            })
+            .map(|f| BreakDown {
+                node: f.clone(),
+                head_cost: (*cost_map.get(f).unwrap()), // 先頭から辿った場合のコスト
+                tail_cost: tail_cost
+                    + lattice.get_node_cost(f)
+                    + next_node
+                        .map(|nn| lattice.get_edge_cost(f, nn))
+                        .unwrap_or_else(|| lattice.get_default_edge_cost()),
+            })
+            .collect::<Vec<_>>();
+        targets.sort();
+
+        // ここの 3、はヒューリスティックな値。
+        // たとえば、3単語までブレーくダウンするとすれば、3**3 辿ることになるわけだから
+        // 相当気を塚うひつようがあるだろう。
+        let targets = targets.iter().take(3).collect::<BinaryHeap<_>>();
+
+        trace!("Targets: {:?}, min_start_pos={}", targets, min_start_pos);
+        for target in targets {
+            if target.node.yomi == "__BOS__" || target.node.yomi == "__EOS__" {
+                continue;
+            }
+
+            info!(
+                "Recursive tracking : {}/{}",
+                target.node.surface, target.node.yomi
+            );
+            if required_len < target.node.yomi.len() {
+                panic!("??? underflow: {:?}, {:?}", required_len, target.node.yomi);
+            }
+            self.collect_breakdown_results(
+                node_yomi,
+                required_len - target.node.yomi.len(),
+                min_start_pos,
+                strict_results,
+                target.node.surface.clone() + cur_surface.as_str(),
+                target.node.yomi.clone() + cur_yomi.as_str(),
+                lattice,
+                end_pos - (target.node.yomi.len() as i32),
+                depth + 1,
+                cost_map,
+                tail_cost + target.tail_cost,
+                Some(&target.node),
+            )
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+struct BreakDown {
+    node: WordNode,
+    /// 先頭から辿った場合のコスト
+    pub head_cost: f32,
+    /// 末尾から辿った場合のコスト
+    pub tail_cost: f32,
+}
+
+impl Eq for BreakDown {}
+
+impl PartialOrd<Self> for BreakDown {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        (self.head_cost + self.tail_cost).partial_cmp(&(other.head_cost + other.tail_cost))
+    }
+}
+
+impl Ord for BreakDown {
+    fn cmp(&self, other: &Self) -> Ordering {
+        (self.head_cost + self.tail_cost)
+            .partial_cmp(&(other.head_cost + other.tail_cost))
+            .unwrap()
     }
 }
 
@@ -128,6 +282,7 @@ mod tests {
     use std::sync::{Arc, Mutex};
 
     use anyhow::Result;
+    use log::LevelFilter;
 
     use crate::graph::graph_builder::GraphBuilder;
     use crate::graph::segmenter::{SegmentationResult, Segmenter};
@@ -249,7 +404,10 @@ mod tests {
         // 「きたかな」を変換したときに、北香那だけではなく「来た/きた かな/かな」のような
         // 文節を区切った候補も出て来ること。
 
-        let _ = env_logger::builder().is_test(true).try_init();
+        let _ = env_logger::builder()
+            .is_test(true)
+            .filter_level(LevelFilter::Trace)
+            .try_init();
 
         let kana_trie = CedarwoodKanaTrie::build(Vec::from([
             "きたかな".to_string(),
@@ -298,12 +456,12 @@ mod tests {
         let system_bigram_lm = MarisaSystemBigramLMBuilder::default()
             .set_default_edge_cost(20_f32)
             .build()?;
-        let user_data = UserData::default();
+        let mut user_data = UserData::default();
         // 来た/きた かな/かな のコストを下げておく。
-        // user_data.record_entries(&[
-        //     Candidate::new("きた", "来た", 0_f32),
-        //     Candidate::new("かな", "かな", 0_f32),
-        // ]);
+        user_data.record_entries(&[
+            Candidate::new("きた", "来た", 0_f32),
+            // Candidate::new("かな", "かな", 0_f32),
+        ]);
         let graph_builder = GraphBuilder::new_with_default_score(
             HashmapVecKanaKanjiDict::new(dict),
             HashmapVecKanaKanjiDict::new(HashMap::new()),
@@ -320,16 +478,16 @@ mod tests {
         let resolver = GraphResolver::default();
         let got = resolver.resolve(&lattice)?;
         // 来たかな が候補に出てくる。
-        assert_eq!(
-            got[0]
-                .iter()
-                .collect::<Vec<_>>()
-                .iter()
-                .map(|it| it.surface.to_string())
-                .collect::<Vec<_>>()
-                .join(","),
-            "来たかな"
-        );
+
+        let got = got[0]
+            .iter()
+            .collect::<Vec<_>>()
+            .iter()
+            .map(|it| it.surface.to_string())
+            .collect::<Vec<_>>()
+            .join(",");
+        info!("Got: {}", got);
+        assert!(got.contains("来たかな"), "{}", got);
         // assert_eq!(result, "来たかな");
         Ok(())
     }

@@ -10,6 +10,7 @@ pub struct WordNode {
     pub yomi: String,
     pub cost: f32,
     pub word_id_and_score: Option<(i32, f32)>,
+    pub auto_generated: bool,
 }
 
 impl Hash for WordNode {
@@ -48,6 +49,7 @@ impl WordNode {
             yomi: "__BOS__".to_string(),
             cost: 0_f32,
             word_id_and_score: None,
+            auto_generated: true,
         }
     }
     pub(crate) fn create_eos(start_pos: i32) -> WordNode {
@@ -57,6 +59,7 @@ impl WordNode {
             yomi: "__EOS__".to_string(),
             cost: 0_f32,
             word_id_and_score: None,
+            auto_generated: true,
         }
     }
     pub fn new(
@@ -64,6 +67,7 @@ impl WordNode {
         surface: &str,
         yomi: &str,
         word_id_and_score: Option<(i32, f32)>,
+        auto_generated: bool,
     ) -> WordNode {
         assert!(
             !surface.is_empty(),
@@ -78,6 +82,7 @@ impl WordNode {
             yomi: yomi.to_string(),
             cost: 0_f32,
             word_id_and_score,
+            auto_generated,
         }
     }
 }

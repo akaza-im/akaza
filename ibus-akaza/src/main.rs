@@ -121,7 +121,7 @@ fn main() -> Result<()> {
         thread::Builder::new()
             .name("user-data-save-thread".to_string())
             .spawn(move || {
-                let interval = time::Duration::from_secs(60);
+                let interval = time::Duration::from_secs(3);
 
                 // スレッド内で雑に例外投げるとスレッドとまっちゃうので丁寧めに処理する。
                 loop {

@@ -1,3 +1,4 @@
+use log::info;
 use std::collections::HashMap;
 
 use crate::cost::calc_cost;
@@ -30,13 +31,14 @@ impl UniGramUserStats {
 
     /**
      * ノードコストを計算する。
-     * システム言語モデルと似ているがちょっと違う式を使ってる模様。
      */
     pub(crate) fn get_cost(&self, key: String) -> Option<f32> {
         let Some(count) = self.word_count.get(key.as_str()) else {
+            info!("Missing user's score!!! {:?}", key);
             return None;
         };
 
+        info!("Use user's score!!! {:?}", key);
         Some(calc_cost(*count, self.unique_words, self.total_words))
     }
 
