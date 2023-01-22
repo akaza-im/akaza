@@ -1,11 +1,10 @@
 use std::collections::vec_deque::VecDeque;
 use std::collections::HashMap;
 
-use crate::graph::candidate::Candidate;
 use anyhow::Context;
-
 use log::trace;
 
+use crate::graph::candidate::Candidate;
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::word_node::WordNode;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
@@ -28,6 +27,7 @@ impl GraphResolver {
         let mut prevmap: HashMap<&WordNode, &WordNode> = HashMap::new();
         let mut costmap: HashMap<&WordNode, f32> = HashMap::new();
 
+        // まずは DP で最適な経路を探索します。
         for i in 1..yomi.len() + 2 {
             let Some(nodes) = &lattice.node_list(i as i32) else {
                 continue;
@@ -71,6 +71,7 @@ impl GraphResolver {
             }
         }
 
+        // 逆向きに辿って、最適な経路を探す。
         let eos = lattice
             .get((yomi.len() + 1) as i32)
             .unwrap()
@@ -120,6 +121,8 @@ impl GraphResolver {
 #[cfg(test)]
 mod tests {
     use std::collections::btree_map::BTreeMap;
+    use std::fs::File;
+    use std::io::Write;
     use std::rc::Rc;
     use std::sync::{Arc, Mutex};
 
@@ -237,6 +240,96 @@ mod tests {
         let terms: Vec<String> = got.iter().map(|f| f[0].surface.clone()).collect();
         let result = terms.join("");
         assert_eq!(result, "私");
+        Ok(())
+    }
+
+    #[test]
+    fn test_kitakana() -> Result<()> {
+        // 「きたかな」を変換したときに、北香那だけではなく「来た/きた かな/かな」のような
+        // 文節を区切った候補も出て来ること。
+
+        let _ = env_logger::builder().is_test(true).try_init();
+
+        let kana_trie = CedarwoodKanaTrie::build(Vec::from([
+            "きたかな".to_string(),
+            "きた".to_string(),
+            "き".to_string(),
+            "たかな".to_string(),
+            "かな".to_string(),
+        ]));
+
+        let graph_builder = Segmenter::new(vec![Arc::new(Mutex::new(kana_trie))]);
+        let graph = graph_builder.build("きたかな", None);
+        // assert_eq!(
+        //     graph,
+        //     SegmentationResult::new(BTreeMap::from([
+        //         (3, vec!["き".to_string()]),
+        //         (6, vec!["きた".to_string()]),
+        //         (
+        //             12,
+        //             vec![
+        //                 "きたかな".to_string(),
+        //                 "かな".to_string(),
+        //                 "たかな".to_string(),
+        //             ]
+        //         ),
+        //     ]))
+        // );
+
+        let dict = HashMap::from([
+            ("きたかな".to_string(), vec!["北香那".to_string()]),
+            ("き".to_string(), vec!["気".to_string()]),
+            ("たかな".to_string(), vec!["高菜".to_string()]),
+            ("かな".to_string(), vec!["かな".to_string()]),
+            (
+                "きた".to_string(),
+                vec!["来た".to_string(), "北".to_string()],
+            ),
+        ]);
+
+        let yomi = "きたかな".to_string();
+
+        let mut system_unigram_lm_builder = MarisaSystemUnigramLMBuilder::default();
+        let system_unigram_lm = system_unigram_lm_builder
+            .set_default_cost(19_f32)
+            .set_default_cost_for_short(20_f32)
+            .build();
+        let system_bigram_lm = MarisaSystemBigramLMBuilder::default()
+            .set_default_edge_cost(20_f32)
+            .build()?;
+        let user_data = UserData::default();
+        // 来た/きた かな/かな のコストを下げておく。
+        // user_data.record_entries(&[
+        //     Candidate::new("きた", "来た", 0_f32),
+        //     Candidate::new("かな", "かな", 0_f32),
+        // ]);
+        let graph_builder = GraphBuilder::new_with_default_score(
+            HashmapVecKanaKanjiDict::new(dict),
+            HashmapVecKanaKanjiDict::new(HashMap::new()),
+            Arc::new(Mutex::new(user_data)),
+            Rc::new(system_unigram_lm),
+            Rc::new(system_bigram_lm),
+        );
+        let lattice = graph_builder.construct(&yomi, &graph);
+        // dot -Tpng -o /tmp/lattice.png /tmp/lattice.dot && open /tmp/lattice.png
+        File::create("/tmp/dump.dot")
+            .unwrap()
+            .write_all(lattice.dump_cost_dot("来たかな").as_bytes())
+            .unwrap();
+        let resolver = GraphResolver::default();
+        let got = resolver.resolve(&lattice)?;
+        // 来たかな が候補に出てくる。
+        assert_eq!(
+            got[0]
+                .iter()
+                .collect::<Vec<_>>()
+                .iter()
+                .map(|it| it.surface.to_string())
+                .collect::<Vec<_>>()
+                .join(","),
+            "来たかな"
+        );
+        // assert_eq!(result, "来たかな");
         Ok(())
     }
 }
