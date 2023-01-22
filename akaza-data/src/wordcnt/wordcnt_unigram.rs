@@ -95,8 +95,8 @@ impl WordcntUnigram {
             marisa,
             default_cost,
             default_cost_for_short,
-            total_words: total_words,
-            unique_words: unique_words as u32,
+            total_words,
+            unique_words,
         })
     }
 }
