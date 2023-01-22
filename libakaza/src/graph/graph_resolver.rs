@@ -1,5 +1,4 @@
-use std::collections::vec_deque::VecDeque;
-use std::collections::HashMap;
+use std::collections::{BinaryHeap, HashMap};
 
 use anyhow::Context;
 use log::trace;
@@ -22,12 +21,12 @@ impl GraphResolver {
     pub fn resolve<U: SystemUnigramLM, B: SystemBigramLM>(
         &self,
         lattice: &LatticeGraph<U, B>,
-    ) -> anyhow::Result<Vec<VecDeque<Candidate>>> {
+    ) -> anyhow::Result<Vec<Vec<Candidate>>> {
         let yomi = &lattice.yomi;
         let mut prevmap: HashMap<&WordNode, &WordNode> = HashMap::new();
         let mut costmap: HashMap<&WordNode, f32> = HashMap::new();
 
-        // まずは DP で最適な経路を探索します。
+        // 前向きに動的計画法でたどる
         for i in 1..yomi.len() + 2 {
             let Some(nodes) = &lattice.node_list(i as i32) else {
                 continue;
@@ -71,7 +70,7 @@ impl GraphResolver {
             }
         }
 
-        // 逆向きに辿って、最適な経路を探す。
+        // 後ろ向きに候補を探していく
         let eos = lattice
             .get((yomi.len() + 1) as i32)
             .unwrap()
@@ -79,35 +78,14 @@ impl GraphResolver {
             .unwrap();
         let bos = lattice.get(0).unwrap().get(0).unwrap();
         let mut node = eos;
-        let mut result: Vec<VecDeque<Candidate>> = Vec::new();
+        let mut result: Vec<Vec<Candidate>> = Vec::new();
         while node != bos {
             if node.surface != "__EOS__" {
                 // 同一の開始位置、終了位置を持つものを集める。
                 let end_pos = node.start_pos + (node.yomi.len() as i32);
-                let mut candidates: VecDeque<Candidate> = lattice
-                    .node_list(end_pos)
-                    .unwrap()
-                    .iter()
-                    .filter(|alt_node| {
-                        alt_node.start_pos == node.start_pos
-                            && alt_node.yomi.len() == node.yomi.len()
-                            && alt_node != &node
-                    })
-                    .map(|f| Candidate {
-                        surface: f.surface.clone(),
-                        yomi: f.yomi.clone(),
-                        cost: *costmap.get(f).unwrap(),
-                    })
-                    .collect();
-                candidates
-                    .make_contiguous()
-                    .sort_by(|a, b| a.cost.partial_cmp(&b.cost).unwrap());
-                candidates.push_front(Candidate {
-                    surface: node.surface.clone(),
-                    yomi: node.yomi.clone(),
-                    cost: *costmap.get(node).unwrap(),
-                });
-                result.push(candidates);
+                let candidates: BinaryHeap<Candidate> =
+                    Self::get_candidates(node, lattice, &costmap, end_pos);
+                result.push(candidates.into_sorted_vec());
             }
             node = prevmap
                 .get(node)
@@ -115,6 +93,29 @@ impl GraphResolver {
         }
         result.reverse();
         Ok(result)
+    }
+
+    fn get_candidates<U: SystemUnigramLM, B: SystemBigramLM>(
+        node: &WordNode,
+        lattice: &LatticeGraph<U, B>,
+        costmap: &HashMap<&WordNode, f32>,
+        end_pos: i32,
+    ) -> BinaryHeap<Candidate> {
+        // end_pos で終わる単語を得る。
+        lattice
+            .node_list(end_pos)
+            .unwrap()
+            .iter()
+            .filter(|alt_node| {
+                alt_node.start_pos == node.start_pos // 同じ位置からはじまっている
+                    && alt_node.yomi.len() == node.yomi.len() // 同じ長さの単語を得る
+            })
+            .map(|f| Candidate {
+                surface: f.surface.clone(),
+                yomi: f.yomi.clone(),
+                cost: *costmap.get(f).unwrap(),
+            })
+            .collect()
     }
 }
 
