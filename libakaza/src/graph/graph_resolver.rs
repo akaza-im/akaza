@@ -1,11 +1,9 @@
-use std::collections::vec_deque::VecDeque;
 use std::collections::{BinaryHeap, HashMap};
 
-use crate::graph::candidate::Candidate;
 use anyhow::Context;
-
 use log::trace;
 
+use crate::graph::candidate::Candidate;
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::word_node::WordNode;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
@@ -23,7 +21,7 @@ impl GraphResolver {
     pub fn resolve<U: SystemUnigramLM, B: SystemBigramLM>(
         &self,
         lattice: &LatticeGraph<U, B>,
-    ) -> anyhow::Result<Vec<VecDeque<Candidate>>> {
+    ) -> anyhow::Result<Vec<Vec<Candidate>>> {
         let yomi = &lattice.yomi;
         let mut prevmap: HashMap<&WordNode, &WordNode> = HashMap::new();
         let mut costmap: HashMap<&WordNode, f32> = HashMap::new();
@@ -78,7 +76,7 @@ impl GraphResolver {
             .unwrap();
         let bos = lattice.get(0).unwrap().get(0).unwrap();
         let mut node = eos;
-        let mut result: Vec<VecDeque<Candidate>> = Vec::new();
+        let mut result: Vec<Vec<Candidate>> = Vec::new();
         while node != bos {
             if node.surface != "__EOS__" {
                 // 同一の開始位置、終了位置を持つものを集める。
@@ -93,7 +91,7 @@ impl GraphResolver {
                         cost: *costmap.get(f).unwrap(),
                     })
                     .collect();
-                result.push(VecDeque::from(candidates.into_sorted_vec()));
+                result.push(candidates.into_sorted_vec());
             }
             node = prevmap
                 .get(node)

@@ -1,4 +1,3 @@
-use alloc::collections::vec_deque::VecDeque;
 use alloc::ffi::CString;
 use std::collections::HashMap;
 
@@ -714,8 +713,7 @@ impl AkazaContext {
     ) -> Result<()> {
         // 候補を設定
         let candidate = Candidate::new(yomi, surface, 0_f32);
-        self.current_state
-            .set_clauses(vec![VecDeque::from([candidate])]);
+        self.current_state.set_clauses(vec![Vec::from([candidate])]);
         self.current_state.clear_state();
 
         // ルックアップテーブルに候補を設定
