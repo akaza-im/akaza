@@ -9,8 +9,8 @@ pub struct OnMemorySystemBigramLM {
     // (word_id, word_id) -> cost
     map: Rc<RefCell<HashMap<(i32, i32), u32>>>,
     default_edge_cost: f32,
-    pub c: u32,
-    pub v: u32,
+    pub total_words: u32,
+    pub unique_words: u32,
 }
 
 impl OnMemorySystemBigramLM {
@@ -23,8 +23,8 @@ impl OnMemorySystemBigramLM {
         OnMemorySystemBigramLM {
             map,
             default_edge_cost,
-            c,
-            v,
+            total_words: c,
+            unique_words: v,
         }
     }
 
@@ -47,14 +47,14 @@ impl SystemBigramLM for OnMemorySystemBigramLM {
         self.map
             .borrow()
             .get(&(word_id1, word_id2))
-            .map(|f| calc_cost(*f, self.c, self.v))
+            .map(|f| calc_cost(*f, self.total_words, self.unique_words))
     }
 
     fn as_hash_map(&self) -> HashMap<(i32, i32), f32> {
         self.map
             .borrow()
             .iter()
-            .map(|((id1, id2), cnt)| ((*id1, *id2), calc_cost(*cnt, self.c, self.v)))
+            .map(|((id1, id2), cnt)| ((*id1, *id2), calc_cost(*cnt, self.total_words, self.unique_words)))
             .collect()
     }
 }
