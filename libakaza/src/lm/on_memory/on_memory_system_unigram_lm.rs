@@ -10,8 +10,8 @@ pub struct OnMemorySystemUnigramLM {
     map: Rc<RefCell<HashMap<String, (i32, u32)>>>,
     pub default_cost: f32,
     pub default_cost_for_short: f32,
-    pub c: u32,
-    pub v: u32,
+    pub total_words: u32,
+    pub unique_words: u32,
 }
 
 impl OnMemorySystemUnigramLM {
@@ -26,8 +26,8 @@ impl OnMemorySystemUnigramLM {
             map,
             default_cost,
             default_cost_for_short,
-            c,
-            v,
+            total_words: c,
+            unique_words: v,
         }
     }
 
@@ -69,14 +69,19 @@ impl SystemUnigramLM for OnMemorySystemUnigramLM {
         self.map
             .borrow()
             .get(word)
-            .map(|(id, cnt)| (*id, calc_cost(*cnt, self.c, self.v)))
+            .map(|(id, cnt)| (*id, calc_cost(*cnt, self.total_words, self.unique_words)))
     }
 
     fn as_hash_map(&self) -> HashMap<String, (i32, f32)> {
         self.map
             .borrow()
             .iter()
-            .map(|(key, (id, cnt))| (key.to_string(), (*id, calc_cost(*cnt, self.c, self.v))))
+            .map(|(key, (id, cnt))| {
+                (
+                    key.to_string(),
+                    (*id, calc_cost(*cnt, self.total_words, self.unique_words)),
+                )
+            })
             .collect()
     }
 }

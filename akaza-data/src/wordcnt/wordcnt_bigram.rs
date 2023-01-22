@@ -43,8 +43,8 @@ impl WordcntBigramBuilder {
 pub struct WordcntBigram {
     marisa: Marisa,
     default_edge_cost: f32,
-    pub c: u32,
-    pub v: u32,
+    pub total_words: u32,
+    pub unique_words: u32,
 }
 
 impl WordcntBigram {
@@ -74,16 +74,16 @@ impl WordcntBigram {
         let map: HashMap<(i32, i32), u32> = Self::_to_map(&marisa);
 
         // 総出現単語数
-        let c = map.iter().map(|((_, _), cnt)| *cnt).sum();
+        let total_words = map.iter().map(|((_, _), cnt)| *cnt).sum();
         // 単語の種類数
-        let v = map.keys().count() as u32;
-        let default_edge_cost = calc_cost(0, c, v);
+        let unique_words = map.keys().count() as u32;
+        let default_edge_cost = calc_cost(0, total_words, unique_words);
 
         Ok(WordcntBigram {
             marisa,
             default_edge_cost,
-            c,
-            v,
+            total_words,
+            unique_words,
         })
     }
 }
@@ -116,7 +116,7 @@ impl SystemBigramLM for WordcntBigram {
             .try_into()
             .unwrap();
         let score: u32 = u32::from_le_bytes(last2);
-        Some(calc_cost(score, self.c, self.v))
+        Some(calc_cost(score, self.total_words, self.unique_words))
     }
 
     fn as_hash_map(&self) -> HashMap<(i32, i32), f32> {
@@ -126,7 +126,10 @@ impl SystemBigramLM for WordcntBigram {
                 let word_id1 = i32::from_le_bytes([word[0], word[1], word[2], 0]);
                 let word_id2 = i32::from_le_bytes([word[3], word[4], word[5], 0]);
                 let cnt = u32::from_le_bytes([word[6], word[7], word[8], word[9]]);
-                map.insert((word_id1, word_id2), calc_cost(cnt, self.c, self.v));
+                map.insert(
+                    (word_id1, word_id2),
+                    calc_cost(cnt, self.total_words, self.unique_words),
+                );
             }
             true
         });

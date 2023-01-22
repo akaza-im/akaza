@@ -69,8 +69,8 @@ impl LearningService {
             Rc::new(RefCell::new(unigram_map)),
             src_system_unigram_lm.get_default_cost(),
             src_system_unigram_lm.get_default_cost_for_short(),
-            src_system_unigram_lm.c,
-            src_system_unigram_lm.v,
+            src_system_unigram_lm.total_words,
+            src_system_unigram_lm.unique_words,
         ));
 
         info!("bigram source file: {}", src_bigram);
@@ -78,8 +78,8 @@ impl LearningService {
         let system_bigram_lm = Rc::new(OnMemorySystemBigramLM::new(
             Rc::new(RefCell::new(src_system_bigram_lm.to_cnt_map())),
             src_system_bigram_lm.get_default_edge_cost(),
-            src_system_bigram_lm.c,
-            src_system_bigram_lm.v,
+            src_system_bigram_lm.total_words,
+            src_system_bigram_lm.unique_words,
         ));
 
         let graph_builder = GraphBuilder::new(

@@ -50,8 +50,8 @@ pub struct WordcntUnigram {
     marisa: Marisa,
     default_cost: f32,
     default_cost_for_short: f32,
-    pub(crate) c: u32,
-    pub(crate) v: u32,
+    pub(crate) total_words: u32,
+    pub(crate) unique_words: u32,
 }
 
 impl WordcntUnigram {
@@ -84,19 +84,19 @@ impl WordcntUnigram {
         let map = Self::_to_count_hashmap(&marisa);
 
         // 総出現単語数
-        let c = map.iter().map(|(_, (_, cnt))| *cnt).sum();
+        let total_words = map.iter().map(|(_, (_, cnt))| *cnt).sum();
         // 単語の種類数
-        let v = map.keys().count();
+        let unique_words = map.keys().count() as u32;
 
-        let default_cost = calc_cost(0, c, v as u32);
-        let default_cost_for_short = calc_cost(1, c, v as u32);
+        let default_cost = calc_cost(0, total_words, unique_words);
+        let default_cost_for_short = calc_cost(1, total_words, unique_words);
 
         Ok(WordcntUnigram {
             marisa,
             default_cost,
             default_cost_for_short,
-            c,
-            v: v as u32,
+            total_words,
+            unique_words,
         })
     }
 }
@@ -127,7 +127,10 @@ impl SystemUnigramLM for WordcntUnigram {
             false
         });
         if word_id != usize::MAX {
-            Some((word_id as i32, calc_cost(score, self.c, self.v)))
+            Some((
+                word_id as i32,
+                calc_cost(score, self.total_words, self.unique_words),
+            ))
         } else {
             None
         }
@@ -142,7 +145,10 @@ impl SystemUnigramLM for WordcntUnigram {
             let cnt = u32::from_le_bytes(bytes);
             map.insert(
                 word.to_string(),
-                (id as i32, calc_cost(cnt, self.c, self.v)),
+                (
+                    id as i32,
+                    calc_cost(cnt, self.total_words, self.unique_words),
+                ),
             );
             true
         });
@@ -156,7 +162,7 @@ mod tests {
     use tempfile::NamedTempFile;
 
     #[test]
-    fn test() -> anyhow::Result<()> {
+    fn test() -> Result<()> {
         let named_tmpfile = NamedTempFile::new().unwrap();
         let tmpfile = named_tmpfile.path().to_str().unwrap().to_string();
 
@@ -173,8 +179,8 @@ mod tests {
                 ("彼/かれ".to_string(), (0_i32, 42_u32)),
             ])
         );
-        assert_eq!(wordcnt.c, 45); // 単語発生数
-        assert_eq!(wordcnt.v, 2); // ユニーク単語数
+        assert_eq!(wordcnt.total_words, 45); // 単語発生数
+        assert_eq!(wordcnt.unique_words, 2); // ユニーク単語数
         assert_eq!(wordcnt.get_default_cost(), 6.672098);
         assert_eq!(wordcnt.get_default_cost_for_short(), 1.6720936);
 
