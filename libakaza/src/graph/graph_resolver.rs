@@ -1,11 +1,10 @@
 use std::collections::vec_deque::VecDeque;
 use std::collections::HashMap;
 
-use crate::graph::candidate::Candidate;
 use anyhow::Context;
-
 use log::trace;
 
+use crate::graph::candidate::Candidate;
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::word_node::WordNode;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
@@ -165,7 +164,7 @@ mod tests {
             .set_default_edge_cost(20_f32)
             .build()?;
         let user_data = UserData::default();
-        let graph_builder = GraphBuilder::new_with_default_score(
+        let graph_builder = GraphBuilder::new(
             HashmapVecKanaKanjiDict::new(HashMap::new()),
             HashmapVecKanaKanjiDict::new(Default::default()),
             Arc::new(Mutex::new(user_data)),
@@ -219,7 +218,7 @@ mod tests {
         let mut user_data = UserData::default();
         // 私/わたし のスコアをガッと上げる。
         user_data.record_entries(&[Candidate::new("わたし", "私", 0_f32)]);
-        let graph_builder = GraphBuilder::new_with_default_score(
+        let graph_builder = GraphBuilder::new(
             HashmapVecKanaKanjiDict::new(dict),
             HashmapVecKanaKanjiDict::new(HashMap::new()),
             Arc::new(Mutex::new(user_data)),
