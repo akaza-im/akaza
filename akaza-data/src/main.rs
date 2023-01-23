@@ -166,6 +166,8 @@ struct EvaluateArgs {
     utf8_dict: Vec<String>,
     #[arg(long)]
     eucjp_dict: Vec<String>,
+    #[arg(long)]
+    model_dir: Option<String>,
 }
 
 /// ユニグラム辞書ファイルをダンプする
@@ -244,6 +246,7 @@ fn main() -> anyhow::Result<()> {
             &opt.corpus,
             &opt.eucjp_dict,
             &opt.utf8_dict,
+            opt.model_dir,
             opt.load_user_config,
         ),
         Commands::DumpUnigramDict(opt) => dump_unigram_dict(opt.dict.as_str()),

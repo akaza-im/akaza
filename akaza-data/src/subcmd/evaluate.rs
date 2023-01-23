@@ -49,6 +49,7 @@ pub fn evaluate(
     corpus: &Vec<String>,
     eucjp_dict: &Vec<String>,
     utf8_dict: &Vec<String>,
+    model_dir: Option<String>,
     load_user_config: bool,
 ) -> anyhow::Result<()> {
     let mut dicts: Vec<DictConfig> = Vec::new();
@@ -68,15 +69,18 @@ pub fn evaluate(
         })
     }
 
-    let akaza = BigramWordViterbiEngineBuilder::new(Config {
+    let mut builder = BigramWordViterbiEngineBuilder::new(Config {
         dicts,
         single_term: Default::default(),
         romkan: None,
         keymap: None,
         model: None,
-    })
-    .load_user_config(load_user_config)
-    .build()?;
+    });
+    builder.load_user_config(load_user_config);
+    if let Some(model_dir) = model_dir {
+        builder.model_dir(&model_dir);
+    }
+    let akaza = builder.build()?;
 
     let mut good_cnt = 0;
     let mut bad_cnt = 0;
