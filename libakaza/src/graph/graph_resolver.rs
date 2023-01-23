@@ -177,7 +177,7 @@ impl GraphResolver {
         }
 
         if cur_yomi.len() == node_yomi.len() {
-            info!("Insert strict_results: {}/{}", cur_surface, cur_yomi);
+            trace!("Insert strict_results: {}/{}", cur_surface, cur_yomi);
             strict_results.push(Candidate {
                 surface: cur_surface,
                 yomi: cur_yomi,
@@ -224,9 +224,10 @@ impl GraphResolver {
                 continue;
             }
 
-            info!(
+            trace!(
                 "Recursive tracking : {}/{}",
-                target.node.surface, target.node.yomi
+                target.node.surface,
+                target.node.yomi
             );
             if required_len < target.node.yomi.len() {
                 panic!("??? underflow: {:?}, {:?}", required_len, target.node.yomi);
