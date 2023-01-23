@@ -1,3 +1,4 @@
+use log::info;
 use std::ops::Range;
 
 use crate::graph::candidate::Candidate;
@@ -21,7 +22,13 @@ pub fn extend_right(clauses: &Vec<Vec<Candidate>>, current_clause: usize) -> Vec
         return Vec::new();
     }
     // 一番右の文節が選択されていたらなにもできない。
+    info!(
+        "Keep current? current={:?} len={}",
+        current_clause,
+        clauses.len()
+    );
     if current_clause == clauses.len() - 1 {
+        info!("Keep current");
         return keep_current(clauses);
     }
 
@@ -192,6 +199,15 @@ mod tests_right {
         let (yomi, clauses) = mk(&["わ", "たし"]);
         let got = extend_right(&clauses, 0);
         assert_eq!(to_vec(yomi, got), vec!("わた", "し"));
+    }
+
+    // ちゃんと伸ばせるケース
+    #[test]
+    fn test_extend_right4() {
+        let (yomi, clauses) = mk(&["あい", "ですね"]);
+        // 「ですね」にフォーカス。
+        let got = extend_right(&clauses, 1);
+        assert_eq!(to_vec(yomi, got), vec!("あい", "ですね"));
     }
 }
 

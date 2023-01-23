@@ -67,6 +67,7 @@ impl CurrentState {
 
     pub fn set_clauses(&mut self, clause: Vec<Vec<Candidate>>) {
         self.clauses = clause;
+        self.node_selected.clear();
     }
 
     /// 変換しているときに backspace を入力した場合。
@@ -85,7 +86,7 @@ impl CurrentState {
         targets
     }
 
-    /// 一顧右の文節を選択する
+    /// 一個右の文節を選択する
     pub fn select_right_clause(&mut self) {
         if self.current_clause == self.clauses.len() - 1 {
             // 既に一番右だった場合、一番左にいく。
@@ -95,7 +96,7 @@ impl CurrentState {
         }
     }
 
-    /// 一顧左の文節を選択する
+    /// 一個左の文節を選択する
     pub fn select_left_clause(&mut self) {
         if self.current_clause == 0 {
             // 既に一番左だった場合、一番右にいく
