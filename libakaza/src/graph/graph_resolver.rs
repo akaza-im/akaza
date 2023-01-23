@@ -128,7 +128,7 @@ impl GraphResolver {
         // そのほか、ここより深い階層のハードコードされているものは、すべて、ヒューリスティック。
         if strict_results.len() < 5 {
             let mut candidates: Vec<Candidate> = Vec::new();
-            self.collect_breakdown_results(
+            Self::collect_breakdown_results(
                 &node.yomi,
                 node.yomi.len(),
                 node.start_pos,
@@ -154,7 +154,6 @@ impl GraphResolver {
     /// - `tail_cost`: 末尾から辿った場合のコスト
     #[allow(clippy::too_many_arguments)]
     fn collect_breakdown_results<U: SystemUnigramLM, B: SystemBigramLM>(
-        &self,
         node_yomi: &str,
         required_len: usize,
         min_start_pos: i32,
