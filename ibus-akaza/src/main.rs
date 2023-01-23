@@ -126,7 +126,7 @@ fn main() -> Result<()> {
                 // スレッド内で雑に例外投げるとスレッドとまっちゃうので丁寧めに処理する。
                 loop {
                     if let Ok(mut data) = user_data.lock() {
-                        if let Err(e) = data.write_user_stats_file() {
+                        if let Err(e) = data.write_user_files() {
                             warn!("Cannot save user stats file: {}", e);
                         }
                     } else {

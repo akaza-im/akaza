@@ -53,7 +53,8 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> GraphBuilder<U, B
 
                 let mut seen: HashSet<String> = HashSet::new();
 
-                // 漢字に変換した結果もあれば insert する。
+                // TODO このへんコピペすぎるので整理必要。
+                // システム辞書にある候補を元に候補をリストアップする
                 if let Some(kanjis) = self.system_kana_kanji_dict.get(segmented_yomi) {
                     for kanji in kanjis {
                         let node = WordNode::new(
@@ -69,6 +70,25 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> GraphBuilder<U, B
                         seen.insert(kanji.to_string());
                     }
                 }
+                if let Some(surfaces) = self.user_data.lock().unwrap().dict.get(segmented_yomi) {
+                    for surface in surfaces {
+                        if seen.contains(surface) {
+                            continue;
+                        }
+                        let node = WordNode::new(
+                            (end_pos - segmented_yomi.len()) as i32,
+                            surface,
+                            segmented_yomi,
+                            self.system_unigram_lm
+                                .find((surface.to_string() + "/" + segmented_yomi).as_str()),
+                            false,
+                        );
+                        trace!("WordIDScore: {:?}", node.word_id_and_score);
+                        vec.push(node);
+                        seen.insert(surface.to_string());
+                    }
+                }
+                // ひらがな候補をリストアップする
                 for surface in [
                     segmented_yomi,
                     hira2kata(segmented_yomi, ConvOption::default()).as_str(),
