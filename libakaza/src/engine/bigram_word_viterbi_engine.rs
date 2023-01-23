@@ -212,6 +212,6 @@ impl BigramWordViterbiEngineBuilder {
     }
 
     fn try_load(name: &str) -> Result<String> {
-        detect_resource_path("model", "AKAZA_MODEL_DIR", name)
+        detect_resource_path("model", name)
     }
 }
