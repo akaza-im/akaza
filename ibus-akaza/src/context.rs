@@ -41,6 +41,7 @@ use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use libakaza::romkan::RomKanConverter;
 
 use crate::commands::{ibus_akaza_commands_map, IbusAkazaCommand};
+use crate::conf::open_configuration_window;
 use crate::current_state::CurrentState;
 use crate::input_mode::{
     get_input_mode_from_prop_name, InputMode, INPUT_MODE_HALFWIDTH_KATAKANA, INPUT_MODE_HIRAGANA,
@@ -105,7 +106,11 @@ impl AkazaContext {
         prop_state: guint,
     ) {
         debug!("do_property_activate: {}, {}", prop_name, prop_state);
-        if prop_state == IBusPropState_PROP_STATE_CHECKED && prop_name.starts_with("InputMode.") {
+        if prop_name == "PrefPane" {
+            open_configuration_window();
+        } else if prop_state == IBusPropState_PROP_STATE_CHECKED
+            && prop_name.starts_with("InputMode.")
+        {
             self.input_mode_activate(engine, prop_name, prop_state);
         }
     }

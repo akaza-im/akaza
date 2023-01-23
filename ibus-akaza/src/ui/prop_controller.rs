@@ -93,6 +93,20 @@ impl PropController {
 
             ibus_property_set_sub_props(input_mode_prop, props);
 
+            // 設定ファイルを開くというやつ
+            let preference_prop = g_object_ref_sink(ibus_property_new(
+                "PrefPane\0".as_ptr() as *const gchar,
+                IBusPropType_PROP_TYPE_MENU,
+                "設定".to_ibus_text(),
+                "\0".as_ptr() as *const gchar,
+                "Preference".to_ibus_text(),
+                to_gboolean(true),
+                to_gboolean(true),
+                IBusPropState_PROP_STATE_UNCHECKED,
+                std::ptr::null_mut() as *mut IBusPropList,
+            ) as gpointer) as *mut IBusProperty;
+            ibus_prop_list_append(prop_list, preference_prop);
+
             (input_mode_prop, prop_list, prop_map)
         }
     }

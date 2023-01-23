@@ -28,6 +28,7 @@ mod input_mode;
 mod keymap;
 mod ui;
 mod wrapper_bindings;
+mod conf;
 
 unsafe extern "C" fn process_key_event(
     context: *mut c_void,
