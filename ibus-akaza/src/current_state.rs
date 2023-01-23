@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 use std::ops::Range;
 
-
-
 use libakaza::extend_clause::{extend_left, extend_right};
 use libakaza::graph::candidate::Candidate;
 
