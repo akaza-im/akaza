@@ -30,7 +30,6 @@ impl UniGramUserStats {
 
     /**
      * ノードコストを計算する。
-     * システム言語モデルと似ているがちょっと違う式を使ってる模様。
      */
     pub(crate) fn get_cost(&self, key: String) -> Option<f32> {
         let Some(count) = self.word_count.get(key.as_str()) else {

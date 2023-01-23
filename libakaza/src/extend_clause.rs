@@ -1,10 +1,9 @@
-use std::collections::vec_deque::VecDeque;
 use std::ops::Range;
 
 use crate::graph::candidate::Candidate;
 
 // 現状維持するための文節データを返します。
-fn keep_current(clauses: &[VecDeque<Candidate>]) -> Vec<Range<usize>> {
+fn keep_current(clauses: &[Vec<Candidate>]) -> Vec<Range<usize>> {
     let mut force_selected_clause: Vec<Range<usize>> = Vec::new();
     let mut offset = 0;
     for yomi_len in clauses.iter().map(|f| f[0].yomi.len()) {
@@ -16,10 +15,7 @@ fn keep_current(clauses: &[VecDeque<Candidate>]) -> Vec<Range<usize>> {
 
 /// 文節の選択範囲を右に拡張する。
 /// current_clause は現在選択されている分節。左から 0 origin である。
-pub fn extend_right(
-    clauses: &Vec<VecDeque<Candidate>>,
-    current_clause: usize,
-) -> Vec<Range<usize>> {
+pub fn extend_right(clauses: &Vec<Vec<Candidate>>, current_clause: usize) -> Vec<Range<usize>> {
     // カラだったらなにもできない。
     if clauses.is_empty() {
         return Vec::new();
@@ -65,7 +61,7 @@ pub fn extend_right(
 
 /// 文節の選択範囲を **左** に拡張する。
 /// current_clause は現在選択されている分節。左から 0 origin である。
-pub fn extend_left(clauses: &Vec<VecDeque<Candidate>>, current_clause: usize) -> Vec<Range<usize>> {
+pub fn extend_left(clauses: &Vec<Vec<Candidate>>, current_clause: usize) -> Vec<Range<usize>> {
     if clauses.is_empty() {
         return Vec::new();
     }
@@ -155,10 +151,10 @@ pub fn extend_left(clauses: &Vec<VecDeque<Candidate>>, current_clause: usize) ->
 mod test_base {
     use super::*;
 
-    pub fn mk(src: &[&str]) -> (String, Vec<VecDeque<Candidate>>) {
-        let mut clauses: Vec<VecDeque<Candidate>> = Vec::new();
+    pub fn mk(src: &[&str]) -> (String, Vec<Vec<Candidate>>) {
+        let mut clauses: Vec<Vec<Candidate>> = Vec::new();
         for x in src {
-            clauses.push(VecDeque::from([Candidate::new(x, x, 0_f32)]));
+            clauses.push(vec![Candidate::new(x, x, 0_f32)]);
         }
         let yomi = src.join("");
         (yomi, clauses)

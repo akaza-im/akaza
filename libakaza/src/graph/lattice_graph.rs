@@ -3,7 +3,7 @@ use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
-use log::{error, trace};
+use log::{error, info, trace};
 
 use crate::graph::word_node::WordNode;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
@@ -122,6 +122,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> LatticeGraph<U, B> {
 
     pub(crate) fn get_node_cost(&self, node: &WordNode) -> f32 {
         if let Some(user_cost) = self.user_data.lock().unwrap().get_unigram_cost(node) {
+            info!("Use user's node score: {:?}", node);
             // use user's score. if it's exists.
             return user_cost;
         }
@@ -155,5 +156,9 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> LatticeGraph<U, B> {
         } else {
             self.system_bigram_lm.get_default_edge_cost()
         }
+    }
+
+    pub fn get_default_edge_cost(&self) -> f32 {
+        self.system_bigram_lm.get_default_edge_cost()
     }
 }

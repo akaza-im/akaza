@@ -1,4 +1,3 @@
-use std::collections::vec_deque::VecDeque;
 use std::ops::Range;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
@@ -44,7 +43,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> HenkanEngine
         &self,
         yomi: &str,
         force_ranges: Option<&[Range<usize>]>,
-    ) -> Result<Vec<VecDeque<Candidate>>> {
+    ) -> Result<Vec<Vec<Candidate>>> {
         // 先頭が大文字なケースと、URL っぽい文字列のときは変換処理を実施しない。
         if (!yomi.is_empty()
             && yomi.chars().next().unwrap().is_ascii_uppercase()
@@ -53,7 +52,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> HenkanEngine
             || yomi.starts_with("https://")
             || yomi.starts_with("http://")
         {
-            return Ok(vec![VecDeque::from([Candidate::new(yomi, yomi, 0_f32)])]);
+            return Ok(vec![Vec::from([Candidate::new(yomi, yomi, 0_f32)])]);
         }
 
         let lattice = self.to_lattice(yomi, force_ranges)?;
@@ -62,7 +61,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> HenkanEngine
 }
 
 impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> BigramWordViterbiEngine<U, B, KD> {
-    pub fn resolve(&self, lattice: &LatticeGraph<U, B>) -> Result<Vec<VecDeque<Candidate>>> {
+    pub fn resolve(&self, lattice: &LatticeGraph<U, B>) -> Result<Vec<Vec<Candidate>>> {
         self.graph_resolver.resolve(lattice)
     }
 

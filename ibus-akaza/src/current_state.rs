@@ -1,4 +1,3 @@
-use alloc::collections::vec_deque::VecDeque;
 use std::collections::HashMap;
 use std::ops::Range;
 
@@ -11,7 +10,7 @@ use crate::input_mode::InputMode;
 pub struct CurrentState {
     pub(crate) input_mode: InputMode,
     pub preedit: String,
-    pub(crate) clauses: Vec<VecDeque<Candidate>>,
+    pub(crate) clauses: Vec<Vec<Candidate>>,
     /// 現在選択されている文節
     pub(crate) current_clause: usize,
     // key は、clause 番号。value は、node の index。
@@ -66,7 +65,7 @@ impl CurrentState {
         self.preedit = preedit;
     }
 
-    pub fn set_clauses(&mut self, clause: Vec<VecDeque<Candidate>>) {
+    pub fn set_clauses(&mut self, clause: Vec<Vec<Candidate>>) {
         self.clauses = clause;
     }
 

@@ -62,6 +62,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> GraphBuilder<U, B
                             segmented_yomi,
                             self.system_unigram_lm
                                 .find((kanji.to_string() + "/" + segmented_yomi).as_str()),
+                            false,
                         );
                         trace!("WordIDScore: {:?}", node.word_id_and_score);
                         vec.push(node);
@@ -81,6 +82,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> GraphBuilder<U, B
                         surface,
                         segmented_yomi,
                         None,
+                        true,
                     );
                     vec.push(node);
                 }
@@ -95,6 +97,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> GraphBuilder<U, B
                                 segmented_yomi,
                                 self.system_unigram_lm
                                     .find((surface.to_string() + "/" + segmented_yomi).as_str()),
+                                false,
                             );
                             vec.push(node);
                         }

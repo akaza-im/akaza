@@ -204,6 +204,7 @@ mod tests {
             "アグリゲーション",
             "あぐりげーしょん",
             None,
+            false,
         ));
         assert_eq!(cost1, None);
         user_data.record_entries(&[Candidate::new(
@@ -217,6 +218,7 @@ mod tests {
                 "アグリゲーション",
                 "あぐりげーしょん",
                 None,
+                false,
             ))
             .unwrap();
         user_data.record_entries(&[Candidate::new(
@@ -230,6 +232,7 @@ mod tests {
                 "アグリゲーション",
                 "あぐりげーしょん",
                 None,
+                false,
             ))
             .unwrap();
         info!("{}, {}", cost2, cost3);

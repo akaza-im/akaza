@@ -1,11 +1,29 @@
+use std::cmp::Ordering;
+
 #[allow(unused_imports)]
 use chrono::{DateTime, Local, TimeZone};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Candidate {
     pub surface: String,
     pub yomi: String,
     pub cost: f32,
+    /// 複合語か? 複合語だったら、true になるので、その場合は学習時にユーザー辞書に登録する必要がある。
+    pub compound_word: bool,
+}
+
+impl Eq for Candidate {}
+
+impl PartialOrd<Self> for Candidate {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.cost.partial_cmp(&other.cost)
+    }
+}
+
+impl Ord for Candidate {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.cost.partial_cmp(&other.cost).unwrap()
+    }
 }
 
 impl Candidate {
@@ -20,6 +38,7 @@ impl Candidate {
             yomi: yomi.to_string(),
             surface: surface.to_string(),
             cost,
+            compound_word: false,
         }
     }
 
