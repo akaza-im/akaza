@@ -231,7 +231,7 @@ impl GraphResolver {
             if required_len < target.node.yomi.len() {
                 panic!("??? underflow: {:?}, {:?}", required_len, target.node.yomi);
             }
-            self.collect_breakdown_results(
+            Self::collect_breakdown_results(
                 node_yomi,
                 required_len - target.node.yomi.len(),
                 min_start_pos,
