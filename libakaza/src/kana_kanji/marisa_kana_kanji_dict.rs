@@ -15,6 +15,7 @@ impl MarisaKanaKanjiDict {
     pub(crate) fn build(
         dicts: HashMap<String, Vec<String>>,
         cache_path: &str,
+        cache_serialized_key: &str,
     ) -> anyhow::Result<MarisaKanaKanjiDict> {
         let mut keyset = Keyset::default();
         for (kana, surfaces) in dicts {
@@ -28,6 +29,14 @@ impl MarisaKanaKanjiDict {
                 .as_slice(),
             );
         }
+        keyset.push_back(
+            [
+                "__CACHE_SERIALIZED__\t".as_bytes(),
+                cache_serialized_key.as_bytes(),
+            ]
+            .concat()
+            .as_slice(),
+        );
 
         let mut marisa = Marisa::default();
         marisa.build(&keyset);
@@ -41,12 +50,25 @@ impl MarisaKanaKanjiDict {
         Ok(MarisaKanaKanjiDict { marisa })
     }
 
+    pub fn cache_serialized(&self) -> String {
+        let mut p = String::new();
+        self.marisa
+            .predictive_search("__CACHE_SERIALIZED__\t".as_bytes(), |word, _| {
+                let idx = word.iter().position(|f| *f == b'\t').unwrap();
+                p = String::from_utf8_lossy(&word[idx + 1..word.len()]).to_string();
+                false
+            });
+        p
+    }
+
     pub fn yomis(&self) -> Vec<String> {
         let mut yomis: Vec<String> = Vec::new();
 
         self.marisa.predictive_search("".as_bytes(), |word, _| {
-            let idx = word.iter().position(|f| *f == b'\t').unwrap();
-            yomis.push(String::from_utf8_lossy(&word[0..idx]).to_string());
+            if !word.starts_with("__CACHE_SERIALIZED__\t".as_bytes()) {
+                let idx = word.iter().position(|f| *f == b'\t').unwrap();
+                yomis.push(String::from_utf8_lossy(&word[0..idx]).to_string());
+            }
             true
         });
 
@@ -85,6 +107,7 @@ mod tests {
         let dict = MarisaKanaKanjiDict::build(
             HashMap::from([("たなか".to_string(), vec!["田中".to_string()])]),
             path.as_str(),
+            "",
         )?;
 
         assert_eq!(dict.get("たなか"), Some(vec!["田中".to_string()]));
