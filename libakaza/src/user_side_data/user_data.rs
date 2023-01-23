@@ -4,11 +4,13 @@ use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
 use anyhow::Result;
-use log::{debug, info, warn};
+use encoding_rs::UTF_8;
+use log::{info, warn};
 
+use crate::dict::skk::read::read_skkdict;
+use crate::dict::skk::write::write_skk_dict;
 use crate::graph::candidate::Candidate;
 use crate::graph::word_node::WordNode;
-use crate::kana_trie::base::KanaTrie;
 use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 use crate::user_side_data::bigram_user_stats::BiGramUserStats;
 use crate::user_side_data::unigram_user_stats::UniGramUserStats;
@@ -30,6 +32,9 @@ pub struct UserData {
 
     unigram_path: Option<String>,
     bigram_path: Option<String>,
+    dict_path: Option<String>,
+
+    pub dict: HashMap<String, Vec<String>>,
 
     pub(crate) need_save: bool,
 }
@@ -47,14 +52,19 @@ impl UserData {
             .to_str()
             .unwrap()
             .to_string();
+        let dict_path = basedir
+            .place_data_file(Path::new("SKK-JISYO.user"))?
+            .to_str()
+            .unwrap()
+            .to_string();
         info!(
             "Load user data from default path: unigram={}, bigram={}",
             unigram_path, bigram_path
         );
-        Ok(UserData::load(&unigram_path, &bigram_path))
+        Ok(UserData::load(&unigram_path, &bigram_path, &dict_path))
     }
 
-    pub fn load(unigram_path: &String, bigram_path: &String) -> Self {
+    pub fn load(unigram_path: &String, bigram_path: &String, dict_path: &String) -> Self {
         // ユーザーデータが読み込めないことは fatal エラーではない。
         // 初回起動時にはデータがないので。
         // データがなければ初期所状態から始める
@@ -96,6 +106,14 @@ impl UserData {
             }
         };
 
+        let dict = match read_skkdict(Path::new(dict_path), UTF_8) {
+            Ok(d) => d,
+            Err(err) => {
+                warn!("Cannot load user dict: {:?} {:?}", dict_path, err);
+                Default::default()
+            }
+        };
+
         // let kana_trie = match CedarwoodKanaTrie::load(kana_trie_path) {
         //     Ok(trie) => trie,
         //     Err(err) => {
@@ -107,12 +125,14 @@ impl UserData {
         // cedarwood トライを構築する。
         // キャッシュせずに動的に構築する方向性。
         let t1 = SystemTime::now();
-        let yomis = unigram_user_stats
+        let mut yomis = unigram_user_stats
             .word_count
             .keys()
             .filter_map(|it| it.split_once('/'))
             .map(|(_, yomi)| yomi.to_string())
             .collect::<Vec<_>>();
+        // ユーザー辞書の内容も追加
+        dict.keys().for_each(|yomi| yomis.push(yomi.to_string()));
         let yomi_len = yomis.len();
         let kana_trie = CedarwoodKanaTrie::build(yomis);
         let t2 = SystemTime::now();
@@ -121,15 +141,15 @@ impl UserData {
             t2.duration_since(t1).unwrap().as_millis(),
             yomi_len
         );
-        // TODO remove this
-        debug!("{:?}", kana_trie.common_prefix_search("あぐりげーしょん"));
 
         UserData {
             unigram_user_stats,
             bigram_user_stats,
+            dict,
             kana_trie: Arc::new(Mutex::new(kana_trie)),
             unigram_path: Some(unigram_path.clone()),
             bigram_path: Some(bigram_path.clone()),
+            dict_path: Some(dict_path.clone()),
             need_save: false,
         }
     }
@@ -139,6 +159,17 @@ impl UserData {
     pub fn record_entries(&mut self, candidates: &[Candidate]) {
         self.unigram_user_stats.record_entries(candidates);
         self.bigram_user_stats.record_entries(candidates);
+
+        // 複合語として覚えておくべきものがあれば、学習する。
+        candidates
+            .iter()
+            .filter(|candidate| candidate.compound_word)
+            .for_each(|candidate| {
+                self.dict
+                    .entry(candidate.yomi.to_string())
+                    .or_default()
+                    .push(candidate.surface.to_string())
+            });
 
         // かなトライを更新する
         let mut kana_trie = self.kana_trie.lock().unwrap();
@@ -154,7 +185,7 @@ impl UserData {
         self.need_save = true;
     }
 
-    pub fn write_user_stats_file(&mut self) -> Result<()> {
+    pub fn write_user_files(&mut self) -> Result<()> {
         if self.need_save {
             info!(
                 "Saving user stats file: unigram={:?},{}, bigram={:?},{}",
@@ -168,6 +199,9 @@ impl UserData {
             }
             if let Some(bigram_path) = &self.bigram_path {
                 write_user_stats_file(bigram_path, &self.bigram_user_stats.word_count)?;
+            }
+            if let Some(dict_path) = &self.dict_path {
+                write_skk_dict(dict_path, vec![self.dict.clone()])?;
             }
 
             self.need_save = false;
@@ -188,8 +222,9 @@ impl UserData {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use log::LevelFilter;
+
+    use super::*;
 
     #[test]
     fn test_record_entries() {
