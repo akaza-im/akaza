@@ -22,13 +22,13 @@ use crate::context::AkazaContext;
 use crate::wrapper_bindings::{ibus_akaza_init, ibus_akaza_set_callback};
 
 mod commands;
+mod conf;
 mod context;
 mod current_state;
 mod input_mode;
 mod keymap;
 mod ui;
 mod wrapper_bindings;
-mod conf;
 
 unsafe extern "C" fn process_key_event(
     context: *mut c_void,
