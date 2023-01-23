@@ -84,7 +84,8 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> BigramWordViterbi
 pub struct BigramWordViterbiEngineBuilder {
     user_data: Option<Arc<Mutex<UserData>>>,
     load_user_config: bool,
-    pub config: Config,
+    model_dir: Option<String>,
+    config: Config,
 }
 
 impl BigramWordViterbiEngineBuilder {
@@ -92,6 +93,7 @@ impl BigramWordViterbiEngineBuilder {
         BigramWordViterbiEngineBuilder {
             user_data: None,
             load_user_config: false,
+            model_dir: None,
             config,
         }
     }
@@ -108,6 +110,11 @@ impl BigramWordViterbiEngineBuilder {
         self
     }
 
+    pub fn model_dir(&mut self, model_dir: &str) -> &mut Self {
+        self.model_dir = Some(model_dir.to_string());
+        self
+    }
+
     pub fn build(
         &self,
     ) -> Result<
@@ -119,13 +126,24 @@ impl BigramWordViterbiEngineBuilder {
             .clone()
             .unwrap_or_else(|| "default".to_string());
 
-        let system_unigram_lm = MarisaSystemUnigramLM::load(
-            Self::try_load(&format!("{}/unigram.model", model_name))?.as_str(),
-        )?;
-        let system_bigram_lm = MarisaSystemBigramLM::load(
-            Self::try_load(&format!("{}/bigram.model", model_name))?.as_str(),
-        )?;
-        let system_dict = Self::try_load(&format!("{}/SKK-JISYO.akaza", model_name))?;
+        let system_unigram_lm = match &self.model_dir {
+            Some(path) => MarisaSystemUnigramLM::load(&format!("{}/unigram.model", path)),
+            None => MarisaSystemUnigramLM::load(
+                Self::try_load(&format!("{}/unigram.model", model_name))?.as_str(),
+            ),
+        }?;
+        let system_bigram_lm = match &self.model_dir {
+            Some(path) => MarisaSystemBigramLM::load(&format!("{}/bigram.model", path.clone())),
+            None => MarisaSystemBigramLM::load(
+                Self::try_load(&format!("{}/bigram.model", model_name))?.as_str(),
+            ),
+        }?;
+        let system_dict = match &self.model_dir {
+            Some(path) => {
+                format!("{}/SKK-JISYO.akaza", path)
+            }
+            None => Self::try_load(&format!("{}/SKK-JISYO.akaza", model_name))?,
+        };
 
         let user_data = if let Some(d) = &self.user_data {
             d.clone()
@@ -194,6 +212,6 @@ impl BigramWordViterbiEngineBuilder {
     }
 
     fn try_load(name: &str) -> Result<String> {
-        detect_resource_path("model", "AKAZA_MODEL_DIR", name)
+        detect_resource_path("model", name)
     }
 }

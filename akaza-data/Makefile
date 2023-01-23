@@ -9,7 +9,6 @@ work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.
 	tar -xmzf work/vibrato/ipadic-mecab-2_7_0.tar.gz -C work/vibrato/
 
 evaluate:
-	AKAZA_ROMKAN_DIR=../romkan/ \
 	cargo run --release -- evaluate \
 		 --corpus=anthy-corpus/corpus.0.txt \
 		 --corpus=anthy-corpus/corpus.1.txt \

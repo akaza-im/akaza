@@ -15,8 +15,7 @@ pub struct RomKanConfig {
 }
 
 fn load_romkan_map(name: &str) -> anyhow::Result<HashMap<String, String>> {
-    let pathstr =
-        resource::detect_resource_path("romkan", "AKAZA_ROMKAN_DIR", &format!("{}.yml", name))?;
+    let pathstr = resource::detect_resource_path("romkan", &format!("{}.yml", name))?;
     info!("Load {}", pathstr);
     let got: RomKanConfig = serde_yaml::from_reader(BufReader::new(
         File::open(&pathstr).with_context(|| pathstr)?,
