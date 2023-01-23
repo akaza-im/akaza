@@ -617,7 +617,6 @@ impl AkazaContext {
     pub fn extend_clause_right(&mut self, engine: *mut IBusEngine) -> Result<()> {
         self.current_state.extend_right();
         self._update_candidates(engine)?;
-        self.current_state.clear_state();
         Ok(())
     }
 
@@ -625,7 +624,6 @@ impl AkazaContext {
     pub fn extend_clause_left(&mut self, engine: *mut IBusEngine) -> Result<()> {
         self.current_state.extend_left();
         self._update_candidates(engine)?;
-        self.current_state.clear_state();
         Ok(())
     }
 
