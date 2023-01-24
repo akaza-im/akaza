@@ -44,8 +44,8 @@ Rust で書いています。
 
 モデルファイルをダウンロードして展開してください。
 
-    mkdir /usr/share/akaza/
-    curl -L https://github.com/tokuhirom/akaza/releases/download/<<VERSION>>/akaza-data.tar.gz | tar xzv --strip-components=1 -C /usr/share/akaza/
+    sudo mkdir -p /usr/share/akaza/model/default/
+    curl -L https://github.com/akaza-im/akaza-default-model/releases/download/<<VERSION>>/akaza-default-model.tar.gz | sudo tar xzv --strip-components=1 -C /usr/share/akaza/model/default/
 
 ibus-akaza をインストールしてください。
 
