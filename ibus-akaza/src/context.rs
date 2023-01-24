@@ -1,11 +1,11 @@
 use alloc::ffi::CString;
 use std::collections::HashMap;
 
-use akaza_conf::conf::open_configuration_window;
 use anyhow::Result;
 use kelp::{h2z, hira2kata, z2h, ConvOption};
 use log::{debug, error, info, trace, warn};
 
+use akaza_conf::conf::open_configuration_window;
 use ibus_sys::attr_list::{ibus_attr_list_append, ibus_attr_list_new};
 use ibus_sys::attribute::{
     ibus_attribute_new, IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND,
@@ -42,7 +42,6 @@ use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use libakaza::romkan::RomKanConverter;
 
 use crate::commands::{ibus_akaza_commands_map, IbusAkazaCommand};
-use crate::conf::open_configuration_window;
 use crate::current_state::CurrentState;
 use crate::input_mode::{
     get_input_mode_from_prop_name, InputMode, INPUT_MODE_HALFWIDTH_KATAKANA, INPUT_MODE_HIRAGANA,
