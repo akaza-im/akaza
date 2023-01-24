@@ -3,7 +3,7 @@ use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow, Button, Label, Notebook};
 use gtk4 as gtk;
 use gtk4::gio::ApplicationFlags;
-use gtk4::Grid;
+use gtk4::{Grid, Widget};
 
 pub fn open_configuration_window() {
     let app = Application::new(Some("com.github.akaza.config"), ApplicationFlags::empty());
@@ -16,16 +16,10 @@ pub fn open_configuration_window() {
             .title("Akaza の設定")
             .build();
 
-        let core_label = Label::new(Some("(工事中)"));
-        let dict_label = Label::new(Some("(工事中)"));
-        let about_label = Label::new(Some(
-            format!("Akaza version {}", env!("CARGO_PKG_VERSION")).as_str(),
-        ));
-
         let notebook = Notebook::builder().build();
-        notebook.append_page(&core_label, Some(&Label::new(Some("基本設定"))));
-        notebook.append_page(&dict_label, Some(&Label::new(Some("辞書"))));
-        notebook.append_page(&about_label, Some(&Label::new(Some("アバウト"))));
+        notebook.append_page(&build_core_pane(), Some(&Label::new(Some("基本設定"))));
+        notebook.append_page(&build_dict_pane(), Some(&Label::new(Some("辞書"))));
+        notebook.append_page(&build_about_pane(), Some(&Label::new(Some("アバウト"))));
 
         let grid = Grid::builder().build();
 
@@ -61,4 +55,18 @@ pub fn open_configuration_window() {
 
     let v: Vec<String> = Vec::new();
     app.run_with_args(v.as_slice());
+}
+
+fn build_core_pane() -> Label {
+    Label::new(Some("(工事中)"))
+}
+
+fn build_dict_pane() -> Label {
+    Label::new(Some("(工事中)"))
+}
+
+fn build_about_pane() -> Label {
+    Label::new(Some(
+        format!("Akaza version {}", env!("CARGO_PKG_VERSION")).as_str(),
+    ))
 }
