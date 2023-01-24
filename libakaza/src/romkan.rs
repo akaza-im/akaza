@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 
-
+use crate::resource::detect_resource_path;
 use anyhow::Context;
 use log::info;
 use regex::{Captures, Regex};
@@ -15,7 +15,7 @@ pub struct RomKanConfig {
 }
 
 fn load_romkan_map(file_path: &str) -> anyhow::Result<HashMap<String, String>> {
-    info!("Load {}", file_path);
+    info!("Loading romkan map: {}", file_path);
     let got: RomKanConfig = serde_yaml::from_reader(BufReader::new(
         File::open(file_path).with_context(|| file_path.to_string())?,
     ))?;
@@ -23,7 +23,8 @@ fn load_romkan_map(file_path: &str) -> anyhow::Result<HashMap<String, String>> {
     if let Some(parent) = got.extends {
         // 継承しているので親を読み込む。
         // 再帰的な処理になる。
-        let mut parent = load_romkan_map(parent.as_str())?;
+        let path = detect_resource_path("romkan", &format!("{}.yml", parent))?;
+        let mut parent = load_romkan_map(&path)?;
 
         for (k, v) in got.mapping {
             if let Some(v) = v {
@@ -78,7 +79,7 @@ impl RomKanConverter {
     }
 
     pub fn default_mapping() -> anyhow::Result<RomKanConverter> {
-        Self::new("default")
+        Self::new(&detect_resource_path("romkan", "default.yml")?)
     }
 }
 
@@ -104,6 +105,8 @@ impl RomKanConverter {
 
 #[cfg(test)]
 mod tests {
+    use log::LevelFilter;
+
     use super::*;
 
     #[test]
@@ -160,6 +163,10 @@ mod tests {
 
     #[test]
     fn remove_last_char() -> anyhow::Result<()> {
+        let _ = env_logger::builder()
+            .filter_level(LevelFilter::Info)
+            .try_init();
+
         let cases: Vec<(&str, &str)> = vec![
             ("aka", "a"),
             ("sona", "so"),
@@ -178,7 +185,11 @@ mod tests {
 
     #[test]
     fn test_atok() -> anyhow::Result<()> {
-        let converter = RomKanConverter::new("atok")?;
+        let _ = env_logger::builder()
+            .filter_level(LevelFilter::Info)
+            .try_init();
+
+        let converter = RomKanConverter::new("../romkan/atok.yml")?;
         assert_eq!(converter.to_hiragana("aiu"), "あいう");
         // zya が null で上書きされて消えてる
         assert_eq!(converter.to_hiragana("zya"), "zや");

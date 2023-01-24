@@ -134,6 +134,7 @@ mod tests {
     use std::io::Write;
     use std::{env, thread, time};
 
+    use crate::config::DictUsage;
     use anyhow::Result;
     use log::LevelFilter;
     use tempfile::{tempdir, NamedTempFile};
@@ -168,6 +169,7 @@ mod tests {
                 path: dictfile.path().to_str().unwrap().to_string(),
                 encoding: DictEncoding::Utf8,
                 dict_type: DictType::SKK,
+                usage: DictUsage::Normal,
             }],
             "test",
         )?;
@@ -193,6 +195,7 @@ mod tests {
                 path: dictfile.path().to_str().unwrap().to_string(),
                 encoding: DictEncoding::Utf8,
                 dict_type: DictType::SKK,
+                usage: DictUsage::Normal,
             }],
             "test",
         )?;
@@ -210,6 +213,7 @@ mod tests {
                 path: dictfile.path().to_str().unwrap().to_string(),
                 encoding: DictEncoding::Utf8,
                 dict_type: DictType::SKK,
+                usage: DictUsage::Normal,
             }],
             "test",
         )?;
@@ -267,6 +271,7 @@ mod tests {
                 path: dict1.path().to_str().unwrap().to_string(),
                 encoding: DictEncoding::Utf8,
                 dict_type: DictType::SKK,
+                usage: DictUsage::Normal,
             }],
             "test",
         )?;
@@ -279,11 +284,13 @@ mod tests {
                     path: dict1.path().to_str().unwrap().to_string(),
                     encoding: DictEncoding::Utf8,
                     dict_type: DictType::SKK,
+                    usage: DictUsage::Normal,
                 },
                 DictConfig {
                     path: dict2.path().to_str().unwrap().to_string(),
                     encoding: DictEncoding::Utf8,
                     dict_type: DictType::SKK,
+                    usage: DictUsage::Normal,
                 },
             ],
             "test",

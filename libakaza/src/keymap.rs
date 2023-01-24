@@ -2,11 +2,10 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 
+use crate::resource::detect_resource_path;
 use anyhow::{bail, Context, Result};
 use log::info;
 use serde::{Deserialize, Serialize};
-
-
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Keymap {
@@ -99,7 +98,8 @@ impl Keymap {
         ))?;
 
         if let Some(parent) = &got.extends {
-            let mut map = Keymap::load(parent.as_str())?;
+            let path = detect_resource_path("keymap", &format!("{}.yml", parent))?;
+            let mut map = Keymap::load(&path)?;
 
             for (kp, opts) in &got.to_map()? {
                 if let Some(cmd) = opts {

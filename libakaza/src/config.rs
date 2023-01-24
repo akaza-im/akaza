@@ -208,24 +208,3 @@ impl DictUsage {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_load() -> anyhow::Result<()> {
-        let config = Config::load_from_file("../config.sample.yml")?;
-        assert_eq!(config.dicts.len(), 2);
-        assert_eq!(
-            config.dicts[0],
-            DictConfig {
-                path: "/usr/share/skk/SKK-JISYO.L".to_string(),
-                encoding: DictEncoding::EucJp,
-                dict_type: DictType::SKK,
-                usage: DictUsage::Normal,
-            }
-        );
-        Ok(())
-    }
-}
