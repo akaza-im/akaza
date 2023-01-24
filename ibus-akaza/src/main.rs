@@ -95,9 +95,28 @@ struct IBusAkazaArgs {
 fn main() -> Result<()> {
     let arg: IBusAkazaArgs = IBusAkazaArgs::parse();
 
-    env_logger::Builder::new()
-        .filter_level(arg.verbose.log_level_filter())
-        .init();
+    let logpath = xdg::BaseDirectories::with_prefix("akaza")?
+        .create_cache_directory("logs")?
+        .join("ibus-akaza.log");
+    println!("log file path: {}", logpath.to_string_lossy());
+
+    // log file をファイルに書いていく。
+    // ~/.cache/akaza/logs/ibus-akaza.log に書く。
+    // https://superuser.com/questions/1293842/where-should-userspecific-application-log-files-be-stored-in-gnu-linux
+    fern::Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "{}[{}][{}] {}",
+                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+                record.target(),
+                record.level(),
+                message
+            ))
+        })
+        .level(arg.verbose.log_level_filter())
+        .chain(std::io::stdout())
+        .chain(fern::log_file(logpath)?)
+        .apply()?;
 
     info!("Starting ibus-akaza(rust version)");
 

@@ -18,6 +18,9 @@ clap = { version = "4.1.1", features = ["derive"] }
 clap-verbosity-flag = "2.0.0"
 kelp = "0.4.0"
 regex = "1"
+fern = "0.6.1"
+chrono = "0.4.23"
+xdg = "2.4.1"
 
 [build-dependencies]
 cc = "1.0.78"
