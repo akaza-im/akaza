@@ -27,8 +27,9 @@ Rust で書いています。
 
 ### Runtime dependencies
 
-* ibus
+* ibus 1.5+
 * marisa-trie
+* gtk4
 
 ### Build time dependencies
 
