@@ -22,7 +22,6 @@ use crate::context::AkazaContext;
 use crate::wrapper_bindings::{ibus_akaza_init, ibus_akaza_set_callback};
 
 mod commands;
-mod conf;
 mod context;
 mod current_state;
 mod input_mode;

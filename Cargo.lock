@@ -23,6 +23,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "akaza-conf"
+version = "0.1.7"
+dependencies = [
+ "gtk4",
+]
+
+[[package]]
 name = "akaza-data"
 version = "0.1.7"
 dependencies = [
@@ -939,12 +946,12 @@ dependencies = [
 name = "ibus-akaza"
 version = "0.1.7"
 dependencies = [
+ "akaza-conf",
  "anyhow",
  "cc",
  "clap 4.1.1",
  "clap-verbosity-flag",
  "env_logger",
- "gtk4",
  "ibus-sys",
  "kelp",
  "libakaza",

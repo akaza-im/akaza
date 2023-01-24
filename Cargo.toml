@@ -1,2 +1,2 @@
 [workspace]
-members = ["libakaza", "marisa-sys", "ibus-akaza", "ibus-sys", "akaza-data"]
+members = ["libakaza", "marisa-sys", "ibus-akaza", "ibus-sys", "akaza-data", "akaza-conf"]

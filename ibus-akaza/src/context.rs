@@ -1,6 +1,7 @@
 use alloc::ffi::CString;
 use std::collections::HashMap;
 
+use akaza_conf::conf::open_configuration_window;
 use anyhow::Result;
 use kelp::{h2z, hira2kata, z2h, ConvOption};
 use log::{debug, error, info, trace, warn};
