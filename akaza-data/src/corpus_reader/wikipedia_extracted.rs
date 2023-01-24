@@ -50,6 +50,14 @@ impl CorpusReader for ExtractedWikipediaProcessor {
                 // のような、タグから始まる行を無視する。
                 continue;
             }
+            // &lt;section begin="WEST順位" /&gt;
+            //  class="wikitable sortable" style="text-align: center;"
+            // ! !!class="unsortable"| チーム!!!!!!!!!!!!!!!!!!!!出場権または降格
+            // &lt;section end="WEST順位" /&gt;
+            // !colspan="4"|日本!!colspan="2"|リーグ戦!!colspan="2"|!!colspan="2"|天皇杯!!colspan="2"|期間通算
+            if line.starts_with(" class=") || line.starts_with("&lt;") || line.starts_with('!') {
+                continue;
+            }
             if line.is_empty() {
                 // 空行を無視する
                 continue;
