@@ -5,6 +5,7 @@ use anyhow::Result;
 use kelp::{h2z, hira2kata, z2h, ConvOption};
 use log::{debug, error, info, trace, warn};
 
+use akaza_conf::conf::open_configuration_window;
 use ibus_sys::attr_list::{ibus_attr_list_append, ibus_attr_list_new};
 use ibus_sys::attribute::{
     ibus_attribute_new, IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND,
@@ -77,12 +78,7 @@ impl AkazaContext {
         config: Config,
     ) -> Result<Self> {
         let input_mode = INPUT_MODE_HIRAGANA;
-        let romkan = RomKanConverter::new(
-            config
-                .romkan
-                .unwrap_or_else(|| "default".to_string())
-                .as_str(),
-        )?;
+        let romkan = RomKanConverter::new(config.romkan.as_str())?;
 
         Ok(AkazaContext {
             current_state: CurrentState::new(input_mode),
@@ -105,7 +101,14 @@ impl AkazaContext {
         prop_state: guint,
     ) {
         debug!("do_property_activate: {}, {}", prop_name, prop_state);
-        if prop_state == IBusPropState_PROP_STATE_CHECKED && prop_name.starts_with("InputMode.") {
+        if prop_name == "PrefPane" {
+            match open_configuration_window() {
+                Ok(_) => {}
+                Err(e) => info!("Err: {}", e),
+            }
+        } else if prop_state == IBusPropState_PROP_STATE_CHECKED
+            && prop_name.starts_with("InputMode.")
+        {
             self.input_mode_activate(engine, prop_name, prop_state);
         }
     }

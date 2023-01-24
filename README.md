@@ -56,38 +56,7 @@ ibus-akaza をインストールしてください。
 
 ## 設定方法
 
-### config.yml
-
-XDG の設定ファイルディレクトリ以下、通常であれば `$HOME/.config/akaza/config.yml` に設定ファイルを書くことができます。
-
-設定可能な項目は以下のもの。
-
-* ユーザー辞書の設定
-
-サンプルの設定は以下のような感じになります。
-akaza が提供しているシステム辞書は偏りがすごくあるので、SKK-JISYO.L を読み込むことをおすすめします。たとえば以下のように設定すると良いでしょう。
-
-    ---
-    dicts:
-      - path: /usr/share/skk/SKK-JISYO.L
-        encoding: euc-jp
-        dict_type: skk
-      - path: /usr/share/skk/SKK-JISYO.jinmei
-        encoding: euc-jp
-        dict_type: skk
-    single_term:
-      - path: /usr/share/akaza/SKK-JISYO.dynamic
-        encoding: utf-8
-        dict_type: skk
-
-akaza に付属する SKK-JISYO.dynamic を利用すると、「きょう」を変換すると、今日の日付がでるという機能が利用可能です。
-
-↓ かな入力したい場合は以下のように設定してください。
-
-    romkan: kana
-
 ### Keymap の設定
-
 
 Akaza は典型的には以下の順番で探します。
 
@@ -95,7 +64,8 @@ Akaza は典型的には以下の順番で探します。
 2. `/usr/local/share/akaza/keymap/{KEYMAP_NAME}.yml`
 3. `/usr/share/akaza/keymap/{KEYMAP_NAME}.yml`
 
-このパスは、[XDG ユーザーディレクトリ](https://wiki.archlinux.jp/index.php/XDG_%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA) の仕様に基づいています。
+このパスは、[XDG ユーザーディレクトリ](https://wiki.archlinux.jp/index.php/XDG_%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA)
+の仕様に基づいています。
 Akaza は Keymap は `XDG_DATA_HOME` と `XDG_DATA_DIRS` からさがします。
 `XDG_DATA_HOME` は設定していなければ `~/.local/share/` です。`XDGA_DATA_DIR` は設定していなければ `/usr/local/share:/usr/share/` です。
 

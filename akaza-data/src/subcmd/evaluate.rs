@@ -5,7 +5,7 @@ use std::time::SystemTime;
 use anyhow::Context;
 use log::info;
 
-use libakaza::config::{Config, DictConfig};
+use libakaza::config::{Config, DictConfig, DictEncoding, DictType, DictUsage};
 use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 
@@ -55,26 +55,27 @@ pub fn evaluate(
     let mut dicts: Vec<DictConfig> = Vec::new();
     for path in eucjp_dict {
         dicts.push(DictConfig {
-            dict_type: "skk".to_string(),
-            encoding: Some("euc-jp".to_string()),
+            dict_type: DictType::SKK,
+            encoding: DictEncoding::EucJp,
             path: path.clone(),
+            usage: DictUsage::Normal,
         })
     }
 
     for path in utf8_dict {
         dicts.push(DictConfig {
-            dict_type: "skk".to_string(),
-            encoding: Some("utf-8".to_string()),
+            dict_type: DictType::SKK,
+            encoding: DictEncoding::Utf8,
             path: path.clone(),
+            usage: DictUsage::Normal,
         })
     }
 
     let mut builder = BigramWordViterbiEngineBuilder::new(Config {
         dicts,
-        single_term: Default::default(),
-        romkan: None,
-        keymap: None,
-        model: None,
+        romkan: Default::default(),
+        keymap: Default::default(),
+        model: Default::default(),
     });
     builder.load_user_config(load_user_config);
     if let Some(model_dir) = model_dir {
