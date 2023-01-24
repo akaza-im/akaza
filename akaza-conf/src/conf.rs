@@ -29,16 +29,12 @@ pub fn open_configuration_window() {
 
         let grid = Grid::builder().build();
 
-        let ok_button = Button::with_label("OK");
-        ok_button.connect_clicked(|_| {
-            eprintln!("Clicked!");
-        });
-
         grid.attach(&notebook, 0, 0, 6, 1);
 
         let ok_button = Button::with_label("OK");
         ok_button.connect_clicked(|_| {
             eprintln!("Save the configuration...");
+            // TODO: 保存処理
         });
         let cancel_button = Button::with_label("Cancel");
         {
