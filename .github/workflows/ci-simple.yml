@@ -25,7 +25,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install ibus libgirepository1.0-dev libmarisa-dev clang libibus-1.0-dev unzip libgtk4-dev
+        sudo apt-get install ibus libgirepository1.0-dev libmarisa-dev clang libibus-1.0-dev unzip libgtk-4-dev
     - name: make test data
       run: |
         cd akaza-data/ && make test-data
