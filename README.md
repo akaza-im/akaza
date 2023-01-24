@@ -70,15 +70,15 @@ akaza が提供しているシステム辞書は偏りがすごくあるので�
     ---
     dicts:
       - path: /usr/share/skk/SKK-JISYO.L
-        encoding: euc-jp
-        dict_type: skk
+        encoding: EucJp
+        dict_type: SKK
       - path: /usr/share/skk/SKK-JISYO.jinmei
-        encoding: euc-jp
-        dict_type: skk
+        encoding: EucJp
+        dict_type: SKK
     single_term:
       - path: /usr/share/akaza/SKK-JISYO.dynamic
-        encoding: utf-8
-        dict_type: skk
+        encoding: Utf8
+        dict_type: SKK
 
 akaza に付属する SKK-JISYO.dynamic を利用すると、「きょう」を変換すると、今日の日付がでるという機能が利用可能です。
 
@@ -88,14 +88,14 @@ akaza に付属する SKK-JISYO.dynamic を利用すると、「きょう」を�
 
 ### Keymap の設定
 
-
 Akaza は典型的には以下の順番で探します。
 
 1. `~/.local/share/akaza/keymap/{KEYMAP_NAME}.yml`
 2. `/usr/local/share/akaza/keymap/{KEYMAP_NAME}.yml`
 3. `/usr/share/akaza/keymap/{KEYMAP_NAME}.yml`
 
-このパスは、[XDG ユーザーディレクトリ](https://wiki.archlinux.jp/index.php/XDG_%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA) の仕様に基づいています。
+このパスは、[XDG ユーザーディレクトリ](https://wiki.archlinux.jp/index.php/XDG_%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA)
+の仕様に基づいています。
 Akaza は Keymap は `XDG_DATA_HOME` と `XDG_DATA_DIRS` からさがします。
 `XDG_DATA_HOME` は設定していなければ `~/.local/share/` です。`XDGA_DATA_DIR` は設定していなければ `/usr/local/share:/usr/share/` です。
 
