@@ -187,10 +187,8 @@ impl AkazaContext {
         if modifiers & IBusModifierType_IBUS_RELEASE_MASK != 0 {
             return false;
         }
-        // keymap.register([KEY_STATE_COMPOSITION], ['Return', 'KP_Enter'], 'commit_preedit')
         let key_state = self.get_key_state();
 
-        // TODO configure keymap in ~/.config/akaza/keymap.yml?
         trace!("KeyState={:?}", key_state);
         if let Some(callback) = self
             .keymap
