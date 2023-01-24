@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 
 use log::info;
 
-use libakaza::config::{Config, DictConfig, DictEncoding, DictType};
+use libakaza::config::{Config, DictConfig, DictEncoding, DictType, DictUsage};
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 use libakaza::user_side_data::user_data::UserData;
 
@@ -16,14 +16,15 @@ pub fn check(yomi: &str, expected: Option<String>, user_data: bool) -> anyhow::R
                 dict_type: DictType::SKK,
                 encoding: DictEncoding::EucJp,
                 path: "/usr/share/skk/SKK-JISYO.L".to_string(),
+                usage: DictUsage::Normal,
             },
             DictConfig {
                 dict_type: DictType::SKK,
                 encoding: DictEncoding::Utf8,
                 path: "data/SKK-JISYO.akaza".to_string(),
+                usage: DictUsage::Normal,
             },
         ],
-        single_term: Default::default(),
         romkan: Default::default(),
         keymap: Default::default(),
         model: Default::default(),

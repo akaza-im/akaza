@@ -10,3 +10,6 @@ xdg = "2.4.1"
 log = "0.4.17"
 env_logger = "0.10.0"
 libakaza = { path = "../libakaza" }
+anyhow = "1.0.68"
+serde = "1.0.152"
+serde_yaml = "0.9.17"

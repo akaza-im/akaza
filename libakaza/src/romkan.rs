@@ -14,11 +14,10 @@ pub struct RomKanConfig {
     extends: Option<String>,
 }
 
-fn load_romkan_map(name: &str) -> anyhow::Result<HashMap<String, String>> {
-    let pathstr = resource::detect_resource_path("romkan", &format!("{}.yml", name))?;
-    info!("Load {}", pathstr);
+fn load_romkan_map(file_path: &str) -> anyhow::Result<HashMap<String, String>> {
+    info!("Load {}", file_path);
     let got: RomKanConfig = serde_yaml::from_reader(BufReader::new(
-        File::open(&pathstr).with_context(|| pathstr)?,
+        File::open(file_path).with_context(|| file_path.to_string())?,
     ))?;
 
     if let Some(parent) = got.extends {

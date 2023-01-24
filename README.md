@@ -56,36 +56,6 @@ ibus-akaza をインストールしてください。
 
 ## 設定方法
 
-### config.yml
-
-XDG の設定ファイルディレクトリ以下、通常であれば `$HOME/.config/akaza/config.yml` に設定ファイルを書くことができます。
-
-設定可能な項目は以下のもの。
-
-* ユーザー辞書の設定
-
-サンプルの設定は以下のような感じになります。
-akaza が提供しているシステム辞書は偏りがすごくあるので、SKK-JISYO.L を読み込むことをおすすめします。たとえば以下のように設定すると良いでしょう。
-
-    ---
-    dicts:
-      - path: /usr/share/skk/SKK-JISYO.L
-        encoding: EucJp
-        dict_type: SKK
-      - path: /usr/share/skk/SKK-JISYO.jinmei
-        encoding: EucJp
-        dict_type: SKK
-    single_term:
-      - path: /usr/share/akaza/SKK-JISYO.dynamic
-        encoding: Utf8
-        dict_type: SKK
-
-akaza に付属する SKK-JISYO.dynamic を利用すると、「きょう」を変換すると、今日の日付がでるという機能が利用可能です。
-
-↓ かな入力したい場合は以下のように設定してください。
-
-    romkan: kana
-
 ### Keymap の設定
 
 Akaza は典型的には以下の順番で探します。

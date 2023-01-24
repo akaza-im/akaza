@@ -102,7 +102,10 @@ impl AkazaContext {
     ) {
         debug!("do_property_activate: {}, {}", prop_name, prop_state);
         if prop_name == "PrefPane" {
-            open_configuration_window();
+            match open_configuration_window() {
+                Ok(_) => {}
+                Err(e) => info!("Err: {}", e),
+            }
         } else if prop_state == IBusPropState_PROP_STATE_CHECKED
             && prop_name.starts_with("InputMode.")
         {

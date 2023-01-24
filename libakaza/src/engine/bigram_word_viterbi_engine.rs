@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
 
-use crate::config::{Config, DictConfig, DictEncoding, DictType};
+use crate::config::{Config, DictConfig, DictEncoding, DictType, DictUsage};
 use crate::dict::loader::load_dicts_ex;
 use crate::engine::base::HenkanEngine;
 use crate::graph::candidate::Candidate;
@@ -124,21 +124,22 @@ impl BigramWordViterbiEngineBuilder {
 
         let system_unigram_lm = match &self.model_dir {
             Some(path) => MarisaSystemUnigramLM::load(&format!("{}/unigram.model", path)),
-            None => MarisaSystemUnigramLM::load(
-                Self::try_load(&format!("{}/unigram.model", model_name))?.as_str(),
-            ),
+            None => {
+                MarisaSystemUnigramLM::load(Self::try_load(&model_name, "unigram.model")?.as_str())
+            }
         }?;
         let system_bigram_lm = match &self.model_dir {
             Some(path) => MarisaSystemBigramLM::load(&format!("{}/bigram.model", path.clone())),
-            None => MarisaSystemBigramLM::load(
-                Self::try_load(&format!("{}/bigram.model", model_name))?.as_str(),
-            ),
+            None => {
+                MarisaSystemBigramLM::load(Self::try_load(&model_name, "bigram.model")?.as_str())
+            }
         }?;
+        // TODO Merge self.model_dir and config.model
         let system_dict = match &self.model_dir {
             Some(path) => {
                 format!("{}/SKK-JISYO.akaza", path)
             }
-            None => Self::try_load(&format!("{}/SKK-JISYO.akaza", model_name))?,
+            None => Self::try_load(&model_name, "SKK-JISYO.akaza")?,
         };
 
         let user_data = if let Some(d) = &self.user_data {
@@ -148,17 +149,33 @@ impl BigramWordViterbiEngineBuilder {
         };
 
         let dict = {
-            let mut dicts = self.config.dicts.to_vec();
+            let mut dicts = self
+                .config
+                .dicts
+                .iter()
+                .filter(|it| it.usage == DictUsage::Normal)
+                .cloned()
+                .collect::<Vec<_>>();
             dicts.push(DictConfig {
                 path: system_dict,
                 dict_type: DictType::SKK,
                 encoding: DictEncoding::Utf8,
+                usage: DictUsage::Normal,
             });
 
             load_dicts_ex(&dicts, "kana_kanji_cache.marisa")?
         };
 
-        let single_term = load_dicts_ex(&self.config.single_term, "single_term_cache.marisa")?;
+        let single_term = load_dicts_ex(
+            &self
+                .config
+                .dicts
+                .iter()
+                .filter(|it| it.usage == DictUsage::SingleTerm)
+                .cloned()
+                .collect::<Vec<_>>(),
+            "single_term_cache.marisa",
+        )?;
 
         // 辞書を元に、トライを作成していく。
         let mut kana_trie = CedarwoodKanaTrie::default();
@@ -203,7 +220,7 @@ impl BigramWordViterbiEngineBuilder {
         })
     }
 
-    fn try_load(name: &str) -> Result<String> {
-        detect_resource_path("model", name)
+    fn try_load(model_dir: &str, name: &str) -> Result<String> {
+        Ok(model_dir.to_string() + "/" + name)
     }
 }

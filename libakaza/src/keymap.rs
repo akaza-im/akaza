@@ -92,11 +92,10 @@ pub enum KeyState {
 }
 
 impl Keymap {
-    pub fn load(name: &str) -> Result<HashMap<KeyPattern, String>> {
-        let pathstr = detect_resource_path("keymap", &format!("{}.yml", name))?;
-        info!("Load {}", pathstr);
+    pub fn load(keymap_path: &str) -> Result<HashMap<KeyPattern, String>> {
+        info!("Load {}", keymap_path);
         let got: Keymap = serde_yaml::from_reader(BufReader::new(
-            File::open(&pathstr).with_context(|| pathstr)?,
+            File::open(keymap_path).with_context(|| keymap_path.to_string())?,
         ))?;
 
         if let Some(parent) = &got.extends {

@@ -1,3 +1,7 @@
+# 2023-01-24(Tue)
+
+* 設定画面を gtk4-rs で実装した。
+
 # 2022-12-23(Fri)
 
  * Started development, again.
