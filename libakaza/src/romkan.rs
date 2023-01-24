@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 
-use crate::resource;
+
 use anyhow::Context;
 use log::info;
 use regex::{Captures, Regex};

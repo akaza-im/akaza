@@ -18,7 +18,7 @@ use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 use crate::lm::system_bigram::MarisaSystemBigramLM;
 use crate::lm::system_unigram_lm::MarisaSystemUnigramLM;
-use crate::resource::detect_resource_path;
+
 use crate::romkan::RomKanConverter;
 use crate::user_side_data::user_data::UserData;
 

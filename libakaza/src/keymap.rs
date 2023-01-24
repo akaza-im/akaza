@@ -6,7 +6,7 @@ use anyhow::{bail, Context, Result};
 use log::info;
 use serde::{Deserialize, Serialize};
 
-use crate::resource::detect_resource_path;
+
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Keymap {
