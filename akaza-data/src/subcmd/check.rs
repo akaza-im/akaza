@@ -4,28 +4,29 @@ use std::sync::{Arc, Mutex};
 
 use log::info;
 
-use libakaza::config::{Config, DictConfig};
+use libakaza::config::{Config, DictConfig, DictEncoding, DictType};
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 use libakaza::user_side_data::user_data::UserData;
 
 pub fn check(yomi: &str, expected: Option<String>, user_data: bool) -> anyhow::Result<()> {
     let mut builder = BigramWordViterbiEngineBuilder::new(Config {
         dicts: vec![
+            // TODO ハードコードやめたい
             DictConfig {
-                dict_type: "skk".to_string(),
-                encoding: Some("euc-jp".to_string()),
+                dict_type: DictType::SKK,
+                encoding: DictEncoding::EucJp,
                 path: "/usr/share/skk/SKK-JISYO.L".to_string(),
             },
             DictConfig {
-                dict_type: "skk".to_string(),
-                encoding: Some("utf-8".to_string()),
+                dict_type: DictType::SKK,
+                encoding: DictEncoding::Utf8,
                 path: "data/SKK-JISYO.akaza".to_string(),
             },
         ],
         single_term: Default::default(),
-        romkan: None,
-        keymap: None,
-        model: None,
+        romkan: Default::default(),
+        keymap: Default::default(),
+        model: Default::default(),
     });
     if user_data {
         info!("Enabled user data");

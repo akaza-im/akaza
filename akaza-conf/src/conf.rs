@@ -104,6 +104,7 @@ fn build_core_pane() -> Grid {
     );
     grid.attach(
         &{
+            //TODO: 設定ファイルに書いてあるものを default value として選ぶ
             let cbt = ComboBoxText::new();
             let romkan = get_keymap_list("keymap", { |f| f.to_string_lossy().ends_with(".yml") });
             info!("keymap: {:?}", romkan);
@@ -153,7 +154,7 @@ fn build_core_pane() -> Grid {
         &{
             let cbt = ComboBoxText::new();
             let romkan = get_keymap_list("model", {
-                |f| !f.file_name().unwrap().to_string_lossy().starts_with(".")
+                |f| !f.file_name().unwrap().to_string_lossy().starts_with('.')
             });
             info!("model: {:?}", romkan);
             for item in romkan {

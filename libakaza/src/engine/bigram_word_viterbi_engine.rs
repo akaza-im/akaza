@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
 
-use crate::config::{Config, DictConfig};
+use crate::config::{Config, DictConfig, DictEncoding, DictType};
 use crate::dict::loader::load_dicts_ex;
 use crate::engine::base::HenkanEngine;
 use crate::graph::candidate::Candidate;
@@ -120,11 +120,7 @@ impl BigramWordViterbiEngineBuilder {
     ) -> Result<
         BigramWordViterbiEngine<MarisaSystemUnigramLM, MarisaSystemBigramLM, MarisaKanaKanjiDict>,
     > {
-        let model_name = self
-            .config
-            .model
-            .clone()
-            .unwrap_or_else(|| "default".to_string());
+        let model_name = self.config.model.clone();
 
         let system_unigram_lm = match &self.model_dir {
             Some(path) => MarisaSystemUnigramLM::load(&format!("{}/unigram.model", path)),
@@ -155,8 +151,8 @@ impl BigramWordViterbiEngineBuilder {
             let mut dicts = self.config.dicts.to_vec();
             dicts.push(DictConfig {
                 path: system_dict,
-                dict_type: "skk".to_string(),
-                encoding: None,
+                dict_type: DictType::SKK,
+                encoding: DictEncoding::Utf8,
             });
 
             load_dicts_ex(&dicts, "kana_kanji_cache.marisa")?
@@ -194,11 +190,7 @@ impl BigramWordViterbiEngineBuilder {
 
         let graph_resolver = GraphResolver::default();
 
-        let mapping_name = self
-            .config
-            .romkan
-            .clone()
-            .unwrap_or_else(|| "default".to_string());
+        let mapping_name = self.config.romkan.clone();
         let mapping_name = mapping_name.as_str();
         let romkan_converter = RomKanConverter::new(mapping_name)?;
 

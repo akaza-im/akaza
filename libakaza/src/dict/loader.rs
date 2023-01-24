@@ -3,12 +3,12 @@ use std::fs::File;
 use std::path::Path;
 use std::time::SystemTime;
 
+use anyhow::Context;
 use anyhow::Result;
-use anyhow::{bail, Context};
 use encoding_rs::{EUC_JP, UTF_8};
 use log::{error, info};
 
-use crate::config::DictConfig;
+use crate::config::{DictConfig, DictEncoding, DictType};
 use crate::dict::merge_dict::merge_dict;
 use crate::dict::skk::read::read_skkdict;
 use crate::kana_kanji::marisa_kana_kanji_dict::MarisaKanaKanjiDict;
@@ -108,22 +108,12 @@ pub fn load_dict(dict: &DictConfig) -> Result<HashMap<String, Vec<String>>> {
         dict.path, dict.encoding, dict.dict_type
     );
     let encoding = match &dict.encoding {
-        Some(encoding) => match encoding.to_ascii_lowercase().as_str() {
-            "euc-jp" | "euc_jp" => EUC_JP,
-            "utf-8" => UTF_8,
-            _ => {
-                bail!(
-                    "Unknown enconding in configuration: {} for {}",
-                    encoding,
-                    dict.path
-                )
-            }
-        },
-        None => UTF_8,
+        DictEncoding::EucJp => EUC_JP,
+        DictEncoding::Utf8 => UTF_8,
     };
 
-    match dict.dict_type.as_str() {
-        "skk" => {
+    match dict.dict_type {
+        DictType::SKK => {
             let t1 = SystemTime::now();
             let merged = read_skkdict(Path::new(dict.path.as_str()), encoding)?;
             let t2 = SystemTime::now();
@@ -134,13 +124,6 @@ pub fn load_dict(dict: &DictConfig) -> Result<HashMap<String, Vec<String>>> {
                 t2.duration_since(t1).unwrap().as_millis()
             );
             Ok(merged)
-        }
-        _ => {
-            bail!(
-                "Unknown dictionary type: {} for {}",
-                dict.dict_type,
-                dict.path
-            );
         }
     }
 }
@@ -183,8 +166,8 @@ mod tests {
         let loaded = load_dicts_ex(
             &vec![DictConfig {
                 path: dictfile.path().to_str().unwrap().to_string(),
-                encoding: None,
-                dict_type: "skk".to_string(),
+                encoding: DictEncoding::Utf8,
+                dict_type: DictType::SKK,
             }],
             "test",
         )?;
@@ -208,8 +191,8 @@ mod tests {
         let loaded = load_dicts_ex(
             &vec![DictConfig {
                 path: dictfile.path().to_str().unwrap().to_string(),
-                encoding: None,
-                dict_type: "skk".to_string(),
+                encoding: DictEncoding::Utf8,
+                dict_type: DictType::SKK,
             }],
             "test",
         )?;
@@ -225,8 +208,8 @@ mod tests {
         let loaded = load_dicts_ex(
             &vec![DictConfig {
                 path: dictfile.path().to_str().unwrap().to_string(),
-                encoding: None,
-                dict_type: "skk".to_string(),
+                encoding: DictEncoding::Utf8,
+                dict_type: DictType::SKK,
             }],
             "test",
         )?;
@@ -282,8 +265,8 @@ mod tests {
         let loaded = load_dicts_ex(
             &vec![DictConfig {
                 path: dict1.path().to_str().unwrap().to_string(),
-                encoding: None,
-                dict_type: "skk".to_string(),
+                encoding: DictEncoding::Utf8,
+                dict_type: DictType::SKK,
             }],
             "test",
         )?;
@@ -294,13 +277,13 @@ mod tests {
             &vec![
                 DictConfig {
                     path: dict1.path().to_str().unwrap().to_string(),
-                    encoding: None,
-                    dict_type: "skk".to_string(),
+                    encoding: DictEncoding::Utf8,
+                    dict_type: DictType::SKK,
                 },
                 DictConfig {
                     path: dict2.path().to_str().unwrap().to_string(),
-                    encoding: None,
-                    dict_type: "skk".to_string(),
+                    encoding: DictEncoding::Utf8,
+                    dict_type: DictType::SKK,
                 },
             ],
             "test",
