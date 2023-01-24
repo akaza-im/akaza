@@ -5,26 +5,47 @@ dicts:
     encoding: euc-jp
     dict_type: skk
  */
+use std::fmt::Display;
+use std::fmt::Formatter;
 use std::fs::File;
 use std::io::BufReader;
 
 use anyhow::Result;
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
+use DictEncoding::Utf8;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct Config {
     pub dicts: Vec<DictConfig>,
     pub single_term: Vec<DictConfig>,
+
     /// ローマ字かな変換テーブルの指定
     /// "default", "kana", etc.
-    pub romkan: Option<String>,
+    #[serde(default = "default_romkan")]
+    pub romkan: String,
+
     /// キーマップテーブルの指定
     /// "default", "atok", etc.
-    pub keymap: Option<String>,
+    #[serde(default = "default_keymap")]
+    pub keymap: String,
+
     /// Model の指定
     /// "default", etc.
-    pub model: Option<String>,
+    #[serde(default = "default_model")]
+    pub model: String,
+}
+
+fn default_romkan() -> String {
+    "default".to_string()
+}
+
+fn default_keymap() -> String {
+    "default".to_string()
+}
+
+fn default_model() -> String {
+    "default".to_string()
 }
 
 impl Config {
@@ -61,9 +82,74 @@ impl Config {
 #[derive(Debug, PartialEq, Serialize, Deserialize, Default, Clone)]
 pub struct DictConfig {
     pub path: String,
+
+    /// Encoding of the dictionary
     /// Default: UTF-8
-    pub encoding: Option<String>,
-    pub dict_type: String,
+    // #[serde(default = "default_encoding")]
+    pub encoding: DictEncoding,
+
+    // #[serde(default = "default_dict_type")]
+    pub dict_type: DictType,
+}
+
+fn default_encoding() -> DictEncoding {
+    Utf8
+}
+
+fn default_dict_type() -> DictType {
+    DictType::SKK
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub enum DictEncoding {
+    EucJp,
+    Utf8,
+}
+
+impl Default for DictEncoding {
+    fn default() -> Self {
+        Utf8
+    }
+}
+
+impl Display for DictEncoding {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl DictEncoding {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            DictEncoding::Utf8 => "UTF-8",
+            DictEncoding::EucJp => "EUC-JP",
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub enum DictType {
+    SKK,
+}
+
+impl Display for DictType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Default for DictType {
+    fn default() -> Self {
+        DictType::SKK
+    }
+}
+
+impl DictType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            &DictType::SKK => "SKK",
+        }
+    }
 }
 
 #[cfg(test)]
@@ -78,8 +164,8 @@ mod tests {
             config.dicts[0],
             DictConfig {
                 path: "/usr/share/skk/SKK-JISYO.L".to_string(),
-                encoding: Some("euc-jp".to_string()),
-                dict_type: "skk".to_string(),
+                encoding: DictEncoding::EucJp,
+                dict_type: DictType::SKK,
             }
         );
         Ok(())

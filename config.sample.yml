@@ -1,15 +1,15 @@
 ---
 dicts:
   - path: /usr/share/skk/SKK-JISYO.L
-    encoding: euc-jp
-    dict_type: skk
+    encoding: EucJp
+    dict_type: SKK
   - path: /usr/share/skk/SKK-JISYO.jinmei
-    encoding: euc-jp
-    dict_type: skk
+    encoding: EucJp
+    dict_type: SKK
 single_term:
   - path: /usr/share/akaza/SKK-JISYO.dynamic
-    encoding: utf-8
-    dict_type: skk
+    encoding: Utf8
+    dict_type: SKK
 
 # 仮名入力にしたい場合は以下の行をコメント外す。
 # romkan: kana

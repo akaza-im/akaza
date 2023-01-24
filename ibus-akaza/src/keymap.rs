@@ -38,8 +38,7 @@ impl KeyMap {
         unsafe { ibus_keyval_from_name(cs.as_ptr()) }
     }
 
-    pub(crate) fn new(keymap_name: Option<String>) -> anyhow::Result<Self> {
-        let keymap_name = keymap_name.unwrap_or_else(|| "default".to_string());
+    pub(crate) fn new(keymap_name: String) -> anyhow::Result<Self> {
         let keymap = Keymap::load(keymap_name.as_str())?;
         let mut mapping: HashMap<KeyPattern, String> = HashMap::new();
 

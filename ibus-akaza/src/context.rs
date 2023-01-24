@@ -78,12 +78,7 @@ impl AkazaContext {
         config: Config,
     ) -> Result<Self> {
         let input_mode = INPUT_MODE_HIRAGANA;
-        let romkan = RomKanConverter::new(
-            config
-                .romkan
-                .unwrap_or_else(|| "default".to_string())
-                .as_str(),
-        )?;
+        let romkan = RomKanConverter::new(config.romkan.as_str())?;
 
         Ok(AkazaContext {
             current_state: CurrentState::new(input_mode),
