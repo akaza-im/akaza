@@ -533,6 +533,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fern"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3bdd7b0849075e79ee9a1836df22c717d1eba30451796fdc631b04565dd11e2a"
+dependencies = [
+ "log",
+]
+
+[[package]]
 name = "field-offset"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -956,15 +965,18 @@ dependencies = [
  "akaza-conf",
  "anyhow",
  "cc",
+ "chrono",
  "clap 4.1.1",
  "clap-verbosity-flag",
  "env_logger",
+ "fern",
  "ibus-sys",
  "kelp",
  "libakaza",
  "log",
  "regex",
  "tempfile",
+ "xdg",
 ]
 
 [[package]]
