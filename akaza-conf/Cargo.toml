@@ -6,4 +6,7 @@ license = "MIT"
 
 [dependencies]
 gtk4 = "0.5.5"
-
+xdg = "2.4.1"
+log = "0.4.17"
+env_logger = "0.10.0"
+libakaza = { path = "../libakaza" }

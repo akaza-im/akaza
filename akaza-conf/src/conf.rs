@@ -1,9 +1,14 @@
+use std::path::PathBuf;
+
 use gtk::glib::signal::Inhibit;
 use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow, Button, Label, Notebook};
 use gtk4 as gtk;
+use gtk4::builders::ComboBoxTextBuilder;
 use gtk4::gio::ApplicationFlags;
-use gtk4::{Grid, Widget};
+use gtk4::{ComboBoxText, Grid};
+use libakaza::config::Config;
+use log::info;
 
 pub fn open_configuration_window() {
     let app = Application::new(Some("com.github.akaza.config"), ApplicationFlags::empty());
@@ -57,8 +62,111 @@ pub fn open_configuration_window() {
     app.run_with_args(v.as_slice());
 }
 
-fn build_core_pane() -> Label {
-    Label::new(Some("(工事中)"))
+#[derive(Debug)]
+struct PathConfItem {
+    name: String,
+    path: String,
+}
+
+fn get_keymap_list<P>(path: &str, filter: P) -> Vec<PathConfItem>
+where
+    P: FnMut(&&PathBuf) -> bool,
+{
+    let p = xdg::BaseDirectories::with_prefix("akaza")
+        .unwrap()
+        .list_data_files(path);
+
+    p.iter()
+        .filter(filter)
+        .map(|f| PathConfItem {
+            name: f
+                .as_path()
+                .file_name()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_string(),
+            path: f.to_string_lossy().to_string(),
+        })
+        .collect::<Vec<_>>()
+}
+
+fn build_core_pane() -> Grid {
+    // キーマップとローマ字テーブル、モデルの設定ができるようにする。
+    let grid = Grid::new();
+    // xalign: 0 は左寄という意味。
+    grid.attach(
+        &Label::builder().label("キーマップ").xalign(0_f32).build(),
+        0,
+        0,
+        1,
+        1,
+    );
+    grid.attach(
+        &{
+            let cbt = ComboBoxText::new();
+            let romkan = get_keymap_list("keymap", { |f| f.to_string_lossy().ends_with(".yml") });
+            info!("keymap: {:?}", romkan);
+            for item in romkan {
+                cbt.append(Some(&item.path), &item.name);
+            }
+            cbt
+        },
+        1,
+        0,
+        1,
+        1,
+    );
+    grid.attach(
+        &Label::builder()
+            .label("ローマ字テーブル")
+            .xalign(0_f32)
+            .build(),
+        0,
+        1,
+        1,
+        1,
+    );
+    grid.attach(
+        &{
+            let cbt = ComboBoxText::new();
+            let romkan = get_keymap_list("romkan", { |f| f.to_string_lossy().ends_with(".yml") });
+            info!("romkan: {:?}", romkan);
+            for item in romkan {
+                cbt.append(Some(&item.path), &item.name);
+            }
+            cbt
+        },
+        1,
+        1,
+        1,
+        1,
+    );
+    grid.attach(
+        &Label::builder().label("言語モデル").xalign(0_f32).build(),
+        0,
+        2,
+        1,
+        1,
+    );
+    grid.attach(
+        &{
+            let cbt = ComboBoxText::new();
+            let romkan = get_keymap_list("model", {
+                |f| !f.file_name().unwrap().to_string_lossy().starts_with(".")
+            });
+            info!("model: {:?}", romkan);
+            for item in romkan {
+                cbt.append(Some(&item.path), &item.name);
+            }
+            cbt
+        },
+        1,
+        2,
+        1,
+        1,
+    );
+    grid
 }
 
 fn build_dict_pane() -> Label {

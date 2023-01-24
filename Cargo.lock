@@ -26,7 +26,11 @@ dependencies = [
 name = "akaza-conf"
 version = "0.1.7"
 dependencies = [
+ "env_logger",
  "gtk4",
+ "libakaza",
+ "log",
+ "xdg",
 ]
 
 [[package]]
