@@ -8,24 +8,36 @@ use libakaza::config::{DictConfig, DictEncoding, DictType, DictUsage, EngineConf
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 use libakaza::user_side_data::user_data::UserData;
 
-pub fn check(yomi: &str, expected: Option<String>, user_data: bool) -> anyhow::Result<()> {
+pub fn check(
+    yomi: &str,
+    expected: Option<String>,
+    user_data: bool,
+    eucjp_dict: &Vec<String>,
+    utf8_dict: &Vec<String>,
+    model_dir: &str,
+) -> anyhow::Result<()> {
+    let mut dicts: Vec<DictConfig> = Vec::new();
+    for path in eucjp_dict {
+        dicts.push(DictConfig {
+            dict_type: DictType::SKK,
+            encoding: DictEncoding::EucJp,
+            path: path.clone(),
+            usage: DictUsage::Normal,
+        })
+    }
+
+    for path in utf8_dict {
+        dicts.push(DictConfig {
+            dict_type: DictType::SKK,
+            encoding: DictEncoding::Utf8,
+            path: path.clone(),
+            usage: DictUsage::Normal,
+        })
+    }
+
     let mut builder = BigramWordViterbiEngineBuilder::new(EngineConfig {
-        dicts: vec![
-            // TODO ハードコードやめたい
-            DictConfig {
-                dict_type: DictType::SKK,
-                encoding: DictEncoding::EucJp,
-                path: "/usr/share/skk/SKK-JISYO.L".to_string(),
-                usage: DictUsage::Normal,
-            },
-            DictConfig {
-                dict_type: DictType::SKK,
-                encoding: DictEncoding::Utf8,
-                path: "data/SKK-JISYO.akaza".to_string(),
-                usage: DictUsage::Normal,
-            },
-        ],
-        model: Default::default(),
+        dicts,
+        model: model_dir.to_string(),
         dict_cache: false,
     });
     if user_data {

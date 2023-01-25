@@ -153,6 +153,12 @@ struct CheckArgs {
     /// 変換したい読みがな
     yomi: String,
     expected: Option<String>,
+    #[arg(long)]
+    utf8_dict: Vec<String>,
+    #[arg(long)]
+    eucjp_dict: Vec<String>,
+    #[arg(long)]
+    model_dir: String,
 }
 
 /// 変換精度を評価する
@@ -241,7 +247,14 @@ fn main() -> anyhow::Result<()> {
             opts.dst_unigram.as_str(),
             opts.dst_bigram.as_str(),
         ),
-        Commands::Check(opt) => check(&opt.yomi, opt.expected, opt.user_data),
+        Commands::Check(opt) => check(
+            &opt.yomi,
+            opt.expected,
+            opt.user_data,
+            &opt.eucjp_dict,
+            &opt.utf8_dict,
+            &opt.model_dir,
+        ),
         Commands::Evaluate(opt) => evaluate(
             &opt.corpus,
             &opt.eucjp_dict,
