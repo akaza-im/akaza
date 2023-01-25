@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
 
-use crate::config::{Config, DictConfig, DictEncoding, DictType, DictUsage};
+use crate::config::{DictConfig, DictEncoding, DictType, DictUsage, EngineConfig};
 use crate::dict::loader::{load_dicts, load_dicts_with_cache};
 use crate::engine::base::HenkanEngine;
 use crate::graph::candidate::Candidate;
@@ -66,11 +66,11 @@ pub struct BigramWordViterbiEngineBuilder {
     user_data: Option<Arc<Mutex<UserData>>>,
     load_user_config: bool,
     model_dir: Option<String>,
-    config: Config,
+    config: EngineConfig,
 }
 
 impl BigramWordViterbiEngineBuilder {
-    pub fn new(config: Config) -> BigramWordViterbiEngineBuilder {
+    pub fn new(config: EngineConfig) -> BigramWordViterbiEngineBuilder {
         BigramWordViterbiEngineBuilder {
             user_data: None,
             load_user_config: false,

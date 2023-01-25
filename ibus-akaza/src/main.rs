@@ -124,7 +124,7 @@ fn main() -> Result<()> {
         let sys_time = SystemTime::now();
         let user_data = load_user_data();
         let config = Config::load()?;
-        let akaza = BigramWordViterbiEngineBuilder::new(Config::load()?)
+        let akaza = BigramWordViterbiEngineBuilder::new(Config::load()?.engine)
             .user_data(user_data.clone())
             .load_user_config(true)
             .build()?;

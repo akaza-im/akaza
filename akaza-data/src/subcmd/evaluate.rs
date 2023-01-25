@@ -5,7 +5,7 @@ use std::time::SystemTime;
 use anyhow::Context;
 use log::info;
 
-use libakaza::config::{Config, DictConfig, DictEncoding, DictType, DictUsage};
+use libakaza::config::{DictConfig, DictEncoding, DictType, DictUsage, EngineConfig};
 use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 
@@ -71,10 +71,8 @@ pub fn evaluate(
         })
     }
 
-    let mut builder = BigramWordViterbiEngineBuilder::new(Config {
+    let mut builder = BigramWordViterbiEngineBuilder::new(EngineConfig {
         dicts,
-        romkan: Default::default(),
-        keymap: Default::default(),
         model: model_dir,
         dict_cache: false,
     });

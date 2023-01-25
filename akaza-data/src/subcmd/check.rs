@@ -4,12 +4,12 @@ use std::sync::{Arc, Mutex};
 
 use log::info;
 
-use libakaza::config::{Config, DictConfig, DictEncoding, DictType, DictUsage};
+use libakaza::config::{DictConfig, DictEncoding, DictType, DictUsage, EngineConfig};
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
 use libakaza::user_side_data::user_data::UserData;
 
 pub fn check(yomi: &str, expected: Option<String>, user_data: bool) -> anyhow::Result<()> {
-    let mut builder = BigramWordViterbiEngineBuilder::new(Config {
+    let mut builder = BigramWordViterbiEngineBuilder::new(EngineConfig {
         dicts: vec![
             // TODO ハードコードやめたい
             DictConfig {
@@ -25,8 +25,6 @@ pub fn check(yomi: &str, expected: Option<String>, user_data: bool) -> anyhow::R
                 usage: DictUsage::Normal,
             },
         ],
-        romkan: Default::default(),
-        keymap: Default::default(),
         model: Default::default(),
         dict_cache: false,
     });
