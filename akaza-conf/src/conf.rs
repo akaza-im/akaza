@@ -8,7 +8,9 @@ use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow, Button, Label, Notebook};
 use gtk4 as gtk;
 use gtk4::gio::ApplicationFlags;
-use gtk4::{ComboBoxText, Grid, ScrolledWindow};
+use gtk4::{
+    ComboBoxText, FileChooserAction, FileChooserDialog, Grid, ResponseType, ScrolledWindow, Window,
+};
 use log::{error, info};
 
 use libakaza::config::{Config, DictConfig, DictEncoding, DictType, DictUsage, EngineConfig};
@@ -247,25 +249,7 @@ fn build_dict_pane(config: Arc<Mutex<Config>>) -> Result<ScrolledWindow> {
 
     let grid = Grid::builder().column_spacing(10).build();
 
-    let mut dicts = config.lock().unwrap().engine.dicts.clone();
-
-    // /usr/share/skk/ 以下のものを拾ってきて入れる
-    let skk_dicts = detect_skk_dictionaries()?;
-
-    for mm in skk_dicts {
-        let cnt = dicts.iter().filter(|f| Path::new(&f.path) == mm).count();
-
-        // 設定ファイルにないものは追加する。
-        if cnt == 0 {
-            dicts.push(DictConfig {
-                path: mm.to_string_lossy().to_string(),
-                dict_type: DictType::SKK,
-                encoding: DictEncoding::EucJp,
-                usage: DictUsage::Disabled,
-            });
-            info!("Set SKK dictionary: {:?}", mm);
-        }
-    }
+    let dicts = config.lock().unwrap().engine.dicts.clone();
 
     for (i, dict_config) in dicts.iter().enumerate() {
         grid.attach(
@@ -279,37 +263,39 @@ fn build_dict_pane(config: Arc<Mutex<Config>>) -> Result<ScrolledWindow> {
             1,
         );
 
-        let cbt = ComboBoxText::builder().build();
-        for usage in vec![
-            DictUsage::Normal,
-            DictUsage::SingleTerm,
-            DictUsage::Disabled,
-        ] {
-            cbt.append(Some(usage.as_str()), usage.text_jp());
-        }
-        cbt.set_active_id(Some(dict_config.usage.as_str()));
         {
-            let config = config.clone();
-            let path = dict_config.path.clone();
-            cbt.connect_changed(move |f| {
-                if let Some(id) = f.active_id() {
-                    let mut config = config.lock().unwrap();
-                    for mut dict in &mut config.engine.dicts {
-                        if dict.path == path {
-                            dict.usage = DictUsage::from(&id).unwrap();
-                            return;
+            let cbt = ComboBoxText::builder().build();
+            for usage in vec![
+                DictUsage::Normal,
+                DictUsage::SingleTerm,
+                DictUsage::Disabled,
+            ] {
+                cbt.append(Some(usage.as_str()), usage.text_jp());
+            }
+            cbt.set_active_id(Some(dict_config.usage.as_str()));
+            {
+                let config = config.clone();
+                let path = dict_config.path.clone();
+                cbt.connect_changed(move |f| {
+                    if let Some(id) = f.active_id() {
+                        let mut config = config.lock().unwrap();
+                        for mut dict in &mut config.engine.dicts {
+                            if dict.path == path {
+                                dict.usage = DictUsage::from(&id).unwrap();
+                                return;
+                            }
                         }
+                        config.engine.dicts.push(DictConfig {
+                            dict_type: DictType::SKK,
+                            encoding: DictEncoding::EucJp,
+                            path: path.to_string(),
+                            usage: DictUsage::from(&id).unwrap(),
+                        })
                     }
-                    config.engine.dicts.push(DictConfig {
-                        dict_type: DictType::SKK,
-                        encoding: DictEncoding::EucJp,
-                        path: path.to_string(),
-                        usage: DictUsage::from(&id).unwrap(),
-                    })
-                }
-            });
+                });
+            }
+            grid.attach(&cbt, 1, i as i32, 1, 1);
         }
-        grid.attach(&cbt, 1, i as i32, 1, 1);
 
         grid.attach(
             &Label::new(Some(dict_config.dict_type.as_str())),
@@ -318,6 +304,66 @@ fn build_dict_pane(config: Arc<Mutex<Config>>) -> Result<ScrolledWindow> {
             1,
             1,
         );
+        {
+            let cbt = ComboBoxText::builder().build();
+            for encoding in vec![DictEncoding::EucJp, DictEncoding::Utf8] {
+                cbt.append(
+                    Some(&encoding.to_string()),
+                    encoding.as_str().replace('_', "-").as_str(),
+                );
+            }
+            cbt.set_active_id(Some(dict_config.encoding.as_str()));
+            {
+                let config = config.clone();
+                let path = dict_config.path.clone();
+                cbt.connect_changed(move |f| {
+                    if let Some(id) = f.active_id() {
+                        let mut config = config.lock().unwrap();
+                        for mut dict in &mut config.engine.dicts {
+                            if dict.path == path {
+                                dict.encoding = DictEncoding::from(&id).unwrap();
+                                break;
+                            }
+                        }
+                    }
+                });
+            }
+            grid.attach(&cbt, 3, i as i32, 1, 1);
+        }
+    }
+    {
+        let add_btn = Button::with_label("Add");
+        add_btn.connect_clicked(|_| {
+            let dialog = FileChooserDialog::new(
+                Some("辞書の選択"),
+                None::<&Window>,
+                FileChooserAction::Open,
+                &[
+                    ("開く", ResponseType::Accept),
+                    ("キャンセル", ResponseType::None),
+                ],
+            );
+            dialog.connect_response(move |dialog, resp| match resp {
+                ResponseType::Accept => {
+                    let file = dialog.file().unwrap();
+                    let path = file.path().unwrap();
+
+                    info!("File: {:?}", path);
+                    dialog.close();
+                }
+                ResponseType::Close
+                | ResponseType::Reject
+                | ResponseType::Yes
+                | ResponseType::No
+                | ResponseType::None
+                | ResponseType::DeleteEvent => {
+                    dialog.close();
+                }
+                _ => {}
+            });
+            dialog.show();
+        });
+        grid.attach(&add_btn, 0, dicts.len() as i32, 1, 1);
     }
     scroll.set_child(Some(&grid));
     Ok(scroll)
@@ -327,25 +373,4 @@ fn build_about_pane() -> Label {
     Label::new(Some(
         format!("Akaza version {}", env!("CARGO_PKG_VERSION")).as_str(),
     ))
-}
-
-/// SKK の辞書のリストを得る
-fn detect_skk_dictionaries() -> Result<Vec<PathBuf>> {
-    let dir = xdg::BaseDirectories::with_prefix("skk")?;
-    Ok(dir
-        .find_data_files("")
-        .map(|f| f.read_dir())
-        .filter_map(|f| f.ok())
-        .flatten()
-        .filter_map(|f| f.ok())
-        .filter(|f| f.file_name() != "SKK-JISYO.wrong")
-        .filter(|f| f.file_name() != "SKK-JISYO.lisp")
-        .filter(|f| {
-            f.file_name()
-                .to_string_lossy()
-                .to_string()
-                .starts_with("SKK-JISYO")
-        })
-        .map(|f| f.path())
-        .collect::<Vec<_>>())
 }

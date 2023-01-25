@@ -149,6 +149,14 @@ impl Display for DictEncoding {
 }
 
 impl DictEncoding {
+    pub fn from(s: &str) -> Result<DictEncoding> {
+        match s {
+            "EUC-JP" | "EucJp" => Ok(DictEncoding::EucJp),
+            "UTF-8" | "Utf8" => Ok(DictEncoding::Utf8),
+            _ => bail!("Unknown encoding: {:?}", s),
+        }
+    }
+
     pub fn as_str(&self) -> &'static str {
         match self {
             Utf8 => "UTF-8",
