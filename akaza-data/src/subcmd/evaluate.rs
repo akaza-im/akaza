@@ -49,7 +49,7 @@ pub fn evaluate(
     corpus: &Vec<String>,
     eucjp_dict: &Vec<String>,
     utf8_dict: &Vec<String>,
-    model_dir: Option<String>,
+    model_dir: String,
     load_user_config: bool,
 ) -> anyhow::Result<()> {
     let mut dicts: Vec<DictConfig> = Vec::new();
@@ -75,12 +75,9 @@ pub fn evaluate(
         dicts,
         romkan: Default::default(),
         keymap: Default::default(),
-        model: Default::default(),
+        model: model_dir,
     });
     builder.load_user_config(load_user_config);
-    if let Some(model_dir) = model_dir {
-        builder.model_dir(&model_dir);
-    }
     let akaza = builder.build()?;
 
     let mut good_cnt = 0;
