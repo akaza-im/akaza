@@ -418,7 +418,7 @@ impl AkazaContext {
                 )])]
             } else {
                 self.engine.convert(
-                    self.current_state.preedit.as_str(),
+                    self.romkan.to_hiragana(&yomi).as_str(),
                     Some(&self.current_state.force_selected_clause),
                 )?
             };
