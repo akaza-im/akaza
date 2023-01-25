@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
 
@@ -245,13 +245,7 @@ fn build_core_pane(config: Arc<Mutex<Config>>) -> Result<Grid> {
 }
 
 fn build_dict_pane(config: Arc<Mutex<Config>>) -> Result<ScrolledWindow> {
-    let scroll = ScrolledWindow::new();
-
-    let grid = Grid::builder().column_spacing(10).build();
-
-    let dicts = config.lock().unwrap().engine.dicts.clone();
-
-    for (i, dict_config) in dicts.iter().enumerate() {
+    fn add_row(grid: &Grid, dict_config: &DictConfig, config: &Arc<Mutex<Config>>, i: usize) {
         grid.attach(
             &Label::builder()
                 .xalign(0_f32)
@@ -331,41 +325,80 @@ fn build_dict_pane(config: Arc<Mutex<Config>>) -> Result<ScrolledWindow> {
             grid.attach(&cbt, 3, i as i32, 1, 1);
         }
     }
-    {
-        let add_btn = Button::with_label("Add");
-        add_btn.connect_clicked(|_| {
-            let dialog = FileChooserDialog::new(
-                Some("辞書の選択"),
-                None::<&Window>,
-                FileChooserAction::Open,
-                &[
-                    ("開く", ResponseType::Accept),
-                    ("キャンセル", ResponseType::None),
-                ],
-            );
-            dialog.connect_response(move |dialog, resp| match resp {
-                ResponseType::Accept => {
-                    let file = dialog.file().unwrap();
-                    let path = file.path().unwrap();
 
-                    info!("File: {:?}", path);
-                    dialog.close();
-                }
-                ResponseType::Close
-                | ResponseType::Reject
-                | ResponseType::Yes
-                | ResponseType::No
-                | ResponseType::None
-                | ResponseType::DeleteEvent => {
-                    dialog.close();
-                }
-                _ => {}
-            });
-            dialog.show();
-        });
-        grid.attach(&add_btn, 0, dicts.len() as i32, 1, 1);
+    let scroll = ScrolledWindow::new();
+
+    let parent_grid = Grid::builder().column_spacing(10).build();
+    let grid = Grid::builder().column_spacing(10).build();
+
+    let dicts = config.lock().unwrap().engine.dicts.clone();
+
+    for (i, dict_config) in dicts.iter().enumerate() {
+        add_row(&grid, dict_config, &config.clone(), i);
     }
-    scroll.set_child(Some(&grid));
+
+    parent_grid.attach(&grid, 0, 0, 1, 1);
+
+    {
+        let add_btn = {
+            let add_btn = Button::with_label("Add");
+            let config = config;
+            let grid = grid;
+            add_btn.connect_clicked(move |_| {
+                let dialog = FileChooserDialog::new(
+                    Some("辞書の選択"),
+                    None::<&Window>,
+                    FileChooserAction::Open,
+                    &[
+                        ("開く", ResponseType::Accept),
+                        ("キャンセル", ResponseType::None),
+                    ],
+                );
+                let config = config.clone();
+                let grid = grid.clone();
+                dialog.connect_response(move |dialog, resp| match resp {
+                    ResponseType::Accept => {
+                        let file = dialog.file().unwrap();
+                        let path = file.path().unwrap();
+
+                        info!("File: {:?}", path);
+                        let dict_config = &DictConfig {
+                            path: path.to_string_lossy().to_string(),
+                            encoding: DictEncoding::Utf8,
+                            usage: DictUsage::Normal,
+                            dict_type: DictType::SKK,
+                        };
+                        config
+                            .lock()
+                            .unwrap()
+                            .engine
+                            .dicts
+                            .push(dict_config.clone());
+                        add_row(
+                            &grid,
+                            dict_config,
+                            &config.clone(),
+                            config.lock().unwrap().engine.dicts.len(),
+                        );
+                        dialog.close();
+                    }
+                    ResponseType::Close
+                    | ResponseType::Reject
+                    | ResponseType::Yes
+                    | ResponseType::No
+                    | ResponseType::None
+                    | ResponseType::DeleteEvent => {
+                        dialog.close();
+                    }
+                    _ => {}
+                });
+                dialog.show();
+            });
+            add_btn
+        };
+        parent_grid.attach(&add_btn, 0, 1, 1, 1);
+    }
+    scroll.set_child(Some(&parent_grid));
     Ok(scroll)
 }
 
