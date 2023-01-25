@@ -8,10 +8,12 @@ use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow, Button, Label, Notebook};
 use gtk4 as gtk;
 use gtk4::gio::ApplicationFlags;
-use gtk4::{ComboBoxText, Grid};
+use gtk4::{
+    ComboBoxText, FileChooserAction, FileChooserDialog, Grid, ResponseType, ScrolledWindow, Window,
+};
 use log::{error, info};
 
-use libakaza::config::{Config, DictUsage, EngineConfig};
+use libakaza::config::{Config, DictConfig, DictEncoding, DictType, DictUsage, EngineConfig};
 
 pub fn open_configuration_window() -> Result<()> {
     let config = Arc::new(Mutex::new(Config::load()?));
@@ -29,18 +31,18 @@ pub fn open_configuration_window() -> Result<()> {
 fn connect_activate(app: &Application, config: Arc<Mutex<Config>>) -> Result<()> {
     let window = ApplicationWindow::builder()
         .application(app)
-        .default_width(320)
-        .default_height(200)
+        .default_width(520)
+        .default_height(500)
         .title("Akaza の設定")
         .build();
 
-    let notebook = Notebook::builder().build();
+    let notebook = Notebook::builder().vexpand(true).hexpand(true).build();
     notebook.append_page(
         &build_core_pane(config.clone())?,
         Some(&Label::new(Some("基本設定"))),
     );
     notebook.append_page(
-        &build_dict_pane(config.clone()),
+        &build_dict_pane(config.clone())?,
         Some(&Label::new(Some("辞書"))),
     );
     notebook.append_page(&build_about_pane(), Some(&Label::new(Some("アバウト"))));
@@ -139,7 +141,7 @@ where
         .collect::<Vec<_>>()
 }
 
-fn build_core_pane(config: Arc<Mutex<Config>>) -> anyhow::Result<Grid> {
+fn build_core_pane(config: Arc<Mutex<Config>>) -> Result<Grid> {
     // キーマップとローマ字テーブル、モデルの設定ができるようにする。
     let grid = Grid::new();
     // xalign: 0 は左寄という意味。
@@ -242,10 +244,8 @@ fn build_core_pane(config: Arc<Mutex<Config>>) -> anyhow::Result<Grid> {
     Ok(grid)
 }
 
-fn build_dict_pane(config: Arc<Mutex<Config>>) -> Grid {
-    let grid = Grid::builder().column_spacing(10).build();
-    // TODO /usr/share/skk/ 以下のものを拾ってきて入れる
-    for (i, dict_config) in config.lock().unwrap().engine.dicts.iter().enumerate() {
+fn build_dict_pane(config: Arc<Mutex<Config>>) -> Result<ScrolledWindow> {
+    fn add_row(grid: &Grid, dict_config: &DictConfig, config: &Arc<Mutex<Config>>, i: usize) {
         grid.attach(
             &Label::builder()
                 .xalign(0_f32)
@@ -257,31 +257,39 @@ fn build_dict_pane(config: Arc<Mutex<Config>>) -> Grid {
             1,
         );
 
-        let cbt = ComboBoxText::builder().build();
-        for usage in vec![
-            DictUsage::Normal,
-            DictUsage::SingleTerm,
-            DictUsage::Disabled,
-        ] {
-            cbt.append(Some(usage.as_str()), usage.text_jp());
-        }
-        cbt.set_active_id(Some(dict_config.usage.as_str()));
         {
-            let config = config.clone();
-            let path = dict_config.path.clone();
-            cbt.connect_changed(move |f| {
-                if let Some(id) = f.active_id() {
-                    let mut config = config.lock().unwrap();
-                    for mut dict in &mut config.engine.dicts {
-                        if dict.path == path {
-                            dict.usage = DictUsage::from(&id).unwrap();
-                            break;
+            let cbt = ComboBoxText::builder().build();
+            for usage in vec![
+                DictUsage::Normal,
+                DictUsage::SingleTerm,
+                DictUsage::Disabled,
+            ] {
+                cbt.append(Some(usage.as_str()), usage.text_jp());
+            }
+            cbt.set_active_id(Some(dict_config.usage.as_str()));
+            {
+                let config = config.clone();
+                let path = dict_config.path.clone();
+                cbt.connect_changed(move |f| {
+                    if let Some(id) = f.active_id() {
+                        let mut config = config.lock().unwrap();
+                        for mut dict in &mut config.engine.dicts {
+                            if dict.path == path {
+                                dict.usage = DictUsage::from(&id).unwrap();
+                                return;
+                            }
                         }
+                        config.engine.dicts.push(DictConfig {
+                            dict_type: DictType::SKK,
+                            encoding: DictEncoding::EucJp,
+                            path: path.to_string(),
+                            usage: DictUsage::from(&id).unwrap(),
+                        })
                     }
-                }
-            });
+                });
+            }
+            grid.attach(&cbt, 1, i as i32, 1, 1);
         }
-        grid.attach(&cbt, 1, i as i32, 1, 1);
 
         grid.attach(
             &Label::new(Some(dict_config.dict_type.as_str())),
@@ -290,8 +298,108 @@ fn build_dict_pane(config: Arc<Mutex<Config>>) -> Grid {
             1,
             1,
         );
+        {
+            let cbt = ComboBoxText::builder().build();
+            for encoding in vec![DictEncoding::EucJp, DictEncoding::Utf8] {
+                cbt.append(
+                    Some(&encoding.to_string()),
+                    encoding.as_str().replace('_', "-").as_str(),
+                );
+            }
+            cbt.set_active_id(Some(dict_config.encoding.as_str()));
+            {
+                let config = config.clone();
+                let path = dict_config.path.clone();
+                cbt.connect_changed(move |f| {
+                    if let Some(id) = f.active_id() {
+                        let mut config = config.lock().unwrap();
+                        for mut dict in &mut config.engine.dicts {
+                            if dict.path == path {
+                                dict.encoding = DictEncoding::from(&id).unwrap();
+                                break;
+                            }
+                        }
+                    }
+                });
+            }
+            grid.attach(&cbt, 3, i as i32, 1, 1);
+        }
     }
-    grid
+
+    let scroll = ScrolledWindow::new();
+
+    let parent_grid = Grid::builder().column_spacing(10).build();
+    let grid = Grid::builder().column_spacing(10).build();
+
+    let dicts = config.lock().unwrap().engine.dicts.clone();
+
+    for (i, dict_config) in dicts.iter().enumerate() {
+        add_row(&grid, dict_config, &config.clone(), i);
+    }
+
+    parent_grid.attach(&grid, 0, 0, 1, 1);
+
+    {
+        let add_btn = {
+            let add_btn = Button::with_label("Add");
+            let config = config;
+            let grid = grid;
+            add_btn.connect_clicked(move |_| {
+                let dialog = FileChooserDialog::new(
+                    Some("辞書の選択"),
+                    None::<&Window>,
+                    FileChooserAction::Open,
+                    &[
+                        ("開く", ResponseType::Accept),
+                        ("キャンセル", ResponseType::None),
+                    ],
+                );
+                let config = config.clone();
+                let grid = grid.clone();
+                dialog.connect_response(move |dialog, resp| match resp {
+                    ResponseType::Accept => {
+                        let file = dialog.file().unwrap();
+                        let path = file.path().unwrap();
+
+                        info!("File: {:?}", path);
+                        let dict_config = &DictConfig {
+                            path: path.to_string_lossy().to_string(),
+                            encoding: DictEncoding::Utf8,
+                            usage: DictUsage::Normal,
+                            dict_type: DictType::SKK,
+                        };
+                        config
+                            .lock()
+                            .unwrap()
+                            .engine
+                            .dicts
+                            .push(dict_config.clone());
+                        add_row(
+                            &grid,
+                            dict_config,
+                            &config.clone(),
+                            config.lock().unwrap().engine.dicts.len(),
+                        );
+                        dialog.close();
+                    }
+                    ResponseType::Close
+                    | ResponseType::Reject
+                    | ResponseType::Yes
+                    | ResponseType::No
+                    | ResponseType::None
+                    | ResponseType::DeleteEvent => {
+                        dialog.close();
+                    }
+                    _ => {}
+                });
+                dialog.show();
+            });
+            add_btn
+        };
+        parent_grid.attach(&add_btn, 0, 1, 1, 1);
+    }
+    scroll.set_child(Some(&parent_grid));
+    Ok(scroll)
 }
 
 fn build_about_pane() -> Label {
