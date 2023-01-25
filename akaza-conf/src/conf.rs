@@ -1,4 +1,5 @@
-use std::path::PathBuf;
+use std::fs::DirEntry;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::{Arc, Mutex};
 
@@ -11,7 +12,7 @@ use gtk4::gio::ApplicationFlags;
 use gtk4::{ComboBoxText, Grid};
 use log::{error, info};
 
-use libakaza::config::{Config, DictUsage, EngineConfig};
+use libakaza::config::{Config, DictConfig, DictEncoding, DictType, DictUsage, EngineConfig};
 
 pub fn open_configuration_window() -> Result<()> {
     let config = Arc::new(Mutex::new(Config::load()?));
@@ -40,7 +41,7 @@ fn connect_activate(app: &Application, config: Arc<Mutex<Config>>) -> Result<()>
         Some(&Label::new(Some("基本設定"))),
     );
     notebook.append_page(
-        &build_dict_pane(config.clone()),
+        &build_dict_pane(config.clone())?,
         Some(&Label::new(Some("辞書"))),
     );
     notebook.append_page(&build_about_pane(), Some(&Label::new(Some("アバウト"))));
@@ -139,7 +140,7 @@ where
         .collect::<Vec<_>>()
 }
 
-fn build_core_pane(config: Arc<Mutex<Config>>) -> anyhow::Result<Grid> {
+fn build_core_pane(config: Arc<Mutex<Config>>) -> Result<Grid> {
     // キーマップとローマ字テーブル、モデルの設定ができるようにする。
     let grid = Grid::new();
     // xalign: 0 は左寄という意味。
@@ -242,10 +243,30 @@ fn build_core_pane(config: Arc<Mutex<Config>>) -> anyhow::Result<Grid> {
     Ok(grid)
 }
 
-fn build_dict_pane(config: Arc<Mutex<Config>>) -> Grid {
+fn build_dict_pane(config: Arc<Mutex<Config>>) -> Result<Grid> {
     let grid = Grid::builder().column_spacing(10).build();
-    // TODO /usr/share/skk/ 以下のものを拾ってきて入れる
-    for (i, dict_config) in config.lock().unwrap().engine.dicts.iter().enumerate() {
+
+    let mut dicts = config.lock().unwrap().engine.dicts.clone();
+
+    // /usr/share/skk/ 以下のものを拾ってきて入れる
+    let skk_dicts = detect_skk_dictionaries()?;
+
+    for mm in skk_dicts {
+        let cnt = dicts.iter().filter(|f| Path::new(&f.path) == mm).count();
+
+        // 設定ファイルにないものは追加する。
+        if cnt == 0 {
+            dicts.push(DictConfig {
+                path: mm.to_string_lossy().to_string(),
+                dict_type: DictType::SKK,
+                encoding: DictEncoding::EucJp,
+                usage: DictUsage::Disabled,
+            });
+            info!("Set SKK dictionary: {:?}", mm);
+        }
+    }
+
+    for (i, dict_config) in dicts.iter().enumerate() {
         grid.attach(
             &Label::builder()
                 .xalign(0_f32)
@@ -275,9 +296,15 @@ fn build_dict_pane(config: Arc<Mutex<Config>>) -> Grid {
                     for mut dict in &mut config.engine.dicts {
                         if dict.path == path {
                             dict.usage = DictUsage::from(&id).unwrap();
-                            break;
+                            return;
                         }
                     }
+                    config.engine.dicts.push(DictConfig {
+                        dict_type: DictType::SKK,
+                        encoding: DictEncoding::EucJp,
+                        path: path.to_string(),
+                        usage: DictUsage::from(&id).unwrap(),
+                    })
                 }
             });
         }
@@ -291,11 +318,32 @@ fn build_dict_pane(config: Arc<Mutex<Config>>) -> Grid {
             1,
         );
     }
-    grid
+    Ok(grid)
 }
 
 fn build_about_pane() -> Label {
     Label::new(Some(
         format!("Akaza version {}", env!("CARGO_PKG_VERSION")).as_str(),
     ))
+}
+
+/// SKK の辞書のリストを得る
+fn detect_skk_dictionaries() -> Result<Vec<PathBuf>> {
+    let dir = xdg::BaseDirectories::with_prefix("skk")?;
+    Ok(dir
+        .find_data_files("")
+        .map(|f| f.read_dir())
+        .filter_map(|f| f.ok())
+        .flatten()
+        .filter_map(|f| f.ok())
+        .filter(|f| f.file_name() != "SKK-JISYO.wrong")
+        .filter(|f| f.file_name() != "SKK-JISYO.lisp")
+        .filter(|f| {
+            f.file_name()
+                .to_string_lossy()
+                .to_string()
+                .starts_with("SKK-JISYO")
+        })
+        .map(|f| f.path())
+        .collect::<Vec<_>>())
 }
