@@ -167,7 +167,7 @@ struct EvaluateArgs {
     #[arg(long)]
     eucjp_dict: Vec<String>,
     #[arg(long)]
-    model_dir: Option<String>,
+    model_dir: String,
 }
 
 /// ユニグラム辞書ファイルをダンプする

@@ -28,6 +28,7 @@ pub fn check(yomi: &str, expected: Option<String>, user_data: bool) -> anyhow::R
         romkan: Default::default(),
         keymap: Default::default(),
         model: Default::default(),
+        dict_cache: false,
     });
     if user_data {
         info!("Enabled user data");

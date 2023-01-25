@@ -12,23 +12,12 @@ pub struct MarisaKanaKanjiDict {
 }
 
 impl MarisaKanaKanjiDict {
-    pub(crate) fn build(
-        dicts: HashMap<String, Vec<String>>,
+    pub(crate) fn build_with_cache(
+        dict: HashMap<String, Vec<String>>,
         cache_path: &str,
         cache_serialized_key: &str,
     ) -> anyhow::Result<MarisaKanaKanjiDict> {
-        let mut keyset = Keyset::default();
-        for (kana, surfaces) in dicts {
-            keyset.push_back(
-                [
-                    kana.as_bytes(),
-                    b"\t", // seperator
-                    surfaces.join("/").as_bytes(),
-                ]
-                .concat()
-                .as_slice(),
-            );
-        }
+        let mut keyset = Self::build_keyset(dict);
         keyset.push_back(
             [
                 "__CACHE_SERIALIZED__\t".as_bytes(),
@@ -42,6 +31,29 @@ impl MarisaKanaKanjiDict {
         marisa.build(&keyset);
         marisa.save(cache_path)?;
         Ok(MarisaKanaKanjiDict { marisa })
+    }
+
+    pub(crate) fn build(dict: HashMap<String, Vec<String>>) -> anyhow::Result<MarisaKanaKanjiDict> {
+        let keyset = Self::build_keyset(dict);
+        let mut marisa = Marisa::default();
+        marisa.build(&keyset);
+        Ok(MarisaKanaKanjiDict { marisa })
+    }
+
+    pub fn build_keyset(dict: HashMap<String, Vec<String>>) -> Keyset {
+        let mut keyset = Keyset::default();
+        for (kana, surfaces) in dict {
+            keyset.push_back(
+                [
+                    kana.as_bytes(),
+                    b"\t", // seperator
+                    surfaces.join("/").as_bytes(),
+                ]
+                .concat()
+                .as_slice(),
+            );
+        }
+        keyset
     }
 
     pub fn load(file_name: &str) -> anyhow::Result<MarisaKanaKanjiDict> {
@@ -104,7 +116,7 @@ mod tests {
         let tmpfile = NamedTempFile::new().unwrap();
         let path = tmpfile.path().to_str().unwrap().to_string();
 
-        let dict = MarisaKanaKanjiDict::build(
+        let dict = MarisaKanaKanjiDict::build_with_cache(
             HashMap::from([("たなか".to_string(), vec!["田中".to_string()])]),
             path.as_str(),
             "",

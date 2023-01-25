@@ -23,7 +23,7 @@ fn try_get_mtime(path: &str) -> Result<u128> {
 
 /// - `dict_configs`: 辞書の読み込み設定
 /// - `cache_name`: キャッシュファイル名。 `~/.cache/akaza/kana_kanji_cache.marisa` とかにでる。
-pub fn load_dicts_ex(
+pub fn load_dicts_with_cache(
     dict_configs: &Vec<DictConfig>,
     cache_name: &str,
 ) -> Result<MarisaKanaKanjiDict> {
@@ -80,7 +80,7 @@ pub fn load_dicts_ex(
     info!("Cache is not fresh! {:?} => {}", dict_configs, cache_path);
     let dicts = load_dicts(dict_configs)?;
 
-    MarisaKanaKanjiDict::build(dicts, &cache_path, &config_serialized)
+    MarisaKanaKanjiDict::build_with_cache(dicts, &cache_path, &config_serialized)
 }
 
 pub fn load_dicts(dict_configs: &Vec<DictConfig>) -> Result<HashMap<String, Vec<String>>> {
@@ -88,7 +88,6 @@ pub fn load_dicts(dict_configs: &Vec<DictConfig>) -> Result<HashMap<String, Vec<
     for dict_config in dict_configs {
         match load_dict(dict_config) {
             Ok(dict) => {
-                // TODO 辞書をうまく使う
                 dicts.push(dict);
             }
             Err(err) => {
@@ -102,7 +101,6 @@ pub fn load_dicts(dict_configs: &Vec<DictConfig>) -> Result<HashMap<String, Vec<
 }
 
 pub fn load_dict(dict: &DictConfig) -> Result<HashMap<String, Vec<String>>> {
-    // TODO キャッシュ機構を入れる。
     info!(
         "Loading dictionary: {} {:?} {}",
         dict.path, dict.encoding, dict.dict_type
@@ -164,7 +162,7 @@ mod tests {
             )?;
         }
 
-        let loaded = load_dicts_ex(
+        let loaded = load_dicts_with_cache(
             &vec![DictConfig {
                 path: dictfile.path().to_str().unwrap().to_string(),
                 encoding: DictEncoding::Utf8,
@@ -190,7 +188,7 @@ mod tests {
         }
 
         // ファイルを書き直したら、キャッシュも読みなおしてほしい。
-        let loaded = load_dicts_ex(
+        let loaded = load_dicts_with_cache(
             &vec![DictConfig {
                 path: dictfile.path().to_str().unwrap().to_string(),
                 encoding: DictEncoding::Utf8,
@@ -208,7 +206,7 @@ mod tests {
             HashSet::from(["いか".to_string(), "たこ".to_string()])
         );
 
-        let loaded = load_dicts_ex(
+        let loaded = load_dicts_with_cache(
             &vec![DictConfig {
                 path: dictfile.path().to_str().unwrap().to_string(),
                 encoding: DictEncoding::Utf8,
@@ -266,7 +264,7 @@ mod tests {
         }
 
         // dict1 のみを読んでみる。
-        let loaded = load_dicts_ex(
+        let loaded = load_dicts_with_cache(
             &vec![DictConfig {
                 path: dict1.path().to_str().unwrap().to_string(),
                 encoding: DictEncoding::Utf8,
@@ -278,7 +276,7 @@ mod tests {
         assert_eq!(loaded.yomis(), vec!["たこ"]);
 
         // dict2 も指定するパターン。
-        let loaded = load_dicts_ex(
+        let loaded = load_dicts_with_cache(
             &vec![
                 DictConfig {
                     path: dict1.path().to_str().unwrap().to_string(),

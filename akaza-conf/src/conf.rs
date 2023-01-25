@@ -60,6 +60,7 @@ fn connect_activate(app: &Application, config: Arc<Mutex<Config>>) -> Result<()>
             romkan: config.romkan.to_string(),
             model: config.model.to_string(),
             dicts: config.dicts.clone(),
+            dict_cache: true,
         };
         info!("Saving config: {}", serde_yaml::to_string(&config).unwrap());
 
