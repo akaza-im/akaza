@@ -18,8 +18,6 @@ use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
 use crate::lm::system_bigram::MarisaSystemBigramLM;
 use crate::lm::system_unigram_lm::MarisaSystemUnigramLM;
-
-use crate::romkan::RomKanConverter;
 use crate::user_side_data::user_data::UserData;
 
 /// バイグラムのビタビベースかな漢字変換エンジンです。
@@ -28,7 +26,6 @@ pub struct BigramWordViterbiEngine<U: SystemUnigramLM, B: SystemBigramLM, KD: Ka
     graph_builder: GraphBuilder<U, B, KD>,
     pub segmenter: Segmenter,
     pub graph_resolver: GraphResolver,
-    romkan_converter: RomKanConverter,
     pub user_data: Arc<Mutex<UserData>>,
 }
 
@@ -44,17 +41,6 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> HenkanEngine
         yomi: &str,
         force_ranges: Option<&[Range<usize>]>,
     ) -> Result<Vec<Vec<Candidate>>> {
-        // 先頭が大文字なケースと、URL っぽい文字列のときは変換処理を実施しない。
-        if (!yomi.is_empty()
-            && yomi.chars().next().unwrap().is_ascii_uppercase()
-            && (force_ranges.is_none()
-                || (force_ranges.is_none() && force_ranges.unwrap().is_empty())))
-            || yomi.starts_with("https://")
-            || yomi.starts_with("http://")
-        {
-            return Ok(vec![Vec::from([Candidate::new(yomi, yomi, 0_f32)])]);
-        }
-
         let lattice = self.to_lattice(yomi, force_ranges)?;
         self.resolve(&lattice)
     }
@@ -70,13 +56,8 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> BigramWordViterbi
         yomi: &str,
         force_ranges: Option<&[Range<usize>]>,
     ) -> Result<LatticeGraph<U, B>> {
-        // ローマ字からひらがなへの変換をする。
-        let yomi = self.romkan_converter.to_hiragana(yomi);
-
-        let segmentation_result = &self.segmenter.build(yomi.as_str(), force_ranges);
-        let lattice = self
-            .graph_builder
-            .construct(yomi.as_str(), segmentation_result);
+        let segmentation_result = &self.segmenter.build(yomi, force_ranges);
+        let lattice = self.graph_builder.construct(yomi, segmentation_result);
         Ok(lattice)
     }
 }
@@ -207,15 +188,10 @@ impl BigramWordViterbiEngineBuilder {
 
         let graph_resolver = GraphResolver::default();
 
-        let mapping_name = self.config.romkan.clone();
-        let mapping_name = mapping_name.as_str();
-        let romkan_converter = RomKanConverter::new(mapping_name)?;
-
         Ok(BigramWordViterbiEngine {
             graph_builder,
             segmenter,
             graph_resolver,
-            romkan_converter,
             user_data,
         })
     }

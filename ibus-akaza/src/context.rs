@@ -402,10 +402,28 @@ impl AkazaContext {
         if self.current_state.preedit.is_empty() {
             self.current_state.set_clauses(vec![]);
         } else {
-            self.current_state.set_clauses(self.engine.convert(
-                self.current_state.preedit.as_str(),
-                Some(&self.current_state.force_selected_clause),
-            )?);
+            let yomi = self.current_state.preedit.clone();
+
+            // 先頭が大文字なケースと、URL っぽい文字列のときは変換処理を実施しない。
+            let clauses = if (!yomi.is_empty()
+                && yomi.chars().next().unwrap().is_ascii_uppercase()
+                && self.current_state.force_selected_clause.is_empty())
+                || yomi.starts_with("https://")
+                || yomi.starts_with("http://")
+            {
+                vec![Vec::from([Candidate::new(
+                    yomi.as_str(),
+                    yomi.as_str(),
+                    0_f32,
+                )])]
+            } else {
+                self.engine.convert(
+                    self.current_state.preedit.as_str(),
+                    Some(&self.current_state.force_selected_clause),
+                )?
+            };
+
+            self.current_state.set_clauses(clauses);
 
             self.current_state.adjust_current_clause();
         }
