@@ -1,4 +1,3 @@
-use std::fs::DirEntry;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::{Arc, Mutex};
@@ -9,7 +8,7 @@ use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow, Button, Label, Notebook};
 use gtk4 as gtk;
 use gtk4::gio::ApplicationFlags;
-use gtk4::{ComboBoxText, Grid};
+use gtk4::{ComboBoxText, Grid, ScrolledWindow};
 use log::{error, info};
 
 use libakaza::config::{Config, DictConfig, DictEncoding, DictType, DictUsage, EngineConfig};
@@ -30,12 +29,12 @@ pub fn open_configuration_window() -> Result<()> {
 fn connect_activate(app: &Application, config: Arc<Mutex<Config>>) -> Result<()> {
     let window = ApplicationWindow::builder()
         .application(app)
-        .default_width(320)
-        .default_height(200)
+        .default_width(520)
+        .default_height(500)
         .title("Akaza の設定")
         .build();
 
-    let notebook = Notebook::builder().build();
+    let notebook = Notebook::builder().vexpand(true).hexpand(true).build();
     notebook.append_page(
         &build_core_pane(config.clone())?,
         Some(&Label::new(Some("基本設定"))),
@@ -243,7 +242,9 @@ fn build_core_pane(config: Arc<Mutex<Config>>) -> Result<Grid> {
     Ok(grid)
 }
 
-fn build_dict_pane(config: Arc<Mutex<Config>>) -> Result<Grid> {
+fn build_dict_pane(config: Arc<Mutex<Config>>) -> Result<ScrolledWindow> {
+    let scroll = ScrolledWindow::new();
+
     let grid = Grid::builder().column_spacing(10).build();
 
     let mut dicts = config.lock().unwrap().engine.dicts.clone();
@@ -318,7 +319,8 @@ fn build_dict_pane(config: Arc<Mutex<Config>>) -> Result<Grid> {
             1,
         );
     }
-    Ok(grid)
+    scroll.set_child(Some(&grid));
+    Ok(scroll)
 }
 
 fn build_about_pane() -> Label {
