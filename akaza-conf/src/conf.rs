@@ -11,7 +11,7 @@ use gtk4::gio::ApplicationFlags;
 use gtk4::{ComboBoxText, Grid};
 use log::{error, info};
 
-use libakaza::config::{Config, DictUsage};
+use libakaza::config::{Config, DictUsage, EngineConfig};
 
 pub fn open_configuration_window() -> Result<()> {
     let config = Arc::new(Mutex::new(Config::load()?));
@@ -58,9 +58,11 @@ fn connect_activate(app: &Application, config: Arc<Mutex<Config>>) -> Result<()>
         let config = Config {
             keymap: config.keymap.to_string(),
             romkan: config.romkan.to_string(),
-            model: config.model.to_string(),
-            dicts: config.dicts.clone(),
-            dict_cache: true,
+            engine: EngineConfig {
+                model: config.engine.model.to_string(),
+                dicts: config.engine.dicts.clone(),
+                dict_cache: true,
+            },
         };
         info!("Saving config: {}", serde_yaml::to_string(&config).unwrap());
 
@@ -222,11 +224,11 @@ fn build_core_pane(config: Arc<Mutex<Config>>) -> anyhow::Result<Grid> {
             for item in model {
                 cbt.append(Some(&item.path), &item.name);
             }
-            cbt.set_active_id(Some(&config.lock().unwrap().model));
+            cbt.set_active_id(Some(&config.lock().unwrap().engine.model));
 
             cbt.connect_changed(move |f| {
                 if let Some(id) = f.active_id() {
-                    config.lock().unwrap().model = id.to_string();
+                    config.lock().unwrap().engine.model = id.to_string();
                 }
             });
 
@@ -243,7 +245,7 @@ fn build_core_pane(config: Arc<Mutex<Config>>) -> anyhow::Result<Grid> {
 fn build_dict_pane(config: Arc<Mutex<Config>>) -> Grid {
     let grid = Grid::builder().column_spacing(10).build();
     // TODO /usr/share/skk/ 以下のものを拾ってきて入れる
-    for (i, dict_config) in config.lock().unwrap().dicts.iter().enumerate() {
+    for (i, dict_config) in config.lock().unwrap().engine.dicts.iter().enumerate() {
         grid.attach(
             &Label::builder()
                 .xalign(0_f32)
@@ -270,7 +272,7 @@ fn build_dict_pane(config: Arc<Mutex<Config>>) -> Grid {
             cbt.connect_changed(move |f| {
                 if let Some(id) = f.active_id() {
                     let mut config = config.lock().unwrap();
-                    for mut dict in &mut config.dicts {
+                    for mut dict in &mut config.engine.dicts {
                         if dict.path == path {
                             dict.usage = DictUsage::from(&id).unwrap();
                             break;

@@ -22,8 +22,6 @@ use crate::resource::detect_resource_path;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct Config {
-    pub dicts: Vec<DictConfig>,
-
     /// ローマ字かな変換テーブルの指定
     /// "default", "kana", etc.
     #[serde(default = "default_romkan")]
@@ -34,14 +32,7 @@ pub struct Config {
     #[serde(default = "default_keymap")]
     pub keymap: String,
 
-    /// Model の指定
-    /// "default", etc.
-    #[serde(default = "default_model")]
-    pub model: String,
-
-    /// 辞書のキャッシュ機能のオンオフ設定
-    #[serde(default = "default_dict_cache")]
-    pub dict_cache: bool,
+    pub engine: EngineConfig,
 }
 
 fn default_romkan() -> String {
@@ -50,14 +41,6 @@ fn default_romkan() -> String {
 
 fn default_keymap() -> String {
     detect_resource_path("keymap", "default").unwrap()
-}
-
-fn default_model() -> String {
-    detect_resource_path("model", "default").unwrap()
-}
-
-fn default_dict_cache() -> bool {
-    true
 }
 
 impl Config {
@@ -102,6 +85,28 @@ impl Config {
         );
         Ok(config)
     }
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Default, Clone)]
+pub struct EngineConfig {
+    pub dicts: Vec<DictConfig>,
+
+    /// 辞書のキャッシュ機能のオンオフ設定
+    #[serde(default = "default_dict_cache")]
+    pub dict_cache: bool,
+
+    /// Model の指定
+    /// "default", etc.
+    #[serde(default = "default_model")]
+    pub model: String,
+}
+
+fn default_model() -> String {
+    detect_resource_path("model", "default").unwrap()
+}
+
+fn default_dict_cache() -> bool {
+    true
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Default, Clone)]
