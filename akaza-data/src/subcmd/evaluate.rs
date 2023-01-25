@@ -76,6 +76,7 @@ pub fn evaluate(
         romkan: Default::default(),
         keymap: Default::default(),
         model: model_dir,
+        dict_cache: false,
     });
     builder.load_user_config(load_user_config);
     let akaza = builder.build()?;

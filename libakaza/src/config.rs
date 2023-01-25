@@ -38,6 +38,10 @@ pub struct Config {
     /// "default", etc.
     #[serde(default = "default_model")]
     pub model: String,
+
+    /// 辞書のキャッシュ機能のオンオフ設定
+    #[serde(default = "default_dict_cache")]
+    pub dict_cache: bool,
 }
 
 fn default_romkan() -> String {
@@ -50,6 +54,10 @@ fn default_keymap() -> String {
 
 fn default_model() -> String {
     detect_resource_path("model", "default").unwrap()
+}
+
+fn default_dict_cache() -> bool {
+    true
 }
 
 impl Config {

@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use anyhow::Result;
 
 use crate::config::{Config, DictConfig, DictEncoding, DictType, DictUsage};
-use crate::dict::loader::load_dicts_ex;
+use crate::dict::loader::{load_dicts, load_dicts_with_cache};
 use crate::engine::base::HenkanEngine;
 use crate::graph::candidate::Candidate;
 use crate::graph::graph_builder::GraphBuilder;
@@ -144,19 +144,29 @@ impl BigramWordViterbiEngineBuilder {
                 usage: DictUsage::Normal,
             });
 
-            load_dicts_ex(&dicts, "kana_kanji_cache.marisa")?
+            if self.config.dict_cache {
+                load_dicts_with_cache(&dicts, "kana_kanji_cache.marisa")?
+            } else {
+                let dict = load_dicts(&dicts)?;
+                MarisaKanaKanjiDict::build(dict)?
+            }
         };
 
-        let single_term = load_dicts_ex(
-            &self
+        let single_term = {
+            let dicts = self
                 .config
                 .dicts
                 .iter()
                 .filter(|it| it.usage == DictUsage::SingleTerm)
                 .cloned()
-                .collect::<Vec<_>>(),
-            "single_term_cache.marisa",
-        )?;
+                .collect::<Vec<_>>();
+            if self.config.dict_cache {
+                load_dicts_with_cache(&dicts, "single_term_cache.marisa")?
+            } else {
+                let dict = load_dicts(&dicts)?;
+                MarisaKanaKanjiDict::build(dict)?
+            }
+        };
 
         // 辞書を元に、トライを作成していく。
         let mut kana_trie = CedarwoodKanaTrie::default();
