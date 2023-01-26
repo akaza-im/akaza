@@ -91,11 +91,6 @@ impl BigramWordViterbiEngineBuilder {
         self
     }
 
-    pub fn model_dir(&mut self, model_dir: &str) -> &mut Self {
-        self.model_dir = Some(model_dir.to_string());
-        self
-    }
-
     pub fn build(
         &self,
     ) -> Result<
