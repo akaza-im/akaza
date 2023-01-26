@@ -245,6 +245,8 @@ fn build_core_pane(config: Arc<Mutex<Config>>) -> Result<Grid> {
 }
 
 fn build_dict_pane(config: Arc<Mutex<Config>>) -> Result<ScrolledWindow> {
+    // TODO ここは TreeView 使った方がすっきり書けるはずだが、僕の GTK+ 力が引くすぎて対応できていない。
+    // 誰かすっきり使い易くしてほしい。
     fn add_row(grid: &Grid, dict_config: &DictConfig, config: &Arc<Mutex<Config>>, i: usize) {
         grid.attach(
             &Label::builder()
@@ -323,6 +325,27 @@ fn build_dict_pane(config: Arc<Mutex<Config>>) -> Result<ScrolledWindow> {
                 });
             }
             grid.attach(&cbt, 3, i as i32, 1, 1);
+        }
+
+        {
+            let delete_btn = {
+                let path = dict_config.path.clone();
+                let config = config.clone();
+                let delete_btn = Button::with_label("削除");
+                let grid = grid.clone();
+                delete_btn.connect_clicked(move |_| {
+                    let mut config = config.lock().unwrap();
+                    for (i, dict) in &mut config.engine.dicts.iter().enumerate() {
+                        if dict.path == path {
+                            config.engine.dicts.remove(i);
+                            grid.remove_row(i as i32);
+                            break;
+                        }
+                    }
+                });
+                delete_btn
+            };
+            grid.attach(&delete_btn, 4, i as i32, 1, 1);
         }
     }
 
