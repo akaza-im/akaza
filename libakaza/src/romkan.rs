@@ -197,4 +197,15 @@ mod tests {
         assert_eq!(converter.to_hiragana("tso"), "つぉ");
         Ok(())
     }
+
+    #[test]
+    fn test_azik() -> anyhow::Result<()> {
+        let _ = env_logger::builder()
+            .filter_level(LevelFilter::Info)
+            .try_init();
+
+        let converter = RomKanConverter::new("../romkan/azik.yml")?;
+        assert_eq!(converter.to_hiragana("dn"), "だん");
+        Ok(())
+    }
 }
