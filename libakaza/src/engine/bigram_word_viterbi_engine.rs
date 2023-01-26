@@ -65,7 +65,6 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> BigramWordViterbi
 pub struct BigramWordViterbiEngineBuilder {
     user_data: Option<Arc<Mutex<UserData>>>,
     load_user_config: bool,
-    model_dir: Option<String>,
     config: EngineConfig,
 }
 
@@ -74,7 +73,6 @@ impl BigramWordViterbiEngineBuilder {
         BigramWordViterbiEngineBuilder {
             user_data: None,
             load_user_config: false,
-            model_dir: None,
             config,
         }
     }
@@ -91,11 +89,6 @@ impl BigramWordViterbiEngineBuilder {
         self
     }
 
-    pub fn model_dir(&mut self, model_dir: &str) -> &mut Self {
-        self.model_dir = Some(model_dir.to_string());
-        self
-    }
-
     pub fn build(
         &self,
     ) -> Result<
@@ -103,25 +96,11 @@ impl BigramWordViterbiEngineBuilder {
     > {
         let model_name = self.config.model.clone();
 
-        let system_unigram_lm = match &self.model_dir {
-            Some(path) => MarisaSystemUnigramLM::load(&format!("{}/unigram.model", path)),
-            None => {
-                MarisaSystemUnigramLM::load(Self::try_load(&model_name, "unigram.model")?.as_str())
-            }
-        }?;
-        let system_bigram_lm = match &self.model_dir {
-            Some(path) => MarisaSystemBigramLM::load(&format!("{}/bigram.model", path.clone())),
-            None => {
-                MarisaSystemBigramLM::load(Self::try_load(&model_name, "bigram.model")?.as_str())
-            }
-        }?;
-        // TODO Merge self.model_dir and config.model
-        let system_dict = match &self.model_dir {
-            Some(path) => {
-                format!("{}/SKK-JISYO.akaza", path)
-            }
-            None => Self::try_load(&model_name, "SKK-JISYO.akaza")?,
-        };
+        let system_unigram_lm =
+            MarisaSystemUnigramLM::load(Self::try_load(&model_name, "unigram.model")?.as_str())?;
+        let system_bigram_lm =
+            MarisaSystemBigramLM::load(Self::try_load(&model_name, "bigram.model")?.as_str())?;
+        let system_dict = Self::try_load(&model_name, "SKK-JISYO.akaza")?;
 
         let user_data = if let Some(d) = &self.user_data {
             d.clone()
