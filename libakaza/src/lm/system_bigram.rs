@@ -7,7 +7,7 @@ use log::info;
 use marisa_sys::{Keyset, Marisa};
 
 use crate::lm::base::SystemBigramLM;
-use crate::trie::SearchResult;
+use crate::search_result::SearchResult;
 
 /*
    {word1 ID}    # 3 bytes
