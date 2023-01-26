@@ -5,7 +5,7 @@ use log::info;
 
 use libakaza::cost::calc_cost;
 use libakaza::lm::base::SystemBigramLM;
-use libakaza::trie::SearchResult;
+use libakaza::search_result::SearchResult;
 use marisa_sys::{Keyset, Marisa};
 
 /**
