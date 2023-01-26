@@ -194,6 +194,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "cbindgen"
+version = "0.24.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a6358dedf60f4d9b8db43ad187391afe959746101346fe51bb978126bec61dfb"
+dependencies = [
+ "clap 3.2.23",
+ "heck",
+ "indexmap",
+ "log",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "syn",
+ "tempfile",
+ "toml",
+]
+
+[[package]]
 name = "cc"
 version = "1.0.78"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1062,6 +1081,7 @@ name = "libakaza"
 version = "0.1.7"
 dependencies = [
  "anyhow",
+ "cbindgen",
  "cedarwood",
  "chrono",
  "encoding_rs",

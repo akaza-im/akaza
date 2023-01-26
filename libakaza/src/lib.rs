@@ -18,3 +18,8 @@ mod resource;
 pub mod romkan;
 pub mod trie;
 pub mod user_side_data;
+
+#[no_mangle]
+pub extern "C" fn print_foo() {
+    println!("foo");
+}
