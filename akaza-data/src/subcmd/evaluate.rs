@@ -6,7 +6,6 @@ use anyhow::Context;
 use log::info;
 
 use libakaza::config::{DictConfig, DictEncoding, DictType, DictUsage, EngineConfig};
-use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::engine_factory::EngineFactory;
 
 #[derive(Default)]
@@ -50,7 +49,6 @@ pub fn evaluate(
     eucjp_dict: &Vec<String>,
     utf8_dict: &Vec<String>,
     model_dir: String,
-    load_user_config: bool,
 ) -> anyhow::Result<()> {
     let mut dicts: Vec<DictConfig> = Vec::new();
     for path in eucjp_dict {

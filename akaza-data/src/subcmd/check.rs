@@ -1,5 +1,3 @@
-use std::fs::File;
-use std::io::Write;
 use std::sync::{Arc, Mutex};
 
 use log::info;
@@ -10,7 +8,6 @@ use libakaza::user_side_data::user_data::UserData;
 
 pub fn check(
     yomi: &str,
-    expected: Option<String>,
     user_data: bool,
     eucjp_dict: &Vec<String>,
     utf8_dict: &Vec<String>,
@@ -46,15 +43,7 @@ pub fn check(
         builder.user_data(Arc::new(Mutex::new(user_data)));
     }
     let engine = builder.build()?;
-    let lattice = engine.to_lattice(yomi, None)?;
-    if let Some(expected) = expected {
-        let _dot = lattice.dump_cost_dot(expected.as_str());
-        println!("{}", _dot);
-        let mut file = File::create("/tmp/dump.dot")?;
-        file.write_all(_dot.as_bytes())?;
-    }
-
-    let got = engine.resolve(&lattice)?;
+    let got = engine.convert(yomi, None)?;
     let terms: Vec<String> = got.iter().map(|f| f[0].surface.clone()).collect();
     let result = terms.join("/");
     println!("{}", result);

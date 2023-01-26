@@ -10,10 +10,7 @@ use crate::graph::graph_resolver::GraphResolver;
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::Segmenter;
 use crate::kana_kanji::base::KanaKanjiDict;
-use crate::kana_kanji::marisa_kana_kanji_dict::MarisaKanaKanjiDict;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
-use crate::lm::system_bigram::MarisaSystemBigramLM;
-use crate::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use crate::user_side_data::user_data::UserData;
 
 /// バイグラムのビタビベースかな漢字変換エンジンです。
