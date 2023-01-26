@@ -126,7 +126,6 @@ fn main() -> Result<()> {
         let config = Config::load()?;
         let akaza = BigramWordViterbiEngineBuilder::new(Config::load()?.engine)
             .user_data(user_data.clone())
-            .load_user_config(true)
             .build()?;
         let mut ac = AkazaContext::new(akaza, config);
         let new_sys_time = SystemTime::now();

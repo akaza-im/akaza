@@ -70,12 +70,12 @@ pub fn evaluate(
         })
     }
 
-    let mut builder = BigramWordViterbiEngineBuilder::new(EngineConfig {
+    let akaza = BigramWordViterbiEngineBuilder::new(EngineConfig {
         dicts,
         model: model_dir,
         dict_cache: false,
-    });
-    let akaza = builder.build()?;
+    })
+    .build()?;
 
     let mut good_cnt = 0;
     let mut bad_cnt = 0;
