@@ -7,7 +7,7 @@ use log::info;
 
 use libakaza::config::{DictConfig, DictEncoding, DictType, DictUsage, EngineConfig};
 use libakaza::engine::base::HenkanEngine;
-use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
+use libakaza::engine::engine_factory::EngineFactory;
 
 #[derive(Default)]
 struct SaigenRitsu {
@@ -71,7 +71,7 @@ pub fn evaluate(
         })
     }
 
-    let builder = BigramWordViterbiEngineBuilder::new(EngineConfig {
+    let builder = EngineFactory::new(EngineConfig {
         dicts,
         model: model_dir,
         dict_cache: false,

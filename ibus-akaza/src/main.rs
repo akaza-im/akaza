@@ -15,7 +15,7 @@ use ibus_sys::core::ibus_main;
 use ibus_sys::engine::IBusEngine;
 use ibus_sys::glib::{gchar, guint};
 use libakaza::config::Config;
-use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
+use libakaza::engine::engine_factory::EngineFactory;
 use libakaza::user_side_data::user_data::UserData;
 
 use crate::context::AkazaContext;
@@ -124,7 +124,7 @@ fn main() -> Result<()> {
         let sys_time = SystemTime::now();
         let user_data = load_user_data();
         let config = Config::load()?;
-        let akaza = BigramWordViterbiEngineBuilder::new(Config::load()?.engine)
+        let akaza = EngineFactory::new(Config::load()?.engine)
             .user_data(user_data.clone())
             .build()?;
         let mut ac = AkazaContext::new(akaza, config);

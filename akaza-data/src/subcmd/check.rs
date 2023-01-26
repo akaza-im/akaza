@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use log::info;
 
 use libakaza::config::{DictConfig, DictEncoding, DictType, DictUsage, EngineConfig};
-use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
+use libakaza::engine::engine_factory::EngineFactory;
 use libakaza::user_side_data::user_data::UserData;
 
 pub fn check(
@@ -35,7 +35,7 @@ pub fn check(
         })
     }
 
-    let mut builder = BigramWordViterbiEngineBuilder::new(EngineConfig {
+    let mut builder = EngineFactory::new(EngineConfig {
         dicts,
         model: model_dir.to_string(),
         dict_cache: false,
