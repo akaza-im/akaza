@@ -165,8 +165,6 @@ struct CheckArgs {
 #[derive(Debug, clap::Args)]
 struct EvaluateArgs {
     #[arg(long)]
-    load_user_config: bool,
-    #[arg(long)]
     corpus: Vec<String>,
     #[arg(long)]
     utf8_dict: Vec<String>,
@@ -255,13 +253,9 @@ fn main() -> anyhow::Result<()> {
             &opt.utf8_dict,
             &opt.model_dir,
         ),
-        Commands::Evaluate(opt) => evaluate(
-            &opt.corpus,
-            &opt.eucjp_dict,
-            &opt.utf8_dict,
-            opt.model_dir,
-            opt.load_user_config,
-        ),
+        Commands::Evaluate(opt) => {
+            evaluate(&opt.corpus, &opt.eucjp_dict, &opt.utf8_dict, opt.model_dir)
+        }
         Commands::DumpUnigramDict(opt) => dump_unigram_dict(opt.dict.as_str()),
         Commands::DumpBigramDict(opt) => {
             dump_bigram_dict(opt.unigram_file.as_str(), opt.bigram_file.as_str())

@@ -64,7 +64,6 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> BigramWordViterbi
 
 pub struct BigramWordViterbiEngineBuilder {
     user_data: Option<Arc<Mutex<UserData>>>,
-    load_user_config: bool,
     config: EngineConfig,
 }
 
@@ -72,16 +71,8 @@ impl BigramWordViterbiEngineBuilder {
     pub fn new(config: EngineConfig) -> BigramWordViterbiEngineBuilder {
         BigramWordViterbiEngineBuilder {
             user_data: None,
-            load_user_config: false,
             config,
         }
-    }
-
-    // TODO: ユーザー設定を読むかどうかの責任は、Engine ではなく EngineFactory 的なクラスを用意して
-    // 責務を移管する。
-    pub fn load_user_config(&mut self, load_user_config: bool) -> &mut Self {
-        self.load_user_config = load_user_config;
-        self
     }
 
     pub fn user_data(&mut self, user_data: Arc<Mutex<UserData>>) -> &mut Self {

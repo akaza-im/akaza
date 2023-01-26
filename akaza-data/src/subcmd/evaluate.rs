@@ -50,7 +50,6 @@ pub fn evaluate(
     eucjp_dict: &Vec<String>,
     utf8_dict: &Vec<String>,
     model_dir: String,
-    load_user_config: bool,
 ) -> anyhow::Result<()> {
     let mut dicts: Vec<DictConfig> = Vec::new();
     for path in eucjp_dict {
@@ -71,13 +70,12 @@ pub fn evaluate(
         })
     }
 
-    let mut builder = BigramWordViterbiEngineBuilder::new(EngineConfig {
+    let akaza = BigramWordViterbiEngineBuilder::new(EngineConfig {
         dicts,
         model: model_dir,
         dict_cache: false,
-    });
-    builder.load_user_config(load_user_config);
-    let akaza = builder.build()?;
+    })
+    .build()?;
 
     let mut good_cnt = 0;
     let mut bad_cnt = 0;
