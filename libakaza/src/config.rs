@@ -131,7 +131,6 @@ pub struct DictConfig {
     #[serde(default = "default_dict_type")]
     pub dict_type: DictType,
 
-
     #[serde(default = "default_dict_usage")]
     pub usage: DictUsage,
 }
