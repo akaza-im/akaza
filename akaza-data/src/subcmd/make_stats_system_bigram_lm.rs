@@ -163,11 +163,9 @@ fn validation(unigram_dst: &str, bigram_dst: &str) -> Result<()> {
         .ok_or_else(|| anyhow!("Cannot find '{}' in unigram dict.", word1))?;
     println!("word2_id={word2_id} word2_cost={word2_cost}");
 
-    bigram.get_edge_cost(word1_id, word2_id).with_context(|| {
-        format!(
-            "Get bigram entry: '{word1} -> {word2}' {word1_id},{word2_id}"
-        )
-    })?;
+    bigram
+        .get_edge_cost(word1_id, word2_id)
+        .with_context(|| format!("Get bigram entry: '{word1} -> {word2}' {word1_id},{word2_id}"))?;
 
     Ok(())
 }
