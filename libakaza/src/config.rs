@@ -32,15 +32,24 @@ pub struct Config {
     #[serde(default = "default_keymap")]
     pub keymap: String,
 
+    #[serde(default = "default_engine_config")]
     pub engine: EngineConfig,
 }
 
 fn default_romkan() -> String {
-    detect_resource_path("romkan", "default").unwrap()
+    detect_resource_path("romkan", "default.yml").unwrap()
 }
 
 fn default_keymap() -> String {
-    detect_resource_path("keymap", "default").unwrap()
+    detect_resource_path("keymap", "default.yml").unwrap()
+}
+
+fn default_engine_config() -> EngineConfig {
+    EngineConfig {
+        dicts: [].to_vec(),
+        dict_cache: true,
+        model: default_model(),
+    }
 }
 
 impl Config {
@@ -101,25 +110,34 @@ pub struct EngineConfig {
     pub model: String,
 }
 
-fn default_model() -> String {
-    detect_resource_path("model", "default").unwrap()
-}
-
 fn default_dict_cache() -> bool {
     true
 }
 
+fn default_model() -> String {
+    detect_resource_path("model", "default").unwrap()
+}
+
 #[derive(Debug, PartialEq, Serialize, Deserialize, Default, Clone)]
 pub struct DictConfig {
+    #[serde(default = "default_path")]
     pub path: String,
 
     /// Encoding of the dictionary
     /// Default: UTF-8
+    #[serde(default = "default_encoding")]
     pub encoding: DictEncoding,
 
+    #[serde(default = "default_dict_type")]
     pub dict_type: DictType,
 
+
+    #[serde(default = "default_dict_usage")]
     pub usage: DictUsage,
+}
+
+fn default_path() -> String {
+    "".to_string()
 }
 
 fn default_encoding() -> DictEncoding {
@@ -128,6 +146,10 @@ fn default_encoding() -> DictEncoding {
 
 fn default_dict_type() -> DictType {
     DictType::SKK
+}
+
+fn default_dict_usage() -> DictUsage {
+    DictUsage::Disabled
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
