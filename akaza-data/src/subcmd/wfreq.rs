@@ -80,7 +80,7 @@ pub fn wfreq(src_dirs: &Vec<String>, dst_file: &str) -> anyhow::Result<()> {
             info!("Skip 2 character katakana entry: {}", word);
             continue;
         }
-        ofp.write_fmt(format_args!("{}\t{}\n", word, cnt))?;
+        ofp.write_fmt(format_args!("{word}\t{cnt}\n"))?;
     }
     fs::rename(dst_file.to_owned() + ".tmp", dst_file)?;
 

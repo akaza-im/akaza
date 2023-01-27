@@ -132,7 +132,7 @@ impl LearningService {
         let terms: Vec<String> = got.iter().map(|f| f[0].surface.clone()).collect();
         let result = terms.join("");
 
-        println!("{}", result);
+        println!("{result}");
 
         // 正解じゃないときには出現頻度の確率が正しくないということだと思いますんで
         // 頻度を増やす。

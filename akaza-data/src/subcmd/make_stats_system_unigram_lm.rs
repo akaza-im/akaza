@@ -18,7 +18,7 @@ pub fn make_stats_system_unigram_lm(srcpath: &str, dstpath: &str) -> anyhow::Res
         // 3 byte に ID が収めるようにする。
         // よって、最大でも 8,388,608 単語までになるように vocab を制限する。
         // 現実的な線で切っても、500万単語ぐらいで十分。
-        panic!("too much words in wfreq file: {}", srcpath);
+        panic!("too much words in wfreq file: {srcpath}");
     }
 
     homograph_hack(&mut wordcnt);
@@ -29,7 +29,7 @@ pub fn make_stats_system_unigram_lm(srcpath: &str, dstpath: &str) -> anyhow::Res
         builder.add(word.as_str(), *score);
     }
 
-    println!("Writing {}", dstpath);
+    println!("Writing {dstpath}");
     builder.save(dstpath)?;
 
     Ok(())

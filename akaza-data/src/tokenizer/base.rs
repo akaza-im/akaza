@@ -82,7 +82,7 @@ pub(crate) fn merge_terms_ipadic(intermediates: Vec<IntermediateToken>) -> Strin
             }
         }
 
-        buf += format!("{}/{} ", surface, yomi).as_str();
+        buf += format!("{surface}/{yomi} ").as_str();
 
         i = j;
     }

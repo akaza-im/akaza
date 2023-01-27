@@ -128,8 +128,7 @@ impl CurrentState {
             if idex >= nodes.len() {
                 // 発生しないはずだが、発生している。。なぜだろう?
                 panic!(
-                    "[BUG] self.node_selected and self.clauses missmatch: {:?}",
-                    self
+                    "[BUG] self.node_selected and self.clauses missmatch: {self:?}"
                 )
             }
             result += &nodes[idex].surface_with_dynamic();

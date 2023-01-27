@@ -86,7 +86,7 @@ pub fn evaluate(
     let mut saigen_ritsu = SaigenRitsu::default();
 
     for file in corpus {
-        let fp = File::open(file).with_context(|| format!("File: {}", file))?;
+        let fp = File::open(file).with_context(|| format!("File: {file}"))?;
         for line in BufReader::new(fp).lines() {
             let line = line?;
             let line = line.trim();
@@ -96,7 +96,7 @@ pub fn evaluate(
 
             let (yomi, surface) = line
                 .split_once(' ')
-                .with_context(|| format!("source: {}", line))
+                .with_context(|| format!("source: {line}"))
                 .unwrap();
             let yomi = yomi.replace('|', "");
             let surface = surface.replace('|', "");

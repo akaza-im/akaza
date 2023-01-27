@@ -125,7 +125,7 @@ impl PropController {
 
         // 有効化する input mode のメニュー項目にチェックを入れる。
         let Some(property) = self.prop_dict.get(input_mode.prop_name) else {
-            panic!("Unknown input mode: {:?}", input_mode);
+            panic!("Unknown input mode: {input_mode:?}");
         };
         unsafe {
             ibus_property_set_state(*property, IBusPropState_PROP_STATE_CHECKED);

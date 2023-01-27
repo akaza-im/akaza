@@ -49,7 +49,7 @@ pub fn check(
     let lattice = engine.to_lattice(yomi, None)?;
     if let Some(expected) = expected {
         let _dot = lattice.dump_cost_dot(expected.as_str());
-        println!("{}", _dot);
+        println!("{_dot}");
         let mut file = File::create("/tmp/dump.dot")?;
         file.write_all(_dot.as_bytes())?;
     }
@@ -57,7 +57,7 @@ pub fn check(
     let got = engine.resolve(&lattice)?;
     let terms: Vec<String> = got.iter().map(|f| f[0].surface.clone()).collect();
     let result = terms.join("/");
-    println!("{}", result);
+    println!("{result}");
 
     Ok(())
 }

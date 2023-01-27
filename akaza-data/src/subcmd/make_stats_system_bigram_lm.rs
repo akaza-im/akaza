@@ -75,7 +75,7 @@ pub fn make_stats_system_bigram_lm(
         "work/dump/bigram-{}.txt",
         Local::now().format("%Y%m%d-%H%M%S")
     );
-    println!("Dump to text file: {}", dumpfname);
+    println!("Dump to text file: {dumpfname}");
     let mut file = File::create(dumpfname)?;
     for ((word_id1, word_id2), cnt) in &merged {
         let Some(word1) = reverse_unigram_map.get(word_id1) else {
@@ -85,7 +85,7 @@ pub fn make_stats_system_bigram_lm(
             continue;
         };
         if *cnt > 16 {
-            file.write_fmt(format_args!("{}\t{}\t{}\n", cnt, word1, word2))?;
+            file.write_fmt(format_args!("{cnt}\t{word1}\t{word2}\n"))?;
         }
     }
 
@@ -155,18 +155,17 @@ fn validation(unigram_dst: &str, bigram_dst: &str) -> Result<()> {
     let (word1_id, watshi_cost) = unigram
         .find(word1)
         .ok_or_else(|| anyhow!("Cannot find '{}' in unigram dict.", word1))?;
-    println!("word1_id={} word1_cost={}", word1_id, watshi_cost);
+    println!("word1_id={word1_id} word1_cost={watshi_cost}");
 
     let word2 = "から/から";
     let (word2_id, word2_cost) = unigram
         .find(word2)
         .ok_or_else(|| anyhow!("Cannot find '{}' in unigram dict.", word1))?;
-    println!("word2_id={} word2_cost={}", word2_id, word2_cost);
+    println!("word2_id={word2_id} word2_cost={word2_cost}");
 
     bigram.get_edge_cost(word1_id, word2_id).with_context(|| {
         format!(
-            "Get bigram entry: '{} -> {}' {},{}",
-            word1, word2, word1_id, word2_id
+            "Get bigram entry: '{word1} -> {word2}' {word1_id},{word2_id}"
         )
     })?;
 
