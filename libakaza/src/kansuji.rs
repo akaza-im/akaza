@@ -24,21 +24,14 @@ const PARTS: [&str; 18] = [
 ];
 
 fn int2kanji(i: i64) -> String {
-    let s = i.to_string();
-    let chars = s.bytes();
-    let p = chars.into_iter().rev().enumerate().collect::<Vec<_>>();
+    let p = i.to_string().bytes().map(|b| (b - b'0') as usize)
+        .rev().enumerate().collect::<Vec<_>>();
     let mut buf: Vec<&'static str> = Vec::new();
-    for (i, b) in p.clone() {
-        let c = (b - 48) as usize; // 48 is '0'
+    for &(i, c) in &p {
         if i % 4 == 0
             && i > 0
-            && (i..min(i + 4, s.len()))
-                .map(|i| {
-                    let (_, c) = p.get(i).unwrap();
-                    *c
-                })
-                .any(|n| n != 48)
-        {
+            && (i..min(i + 4, p.len()))
+                .any(|i| { p[i].1 != 0 }) {
             buf.push(PARTS[i / 4]);
         }
         if c != 0 {
@@ -47,7 +40,7 @@ fn int2kanji(i: i64) -> String {
         }
         if !(i % 4 != 0 && c == 1) {
             // 十百千を表示したときで、一のときは追加しない。
-            buf.push(NUMS[c]); // 48 is '0'
+            buf.push(NUMS[c]);
         }
     }
     buf.reverse();
