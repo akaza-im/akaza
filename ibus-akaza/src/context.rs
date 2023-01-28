@@ -66,6 +66,7 @@ pub struct AkazaContext {
     // ==== UI 関連 ====
     lookup_table: IBusLookupTable,
     prop_controller: PropController,
+    live_conversion: bool,
 }
 
 impl AkazaContext {
@@ -90,6 +91,7 @@ impl AkazaContext {
             keymap: KeyMap::new(config.keymap)?,
             prop_controller: PropController::new(input_mode)?,
             consonant_suffix_extractor: ConsonantSuffixExtractor::default(),
+            live_conversion: config.live_conversion,
         })
     }
 
@@ -225,7 +227,7 @@ impl AkazaContext {
                         "Insert new character to preedit: '{}'",
                         self.current_state.preedit
                     );
-                    if self.lookup_table.get_number_of_candidates() > 0 {
+                    if !self.live_conversion && self.lookup_table.get_number_of_candidates() > 0 {
                         // 変換の途中に別の文字が入力された。よって、現在の preedit 文字列は確定させる。
                         self.commit_candidate(engine);
                     }
@@ -236,6 +238,12 @@ impl AkazaContext {
 
                     // And update the display status.
                     self.update_preedit_text_in_precomposition(engine);
+
+                    // live conversion mode が true であれば、変換をガンガンかける
+                    if self.live_conversion {
+                        self.update_candidates(engine);
+                    }
+
                     return true;
                 }
             }
