@@ -4,7 +4,7 @@ DATADIR ?= $(PREFIX)/share
 DESTDIR ?=
 AKAZA_DATA_DIR ?= $(DATADIR)/akaza/
 
-all: akaza.xml config.h
+all: akaza.xml config.h ../target/release/ibus-akaza
 
 #   ibus_akaza/config.py: ibus_akaza/config.py.in
 #   	sed -e "s:@SYSCONFDIR@:$(SYSCONFDIR):g" \
@@ -27,13 +27,13 @@ akaza-debug.xml: akaza.xml.in
 	    -e "s:@BINARY@:$(PWD)/ibus-akaza-debug.sh:g" \
 	    -e "s:@DATADIR@:$(DATADIR)/:g" $< > $@
 
-install: akaza.xml config.h .ibus-akaza
+install: akaza.xml config.h ../target/release/ibus-akaza
 	install -m 0644 ../target/release/ibus-akaza $(PREFIX)/bin/
 
 	install -m 0644 akaza.svg $(DESTDIR)$(DATADIR)/ibus-akaza
 	install -m 0644 akaza.xml $(DESTDIR)$(DATADIR)/ibus/component
 
-.ibus-akaza:
+../target/release/ibus-akaza:
 	cargo build --release
 
 install-debug: akaza-debug.xml
@@ -46,7 +46,7 @@ uninstall:
 	rm -f $(DESTDIR)$(DATADIR)/ibus-akaza/akaza.svg
 
 clean:
-	rm -f akaza.xml
+	rm -f akaza.xml config.h
 
 .PHONY: all test install uninstall clean install-debug
 
