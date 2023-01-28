@@ -58,7 +58,7 @@ impl MarisaSystemBigramLMBuilder {
     }
 
     pub fn set_default_edge_cost(&mut self, score: f32) -> &mut Self {
-        let key = format!("{}\t{}", DEFAULT_COST_KEY, score);
+        let key = format!("{DEFAULT_COST_KEY}\t{score}");
         let key1 = key.as_bytes().to_vec();
         self.keyset.push_back(key1.as_slice());
         self

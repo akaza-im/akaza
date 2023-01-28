@@ -98,7 +98,7 @@ impl Keymap {
         ))?;
 
         if let Some(parent) = &got.extends {
-            let path = detect_resource_path("keymap", &format!("{}.yml", parent))?;
+            let path = detect_resource_path("keymap", &format!("{parent}.yml"))?;
             let mut map = Keymap::load(&path)?;
 
             for (kp, opts) in &got.to_map()? {
@@ -135,7 +135,7 @@ mod tests {
         let keymap: Keymap =
             serde_yaml::from_reader(BufReader::new(File::open("../keymap/default.yml")?))?;
         for kc in keymap.keys {
-            println!("{:?}", kc);
+            println!("{kc:?}");
         }
         Ok(())
     }

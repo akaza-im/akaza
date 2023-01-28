@@ -27,7 +27,7 @@ pub fn vocab(src_file: &str, dst_file: &str, threshold: u32) -> anyhow::Result<(
         }
         let cnt: u32 = cnt.parse()?;
         if cnt > threshold {
-            ofp.write_fmt(format_args!("{}\n", word))?;
+            ofp.write_fmt(format_args!("{word}\n"))?;
         }
     }
     fs::rename(dst_file.to_owned() + ".tmp", dst_file)?;

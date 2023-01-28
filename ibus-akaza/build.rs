@@ -38,7 +38,7 @@ fn main() {
             c = c.flag(flag.as_str());
         }
         for flag in pkgconfig(module, "--libs") {
-            println!("cargo:rustc-link-arg={}", flag);
+            println!("cargo:rustc-link-arg={flag}");
         }
     }
     p.compile("wrapper");

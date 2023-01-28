@@ -71,9 +71,7 @@ impl WordNode {
     ) -> WordNode {
         assert!(
             !surface.is_empty(),
-            "Kanji shouldn't be empty: {}/{}",
-            surface,
-            yomi
+            "Kanji shouldn't be empty: {surface}/{yomi}"
         );
 
         WordNode {

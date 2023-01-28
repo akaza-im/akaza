@@ -20,9 +20,9 @@ pub fn write_skk_dict(
         keys.sort();
         for yomi in keys {
             let kanjis = merged_dict.get(yomi).unwrap();
-            assert!(!yomi.is_empty(), "yomi must not be empty: {:?}", kanjis);
+            assert!(!yomi.is_empty(), "yomi must not be empty: {kanjis:?}");
             let kanjis = kanjis.join("/");
-            wfp.write_fmt(format_args!("{} /{}/\n", yomi, kanjis))?;
+            wfp.write_fmt(format_args!("{yomi} /{kanjis}/\n"))?;
         }
     }
     Ok(())

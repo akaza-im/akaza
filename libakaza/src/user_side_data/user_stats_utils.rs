@@ -19,7 +19,7 @@ pub(crate) fn read_user_stats_file(path: &String) -> Result<Vec<(String, u32)>> 
         let count = count
             .to_string()
             .parse::<u32>()
-            .with_context(|| format!("Invalid line in user language model: {}", count))?;
+            .with_context(|| format!("Invalid line in user language model: {count}"))?;
 
         result.push((key.to_string(), count));
     }

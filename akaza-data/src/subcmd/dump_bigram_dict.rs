@@ -15,7 +15,7 @@ pub fn dump_bigram_dict(unigram_file: &str, bigram_file: &str) -> anyhow::Result
     for ((word_id1, word_id2), cost) in bigram.as_hash_map() {
         let key1 = unigram_map.get(&word_id1).unwrap();
         let key2 = unigram_map.get(&word_id2).unwrap();
-        println!("{} {} {}", cost, key1, key2);
+        println!("{cost} {key1} {key2}");
     }
 
     Ok(())

@@ -23,7 +23,7 @@ fn load_romkan_map(file_path: &str) -> anyhow::Result<HashMap<String, String>> {
     if let Some(parent) = got.extends {
         // 継承しているので親を読み込む。
         // 再帰的な処理になる。
-        let path = detect_resource_path("romkan", &format!("{}.yml", parent))?;
+        let path = detect_resource_path("romkan", &format!("{parent}.yml"))?;
         let mut parent = load_romkan_map(&path)?;
 
         for (k, v) in got.mapping {
