@@ -1,7 +1,7 @@
-use anyhow::Context;
 use std::fs::File;
 use std::time::SystemTime;
 
+use anyhow::Context;
 use kelp::{kata2hira, ConvOption};
 use log::info;
 use vibrato::{Dictionary, Tokenizer};
@@ -61,6 +61,7 @@ impl AkazaTokenizer for VibratoTokenizer {
 
             let hinshi = feature[0];
             let subhinshi = if feature.len() > 2 { feature[1] } else { "UNK" };
+            let subsubhinshi = if feature.len() > 3 { feature[2] } else { "UNK" };
             let yomi = if feature.len() > 7 {
                 feature[7]
             } else {
@@ -74,6 +75,7 @@ impl AkazaTokenizer for VibratoTokenizer {
                 yomi.to_string(),
                 hinshi.to_string(),
                 subhinshi.to_string(),
+                subsubhinshi.to_string(),
             );
             intermediates.push(intermediate);
             // println!("{}/{}/{}", token.surface(), hinshi, yomi);
@@ -119,6 +121,32 @@ mod tests {
             runner.tokenize("書いていたものである")?,
             "書いて/かいて いた/いた もの/もの である/である"
         );
+        Ok(())
+    }
+
+    #[test]
+    fn test_iika() -> anyhow::Result<()> {
+        // 井伊家が ipadic だと いい/か になるが、「か」が接尾なので、
+        // 複合語化されてしまう。これはひじょうに問題である。
+        // 「いいか」というのはよく出て来る表現なので。。
+        // しかも「井伊家」は wikipedia でもよく出ているので、割とコストが低くなってしまう。
+        // 井伊家だけに限った問題ではないので、mecab への辞書登録ではカバーが難しい。
+        // よって、接尾の「家」は特別扱いして、固有名詞,人名の場合のあとにくる「家」は「け」と読むようにする。
+
+        /*
+        井伊家
+        井伊    名詞,固有名詞,人名,姓,*,*,井伊,イイ,イイ
+        家      名詞,接尾,一般,*,*,*,家,カ,カ
+        EOS
+        */
+
+        let _ = env_logger::builder()
+            .filter_level(LevelFilter::Info)
+            .is_test(true)
+            .try_init();
+
+        let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic", None)?;
+        assert_eq!(runner.tokenize("井伊家")?, "井伊家/いいけ");
         Ok(())
     }
 }

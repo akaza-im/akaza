@@ -3,11 +3,13 @@ pub trait AkazaTokenizer {
 }
 
 /// マージ処理に利用する為の中間表現
+#[derive(Debug)]
 pub(crate) struct IntermediateToken {
     surface: String,
     yomi: String,
     hinshi: String,
     subhinshi: String,
+    subsubhinshi: String,
 }
 
 impl IntermediateToken {
@@ -16,12 +18,14 @@ impl IntermediateToken {
         yomi: String,
         hinshi: String,
         subhinshi: String,
+        subsubhinshi: String,
     ) -> IntermediateToken {
         IntermediateToken {
             surface,
             yomi,
             hinshi,
             subhinshi,
+            subsubhinshi,
         }
     }
 }
@@ -72,8 +76,19 @@ pub(crate) fn merge_terms_ipadic(intermediates: Vec<IntermediateToken>) -> Strin
                 || token.subhinshi == "接続助詞"
                 || token.subhinshi == "接尾"
             {
+                // println!("PREV_TOKEN: {:?}", prev_token);
+                // println!("TOKEN: {:?}", token);
                 surface += token.surface.as_str();
-                yomi += token.yomi.as_str();
+                yomi += if token.surface == "家"
+                    && token.yomi == "か"
+                    && prev_token.subsubhinshi == "人名"
+                {
+                    // 人名 + 家 のケースに ipadic だと「か」と読んでしまう
+                    // 問題があるので、その場合は「家/け」に読み替える。
+                    "け"
+                } else {
+                    token.yomi.as_str()
+                };
 
                 j += 1;
                 prev_token = token;
