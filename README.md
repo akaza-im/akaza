@@ -50,7 +50,8 @@ Rust で書いています。
 
 ibus-akaza をインストールしてください。
 
-    sudo rustup install stable
+    rustup install stable
+    make
     sudo make install
     ibus restart
     ibus engine akaza
