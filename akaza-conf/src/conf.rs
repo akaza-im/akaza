@@ -9,7 +9,8 @@ use gtk::{Application, ApplicationWindow, Button, Label, Notebook};
 use gtk4 as gtk;
 use gtk4::gio::ApplicationFlags;
 use gtk4::{
-    ComboBoxText, FileChooserAction, FileChooserDialog, Grid, ResponseType, ScrolledWindow, Window,
+    CheckButton, ComboBoxText, FileChooserAction, FileChooserDialog, Grid, ResponseType,
+    ScrolledWindow, Window,
 };
 use log::{error, info};
 
@@ -60,6 +61,7 @@ fn connect_activate(app: &Application, config: Arc<Mutex<Config>>) -> Result<()>
         let config = Config {
             keymap: config.keymap.to_string(),
             romkan: config.romkan.to_string(),
+            live_conversion: config.live_conversion,
             engine: EngineConfig {
                 model: config.engine.model.to_string(),
                 dicts: config.engine.dicts.clone(),
@@ -228,6 +230,7 @@ fn build_core_pane(config: Arc<Mutex<Config>>) -> Result<Grid> {
             }
             cbt.set_active_id(Some(&config.lock().unwrap().engine.model));
 
+            let config = config.clone();
             cbt.connect_changed(move |f| {
                 if let Some(id) = f.active_id() {
                     config.lock().unwrap().engine.model = id.to_string();
@@ -241,6 +244,16 @@ fn build_core_pane(config: Arc<Mutex<Config>>) -> Result<Grid> {
         1,
         1,
     );
+    {
+        let check_box = CheckButton::builder()
+            .label("ライブ変換")
+            .active(config.lock().unwrap().live_conversion)
+            .build();
+        grid.attach(&check_box, 0, 3, 1, 1);
+        check_box.connect_toggled(move |f| {
+            config.lock().unwrap().live_conversion = f.is_active();
+        });
+    }
     Ok(grid)
 }
 

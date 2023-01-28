@@ -34,6 +34,10 @@ pub struct Config {
 
     #[serde(default = "default_engine_config")]
     pub engine: EngineConfig,
+
+    /// ライブ変換
+    #[serde(default = "default_live_conversion")]
+    pub live_conversion: bool,
 }
 
 fn default_romkan() -> String {
@@ -50,6 +54,10 @@ fn default_engine_config() -> EngineConfig {
         dict_cache: true,
         model: default_model(),
     }
+}
+
+fn default_live_conversion() -> bool {
+    false
 }
 
 impl Config {
