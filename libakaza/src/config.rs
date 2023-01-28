@@ -84,7 +84,9 @@ impl Config {
                     configfile.to_string_lossy(),
                     err
                 );
-                return Ok(Config::default());
+                let config: Config = serde_yaml::from_str("").unwrap();
+                info!("Loaded default configuration: {:?}", config);
+                return Ok(config);
             }
         };
         info!(
