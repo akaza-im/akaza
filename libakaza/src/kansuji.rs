@@ -23,15 +23,21 @@ const PARTS: [&str; 18] = [
     "無量大数",
 ];
 
-fn int2kanji(i: i64) -> String {
-    let p = i.to_string().bytes().map(|b| (b - b'0') as usize)
-        .rev().enumerate().collect::<Vec<_>>();
+pub fn int2kanji(i: i64) -> String {
+    if i == 0 {
+        return "零".to_string();
+    }
+
+    let p = i
+        .to_string()
+        .bytes()
+        .map(|b| (b - b'0') as usize)
+        .rev()
+        .enumerate()
+        .collect::<Vec<_>>();
     let mut buf: Vec<&'static str> = Vec::new();
     for &(i, c) in &p {
-        if i % 4 == 0
-            && i > 0
-            && (i..min(i + 4, p.len()))
-                .any(|i| { p[i].1 != 0 }) {
+        if i % 4 == 0 && i > 0 && (i..min(i + 4, p.len())).any(|i| p[i].1 != 0) {
             buf.push(PARTS[i / 4]);
         }
         if c != 0 {
@@ -53,6 +59,7 @@ mod tests {
 
     #[test]
     fn test_int2kanji() {
+        assert_eq!(int2kanji(0), "零");
         assert_eq!(int2kanji(1), "一");
         assert_eq!(int2kanji(9), "九");
         assert_eq!(int2kanji(10), "十");

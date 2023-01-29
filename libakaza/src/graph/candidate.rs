@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 
+use crate::kansuji::int2kanji;
 #[allow(unused_imports)]
 use chrono::{DateTime, Local, TimeZone};
 
@@ -50,6 +51,10 @@ impl Candidate {
                 "(*(*(TODAY-SLASH" => now().format("%Y/%m/%d").to_string(),
                 "(*(*(TODAY-KANJI" => now().format("%Y年%m月%d日").to_string(),
                 "(*(*(NOW-KANJI" => now().format("%H時%M分").to_string(),
+                "(*(*(NUMBER-KANSUJI" => match self.yomi.parse::<i64>() {
+                    Ok(n) => int2kanji(n),
+                    Err(e) => e.to_string(),
+                },
                 _ => "不明な動的変換: ".to_string() + self.surface.as_str(),
             }
         } else {
