@@ -67,6 +67,7 @@ pub struct AkazaContext {
     lookup_table: IBusLookupTable,
     prop_controller: PropController,
     live_conversion: bool,
+    lookup_table_visible: bool,
 }
 
 impl AkazaContext {
@@ -92,6 +93,7 @@ impl AkazaContext {
             prop_controller: PropController::new(input_mode)?,
             consonant_suffix_extractor: ConsonantSuffixExtractor::default(),
             live_conversion: config.live_conversion,
+            lookup_table_visible: false,
         })
     }
 
@@ -130,11 +132,19 @@ impl AkazaContext {
 }
 
 impl AkazaContext {
-    pub(crate) fn process_num_key(&mut self, nn: i32, engine: *mut IBusEngine) {
+    pub(crate) fn process_num_key(&mut self, nn: i32, engine: *mut IBusEngine) -> bool {
         let idx = if nn == 0 { 9 } else { nn - 1 };
 
-        if self.set_lookup_table_cursor_pos_in_current_page(idx) {
-            self.refresh(engine, true)
+        if self.lookup_table_visible {
+            if self.set_lookup_table_cursor_pos_in_current_page(idx) {
+                self.refresh(engine, true);
+                true
+            } else {
+                false
+            }
+        } else {
+            info!("ignore process_num_key. lookup table is not enabled.");
+            false
         }
     }
 
@@ -210,7 +220,9 @@ impl AkazaContext {
             )
             .cloned()
         {
-            return self.run_callback_by_name(engine, callback.as_str());
+            if self.run_callback_by_name(engine, callback.as_str()) {
+                return true;
+            }
         }
 
         match self.current_state.input_mode.prop_name {
@@ -355,8 +367,7 @@ impl AkazaContext {
     ) -> bool {
         if let Some(function) = self.command_map.get(function_name) {
             info!("Calling function '{}'", function_name);
-            function(self, engine);
-            true
+            function(self, engine)
         } else {
             error!("Unknown function '{}'", function_name);
             false
@@ -539,6 +550,7 @@ impl AkazaContext {
                 &mut self.lookup_table as *mut _,
                 to_gboolean(visible),
             );
+            self.lookup_table_visible = visible;
         }
     }
 
