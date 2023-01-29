@@ -134,7 +134,7 @@ impl AkazaContext {
         let idx = if nn == 0 { 9 } else { nn - 1 };
 
         if self.set_lookup_table_cursor_pos_in_current_page(idx) {
-            self.refresh(engine)
+            self.refresh(engine, true)
         }
     }
 
@@ -241,7 +241,7 @@ impl AkazaContext {
 
                     // live conversion mode が true であれば、変換をガンガンかける
                     if self.live_conversion {
-                        self.update_candidates(engine);
+                        self.update_candidates(engine, false);
                     }
 
                     return true;
@@ -401,12 +401,16 @@ impl AkazaContext {
         self.commit_string(engine, self.current_state.build_string().as_str());
     }
 
-    pub(crate) fn update_candidates(&mut self, engine: *mut IBusEngine) {
-        self._update_candidates(engine).unwrap();
+    pub(crate) fn update_candidates(&mut self, engine: *mut IBusEngine, show_lookup_table: bool) {
+        self._update_candidates(engine, show_lookup_table).unwrap();
         self.current_state.clear_state();
     }
 
-    fn _update_candidates(&mut self, engine: *mut IBusEngine) -> Result<()> {
+    fn _update_candidates(
+        &mut self,
+        engine: *mut IBusEngine,
+        show_lookup_table: bool,
+    ) -> Result<()> {
         if self.current_state.preedit.is_empty() {
             self.current_state.set_clauses(vec![]);
         } else {
@@ -436,7 +440,7 @@ impl AkazaContext {
             self.current_state.adjust_current_clause();
         }
         self.create_lookup_table();
-        self.refresh(engine);
+        self.refresh(engine, show_lookup_table);
         Ok(())
     }
 
@@ -457,7 +461,7 @@ impl AkazaContext {
         }
     }
 
-    fn refresh(&mut self, engine: *mut IBusEngine) {
+    fn refresh(&mut self, engine: *mut IBusEngine, show_lookup_table: bool) {
         unsafe {
             if self.current_state.clauses.is_empty() {
                 ibus_engine_hide_auxiliary_text(engine);
@@ -470,14 +474,16 @@ impl AkazaContext {
             let current_node = &(current_clause[0]);
 
             // -- auxiliary text(ポップアップしてるやつのほう)
-            let first_candidate = &(current_node.yomi);
-            let auxiliary_text = first_candidate.as_str().to_ibus_text();
-            ibus_text_set_attributes(auxiliary_text, ibus_attr_list_new());
-            ibus_engine_update_auxiliary_text(
-                engine,
-                auxiliary_text,
-                to_gboolean(!self.current_state.preedit.is_empty()),
-            );
+            if show_lookup_table {
+                let first_candidate = &(current_node.yomi);
+                let auxiliary_text = first_candidate.as_str().to_ibus_text();
+                ibus_text_set_attributes(auxiliary_text, ibus_attr_list_new());
+                ibus_engine_update_auxiliary_text(
+                    engine,
+                    auxiliary_text,
+                    to_gboolean(!self.current_state.preedit.is_empty()),
+                );
+            }
 
             let text = self.current_state.build_string();
             let preedit_attrs = ibus_attr_list_new();
@@ -517,8 +523,12 @@ impl AkazaContext {
             );
 
             // 候補があれば、選択肢を表示させる。
-            let visible = self.lookup_table.get_number_of_candidates() > 0;
-            self._update_lookup_table(engine, visible);
+            if show_lookup_table {
+                let visible = self.lookup_table.get_number_of_candidates() > 0;
+                self._update_lookup_table(engine, visible);
+            } else {
+                self._update_lookup_table(engine, false);
+            }
         }
     }
 
@@ -576,7 +586,7 @@ impl AkazaContext {
         if self.lookup_table.cursor_up() {
             self.current_state
                 .select_candidate(self.lookup_table.get_cursor_pos() as usize);
-            self.refresh(engine);
+            self.refresh(engine, true);
         }
     }
 
@@ -585,7 +595,7 @@ impl AkazaContext {
         if self.lookup_table.cursor_down() {
             self.current_state
                 .select_candidate(self.lookup_table.get_cursor_pos() as usize);
-            self.refresh(engine);
+            self.refresh(engine, true);
         }
     }
 
@@ -593,7 +603,7 @@ impl AkazaContext {
         if self.lookup_table.page_up() {
             self.current_state
                 .select_candidate(self.lookup_table.get_cursor_pos() as usize);
-            self.refresh(engine);
+            self.refresh(engine, true);
             true
         } else {
             false
@@ -604,7 +614,7 @@ impl AkazaContext {
         if self.lookup_table.page_up() {
             self.current_state
                 .select_candidate(self.lookup_table.get_cursor_pos() as usize);
-            self.refresh(engine);
+            self.refresh(engine, true);
             true
         } else {
             false
@@ -622,7 +632,7 @@ impl AkazaContext {
 
         self.create_lookup_table();
 
-        self.refresh(engine);
+        self.refresh(engine, true);
     }
 
     /// 選択する分節を左にずらす。
@@ -636,20 +646,20 @@ impl AkazaContext {
 
         self.create_lookup_table();
 
-        self.refresh(engine);
+        self.refresh(engine, true);
     }
 
     /// 文節の選択範囲を右方向に広げる
     pub fn extend_clause_right(&mut self, engine: *mut IBusEngine) -> Result<()> {
         self.current_state.extend_right();
-        self._update_candidates(engine)?;
+        self._update_candidates(engine, true)?;
         Ok(())
     }
 
     /// 文節の選択範囲を左方向に広げる
     pub fn extend_clause_left(&mut self, engine: *mut IBusEngine) -> Result<()> {
         self.current_state.extend_left();
-        self._update_candidates(engine)?;
+        self._update_candidates(engine, true)?;
         Ok(())
     }
 
@@ -746,13 +756,13 @@ impl AkazaContext {
         self.lookup_table.append_candidate(candidate);
 
         // 表示を更新
-        self.refresh(engine);
+        self.refresh(engine, true);
         Ok(())
     }
 
     pub fn escape(&mut self, engine: *mut IBusEngine) {
         trace!("escape: {}", self.current_state.preedit);
         self.current_state.clear();
-        self.update_candidates(engine)
+        self.update_candidates(engine, false)
     }
 }
