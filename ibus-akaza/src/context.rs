@@ -154,7 +154,7 @@ impl AkazaContext {
 
         let new_pos = page * page_size + (idx as u32);
 
-        if new_pos > self.lookup_table.get_number_of_candidates() {
+        if new_pos >= self.lookup_table.get_number_of_candidates() {
             info!(
                 "new_pos too big: {} > {}",
                 new_pos,
