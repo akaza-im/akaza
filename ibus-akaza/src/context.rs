@@ -390,7 +390,7 @@ impl AkazaContext {
             self.current_state.clear();
 
             self.lookup_table.clear();
-            self._update_lookup_table(engine);
+            self._update_lookup_table(engine, false);
 
             ibus_engine_hide_auxiliary_text(engine);
             ibus_engine_hide_preedit_text(engine);
@@ -517,14 +517,13 @@ impl AkazaContext {
             );
 
             // 候補があれば、選択肢を表示させる。
-            self._update_lookup_table(engine);
+            let visible = self.lookup_table.get_number_of_candidates() > 0;
+            self._update_lookup_table(engine, visible);
         }
     }
 
-    /// 候補があれば lookup table を表示。なければ非表示にする。
-    fn _update_lookup_table(&mut self, engine: *mut IBusEngine) {
+    fn _update_lookup_table(&mut self, engine: *mut IBusEngine, visible: bool) {
         unsafe {
-            let visible = self.lookup_table.get_number_of_candidates() > 0;
             ibus_engine_update_lookup_table(
                 engine,
                 &mut self.lookup_table as *mut _,
