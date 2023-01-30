@@ -539,7 +539,19 @@ impl AkazaContext {
         if self.lookup_table.cursor_down() {
             self.current_state
                 .select_candidate(engine, self.lookup_table.get_cursor_pos() as usize);
-            self.refresh(engine, true);
+
+            // -- auxiliary text(ポップアップしてるやつのほう)
+            let current_yomi = self.current_state.clauses[self.current_state.current_clause][0]
+                .yomi
+                .clone();
+            self.current_state.set_auxiliary_text(engine, &current_yomi);
+
+            // 候補があれば、選択肢を表示させる。
+            self.current_state.set_lookup_table_visible(
+                engine,
+                &mut self.lookup_table as *mut _,
+                true,
+            );
         }
     }
 
