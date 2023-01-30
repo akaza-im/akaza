@@ -64,7 +64,8 @@ pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaComman
     });
 
     register("update_candidates", |context, engine| {
-        context.update_candidates(engine, true);
+        context._update_candidates(engine, true).unwrap();
+        context.current_state.clear_state(engine);
         true
     });
     register("erase_character_before_cursor", |context, engine| {
