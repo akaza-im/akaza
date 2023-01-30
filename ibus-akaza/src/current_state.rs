@@ -77,10 +77,7 @@ impl CurrentState {
             self.on_raw_input_change(engine);
         }
 
-        if !self.clauses.is_empty() {
-            self.clauses.clear();
-            self.on_clauses_change(engine, lookup_table);
-        }
+        self.clear_clauses(engine, lookup_table);
 
         self.clear_state(engine, lookup_table);
     }

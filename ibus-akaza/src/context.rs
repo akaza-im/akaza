@@ -710,10 +710,19 @@ impl AkazaContext {
 
     pub fn escape(&mut self, engine: *mut IBusEngine) {
         trace!("escape");
-        self.current_state.clear(engine, &mut self.lookup_table);
-        self.henkan(engine).unwrap();
-        self.refresh(engine, false);
-        self.current_state
-            .clear_state(engine, &mut self.lookup_table);
+
+        if self.current_state.live_conversion {
+            self.current_state.clear(engine, &mut self.lookup_table);
+        } else {
+            // 変換候補の分節をクリアする。
+            self.current_state
+                .clear_clauses(engine, &mut self.lookup_table);
+            // 消す。
+            self.current_state
+                .set_lookup_table_visible(engine, &mut self.lookup_table, false);
+
+            // 次に、preedit を平仮名に戻す。
+            self.update_preedit_text_in_precomposition(engine);
+        }
     }
 }
