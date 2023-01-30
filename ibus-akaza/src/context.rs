@@ -199,7 +199,7 @@ impl AkazaContext {
         if modifiers & IBusModifierType_IBUS_RELEASE_MASK != 0 {
             return false;
         }
-        let key_state = self.get_key_state();
+        let key_state = self.current_state.get_key_state();
 
         trace!("KeyState={:?}", key_state);
         if let Some(callback) = self
@@ -374,21 +374,6 @@ impl AkazaContext {
         } else {
             error!("Unknown function '{}'", function_name);
             false
-        }
-    }
-
-    // TODO I should move this to current_state.get_key_state()
-    pub(crate) fn get_key_state(&self) -> KeyState {
-        // キー入力状態を返す。
-        if self.current_state.get_preedit().is_empty() {
-            // 未入力状態。
-            KeyState::PreComposition
-        } else if self.current_state.in_conversion() {
-            // 変換している状態。lookup table が表示されている状態
-            KeyState::Conversion
-        } else {
-            // preedit になにか入っていて、まだ変換を実施していない状態
-            KeyState::Composition
         }
     }
 

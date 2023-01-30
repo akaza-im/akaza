@@ -12,6 +12,7 @@ use ibus_sys::glib::guint;
 use ibus_sys::text::{ibus_text_set_attributes, StringExt};
 use libakaza::extend_clause::{extend_left, extend_right};
 use libakaza::graph::candidate::Candidate;
+use libakaza::keymap::KeyState;
 
 use crate::input_mode::InputMode;
 
@@ -205,6 +206,20 @@ impl CurrentState {
                 text.len() as guint,
                 to_gboolean(!text.is_empty()),
             );
+        }
+    }
+
+    pub(crate) fn get_key_state(&self) -> KeyState {
+        // キー入力状態を返す。
+        if self.preedit.is_empty() {
+            // 未入力状態。
+            KeyState::PreComposition
+        } else if self.in_conversion() {
+            // 変換している状態。lookup table が表示されている状態
+            KeyState::Conversion
+        } else {
+            // preedit になにか入っていて、まだ変換を実施していない状態
+            KeyState::Composition
         }
     }
 }
