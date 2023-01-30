@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 
 use kelp::{hira2kata, ConvOption};
 use log::trace;
+use regex::Regex;
 
 use crate::graph::lattice_graph::LatticeGraph;
 use crate::graph::segmenter::SegmentationResult;
@@ -19,6 +20,7 @@ pub struct GraphBuilder<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict
     user_data: Arc<Mutex<UserData>>,
     system_unigram_lm: Rc<U>,
     system_bigram_lm: Rc<B>,
+    number_pattern: Regex,
 }
 
 impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> GraphBuilder<U, B, KD> {
@@ -29,12 +31,14 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> GraphBuilder<U, B
         system_unigram_lm: Rc<U>,
         system_bigram_lm: Rc<B>,
     ) -> GraphBuilder<U, B, KD> {
+        let number_pattern = Regex::new(r#"^[0-9]+"#).unwrap();
         GraphBuilder {
             system_kana_kanji_dict,
             system_single_term_dict,
             user_data,
             system_unigram_lm,
             system_bigram_lm,
+            number_pattern,
         }
     }
 
@@ -100,6 +104,18 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> GraphBuilder<U, B
                     let node = WordNode::new(
                         (end_pos - segmented_yomi.len()) as i32,
                         surface,
+                        segmented_yomi,
+                        None,
+                        true,
+                    );
+                    vec.push(node);
+                }
+
+                // 数字の場合は数字用の動的変換を入れる
+                if self.number_pattern.is_match(segmented_yomi) {
+                    let node = WordNode::new(
+                        (end_pos - segmented_yomi.len()) as i32,
+                        "(*(*(NUMBER-KANSUJI",
                         segmented_yomi,
                         None,
                         true,

@@ -12,6 +12,7 @@ pub mod extend_clause;
 pub mod graph;
 pub mod kana_kanji;
 pub mod kana_trie;
+pub mod kansuji;
 pub mod keymap;
 pub mod lm;
 mod resource;
