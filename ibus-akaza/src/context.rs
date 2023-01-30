@@ -295,7 +295,8 @@ impl AkazaContext {
                 // 変換中の場合、無変換モードにもどす。
                 self.lookup_table.clear();
                 // 変換候補をクリアする
-                self.current_state.clear_clauses(engine);
+                self.current_state
+                    .clear_clauses(engine, &mut self.lookup_table);
                 self.current_state.set_auxiliary_text(engine, "");
                 ibus_engine_hide_lookup_table(engine);
             } else {
@@ -304,6 +305,7 @@ impl AkazaContext {
                     engine,
                     self.romkan
                         .remove_last_char(self.current_state.get_raw_input()),
+                    &mut self.lookup_table,
                 )
             }
             // 変換していないときのレンダリングをする。
@@ -363,7 +365,8 @@ impl AkazaContext {
         self.prop_controller.set_input_mode(input_mode, engine);
 
         // 実際に input_mode を設定する
-        self.current_state.set_input_mode(engine, input_mode);
+        self.current_state
+            .set_input_mode(engine, input_mode, &mut self.lookup_table);
     }
 
     pub(crate) fn run_callback_by_name(
@@ -390,7 +393,7 @@ impl AkazaContext {
 
             ibus_engine_commit_text(engine, text.to_ibus_text());
 
-            self.current_state.clear(engine);
+            self.current_state.clear(engine, &mut self.lookup_table);
 
             self.lookup_table.clear();
             self.current_state.set_lookup_table_visible(
@@ -400,7 +403,8 @@ impl AkazaContext {
             );
 
             self.current_state.set_auxiliary_text(engine, "");
-            self.current_state.clear_clauses(engine);
+            self.current_state
+                .clear_clauses(engine, &mut self.lookup_table);
         }
     }
 
@@ -419,7 +423,8 @@ impl AkazaContext {
         show_lookup_table: bool,
     ) -> Result<()> {
         if self.current_state.get_raw_input().is_empty() {
-            self.current_state.set_clauses(engine, vec![]);
+            self.current_state
+                .set_clauses(engine, vec![], &mut self.lookup_table);
         } else {
             let yomi = self.current_state.get_raw_input().to_string();
 
@@ -442,7 +447,8 @@ impl AkazaContext {
                 )?
             };
 
-            self.current_state.set_clauses(engine, clauses);
+            self.current_state
+                .set_clauses(engine, clauses, &mut self.lookup_table);
 
             self.current_state.adjust_current_clause(engine);
         }
@@ -474,31 +480,31 @@ impl AkazaContext {
                 self.current_state.set_auxiliary_text(engine, "");
                 ibus_engine_hide_lookup_table(engine);
                 ibus_engine_hide_preedit_text(engine);
-                return;
-            }
-
-            // -- auxiliary text(ポップアップしてるやつのほう)
-            if show_lookup_table {
-                let current_yomi = self.current_state.clauses[self.current_state.current_clause][0]
-                    .yomi
-                    .clone();
-                self.current_state.set_auxiliary_text(engine, &current_yomi);
-            }
-
-            // 候補があれば、選択肢を表示させる。
-            if show_lookup_table {
-                let visible = self.lookup_table.get_number_of_candidates() > 0;
-                self.current_state.set_lookup_table_visible(
-                    engine,
-                    &mut self.lookup_table as *mut _,
-                    visible,
-                );
             } else {
-                self.current_state.set_lookup_table_visible(
-                    engine,
-                    &mut self.lookup_table as *mut _,
-                    false,
-                );
+                // -- auxiliary text(ポップアップしてるやつのほう)
+                if show_lookup_table {
+                    let current_yomi = self.current_state.clauses
+                        [self.current_state.current_clause][0]
+                        .yomi
+                        .clone();
+                    self.current_state.set_auxiliary_text(engine, &current_yomi);
+                }
+
+                // 候補があれば、選択肢を表示させる。
+                if show_lookup_table {
+                    let visible = self.lookup_table.get_number_of_candidates() > 0;
+                    self.current_state.set_lookup_table_visible(
+                        engine,
+                        &mut self.lookup_table as *mut _,
+                        visible,
+                    );
+                } else {
+                    self.current_state.set_lookup_table_visible(
+                        engine,
+                        &mut self.lookup_table as *mut _,
+                        false,
+                    );
+                }
             }
         }
     }
@@ -708,8 +714,11 @@ impl AkazaContext {
     ) -> Result<()> {
         // 候補を設定
         let candidate = Candidate::new(yomi, surface, 0_f32);
-        self.current_state
-            .set_clauses(engine, vec![Vec::from([candidate])]);
+        self.current_state.set_clauses(
+            engine,
+            vec![Vec::from([candidate])],
+            &mut self.lookup_table,
+        );
         self.current_state.clear_state(engine);
 
         // ルックアップテーブルに候補を設定
@@ -717,14 +726,16 @@ impl AkazaContext {
         let candidate = surface.to_ibus_text();
         self.lookup_table.append_candidate(candidate);
 
-        // 表示を更新
-        self.refresh(engine, true);
+        // lookup table を表示させる
+        self.current_state
+            .set_lookup_table_visible(engine, &mut self.lookup_table as *mut _, true);
+
         Ok(())
     }
 
     pub fn escape(&mut self, engine: *mut IBusEngine) {
         trace!("escape");
-        self.current_state.clear(engine);
+        self.current_state.clear(engine, &mut self.lookup_table);
         self._update_candidates(engine, false).unwrap();
         self.current_state.clear_state(engine);
     }

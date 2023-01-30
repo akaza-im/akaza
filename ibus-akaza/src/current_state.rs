@@ -53,8 +53,13 @@ impl CurrentState {
         }
     }
 
-    pub(crate) fn set_input_mode(&mut self, engine: *mut IBusEngine, input_mode: &InputMode) {
-        self.clear(engine);
+    pub(crate) fn set_input_mode(
+        &mut self,
+        engine: *mut IBusEngine,
+        input_mode: &InputMode,
+        lookup_table: &mut IBusLookupTable,
+    ) {
+        self.clear(engine, lookup_table);
         self.input_mode = *input_mode;
     }
 
@@ -63,7 +68,7 @@ impl CurrentState {
             .insert(self.current_clause, candidate_pos);
     }
 
-    pub(crate) fn clear(&mut self, engine: *mut IBusEngine) {
+    pub(crate) fn clear(&mut self, engine: *mut IBusEngine, lookup_table: &mut IBusLookupTable) {
         if !self.raw_input.is_empty() {
             self.raw_input.clear();
             self.on_raw_input_change(engine);
@@ -71,7 +76,7 @@ impl CurrentState {
 
         if !self.clauses.is_empty() {
             self.clauses.clear();
-            self.on_clauses_change(engine);
+            self.on_clauses_change(engine, lookup_table);
         }
 
         self.clear_state(engine);
@@ -97,7 +102,12 @@ impl CurrentState {
     }
 
     /// バックスペースで一文字削除した場合などに呼ばれる。
-    pub(crate) fn set_raw_input(&mut self, engine: *mut IBusEngine, raw_input: String) {
+    pub(crate) fn set_raw_input(
+        &mut self,
+        engine: *mut IBusEngine,
+        raw_input: String,
+        lookup_table: &mut IBusLookupTable,
+    ) {
         if self.raw_input != raw_input {
             self.raw_input = raw_input;
             self.on_raw_input_change(engine);
@@ -105,7 +115,7 @@ impl CurrentState {
 
         if !self.clauses.is_empty() {
             self.clauses.clear();
-            self.on_clauses_change(engine);
+            self.on_clauses_change(engine, lookup_table);
         }
 
         self.clear_state(engine);
@@ -118,22 +128,44 @@ impl CurrentState {
         }
     }
 
-    pub fn set_clauses(&mut self, engine: *mut IBusEngine, clause: Vec<Vec<Candidate>>) {
+    pub fn set_clauses(
+        &mut self,
+        engine: *mut IBusEngine,
+        clause: Vec<Vec<Candidate>>,
+        lookup_table: &mut IBusLookupTable,
+    ) {
         if self.clauses != clause {
             self.clauses = clause;
-            self.on_clauses_change(engine);
+            self.node_selected.clear();
+            self.on_clauses_change(engine, lookup_table);
         }
-        self.node_selected.clear();
     }
 
     /// 変換しているときに backspace を入力した場合。
     /// 変換候補をクリアして、Conversion から Composition 状態に戻る。
-    pub fn clear_clauses(&mut self, engine: *mut IBusEngine) {
+    pub fn clear_clauses(&mut self, engine: *mut IBusEngine, lookup_table: &mut IBusLookupTable) {
         if !self.clauses.is_empty() {
             self.clauses.clear();
-            self.on_clauses_change(engine);
+            self.on_clauses_change(engine, lookup_table);
         }
         self.clear_state(engine);
+    }
+
+    /**
+     * 現在の候補選択状態から、 lookup table を構築する。
+     */
+    fn render_lookup_table(&mut self, lookup_table: &mut IBusLookupTable) {
+        // 一旦、ルックアップテーブルをクリアする
+        lookup_table.clear();
+
+        // 現在の未変換情報を元に、候補を算出していく。
+        if !self.clauses.is_empty() {
+            // lookup table に候補を詰め込んでいく。
+            for node in &self.clauses[self.current_clause] {
+                let candidate = &node.surface_with_dynamic();
+                lookup_table.append_candidate(candidate.to_ibus_text());
+            }
+        }
     }
 
     pub fn get_first_candidates(&self) -> Vec<Candidate> {
@@ -214,8 +246,13 @@ impl CurrentState {
         !self.clauses.is_empty()
     }
 
-    pub fn on_clauses_change(&self, engine: *mut IBusEngine) {
+    pub fn on_clauses_change(
+        &mut self,
+        engine: *mut IBusEngine,
+        lookup_table: &mut IBusLookupTable,
+    ) {
         self.render_preedit(engine);
+        self.render_lookup_table(lookup_table);
     }
 
     pub fn on_raw_input_change(&self, _engine: *mut IBusEngine) {}
