@@ -417,9 +417,9 @@ impl AkazaContext {
         self.commit_string(engine, self.current_state.build_string().as_str());
     }
 
-    pub(crate) fn update_candidates(&mut self, engine: *mut IBusEngine, show_lookup_table: bool) {
+    pub(crate) fn update_candidates(&mut self, engine: *mut IBusEngine) {
         self._update_candidates(engine).unwrap();
-        self.refresh(engine, show_lookup_table);
+        self.refresh(engine, true);
         self.current_state
             .clear_state(engine, &mut self.lookup_table);
     }
