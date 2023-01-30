@@ -697,18 +697,17 @@ impl AkazaContext {
     ) -> Result<()> {
         // 候補を設定
         let candidate = Candidate::new(yomi, surface, 0_f32);
-        self.current_state.set_clauses(
-            engine,
-            vec![Vec::from([candidate])],
-            &mut self.lookup_table,
-        );
         self.current_state
             .clear_state(engine, &mut self.lookup_table);
+        self.current_state.set_clauses(
+            engine,
+            vec![Vec::from([candidate.clone()])],
+            &mut self.lookup_table,
+        );
 
         // ルックアップテーブルに候補を設定
-        self.lookup_table.clear();
-        let candidate = surface.to_ibus_text();
-        self.lookup_table.append_candidate(candidate);
+        self.current_state
+            .set_auxiliary_text(engine, &candidate.yomi);
 
         // lookup table を表示させる
         self.current_state

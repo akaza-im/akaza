@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::ops::Range;
 
+use log::info;
+
 use ibus_sys::attr_list::{ibus_attr_list_append, ibus_attr_list_new};
 use ibus_sys::attribute::{
     ibus_attribute_new, IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND,
@@ -155,6 +157,7 @@ impl CurrentState {
      * 現在の候補選択状態から、 lookup table を構築する。
      */
     fn render_lookup_table(&mut self, lookup_table: &mut IBusLookupTable) {
+        info!("render_lookup_table");
         // 一旦、ルックアップテーブルをクリアする
         lookup_table.clear();
 
