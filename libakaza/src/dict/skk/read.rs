@@ -61,6 +61,15 @@ pub fn parse_skkdict(src: &str) -> Result<HashMap<String, Vec<String>>> {
             continue;
         };
 
+        // 読み仮名がアルファベットのものは除外する。
+        // `kk /株式会社/` のようなエントリーがライブコンバージョン時に邪魔になるため。
+        // https://github.com/akaza-im/akaza/issues/260
+        if let Some(first_yomi_char) = yomi.chars().next() {
+            if first_yomi_char.is_ascii_alphabetic() {
+                continue;
+            }
+        }
+
         // example:
         // とくひろ /徳宏/徳大/徳寛/督弘/
         // 末尾の slash が抜けてる場合もあるエントリーが SKK-JISYO.L に入っていたりするので注意。
@@ -106,15 +115,9 @@ mod tests {
     #[test]
     fn missing_trailing_slash() -> anyhow::Result<()> {
         let src = ";; okuri-nasi entries.\n\
-            sars-cov /severe acute respiratory syndrome coronavirus/SARSコロナウイルス";
+           こな /粉";
         let dict = parse_skkdict(src)?;
-        assert_eq!(
-            *dict.get("sars-cov").unwrap(),
-            vec![
-                "severe acute respiratory syndrome coronavirus".to_string(),
-                "SARSコロナウイルス".to_string(),
-            ]
-        );
+        assert_eq!(*dict.get("こな").unwrap(), vec!["粉".to_string()]);
 
         Ok(())
     }
@@ -128,6 +131,17 @@ mod tests {
         let dict = parse_skkdict(src)?;
         assert_eq!(*dict.get("せみころん").unwrap(), Vec::<String>::new());
         assert_eq!(*dict.get("お").unwrap(), vec!["尾".to_string()]);
+
+        Ok(())
+    }
+
+    /// パース結果が空になる場合は無視する
+    #[test]
+    fn kk() -> anyhow::Result<()> {
+        let src = ";; okuri-nasi entries.\n\
+            kk /株式会社/\n";
+        let dict = parse_skkdict(src)?;
+        assert_eq!(dict.get("kk"), None);
 
         Ok(())
     }
