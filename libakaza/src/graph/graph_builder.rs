@@ -110,7 +110,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> GraphBuilder<U, B
                     );
                     vec.push(node);
                 }
-                
+
                 // 数字の場合は数字用の動的変換を入れる
                 if self.number_pattern.is_match(segmented_yomi) {
                     let node = WordNode::new(
