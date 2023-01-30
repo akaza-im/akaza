@@ -250,7 +250,8 @@ impl AkazaContext {
                         // And update the display status.
                         self.update_preedit_text_in_precomposition(engine);
 
-                        self.update_candidates(engine, false);
+                        self._update_candidates(engine, false).unwrap();
+                        self.current_state.clear_state(engine);
                     } else {
                         // Append the character to preedit string.
                         let ch = char::from_u32(keyval).unwrap();
@@ -725,6 +726,7 @@ impl AkazaContext {
     pub fn escape(&mut self, engine: *mut IBusEngine) {
         trace!("escape");
         self.current_state.clear(engine);
-        self.update_candidates(engine, false)
+        self._update_candidates(engine, false).unwrap();
+        self.current_state.clear_state(engine);
     }
 }
