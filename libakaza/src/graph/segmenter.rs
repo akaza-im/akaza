@@ -4,6 +4,7 @@ use std::ops::Range;
 use std::sync::{Arc, Mutex};
 
 use log::{debug, info, trace};
+use regex::Regex;
 
 use crate::kana_trie::base::KanaTrie;
 
@@ -38,12 +39,17 @@ impl SegmentationResult {
 
 pub struct Segmenter {
     tries: Vec<Arc<Mutex<dyn KanaTrie>>>,
+    number_pattern: Regex,
 }
 
 impl Segmenter {
     pub fn new(tries: Vec<Arc<Mutex<dyn KanaTrie>>>) -> Segmenter {
         info!("Registering tries for Segmenter: {}", tries.len());
-        Segmenter { tries }
+        let number_pattern = Regex::new(r#"^(?:0|[1-9][0-9]*)(\.[0-9]*)?"#).unwrap();
+        Segmenter {
+            tries,
+            number_pattern,
+        }
     }
 
     /**
@@ -103,26 +109,32 @@ impl Segmenter {
             }
 
             let mut candidates: HashSet<String> = HashSet::new();
-            for trie in &self.tries {
-                let got = trie.lock().unwrap().common_prefix_search(yomi);
-                debug!("Common prefix search: {:?}", got);
-                'insert: for word in got {
-                    let ends_at = start_pos + word.len();
+            if let Some(captured) = self.number_pattern.captures(yomi) {
+                // 数字は一つの単語として処理する。
+                let s = captured.get(0).unwrap().as_str();
+                candidates.insert(s.to_string());
+            } else {
+                for trie in &self.tries {
+                    let got = trie.lock().unwrap().common_prefix_search(yomi);
+                    debug!("Common prefix search: {:?}", got);
+                    'insert: for word in got {
+                        let ends_at = start_pos + word.len();
 
-                    // end_pos が force の範囲に入っていたら処理しない。
-                    if let Some(force_ranges) = force_ranges {
-                        for force_range in force_ranges {
-                            // force_range は exclusive で、厳しい。
-                            if force_range.contains(&ends_at) || force_range.end == ends_at {
-                                trace!("Blocked candidate range: {}, {:?}", word, force_range);
-                                continue 'insert;
-                            } else {
-                                trace!("Accepted candidate range: {}, {:?}", word, force_range);
+                        // end_pos が force の範囲に入っていたら処理しない。
+                        if let Some(force_ranges) = force_ranges {
+                            for force_range in force_ranges {
+                                // force_range は exclusive で、厳しい。
+                                if force_range.contains(&ends_at) || force_range.end == ends_at {
+                                    trace!("Blocked candidate range: {}, {:?}", word, force_range);
+                                    continue 'insert;
+                                } else {
+                                    trace!("Accepted candidate range: {}, {:?}", word, force_range);
+                                }
                             }
                         }
-                    }
 
-                    candidates.insert(word);
+                        candidates.insert(word);
+                    }
                 }
             }
             if !candidates.is_empty() {
@@ -195,6 +207,18 @@ mod tests {
                 (6, vec!["た".to_string()]),
                 (9, vec!["し".to_string()]),
             ]))
+        )
+    }
+
+    #[test]
+    fn test_number() {
+        let kana_trie = CedarwoodKanaTrie::build(vec![]);
+
+        let segmenter = Segmenter::new(vec![Arc::new(Mutex::new(kana_trie))]);
+        let graph = segmenter.build("365", None);
+        assert_eq!(
+            graph,
+            SegmentationResult::new(BTreeMap::from([(3, vec!["365".to_string()]),]))
         )
     }
 
