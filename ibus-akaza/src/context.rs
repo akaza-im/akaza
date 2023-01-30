@@ -64,7 +64,6 @@ pub struct AkazaContext {
     // ==== UI 関連 ====
     lookup_table: IBusLookupTable,
     prop_controller: PropController,
-    lookup_table_visible: bool,
 }
 
 impl AkazaContext {
@@ -89,7 +88,6 @@ impl AkazaContext {
             keymap: KeyMap::new(config.keymap)?,
             prop_controller: PropController::new(input_mode)?,
             consonant_suffix_extractor: ConsonantSuffixExtractor::default(),
-            lookup_table_visible: false,
         })
     }
 
@@ -131,7 +129,7 @@ impl AkazaContext {
     pub(crate) fn process_num_key(&mut self, nn: i32, engine: *mut IBusEngine) -> bool {
         let idx = if nn == 0 { 9 } else { nn - 1 };
 
-        if self.lookup_table_visible {
+        if self.current_state.lookup_table_visible {
             if self.set_lookup_table_cursor_pos_in_current_page(idx) {
                 self.refresh(engine, true);
                 true
@@ -395,7 +393,11 @@ impl AkazaContext {
             self.current_state.clear(engine);
 
             self.lookup_table.clear();
-            self._update_lookup_table(engine, false);
+            self.current_state.set_lookup_table_visible(
+                engine,
+                &mut self.lookup_table as *mut _,
+                false,
+            );
 
             self.current_state.set_auxiliary_text(engine, "");
             self.current_state.clear_clauses(engine);
@@ -486,21 +488,18 @@ impl AkazaContext {
             // 候補があれば、選択肢を表示させる。
             if show_lookup_table {
                 let visible = self.lookup_table.get_number_of_candidates() > 0;
-                self._update_lookup_table(engine, visible);
+                self.current_state.set_lookup_table_visible(
+                    engine,
+                    &mut self.lookup_table as *mut _,
+                    visible,
+                );
             } else {
-                self._update_lookup_table(engine, false);
+                self.current_state.set_lookup_table_visible(
+                    engine,
+                    &mut self.lookup_table as *mut _,
+                    false,
+                );
             }
-        }
-    }
-
-    fn _update_lookup_table(&mut self, engine: *mut IBusEngine, visible: bool) {
-        unsafe {
-            ibus_engine_update_lookup_table(
-                engine,
-                &mut self.lookup_table as *mut _,
-                to_gboolean(visible),
-            );
-            self.lookup_table_visible = visible;
         }
     }
 

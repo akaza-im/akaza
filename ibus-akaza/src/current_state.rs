@@ -9,9 +9,11 @@ use ibus_sys::attribute::{
 use ibus_sys::core::to_gboolean;
 use ibus_sys::engine::{
     ibus_engine_hide_auxiliary_text, ibus_engine_hide_preedit_text,
-    ibus_engine_update_auxiliary_text, ibus_engine_update_preedit_text, IBusEngine,
+    ibus_engine_update_auxiliary_text, ibus_engine_update_lookup_table,
+    ibus_engine_update_preedit_text, IBusEngine,
 };
 use ibus_sys::glib::guint;
+use ibus_sys::lookup_table::IBusLookupTable;
 use ibus_sys::text::{ibus_text_set_attributes, StringExt};
 use libakaza::extend_clause::{extend_left, extend_right};
 use libakaza::graph::candidate::Candidate;
@@ -33,6 +35,7 @@ pub struct CurrentState {
     pub(crate) force_selected_clause: Vec<Range<usize>>,
     /// ライブコンバージョン
     pub live_conversion: bool,
+    pub(crate) lookup_table_visible: bool,
 }
 
 impl CurrentState {
@@ -46,6 +49,7 @@ impl CurrentState {
             node_selected: HashMap::new(),
             force_selected_clause: Vec::new(),
             live_conversion,
+            lookup_table_visible: false,
         }
     }
 
@@ -299,6 +303,17 @@ impl CurrentState {
                     to_gboolean(!self.raw_input.is_empty()),
                 );
             }
+        }
+    }
+
+    pub fn set_lookup_table_visible(
+        &mut self,
+        engine: *mut IBusEngine,
+        lookup_table: *mut IBusLookupTable,
+        visible: bool,
+    ) {
+        unsafe {
+            ibus_engine_update_lookup_table(engine, lookup_table, to_gboolean(visible));
         }
     }
 }
