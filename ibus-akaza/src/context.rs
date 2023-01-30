@@ -8,26 +8,23 @@ use log::{debug, error, info, trace, warn};
 use akaza_conf::conf::open_configuration_window;
 use ibus_sys::attr_list::{ibus_attr_list_append, ibus_attr_list_new};
 use ibus_sys::attribute::{
-    ibus_attribute_new, IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND,
-    IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE, IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
+    ibus_attribute_new, IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE,
+    IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
 };
 use ibus_sys::core::{
-    to_gboolean, IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_HYPER_MASK,
+    IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_HYPER_MASK,
     IBusModifierType_IBUS_META_MASK, IBusModifierType_IBUS_MOD1_MASK,
     IBusModifierType_IBUS_MOD2_MASK, IBusModifierType_IBUS_MOD3_MASK,
     IBusModifierType_IBUS_MOD4_MASK, IBusModifierType_IBUS_MOD5_MASK,
     IBusModifierType_IBUS_RELEASE_MASK, IBusModifierType_IBUS_SHIFT_MASK,
 };
 use ibus_sys::engine::ibus_engine_commit_text;
+use ibus_sys::engine::ibus_engine_hide_lookup_table;
 use ibus_sys::engine::ibus_engine_hide_preedit_text;
-use ibus_sys::engine::ibus_engine_update_auxiliary_text;
-use ibus_sys::engine::ibus_engine_update_lookup_table;
 use ibus_sys::engine::ibus_engine_update_preedit_text;
 use ibus_sys::engine::IBusEngine;
-use ibus_sys::engine::{ibus_engine_hide_auxiliary_text, ibus_engine_hide_lookup_table};
 use ibus_sys::glib::gchar;
 use ibus_sys::glib::{gboolean, guint};
-use ibus_sys::lookup_table::IBusLookupTable;
 use ibus_sys::property::IBusPropState_PROP_STATE_CHECKED;
 use ibus_sys::text::{ibus_text_new_from_string, ibus_text_set_attributes, StringExt};
 use libakaza::config::Config;
@@ -36,7 +33,6 @@ use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngine;
 use libakaza::graph::candidate::Candidate;
 use libakaza::kana_kanji::marisa_kana_kanji_dict::MarisaKanaKanjiDict;
-use libakaza::keymap::KeyState;
 use libakaza::lm::system_bigram::MarisaSystemBigramLM;
 use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use libakaza::romkan::RomKanConverter;
@@ -64,10 +60,7 @@ pub struct AkazaContext {
     current_state: CurrentState,
 
     // ==== UI 関連 ====
-    lookup_table: IBusLookupTable,
     prop_controller: PropController,
-    live_conversion: bool,
-    lookup_table_visible: bool,
 }
 
 impl AkazaContext {
@@ -83,17 +76,14 @@ impl AkazaContext {
         let romkan = RomKanConverter::new(config.romkan.as_str())?;
 
         Ok(AkazaContext {
-            current_state: CurrentState::new(input_mode),
+            current_state: CurrentState::new(input_mode, config.live_conversion),
             //         self.lookup_table = IBus.LookupTable.new(page_size=10, cursor_pos=0, cursor_visible=True, round=True)
-            lookup_table: IBusLookupTable::new(10, 0, 1, 1),
             romkan,
             command_map: ibus_akaza_commands_map(),
             engine: akaza,
             keymap: KeyMap::new(config.keymap)?,
             prop_controller: PropController::new(input_mode)?,
             consonant_suffix_extractor: ConsonantSuffixExtractor::default(),
-            live_conversion: config.live_conversion,
-            lookup_table_visible: false,
         })
     }
 
@@ -135,8 +125,8 @@ impl AkazaContext {
     pub(crate) fn process_num_key(&mut self, nn: i32, engine: *mut IBusEngine) -> bool {
         let idx = if nn == 0 { 9 } else { nn - 1 };
 
-        if self.lookup_table_visible {
-            if self.set_lookup_table_cursor_pos_in_current_page(idx) {
+        if self.current_state.lookup_table_visible {
+            if self.set_lookup_table_cursor_pos_in_current_page(engine, idx) {
                 self.refresh(engine, true);
                 true
             } else {
@@ -150,31 +140,35 @@ impl AkazaContext {
 
     /// Sets the cursor in the lookup table to index in the current page
     /// Returns True if successful, False if not.
-    fn set_lookup_table_cursor_pos_in_current_page(&mut self, idx: i32) -> bool {
+    fn set_lookup_table_cursor_pos_in_current_page(
+        &mut self,
+        engine: *mut IBusEngine,
+        idx: i32,
+    ) -> bool {
         trace!("set_lookup_table_cursor_pos_in_current_page: {}", idx);
 
-        let page_size = self.lookup_table.get_page_size();
+        let page_size = self.current_state.lookup_table.get_page_size();
         if idx > (page_size as i32) {
             info!("Index too big: {} > {}", idx, page_size);
             return false;
         }
 
-        let page = self.lookup_table.get_cursor_pos() / page_size;
+        let page = self.current_state.lookup_table.get_cursor_pos() / page_size;
         // let pos_in_page = self.lookup_table.get_cursor_pos() % page_size;
 
         let new_pos = page * page_size + (idx as u32);
 
-        if new_pos >= self.lookup_table.get_number_of_candidates() {
+        if new_pos >= self.current_state.lookup_table.get_number_of_candidates() {
             info!(
                 "new_pos too big: {} > {}",
                 new_pos,
-                self.lookup_table.get_number_of_candidates()
+                self.current_state.lookup_table.get_number_of_candidates()
             );
             return false;
         }
-        self.lookup_table.set_cursor_pos(new_pos);
-        self.current_state
-            .select_candidate(self.lookup_table.get_cursor_pos() as usize);
+        self.current_state.lookup_table.set_cursor_pos(new_pos);
+        let cursor_pos = self.current_state.lookup_table.get_cursor_pos() as usize;
+        self.current_state.select_candidate(engine, cursor_pos);
 
         true
     }
@@ -199,7 +193,7 @@ impl AkazaContext {
         if modifiers & IBusModifierType_IBUS_RELEASE_MASK != 0 {
             return false;
         }
-        let key_state = self.get_key_state();
+        let key_state = self.current_state.get_key_state();
 
         trace!("KeyState={:?}", key_state);
         if let Some(callback) = self
@@ -237,23 +231,28 @@ impl AkazaContext {
                 if ('!' as u32) <= keyval && keyval <= ('~' as u32) {
                     trace!(
                         "Insert new character to preedit: '{}'",
-                        self.current_state.preedit
+                        self.current_state.get_raw_input()
                     );
-                    if !self.live_conversion && self.lookup_table.get_number_of_candidates() > 0 {
-                        // 変換の途中に別の文字が入力された。よって、現在の preedit 文字列は確定させる。
-                        self.commit_candidate(engine);
-                    }
-
-                    // Append the character to preedit string.
-                    let ch = char::from_u32(keyval).unwrap();
-                    self.current_state.append_preedit(ch);
-
-                    // And update the display status.
-                    self.update_preedit_text_in_precomposition(engine);
 
                     // live conversion mode が true であれば、変換をガンガンかける
-                    if self.live_conversion {
-                        self.update_candidates(engine, false);
+                    if self.current_state.live_conversion {
+                        // Append the character to raw string buffer.
+                        let ch = char::from_u32(keyval).unwrap();
+                        self.current_state.append_raw_input(engine, ch);
+
+                        self.henkan(engine).unwrap();
+                    } else {
+                        if self.current_state.lookup_table.get_number_of_candidates() > 0 {
+                            // 変換の途中に別の文字が入力された。よって、現在の preedit 文字列は確定させる。
+                            self.commit_candidate(engine);
+                        }
+
+                        // Append the character to preedit string.
+                        let ch = char::from_u32(keyval).unwrap();
+                        self.current_state.append_raw_input(engine, ch);
+
+                        // And update the display status.
+                        self.update_preedit_text_in_precomposition(engine);
                     }
 
                     return true;
@@ -290,15 +289,18 @@ impl AkazaContext {
         unsafe {
             if self.current_state.in_conversion() {
                 // 変換中の場合、無変換モードにもどす。
-                self.lookup_table.clear();
+                self.current_state.lookup_table.clear();
                 // 変換候補をクリアする
-                self.current_state.clear_clauses();
-                ibus_engine_hide_auxiliary_text(engine);
+                self.current_state.clear_clauses(engine);
+                self.current_state.set_auxiliary_text(engine, "");
                 ibus_engine_hide_lookup_table(engine);
             } else {
                 // サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
-                self.current_state
-                    .set_preedit(self.romkan.remove_last_char(&self.current_state.preedit))
+                self.current_state.set_raw_input(
+                    engine,
+                    self.romkan
+                        .remove_last_char(self.current_state.get_raw_input()),
+                )
             }
             // 変換していないときのレンダリングをする。
             self.update_preedit_text_in_precomposition(engine);
@@ -307,7 +309,7 @@ impl AkazaContext {
 
     pub(crate) fn update_preedit_text_in_precomposition(&mut self, engine: *mut IBusEngine) {
         unsafe {
-            if self.current_state.preedit.is_empty() {
+            if self.current_state.get_raw_input().is_empty() {
                 ibus_engine_hide_preedit_text(engine);
                 return;
             }
@@ -357,7 +359,7 @@ impl AkazaContext {
         self.prop_controller.set_input_mode(input_mode, engine);
 
         // 実際に input_mode を設定する
-        self.current_state.set_input_mode(input_mode);
+        self.current_state.set_input_mode(engine, input_mode);
     }
 
     pub(crate) fn run_callback_by_name(
@@ -374,58 +376,39 @@ impl AkazaContext {
         }
     }
 
-    pub(crate) fn get_key_state(&self) -> KeyState {
-        // キー入力状態を返す。
-        if self.current_state.preedit.is_empty() {
-            // 未入力状態。
-            KeyState::PreComposition
-        } else if self.current_state.in_conversion() {
-            // 変換している状態。lookup table が表示されている状態
-            KeyState::Conversion
-        } else {
-            // preedit になにか入っていて、まだ変換を実施していない状態
-            KeyState::Composition
-        }
-    }
-
     pub fn commit_string(&mut self, engine: *mut IBusEngine, text: &str) {
-        unsafe {
-            if self.current_state.in_conversion() {
-                // 変換モードのときのみ学習を実施する
-                self.engine
-                    .learn(self.current_state.get_first_candidates().as_slice());
-            }
-
-            ibus_engine_commit_text(engine, text.to_ibus_text());
-
-            self.current_state.clear();
-
-            self.lookup_table.clear();
-            self._update_lookup_table(engine, false);
-
-            ibus_engine_hide_auxiliary_text(engine);
-            ibus_engine_hide_preedit_text(engine);
+        if self.current_state.in_conversion() {
+            // 変換モードのときのみ学習を実施する
+            self.engine
+                .learn(self.current_state.get_first_candidates().as_slice());
         }
+
+        unsafe {
+            ibus_engine_commit_text(engine, text.to_ibus_text());
+        }
+
+        self.current_state.clear(engine);
+
+        self.current_state.set_lookup_table_visible(engine, false);
+
+        self.current_state.set_auxiliary_text(engine, "");
     }
 
     pub fn commit_candidate(&mut self, engine: *mut IBusEngine) {
         self.commit_string(engine, self.current_state.build_string().as_str());
     }
 
-    pub(crate) fn update_candidates(&mut self, engine: *mut IBusEngine, show_lookup_table: bool) {
-        self._update_candidates(engine, show_lookup_table).unwrap();
-        self.current_state.clear_state();
+    pub(crate) fn update_candidates(&mut self, engine: *mut IBusEngine) {
+        self.henkan(engine).unwrap();
+        self.refresh(engine, true);
+        self.current_state.clear_state(engine);
     }
 
-    fn _update_candidates(
-        &mut self,
-        engine: *mut IBusEngine,
-        show_lookup_table: bool,
-    ) -> Result<()> {
-        if self.current_state.preedit.is_empty() {
-            self.current_state.set_clauses(vec![]);
+    fn henkan(&mut self, engine: *mut IBusEngine) -> Result<()> {
+        if self.current_state.get_raw_input().is_empty() {
+            self.current_state.set_clauses(engine, vec![]);
         } else {
-            let yomi = self.current_state.preedit.clone();
+            let yomi = self.current_state.get_raw_input().to_string();
 
             // 先頭が大文字なケースと、URL っぽい文字列のときは変換処理を実施しない。
             let clauses = if (!yomi.is_empty()
@@ -446,117 +429,43 @@ impl AkazaContext {
                 )?
             };
 
-            self.current_state.set_clauses(clauses);
+            self.current_state.set_clauses(engine, clauses);
 
-            self.current_state.adjust_current_clause();
+            self.current_state.adjust_current_clause(engine);
         }
-        self.create_lookup_table();
-        self.refresh(engine, show_lookup_table);
         Ok(())
-    }
-
-    /**
-     * 現在の候補選択状態から、 lookup table を構築する。
-     */
-    fn create_lookup_table(&mut self) {
-        // 一旦、ルックアップテーブルをクリアする
-        self.lookup_table.clear();
-
-        // 現在の未変換情報を元に、候補を算出していく。
-        if !self.current_state.clauses.is_empty() {
-            // lookup table に候補を詰め込んでいく。
-            for node in &self.current_state.clauses[self.current_state.current_clause] {
-                let candidate = &node.surface_with_dynamic();
-                self.lookup_table.append_candidate(candidate.to_ibus_text());
-            }
-        }
     }
 
     fn refresh(&mut self, engine: *mut IBusEngine, show_lookup_table: bool) {
         unsafe {
             if self.current_state.clauses.is_empty() {
-                ibus_engine_hide_auxiliary_text(engine);
+                self.current_state.set_auxiliary_text(engine, "");
                 ibus_engine_hide_lookup_table(engine);
                 ibus_engine_hide_preedit_text(engine);
-                return;
-            }
-
-            let current_clause = &self.current_state.clauses[self.current_state.current_clause];
-            let current_node = &(current_clause[0]);
-
-            // -- auxiliary text(ポップアップしてるやつのほう)
-            if show_lookup_table {
-                let first_candidate = &(current_node.yomi);
-                let auxiliary_text = first_candidate.as_str().to_ibus_text();
-                ibus_text_set_attributes(auxiliary_text, ibus_attr_list_new());
-                ibus_engine_update_auxiliary_text(
-                    engine,
-                    auxiliary_text,
-                    to_gboolean(!self.current_state.preedit.is_empty()),
-                );
-            }
-
-            let text = self.current_state.build_string();
-            let preedit_attrs = ibus_attr_list_new();
-            // 全部に下線をひく。
-            ibus_attr_list_append(
-                preedit_attrs,
-                ibus_attribute_new(
-                    IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE,
-                    IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
-                    0,
-                    text.len() as guint,
-                ),
-            );
-            let bgstart: u32 = self
-                .current_state
-                .clauses
-                .iter()
-                .map(|c| (c[0].surface).len() as u32)
-                .sum();
-            // 背景色を設定する。
-            ibus_attr_list_append(
-                preedit_attrs,
-                ibus_attribute_new(
-                    IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND,
-                    0x00333333,
-                    bgstart,
-                    bgstart + (current_node.surface.len() as u32),
-                ),
-            );
-            let preedit_text = text.to_ibus_text();
-            ibus_text_set_attributes(preedit_text, preedit_attrs);
-            ibus_engine_update_preedit_text(
-                engine,
-                preedit_text,
-                text.len() as guint,
-                to_gboolean(!text.is_empty()),
-            );
-
-            // 候補があれば、選択肢を表示させる。
-            if show_lookup_table {
-                let visible = self.lookup_table.get_number_of_candidates() > 0;
-                self._update_lookup_table(engine, visible);
             } else {
-                self._update_lookup_table(engine, false);
-            }
-        }
-    }
+                // -- auxiliary text(ポップアップしてるやつのほう)
+                if show_lookup_table {
+                    let current_yomi = self.current_state.clauses
+                        [self.current_state.current_clause][0]
+                        .yomi
+                        .clone();
+                    self.current_state.set_auxiliary_text(engine, &current_yomi);
+                }
 
-    fn _update_lookup_table(&mut self, engine: *mut IBusEngine, visible: bool) {
-        unsafe {
-            ibus_engine_update_lookup_table(
-                engine,
-                &mut self.lookup_table as *mut _,
-                to_gboolean(visible),
-            );
-            self.lookup_table_visible = visible;
+                // 候補があれば、選択肢を表示させる。
+                if show_lookup_table {
+                    let visible = self.current_state.lookup_table.get_number_of_candidates() > 0;
+                    self.current_state.set_lookup_table_visible(engine, visible);
+                } else {
+                    self.current_state.set_lookup_table_visible(engine, false);
+                }
+            }
         }
     }
 
     /// (yomi, surface)
     pub fn make_preedit_word(&self) -> (String, String) {
-        let preedit = self.current_state.preedit.clone();
+        let preedit = self.current_state.get_raw_input().to_string();
         // 先頭文字が大文字な場合は、そのまま返す。
         // "IME" などと入力された場合は、それをそのまま返すようにする。
         if !preedit.is_empty() && preedit.chars().next().unwrap().is_ascii_uppercase() {
@@ -595,26 +504,34 @@ impl AkazaContext {
 
     /// 前の変換候補を選択する。
     pub(crate) fn cursor_up(&mut self, engine: *mut IBusEngine) {
-        if self.lookup_table.cursor_up() {
-            self.current_state
-                .select_candidate(self.lookup_table.get_cursor_pos() as usize);
+        if self.current_state.lookup_table.cursor_up() {
+            let cursor_pos = self.current_state.lookup_table.get_cursor_pos() as usize;
+            self.current_state.select_candidate(engine, cursor_pos);
             self.refresh(engine, true);
         }
     }
 
     /// 次の変換候補を選択する。
     pub fn cursor_down(&mut self, engine: *mut IBusEngine) {
-        if self.lookup_table.cursor_down() {
-            self.current_state
-                .select_candidate(self.lookup_table.get_cursor_pos() as usize);
-            self.refresh(engine, true);
+        if self.current_state.lookup_table.cursor_down() {
+            let cursor_pos = self.current_state.lookup_table.get_cursor_pos() as usize;
+            self.current_state.select_candidate(engine, cursor_pos);
+
+            // -- auxiliary text(ポップアップしてるやつのほう)
+            let current_yomi = self.current_state.clauses[self.current_state.current_clause][0]
+                .yomi
+                .clone();
+            self.current_state.set_auxiliary_text(engine, &current_yomi);
+
+            // 候補があれば、選択肢を表示させる。
+            self.current_state.set_lookup_table_visible(engine, true);
         }
     }
 
     pub fn page_up(&mut self, engine: *mut IBusEngine) -> bool {
-        if self.lookup_table.page_up() {
-            self.current_state
-                .select_candidate(self.lookup_table.get_cursor_pos() as usize);
+        if self.current_state.lookup_table.page_up() {
+            let cursor_pos = self.current_state.lookup_table.get_cursor_pos() as usize;
+            self.current_state.select_candidate(engine, cursor_pos);
             self.refresh(engine, true);
             true
         } else {
@@ -623,9 +540,9 @@ impl AkazaContext {
     }
 
     pub fn page_down(&mut self, engine: *mut IBusEngine) -> bool {
-        if self.lookup_table.page_up() {
-            self.current_state
-                .select_candidate(self.lookup_table.get_cursor_pos() as usize);
+        if self.current_state.lookup_table.page_up() {
+            let cursor_pos = self.current_state.lookup_table.get_cursor_pos() as usize;
+            self.current_state.select_candidate(engine, cursor_pos);
             self.refresh(engine, true);
             true
         } else {
@@ -640,11 +557,7 @@ impl AkazaContext {
             return;
         }
 
-        self.current_state.select_right_clause();
-
-        self.create_lookup_table();
-
-        self.refresh(engine, true);
+        self.current_state.select_right_clause(engine);
     }
 
     /// 選択する分節を左にずらす。
@@ -654,24 +567,22 @@ impl AkazaContext {
             return;
         }
 
-        self.current_state.select_left_clause();
-
-        self.create_lookup_table();
-
-        self.refresh(engine, true);
+        self.current_state.select_left_clause(engine);
     }
 
     /// 文節の選択範囲を右方向に広げる
     pub fn extend_clause_right(&mut self, engine: *mut IBusEngine) -> Result<()> {
         self.current_state.extend_right();
-        self._update_candidates(engine, true)?;
+        self.henkan(engine)?;
+        self.refresh(engine, true);
         Ok(())
     }
 
     /// 文節の選択範囲を左方向に広げる
     pub fn extend_clause_left(&mut self, engine: *mut IBusEngine) -> Result<()> {
         self.current_state.extend_left();
-        self._update_candidates(engine, true)?;
+        self.henkan(engine)?;
+        self.refresh(engine, true);
         Ok(())
     }
 
@@ -683,7 +594,7 @@ impl AkazaContext {
         _state: guint,
     ) {
         info!("do_candidate_clicked");
-        if self.set_lookup_table_cursor_pos_in_current_page(index as i32) {
+        if self.set_lookup_table_cursor_pos_in_current_page(engine, index as i32) {
             self.commit_candidate(engine)
         }
     }
@@ -696,20 +607,20 @@ impl AkazaContext {
     /// convert selected word/characters to full-width hiragana (standard hiragana): ホワイト → ほわいと
     pub fn convert_to_full_hiragana(&mut self, engine: *mut IBusEngine) -> Result<()> {
         info!("Convert to full hiragana");
-        let hira = self.romkan.to_hiragana(self.current_state.preedit.as_str());
+        let hira = self.romkan.to_hiragana(self.current_state.get_raw_input());
         self.convert_to_single(engine, hira.as_str(), hira.as_str())
     }
 
     /// convert to full-width katakana (standard katakana): ほわいと → ホワイト
     pub fn convert_to_full_katakana(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        let hira = self.romkan.to_hiragana(self.current_state.preedit.as_str());
+        let hira = self.romkan.to_hiragana(self.current_state.get_raw_input());
         let kata = hira2kata(hira.as_str(), ConvOption::default());
         self.convert_to_single(engine, hira.as_str(), kata.as_str())
     }
 
     /// convert to half-width katakana (standard katakana): ほわいと → ﾎﾜｲﾄ
     pub fn convert_to_half_katakana(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        let hira = self.romkan.to_hiragana(self.current_state.preedit.as_str());
+        let hira = self.romkan.to_hiragana(self.current_state.get_raw_input());
         let kata = z2h(
             hira2kata(hira.as_str(), ConvOption::default()).as_str(),
             ConvOption::default(),
@@ -720,9 +631,9 @@ impl AkazaContext {
     /// convert to full-width romaji, all-capitals, proper noun capitalization (latin script inside
     /// Japanese text): ホワイト → ｈｏｗａｉｔｏ → ＨＯＷＡＩＴＯ → Ｈｏｗａｉｔｏ
     pub fn convert_to_full_romaji(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        let hira = self.romkan.to_hiragana(self.current_state.preedit.as_str());
+        let hira = self.romkan.to_hiragana(self.current_state.get_raw_input());
         let romaji = h2z(
-            &self.current_state.preedit,
+            self.current_state.get_raw_input(),
             ConvOption {
                 kana: true,
                 digit: true,
@@ -736,9 +647,9 @@ impl AkazaContext {
     /// convert to half-width romaji, all-capitals, proper noun capitalization (latin script like
     /// standard English): ホワイト → howaito → HOWAITO → Howaito
     pub fn convert_to_half_romaji(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        let hira = self.romkan.to_hiragana(self.current_state.preedit.as_str());
+        let hira = self.romkan.to_hiragana(self.current_state.get_raw_input());
         let romaji = z2h(
-            &self.current_state.preedit,
+            self.current_state.get_raw_input(),
             ConvOption {
                 kana: true,
                 digit: true,
@@ -759,22 +670,33 @@ impl AkazaContext {
     ) -> Result<()> {
         // 候補を設定
         let candidate = Candidate::new(yomi, surface, 0_f32);
-        self.current_state.set_clauses(vec![Vec::from([candidate])]);
-        self.current_state.clear_state();
+        self.current_state.clear_state(engine);
+        self.current_state
+            .set_clauses(engine, vec![Vec::from([candidate.clone()])]);
 
         // ルックアップテーブルに候補を設定
-        self.lookup_table.clear();
-        let candidate = surface.to_ibus_text();
-        self.lookup_table.append_candidate(candidate);
+        self.current_state
+            .set_auxiliary_text(engine, &candidate.yomi);
 
-        // 表示を更新
-        self.refresh(engine, true);
+        // lookup table を表示させる
+        self.current_state.set_lookup_table_visible(engine, true);
+
         Ok(())
     }
 
     pub fn escape(&mut self, engine: *mut IBusEngine) {
-        trace!("escape: {}", self.current_state.preedit);
-        self.current_state.clear();
-        self.update_candidates(engine, false)
+        trace!("escape");
+
+        if self.current_state.live_conversion {
+            self.current_state.clear(engine);
+        } else {
+            // 変換候補の分節をクリアする。
+            self.current_state.clear_clauses(engine);
+            // 消す。
+            self.current_state.set_lookup_table_visible(engine, false);
+
+            // 次に、preedit を平仮名に戻す。
+            self.update_preedit_text_in_precomposition(engine);
+        }
     }
 }
