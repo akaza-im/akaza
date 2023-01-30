@@ -282,8 +282,10 @@ impl CurrentState {
         self.render_lookup_table(lookup_table);
 
         // -- auxiliary text(ポップアップしてるやつのほう)
-        let current_yomi = self.clauses[self.current_clause][0].yomi.clone();
-        self.set_auxiliary_text(engine, &current_yomi);
+        if !self.clauses.is_empty() {
+            let current_yomi = self.clauses[self.current_clause][0].yomi.clone();
+            self.set_auxiliary_text(engine, &current_yomi);
+        }
 
         // 候補があれば、選択肢を表示させる。
         let visible = lookup_table.get_number_of_candidates() > 0;

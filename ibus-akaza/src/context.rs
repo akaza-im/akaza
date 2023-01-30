@@ -596,8 +596,6 @@ impl AkazaContext {
 
         self.current_state
             .select_left_clause(engine, &mut self.lookup_table);
-
-        self.refresh(engine, true);
     }
 
     /// 文節の選択範囲を右方向に広げる
