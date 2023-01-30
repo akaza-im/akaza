@@ -246,7 +246,8 @@ impl AkazaContext {
                         // And update the display status.
                         self.update_preedit_text_in_precomposition(engine);
 
-                        self._update_candidates(engine, false).unwrap();
+                        self._update_candidates(engine).unwrap();
+                        self.refresh(engine, false);
                         self.current_state
                             .clear_state(engine, &mut self.lookup_table);
                     } else {
@@ -417,16 +418,13 @@ impl AkazaContext {
     }
 
     pub(crate) fn update_candidates(&mut self, engine: *mut IBusEngine, show_lookup_table: bool) {
-        self._update_candidates(engine, show_lookup_table).unwrap();
+        self._update_candidates(engine).unwrap();
+        self.refresh(engine, show_lookup_table);
         self.current_state
             .clear_state(engine, &mut self.lookup_table);
     }
 
-    fn _update_candidates(
-        &mut self,
-        engine: *mut IBusEngine,
-        show_lookup_table: bool,
-    ) -> Result<()> {
+    fn _update_candidates(&mut self, engine: *mut IBusEngine) -> Result<()> {
         if self.current_state.get_raw_input().is_empty() {
             self.current_state
                 .set_clauses(engine, vec![], &mut self.lookup_table);
@@ -458,7 +456,6 @@ impl AkazaContext {
             self.current_state
                 .adjust_current_clause(engine, &mut self.lookup_table);
         }
-        self.refresh(engine, show_lookup_table);
         Ok(())
     }
 
@@ -601,14 +598,16 @@ impl AkazaContext {
     /// 文節の選択範囲を右方向に広げる
     pub fn extend_clause_right(&mut self, engine: *mut IBusEngine) -> Result<()> {
         self.current_state.extend_right();
-        self._update_candidates(engine, true)?;
+        self._update_candidates(engine)?;
+        self.refresh(engine, true);
         Ok(())
     }
 
     /// 文節の選択範囲を左方向に広げる
     pub fn extend_clause_left(&mut self, engine: *mut IBusEngine) -> Result<()> {
         self.current_state.extend_left();
-        self._update_candidates(engine, true)?;
+        self._update_candidates(engine)?;
+        self.refresh(engine, true);
         Ok(())
     }
 
@@ -718,7 +717,8 @@ impl AkazaContext {
     pub fn escape(&mut self, engine: *mut IBusEngine) {
         trace!("escape");
         self.current_state.clear(engine, &mut self.lookup_table);
-        self._update_candidates(engine, false).unwrap();
+        self._update_candidates(engine).unwrap();
+        self.refresh(engine, false);
         self.current_state
             .clear_state(engine, &mut self.lookup_table);
     }
