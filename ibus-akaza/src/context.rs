@@ -239,17 +239,11 @@ impl AkazaContext {
 
                     // live conversion mode が true であれば、変換をガンガンかける
                     if self.current_state.live_conversion {
-                        // Append the character to preedit string.
+                        // Append the character to raw string buffer.
                         let ch = char::from_u32(keyval).unwrap();
                         self.current_state.append_raw_input(engine, ch);
 
-                        // And update the display status.
-                        self.update_preedit_text_in_precomposition(engine);
-
-                        self._update_candidates(engine).unwrap();
-                        self.refresh(engine, false);
-                        self.current_state
-                            .clear_state(engine, &mut self.lookup_table);
+                        self.henkan(engine).unwrap();
                     } else {
                         if self.lookup_table.get_number_of_candidates() > 0 {
                             // 変換の途中に別の文字が入力された。よって、現在の preedit 文字列は確定させる。
@@ -418,13 +412,13 @@ impl AkazaContext {
     }
 
     pub(crate) fn update_candidates(&mut self, engine: *mut IBusEngine) {
-        self._update_candidates(engine).unwrap();
+        self.henkan(engine).unwrap();
         self.refresh(engine, true);
         self.current_state
             .clear_state(engine, &mut self.lookup_table);
     }
 
-    fn _update_candidates(&mut self, engine: *mut IBusEngine) -> Result<()> {
+    fn henkan(&mut self, engine: *mut IBusEngine) -> Result<()> {
         if self.current_state.get_raw_input().is_empty() {
             self.current_state
                 .set_clauses(engine, vec![], &mut self.lookup_table);
@@ -598,7 +592,7 @@ impl AkazaContext {
     /// 文節の選択範囲を右方向に広げる
     pub fn extend_clause_right(&mut self, engine: *mut IBusEngine) -> Result<()> {
         self.current_state.extend_right();
-        self._update_candidates(engine)?;
+        self.henkan(engine)?;
         self.refresh(engine, true);
         Ok(())
     }
@@ -606,7 +600,7 @@ impl AkazaContext {
     /// 文節の選択範囲を左方向に広げる
     pub fn extend_clause_left(&mut self, engine: *mut IBusEngine) -> Result<()> {
         self.current_state.extend_left();
-        self._update_candidates(engine)?;
+        self.henkan(engine)?;
         self.refresh(engine, true);
         Ok(())
     }
@@ -717,7 +711,7 @@ impl AkazaContext {
     pub fn escape(&mut self, engine: *mut IBusEngine) {
         trace!("escape");
         self.current_state.clear(engine, &mut self.lookup_table);
-        self._update_candidates(engine).unwrap();
+        self.henkan(engine).unwrap();
         self.refresh(engine, false);
         self.current_state
             .clear_state(engine, &mut self.lookup_table);
