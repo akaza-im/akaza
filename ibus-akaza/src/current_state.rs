@@ -22,7 +22,7 @@ use crate::input_mode::InputMode;
 #[derive(Debug)]
 pub struct CurrentState {
     pub(crate) input_mode: InputMode,
-    preedit: String,
+    raw_input: String,
     auxiliary_text: String,
     pub(crate) clauses: Vec<Vec<Candidate>>,
     /// 現在選択されている文節
@@ -37,7 +37,7 @@ impl CurrentState {
     pub fn new(input_mode: InputMode) -> Self {
         CurrentState {
             input_mode,
-            preedit: String::new(),
+            raw_input: String::new(),
             auxiliary_text: String::new(),
             clauses: vec![],
             current_clause: 0,
@@ -57,9 +57,9 @@ impl CurrentState {
     }
 
     pub(crate) fn clear(&mut self, engine: *mut IBusEngine) {
-        if !self.preedit.is_empty() {
-            self.preedit.clear();
-            self.on_preedit_change(engine);
+        if !self.raw_input.is_empty() {
+            self.raw_input.clear();
+            self.on_raw_input_change(engine);
         }
 
         if !self.clauses.is_empty() {
@@ -70,8 +70,8 @@ impl CurrentState {
         self.clear_state(engine);
     }
 
-    pub fn get_preedit(&self) -> &str {
-        &self.preedit
+    pub fn get_raw_input(&self) -> &str {
+        &self.raw_input
     }
 
     /// 入力内容以外のものをリセットする
@@ -84,16 +84,16 @@ impl CurrentState {
         self.force_selected_clause.clear();
     }
 
-    pub(crate) fn append_preedit(&mut self, engine: *mut IBusEngine, ch: char) {
-        self.preedit.push(ch);
-        self.on_preedit_change(engine);
+    pub(crate) fn append_raw_input(&mut self, engine: *mut IBusEngine, ch: char) {
+        self.raw_input.push(ch);
+        self.on_raw_input_change(engine);
     }
 
     /// バックスペースで一文字削除した場合などに呼ばれる。
-    pub(crate) fn set_preedit(&mut self, engine: *mut IBusEngine, preedit: String) {
-        if self.preedit != preedit {
-            self.preedit = preedit;
-            self.on_preedit_change(engine);
+    pub(crate) fn set_raw_input(&mut self, engine: *mut IBusEngine, raw_input: String) {
+        if self.raw_input != raw_input {
+            self.raw_input = raw_input;
+            self.on_raw_input_change(engine);
         }
 
         if !self.clauses.is_empty() {
@@ -211,9 +211,7 @@ impl CurrentState {
         self.render_preedit(engine);
     }
 
-    pub fn on_preedit_change(&self, engine: *mut IBusEngine) {
-        self.render_preedit(engine);
-    }
+    pub fn on_raw_input_change(&self, _engine: *mut IBusEngine) {}
 
     pub fn on_current_clause_change(&self, engine: *mut IBusEngine) {
         self.render_preedit(engine);
@@ -273,7 +271,7 @@ impl CurrentState {
 
     pub(crate) fn get_key_state(&self) -> KeyState {
         // キー入力状態を返す。
-        if self.preedit.is_empty() {
+        if self.raw_input.is_empty() {
             // 未入力状態。
             KeyState::PreComposition
         } else if self.in_conversion() {
@@ -295,7 +293,7 @@ impl CurrentState {
                 ibus_engine_update_auxiliary_text(
                     engine,
                     auxiliary_text,
-                    to_gboolean(!self.preedit.is_empty()),
+                    to_gboolean(!self.raw_input.is_empty()),
                 );
             }
         }

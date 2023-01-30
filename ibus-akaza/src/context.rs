@@ -235,7 +235,7 @@ impl AkazaContext {
                 if ('!' as u32) <= keyval && keyval <= ('~' as u32) {
                     trace!(
                         "Insert new character to preedit: '{}'",
-                        self.current_state.get_preedit()
+                        self.current_state.get_raw_input()
                     );
                     if !self.live_conversion && self.lookup_table.get_number_of_candidates() > 0 {
                         // 変換の途中に別の文字が入力された。よって、現在の preedit 文字列は確定させる。
@@ -245,7 +245,7 @@ impl AkazaContext {
                     if self.live_conversion {
                         // Append the character to preedit string.
                         let ch = char::from_u32(keyval).unwrap();
-                        self.current_state.append_preedit(engine, ch);
+                        self.current_state.append_raw_input(engine, ch);
 
                         // And update the display status.
                         self.update_preedit_text_in_precomposition(engine);
@@ -255,7 +255,7 @@ impl AkazaContext {
                     } else {
                         // Append the character to preedit string.
                         let ch = char::from_u32(keyval).unwrap();
-                        self.current_state.append_preedit(engine, ch);
+                        self.current_state.append_raw_input(engine, ch);
 
                         // And update the display status.
                         self.update_preedit_text_in_precomposition(engine);
@@ -302,10 +302,10 @@ impl AkazaContext {
                 ibus_engine_hide_lookup_table(engine);
             } else {
                 // サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
-                self.current_state.set_preedit(
+                self.current_state.set_raw_input(
                     engine,
                     self.romkan
-                        .remove_last_char(self.current_state.get_preedit()),
+                        .remove_last_char(self.current_state.get_raw_input()),
                 )
             }
             // 変換していないときのレンダリングをする。
@@ -315,7 +315,7 @@ impl AkazaContext {
 
     pub(crate) fn update_preedit_text_in_precomposition(&mut self, engine: *mut IBusEngine) {
         unsafe {
-            if self.current_state.get_preedit().is_empty() {
+            if self.current_state.get_raw_input().is_empty() {
                 ibus_engine_hide_preedit_text(engine);
                 return;
             }
@@ -416,10 +416,10 @@ impl AkazaContext {
         engine: *mut IBusEngine,
         show_lookup_table: bool,
     ) -> Result<()> {
-        if self.current_state.get_preedit().is_empty() {
+        if self.current_state.get_raw_input().is_empty() {
             self.current_state.set_clauses(engine, vec![]);
         } else {
-            let yomi = self.current_state.get_preedit().to_string();
+            let yomi = self.current_state.get_raw_input().to_string();
 
             // 先頭が大文字なケースと、URL っぽい文字列のときは変換処理を実施しない。
             let clauses = if (!yomi.is_empty()
@@ -506,7 +506,7 @@ impl AkazaContext {
 
     /// (yomi, surface)
     pub fn make_preedit_word(&self) -> (String, String) {
-        let preedit = self.current_state.get_preedit().to_string();
+        let preedit = self.current_state.get_raw_input().to_string();
         // 先頭文字が大文字な場合は、そのまま返す。
         // "IME" などと入力された場合は、それをそのまま返すようにする。
         if !preedit.is_empty() && preedit.chars().next().unwrap().is_ascii_uppercase() {
@@ -646,20 +646,20 @@ impl AkazaContext {
     /// convert selected word/characters to full-width hiragana (standard hiragana): ホワイト → ほわいと
     pub fn convert_to_full_hiragana(&mut self, engine: *mut IBusEngine) -> Result<()> {
         info!("Convert to full hiragana");
-        let hira = self.romkan.to_hiragana(self.current_state.get_preedit());
+        let hira = self.romkan.to_hiragana(self.current_state.get_raw_input());
         self.convert_to_single(engine, hira.as_str(), hira.as_str())
     }
 
     /// convert to full-width katakana (standard katakana): ほわいと → ホワイト
     pub fn convert_to_full_katakana(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        let hira = self.romkan.to_hiragana(self.current_state.get_preedit());
+        let hira = self.romkan.to_hiragana(self.current_state.get_raw_input());
         let kata = hira2kata(hira.as_str(), ConvOption::default());
         self.convert_to_single(engine, hira.as_str(), kata.as_str())
     }
 
     /// convert to half-width katakana (standard katakana): ほわいと → ﾎﾜｲﾄ
     pub fn convert_to_half_katakana(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        let hira = self.romkan.to_hiragana(self.current_state.get_preedit());
+        let hira = self.romkan.to_hiragana(self.current_state.get_raw_input());
         let kata = z2h(
             hira2kata(hira.as_str(), ConvOption::default()).as_str(),
             ConvOption::default(),
@@ -670,9 +670,9 @@ impl AkazaContext {
     /// convert to full-width romaji, all-capitals, proper noun capitalization (latin script inside
     /// Japanese text): ホワイト → ｈｏｗａｉｔｏ → ＨＯＷＡＩＴＯ → Ｈｏｗａｉｔｏ
     pub fn convert_to_full_romaji(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        let hira = self.romkan.to_hiragana(self.current_state.get_preedit());
+        let hira = self.romkan.to_hiragana(self.current_state.get_raw_input());
         let romaji = h2z(
-            self.current_state.get_preedit(),
+            self.current_state.get_raw_input(),
             ConvOption {
                 kana: true,
                 digit: true,
@@ -686,9 +686,9 @@ impl AkazaContext {
     /// convert to half-width romaji, all-capitals, proper noun capitalization (latin script like
     /// standard English): ホワイト → howaito → HOWAITO → Howaito
     pub fn convert_to_half_romaji(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        let hira = self.romkan.to_hiragana(self.current_state.get_preedit());
+        let hira = self.romkan.to_hiragana(self.current_state.get_raw_input());
         let romaji = z2h(
-            self.current_state.get_preedit(),
+            self.current_state.get_raw_input(),
             ConvOption {
                 kana: true,
                 digit: true,
