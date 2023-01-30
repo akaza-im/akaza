@@ -31,10 +31,12 @@ pub struct CurrentState {
     node_selected: HashMap<usize, usize>,
     /// シフト+右 or シフト+左で強制指定された範囲
     pub(crate) force_selected_clause: Vec<Range<usize>>,
+    /// ライブコンバージョン
+    pub live_conversion: bool,
 }
 
 impl CurrentState {
-    pub fn new(input_mode: InputMode) -> Self {
+    pub fn new(input_mode: InputMode, live_conversion: bool) -> Self {
         CurrentState {
             input_mode,
             raw_input: String::new(),
@@ -43,6 +45,7 @@ impl CurrentState {
             current_clause: 0,
             node_selected: HashMap::new(),
             force_selected_clause: Vec::new(),
+            live_conversion,
         }
     }
 
