@@ -707,7 +707,7 @@ impl AkazaContext {
     pub fn convert_to_half_romaji(&mut self, engine: *mut IBusEngine) -> Result<()> {
         let hira = self.romkan.to_hiragana(self.current_state.get_preedit());
         let romaji = z2h(
-            &self.current_state.get_preedit(),
+            self.current_state.get_preedit(),
             ConvOption {
                 kana: true,
                 digit: true,
