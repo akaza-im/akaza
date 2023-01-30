@@ -12,7 +12,7 @@ use ibus_sys::attribute::{
     IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
 };
 use ibus_sys::core::{
-    to_gboolean, IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_HYPER_MASK,
+    IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_HYPER_MASK,
     IBusModifierType_IBUS_META_MASK, IBusModifierType_IBUS_MOD1_MASK,
     IBusModifierType_IBUS_MOD2_MASK, IBusModifierType_IBUS_MOD3_MASK,
     IBusModifierType_IBUS_MOD4_MASK, IBusModifierType_IBUS_MOD5_MASK,
@@ -21,7 +21,7 @@ use ibus_sys::core::{
 use ibus_sys::engine::ibus_engine_commit_text;
 use ibus_sys::engine::ibus_engine_hide_lookup_table;
 use ibus_sys::engine::ibus_engine_hide_preedit_text;
-use ibus_sys::engine::ibus_engine_update_lookup_table;
+
 use ibus_sys::engine::ibus_engine_update_preedit_text;
 use ibus_sys::engine::IBusEngine;
 use ibus_sys::glib::gchar;
