@@ -19,12 +19,11 @@ use ibus_sys::core::{
     IBusModifierType_IBUS_RELEASE_MASK, IBusModifierType_IBUS_SHIFT_MASK,
 };
 use ibus_sys::engine::ibus_engine_commit_text;
+use ibus_sys::engine::ibus_engine_hide_lookup_table;
 use ibus_sys::engine::ibus_engine_hide_preedit_text;
-use ibus_sys::engine::ibus_engine_update_auxiliary_text;
 use ibus_sys::engine::ibus_engine_update_lookup_table;
 use ibus_sys::engine::ibus_engine_update_preedit_text;
 use ibus_sys::engine::IBusEngine;
-use ibus_sys::engine::{ibus_engine_hide_auxiliary_text, ibus_engine_hide_lookup_table};
 use ibus_sys::glib::gchar;
 use ibus_sys::glib::{gboolean, guint};
 use ibus_sys::lookup_table::IBusLookupTable;
@@ -298,7 +297,7 @@ impl AkazaContext {
                 self.lookup_table.clear();
                 // 変換候補をクリアする
                 self.current_state.clear_clauses(engine);
-                ibus_engine_hide_auxiliary_text(engine);
+                self.current_state.set_auxiliary_text(engine, "");
                 ibus_engine_hide_lookup_table(engine);
             } else {
                 // サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
@@ -397,7 +396,7 @@ impl AkazaContext {
             self.lookup_table.clear();
             self._update_lookup_table(engine, false);
 
-            ibus_engine_hide_auxiliary_text(engine);
+            self.current_state.set_auxiliary_text(engine, "");
             ibus_engine_hide_preedit_text(engine);
         }
     }
@@ -469,25 +468,18 @@ impl AkazaContext {
     fn refresh(&mut self, engine: *mut IBusEngine, show_lookup_table: bool) {
         unsafe {
             if self.current_state.clauses.is_empty() {
-                ibus_engine_hide_auxiliary_text(engine);
+                self.current_state.set_auxiliary_text(engine, "");
                 ibus_engine_hide_lookup_table(engine);
                 ibus_engine_hide_preedit_text(engine);
                 return;
             }
 
-            let current_clause = &self.current_state.clauses[self.current_state.current_clause];
-            let current_node = &(current_clause[0]);
-
             // -- auxiliary text(ポップアップしてるやつのほう)
             if show_lookup_table {
-                let first_candidate = current_node.yomi.to_string() + "YY";
-                let auxiliary_text = first_candidate.as_str().to_ibus_text();
-                ibus_text_set_attributes(auxiliary_text, ibus_attr_list_new());
-                ibus_engine_update_auxiliary_text(
-                    engine,
-                    auxiliary_text,
-                    to_gboolean(!self.current_state.get_preedit().is_empty()),
-                );
+                let current_yomi = self.current_state.clauses[self.current_state.current_clause][0]
+                    .yomi
+                    .clone();
+                self.current_state.set_auxiliary_text(engine, &current_yomi);
             }
 
             // 候補があれば、選択肢を表示させる。

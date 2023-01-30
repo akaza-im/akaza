@@ -8,7 +8,8 @@ use ibus_sys::attribute::{
 };
 use ibus_sys::core::to_gboolean;
 use ibus_sys::engine::{
-    ibus_engine_hide_preedit_text, ibus_engine_update_preedit_text, IBusEngine,
+    ibus_engine_hide_auxiliary_text, ibus_engine_hide_preedit_text,
+    ibus_engine_update_auxiliary_text, ibus_engine_update_preedit_text, IBusEngine,
 };
 use ibus_sys::glib::guint;
 use ibus_sys::text::{ibus_text_set_attributes, StringExt};
@@ -22,6 +23,7 @@ use crate::input_mode::InputMode;
 pub struct CurrentState {
     pub(crate) input_mode: InputMode,
     preedit: String,
+    auxiliary_text: String,
     pub(crate) clauses: Vec<Vec<Candidate>>,
     /// 現在選択されている文節
     pub(crate) current_clause: usize,
@@ -36,6 +38,7 @@ impl CurrentState {
         CurrentState {
             input_mode,
             preedit: String::new(),
+            auxiliary_text: String::new(),
             clauses: vec![],
             current_clause: 0,
             node_selected: HashMap::new(),
@@ -99,6 +102,13 @@ impl CurrentState {
         }
 
         self.clear_state(engine);
+    }
+
+    pub fn set_auxiliary_text(&mut self, engine: *mut IBusEngine, auxiliary_text: &str) {
+        if self.auxiliary_text != auxiliary_text {
+            self.auxiliary_text = auxiliary_text.to_string();
+            self.on_auxiliary_text_change(engine);
+        }
     }
 
     pub fn set_clauses(&mut self, engine: *mut IBusEngine, clause: Vec<Vec<Candidate>>) {
@@ -209,6 +219,10 @@ impl CurrentState {
         self.render_preedit(engine);
     }
 
+    fn on_auxiliary_text_change(&self, engine: *mut IBusEngine) {
+        self.render_auxiliary_text(engine);
+    }
+
     pub fn render_preedit(&self, engine: *mut IBusEngine) {
         if self.clauses.is_empty() {
             unsafe { ibus_engine_hide_preedit_text(engine) }
@@ -268,6 +282,22 @@ impl CurrentState {
         } else {
             // preedit になにか入っていて、まだ変換を実施していない状態
             KeyState::Composition
+        }
+    }
+
+    fn render_auxiliary_text(&self, engine: *mut IBusEngine) {
+        unsafe {
+            if self.auxiliary_text.is_empty() {
+                ibus_engine_hide_auxiliary_text(engine);
+            } else {
+                let auxiliary_text = self.auxiliary_text.to_ibus_text();
+                ibus_text_set_attributes(auxiliary_text, ibus_attr_list_new());
+                ibus_engine_update_auxiliary_text(
+                    engine,
+                    auxiliary_text,
+                    to_gboolean(!self.preedit.is_empty()),
+                );
+            }
         }
     }
 }
