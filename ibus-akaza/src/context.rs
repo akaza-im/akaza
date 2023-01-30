@@ -8,8 +8,8 @@ use log::{debug, error, info, trace, warn};
 use akaza_conf::conf::open_configuration_window;
 use ibus_sys::attr_list::{ibus_attr_list_append, ibus_attr_list_new};
 use ibus_sys::attribute::{
-    ibus_attribute_new, IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND,
-    IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE, IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
+    ibus_attribute_new, IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE,
+    IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
 };
 use ibus_sys::core::{
     to_gboolean, IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_HYPER_MASK,
@@ -237,7 +237,7 @@ impl AkazaContext {
                 if ('!' as u32) <= keyval && keyval <= ('~' as u32) {
                     trace!(
                         "Insert new character to preedit: '{}'",
-                        self.current_state.preedit
+                        self.current_state.get_preedit()
                     );
                     if !self.live_conversion && self.lookup_table.get_number_of_candidates() > 0 {
                         // 変換の途中に別の文字が入力された。よって、現在の preedit 文字列は確定させる。
@@ -246,7 +246,7 @@ impl AkazaContext {
 
                     // Append the character to preedit string.
                     let ch = char::from_u32(keyval).unwrap();
-                    self.current_state.append_preedit(ch);
+                    self.current_state.append_preedit(engine, ch);
 
                     // And update the display status.
                     self.update_preedit_text_in_precomposition(engine);
@@ -297,8 +297,11 @@ impl AkazaContext {
                 ibus_engine_hide_lookup_table(engine);
             } else {
                 // サイゴの一文字をけずるが、子音が先行しているばあいは、子音もついでにとる。
-                self.current_state
-                    .set_preedit(self.romkan.remove_last_char(&self.current_state.preedit))
+                self.current_state.set_preedit(
+                    engine,
+                    self.romkan
+                        .remove_last_char(&self.current_state.get_preedit()),
+                )
             }
             // 変換していないときのレンダリングをする。
             self.update_preedit_text_in_precomposition(engine);
@@ -307,7 +310,7 @@ impl AkazaContext {
 
     pub(crate) fn update_preedit_text_in_precomposition(&mut self, engine: *mut IBusEngine) {
         unsafe {
-            if self.current_state.preedit.is_empty() {
+            if self.current_state.get_preedit().is_empty() {
                 ibus_engine_hide_preedit_text(engine);
                 return;
             }
@@ -357,7 +360,7 @@ impl AkazaContext {
         self.prop_controller.set_input_mode(input_mode, engine);
 
         // 実際に input_mode を設定する
-        self.current_state.set_input_mode(input_mode);
+        self.current_state.set_input_mode(engine, input_mode);
     }
 
     pub(crate) fn run_callback_by_name(
@@ -374,9 +377,10 @@ impl AkazaContext {
         }
     }
 
+    // TODO I should move this to current_state.get_key_state()
     pub(crate) fn get_key_state(&self) -> KeyState {
         // キー入力状態を返す。
-        if self.current_state.preedit.is_empty() {
+        if self.current_state.get_preedit().is_empty() {
             // 未入力状態。
             KeyState::PreComposition
         } else if self.current_state.in_conversion() {
@@ -398,7 +402,7 @@ impl AkazaContext {
 
             ibus_engine_commit_text(engine, text.to_ibus_text());
 
-            self.current_state.clear();
+            self.current_state.clear(engine);
 
             self.lookup_table.clear();
             self._update_lookup_table(engine, false);
@@ -422,10 +426,10 @@ impl AkazaContext {
         engine: *mut IBusEngine,
         show_lookup_table: bool,
     ) -> Result<()> {
-        if self.current_state.preedit.is_empty() {
+        if self.current_state.get_preedit().is_empty() {
             self.current_state.set_clauses(vec![]);
         } else {
-            let yomi = self.current_state.preedit.clone();
+            let yomi = self.current_state.get_preedit().to_string();
 
             // 先頭が大文字なケースと、URL っぽい文字列のときは変換処理を実施しない。
             let clauses = if (!yomi.is_empty()
@@ -492,46 +496,11 @@ impl AkazaContext {
                 ibus_engine_update_auxiliary_text(
                     engine,
                     auxiliary_text,
-                    to_gboolean(!self.current_state.preedit.is_empty()),
+                    to_gboolean(!self.current_state.get_preedit().is_empty()),
                 );
             }
 
-            let text = self.current_state.build_string();
-            let preedit_attrs = ibus_attr_list_new();
-            // 全部に下線をひく。
-            ibus_attr_list_append(
-                preedit_attrs,
-                ibus_attribute_new(
-                    IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE,
-                    IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
-                    0,
-                    text.len() as guint,
-                ),
-            );
-            let bgstart: u32 = self
-                .current_state
-                .clauses
-                .iter()
-                .map(|c| (c[0].surface).len() as u32)
-                .sum();
-            // 背景色を設定する。
-            ibus_attr_list_append(
-                preedit_attrs,
-                ibus_attribute_new(
-                    IBusAttrType_IBUS_ATTR_TYPE_BACKGROUND,
-                    0x00333333,
-                    bgstart,
-                    bgstart + (current_node.surface.len() as u32),
-                ),
-            );
-            let preedit_text = text.to_ibus_text();
-            ibus_text_set_attributes(preedit_text, preedit_attrs);
-            ibus_engine_update_preedit_text(
-                engine,
-                preedit_text,
-                text.len() as guint,
-                to_gboolean(!text.is_empty()),
-            );
+            self.current_state.on_preedit_change(engine);
 
             // 候補があれば、選択肢を表示させる。
             if show_lookup_table {
@@ -556,7 +525,7 @@ impl AkazaContext {
 
     /// (yomi, surface)
     pub fn make_preedit_word(&self) -> (String, String) {
-        let preedit = self.current_state.preedit.clone();
+        let preedit = self.current_state.get_preedit().to_string();
         // 先頭文字が大文字な場合は、そのまま返す。
         // "IME" などと入力された場合は、それをそのまま返すようにする。
         if !preedit.is_empty() && preedit.chars().next().unwrap().is_ascii_uppercase() {
@@ -696,20 +665,20 @@ impl AkazaContext {
     /// convert selected word/characters to full-width hiragana (standard hiragana): ホワイト → ほわいと
     pub fn convert_to_full_hiragana(&mut self, engine: *mut IBusEngine) -> Result<()> {
         info!("Convert to full hiragana");
-        let hira = self.romkan.to_hiragana(self.current_state.preedit.as_str());
+        let hira = self.romkan.to_hiragana(self.current_state.get_preedit());
         self.convert_to_single(engine, hira.as_str(), hira.as_str())
     }
 
     /// convert to full-width katakana (standard katakana): ほわいと → ホワイト
     pub fn convert_to_full_katakana(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        let hira = self.romkan.to_hiragana(self.current_state.preedit.as_str());
+        let hira = self.romkan.to_hiragana(self.current_state.get_preedit());
         let kata = hira2kata(hira.as_str(), ConvOption::default());
         self.convert_to_single(engine, hira.as_str(), kata.as_str())
     }
 
     /// convert to half-width katakana (standard katakana): ほわいと → ﾎﾜｲﾄ
     pub fn convert_to_half_katakana(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        let hira = self.romkan.to_hiragana(self.current_state.preedit.as_str());
+        let hira = self.romkan.to_hiragana(self.current_state.get_preedit());
         let kata = z2h(
             hira2kata(hira.as_str(), ConvOption::default()).as_str(),
             ConvOption::default(),
@@ -720,9 +689,9 @@ impl AkazaContext {
     /// convert to full-width romaji, all-capitals, proper noun capitalization (latin script inside
     /// Japanese text): ホワイト → ｈｏｗａｉｔｏ → ＨＯＷＡＩＴＯ → Ｈｏｗａｉｔｏ
     pub fn convert_to_full_romaji(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        let hira = self.romkan.to_hiragana(self.current_state.preedit.as_str());
+        let hira = self.romkan.to_hiragana(self.current_state.get_preedit());
         let romaji = h2z(
-            &self.current_state.preedit,
+            &self.current_state.get_preedit(),
             ConvOption {
                 kana: true,
                 digit: true,
@@ -736,9 +705,9 @@ impl AkazaContext {
     /// convert to half-width romaji, all-capitals, proper noun capitalization (latin script like
     /// standard English): ホワイト → howaito → HOWAITO → Howaito
     pub fn convert_to_half_romaji(&mut self, engine: *mut IBusEngine) -> Result<()> {
-        let hira = self.romkan.to_hiragana(self.current_state.preedit.as_str());
+        let hira = self.romkan.to_hiragana(self.current_state.get_preedit());
         let romaji = z2h(
-            &self.current_state.preedit,
+            &self.current_state.get_preedit(),
             ConvOption {
                 kana: true,
                 digit: true,
@@ -773,8 +742,8 @@ impl AkazaContext {
     }
 
     pub fn escape(&mut self, engine: *mut IBusEngine) {
-        trace!("escape: {}", self.current_state.preedit);
-        self.current_state.clear();
+        trace!("escape");
+        self.current_state.clear(engine);
         self.update_candidates(engine, false)
     }
 }
