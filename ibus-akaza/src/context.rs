@@ -300,7 +300,7 @@ impl AkazaContext {
                 self.current_state.set_preedit(
                     engine,
                     self.romkan
-                        .remove_last_char(&self.current_state.get_preedit()),
+                        .remove_last_char(self.current_state.get_preedit()),
                 )
             }
             // 変換していないときのレンダリングをする。
@@ -691,7 +691,7 @@ impl AkazaContext {
     pub fn convert_to_full_romaji(&mut self, engine: *mut IBusEngine) -> Result<()> {
         let hira = self.romkan.to_hiragana(self.current_state.get_preedit());
         let romaji = h2z(
-            &self.current_state.get_preedit(),
+            self.current_state.get_preedit(),
             ConvOption {
                 kana: true,
                 digit: true,
