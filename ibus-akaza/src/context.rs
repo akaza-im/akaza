@@ -244,7 +244,8 @@ impl AkazaContext {
                         self.update_preedit_text_in_precomposition(engine);
 
                         self._update_candidates(engine, false).unwrap();
-                        self.current_state.clear_state(engine);
+                        self.current_state
+                            .clear_state(engine, &mut self.lookup_table);
                     } else {
                         if self.lookup_table.get_number_of_candidates() > 0 {
                             // 変換の途中に別の文字が入力された。よって、現在の preedit 文字列は確定させる。
@@ -414,7 +415,8 @@ impl AkazaContext {
 
     pub(crate) fn update_candidates(&mut self, engine: *mut IBusEngine, show_lookup_table: bool) {
         self._update_candidates(engine, show_lookup_table).unwrap();
-        self.current_state.clear_state(engine);
+        self.current_state
+            .clear_state(engine, &mut self.lookup_table);
     }
 
     fn _update_candidates(
@@ -450,28 +452,11 @@ impl AkazaContext {
             self.current_state
                 .set_clauses(engine, clauses, &mut self.lookup_table);
 
-            self.current_state.adjust_current_clause(engine);
+            self.current_state
+                .adjust_current_clause(engine, &mut self.lookup_table);
         }
-        self.create_lookup_table();
         self.refresh(engine, show_lookup_table);
         Ok(())
-    }
-
-    /**
-     * 現在の候補選択状態から、 lookup table を構築する。
-     */
-    fn create_lookup_table(&mut self) {
-        // 一旦、ルックアップテーブルをクリアする
-        self.lookup_table.clear();
-
-        // 現在の未変換情報を元に、候補を算出していく。
-        if !self.current_state.clauses.is_empty() {
-            // lookup table に候補を詰め込んでいく。
-            for node in &self.current_state.clauses[self.current_state.current_clause] {
-                let candidate = &node.surface_with_dynamic();
-                self.lookup_table.append_candidate(candidate.to_ibus_text());
-            }
-        }
     }
 
     fn refresh(&mut self, engine: *mut IBusEngine, show_lookup_table: bool) {
@@ -595,9 +580,8 @@ impl AkazaContext {
             return;
         }
 
-        self.current_state.select_right_clause(engine);
-
-        self.create_lookup_table();
+        self.current_state
+            .select_right_clause(engine, &mut self.lookup_table);
 
         self.refresh(engine, true);
     }
@@ -609,9 +593,8 @@ impl AkazaContext {
             return;
         }
 
-        self.current_state.select_left_clause(engine);
-
-        self.create_lookup_table();
+        self.current_state
+            .select_left_clause(engine, &mut self.lookup_table);
 
         self.refresh(engine, true);
     }
@@ -719,7 +702,8 @@ impl AkazaContext {
             vec![Vec::from([candidate])],
             &mut self.lookup_table,
         );
-        self.current_state.clear_state(engine);
+        self.current_state
+            .clear_state(engine, &mut self.lookup_table);
 
         // ルックアップテーブルに候補を設定
         self.lookup_table.clear();
@@ -737,6 +721,7 @@ impl AkazaContext {
         trace!("escape");
         self.current_state.clear(engine, &mut self.lookup_table);
         self._update_candidates(engine, false).unwrap();
-        self.current_state.clear_state(engine);
+        self.current_state
+            .clear_state(engine, &mut self.lookup_table);
     }
 }

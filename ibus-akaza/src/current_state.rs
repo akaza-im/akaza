@@ -79,7 +79,7 @@ impl CurrentState {
             self.on_clauses_change(engine, lookup_table);
         }
 
-        self.clear_state(engine);
+        self.clear_state(engine, lookup_table);
     }
 
     pub fn get_raw_input(&self) -> &str {
@@ -87,10 +87,10 @@ impl CurrentState {
     }
 
     /// 入力内容以外のものをリセットする
-    pub fn clear_state(&mut self, engine: *mut IBusEngine) {
+    pub fn clear_state(&mut self, engine: *mut IBusEngine, lookup_table: &mut IBusLookupTable) {
         if self.current_clause != 0 {
             self.current_clause = 0;
-            self.on_current_clause_change(engine);
+            self.on_current_clause_change(engine, lookup_table);
         }
         self.node_selected.clear();
         self.force_selected_clause.clear();
@@ -118,7 +118,7 @@ impl CurrentState {
             self.on_clauses_change(engine, lookup_table);
         }
 
-        self.clear_state(engine);
+        self.clear_state(engine, lookup_table);
     }
 
     pub fn set_auxiliary_text(&mut self, engine: *mut IBusEngine, auxiliary_text: &str) {
@@ -148,7 +148,7 @@ impl CurrentState {
             self.clauses.clear();
             self.on_clauses_change(engine, lookup_table);
         }
-        self.clear_state(engine);
+        self.clear_state(engine, lookup_table);
     }
 
     /**
@@ -178,32 +178,44 @@ impl CurrentState {
     }
 
     /// 一個右の文節を選択する
-    pub fn select_right_clause(&mut self, engine: *mut IBusEngine) {
+    pub fn select_right_clause(
+        &mut self,
+        engine: *mut IBusEngine,
+        lookup_table: &mut IBusLookupTable,
+    ) {
         if self.current_clause == self.clauses.len() - 1 {
             // 既に一番右だった場合、一番左にいく。
             if self.current_clause != 0 {
                 self.current_clause = 0;
-                self.on_current_clause_change(engine);
+                self.on_current_clause_change(engine, lookup_table);
             }
         } else {
             self.current_clause += 1;
-            self.on_current_clause_change(engine);
+            self.on_current_clause_change(engine, lookup_table);
         }
     }
 
     /// 一個左の文節を選択する
-    pub fn select_left_clause(&mut self, engine: *mut IBusEngine) {
+    pub fn select_left_clause(
+        &mut self,
+        engine: *mut IBusEngine,
+        lookup_table: &mut IBusLookupTable,
+    ) {
         if self.current_clause == 0 {
             // 既に一番左だった場合、一番右にいく
             self.current_clause = self.clauses.len() - 1;
-            self.on_current_clause_change(engine);
+            self.on_current_clause_change(engine, lookup_table);
         } else {
             self.current_clause -= 1;
-            self.on_current_clause_change(engine);
+            self.on_current_clause_change(engine, lookup_table);
         }
     }
 
-    pub fn adjust_current_clause(&mut self, engine: *mut IBusEngine) {
+    pub fn adjust_current_clause(
+        &mut self,
+        engine: *mut IBusEngine,
+        lookup_table: &mut IBusLookupTable,
+    ) {
         // [a][bc]
         //    ^^^^
         // 上記の様にフォーカスが当たっている時に extend_clause_left した場合
@@ -211,7 +223,7 @@ impl CurrentState {
         // current_clause を動かす。
         if self.current_clause >= self.clauses.len() {
             self.current_clause = self.clauses.len() - 1;
-            self.on_current_clause_change(engine);
+            self.on_current_clause_change(engine, lookup_table);
         }
     }
 
@@ -257,8 +269,13 @@ impl CurrentState {
 
     pub fn on_raw_input_change(&self, _engine: *mut IBusEngine) {}
 
-    pub fn on_current_clause_change(&self, engine: *mut IBusEngine) {
+    pub fn on_current_clause_change(
+        &mut self,
+        engine: *mut IBusEngine,
+        lookup_table: &mut IBusLookupTable,
+    ) {
         self.render_preedit(engine);
+        self.render_lookup_table(lookup_table);
     }
 
     fn on_auxiliary_text_change(&self, engine: *mut IBusEngine) {
