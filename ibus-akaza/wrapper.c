@@ -136,7 +136,7 @@ void ibus_akaza_init(bool ibus) {
         component,
         ibus_engine_desc_new("akaza", "Akaza", "Akaza", "ja", "MIT",
                              "tokuhirom <tokuhirom@gmail.com>",
-                             PKGDATADIR "/icons/ibus-akaza.svg", "us"));
+                             PKGDATADIR "/icons/ibus-akaza.svg", "default"));
     ibus_bus_register_component(bus, component);
   }
 }
