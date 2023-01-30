@@ -383,28 +383,26 @@ impl AkazaContext {
     }
 
     pub fn commit_string(&mut self, engine: *mut IBusEngine, text: &str) {
-        unsafe {
-            if self.current_state.in_conversion() {
-                // 変換モードのときのみ学習を実施する
-                self.engine
-                    .learn(self.current_state.get_first_candidates().as_slice());
-            }
-
-            ibus_engine_commit_text(engine, text.to_ibus_text());
-
-            self.current_state.clear(engine, &mut self.lookup_table);
-
-            self.lookup_table.clear();
-            self.current_state.set_lookup_table_visible(
-                engine,
-                &mut self.lookup_table as *mut _,
-                false,
-            );
-
-            self.current_state.set_auxiliary_text(engine, "");
-            self.current_state
-                .clear_clauses(engine, &mut self.lookup_table);
+        if self.current_state.in_conversion() {
+            // 変換モードのときのみ学習を実施する
+            self.engine
+                .learn(self.current_state.get_first_candidates().as_slice());
         }
+
+        unsafe {
+            ibus_engine_commit_text(engine, text.to_ibus_text());
+        }
+
+        self.current_state.clear(engine, &mut self.lookup_table);
+
+        self.lookup_table.clear();
+        self.current_state.set_lookup_table_visible(
+            engine,
+            &mut self.lookup_table as *mut _,
+            false,
+        );
+
+        self.current_state.set_auxiliary_text(engine, "");
     }
 
     pub fn commit_candidate(&mut self, engine: *mut IBusEngine) {
