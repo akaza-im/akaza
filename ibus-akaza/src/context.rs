@@ -243,17 +243,23 @@ impl AkazaContext {
                         // 変換の途中に別の文字が入力された。よって、現在の preedit 文字列は確定させる。
                         self.commit_candidate(engine);
                     }
-
-                    // Append the character to preedit string.
-                    let ch = char::from_u32(keyval).unwrap();
-                    self.current_state.append_preedit(engine, ch);
-
-                    // And update the display status.
-                    self.update_preedit_text_in_precomposition(engine);
-
                     // live conversion mode が true であれば、変換をガンガンかける
                     if self.live_conversion {
+                        // Append the character to preedit string.
+                        let ch = char::from_u32(keyval).unwrap();
+                        self.current_state.append_preedit(engine, ch);
+
+                        // And update the display status.
+                        self.update_preedit_text_in_precomposition(engine);
+
                         self.update_candidates(engine, false);
+                    } else {
+                        // Append the character to preedit string.
+                        let ch = char::from_u32(keyval).unwrap();
+                        self.current_state.append_preedit(engine, ch);
+
+                        // And update the display status.
+                        self.update_preedit_text_in_precomposition(engine);
                     }
 
                     return true;
@@ -292,7 +298,7 @@ impl AkazaContext {
                 // 変換中の場合、無変換モードにもどす。
                 self.lookup_table.clear();
                 // 変換候補をクリアする
-                self.current_state.clear_clauses();
+                self.current_state.clear_clauses(engine);
                 ibus_engine_hide_auxiliary_text(engine);
                 ibus_engine_hide_lookup_table(engine);
             } else {
@@ -403,7 +409,7 @@ impl AkazaContext {
 
     pub(crate) fn update_candidates(&mut self, engine: *mut IBusEngine, show_lookup_table: bool) {
         self._update_candidates(engine, show_lookup_table).unwrap();
-        self.current_state.clear_state();
+        self.current_state.clear_state(engine);
     }
 
     fn _update_candidates(
@@ -412,7 +418,7 @@ impl AkazaContext {
         show_lookup_table: bool,
     ) -> Result<()> {
         if self.current_state.get_preedit().is_empty() {
-            self.current_state.set_clauses(vec![]);
+            self.current_state.set_clauses(engine, vec![]);
         } else {
             let yomi = self.current_state.get_preedit().to_string();
 
@@ -435,7 +441,7 @@ impl AkazaContext {
                 )?
             };
 
-            self.current_state.set_clauses(clauses);
+            self.current_state.set_clauses(engine, clauses);
 
             self.current_state.adjust_current_clause();
         }
@@ -475,7 +481,7 @@ impl AkazaContext {
 
             // -- auxiliary text(ポップアップしてるやつのほう)
             if show_lookup_table {
-                let first_candidate = &(current_node.yomi);
+                let first_candidate = current_node.yomi.to_string() + "YY";
                 let auxiliary_text = first_candidate.as_str().to_ibus_text();
                 ibus_text_set_attributes(auxiliary_text, ibus_attr_list_new());
                 ibus_engine_update_auxiliary_text(
@@ -484,8 +490,6 @@ impl AkazaContext {
                     to_gboolean(!self.current_state.get_preedit().is_empty()),
                 );
             }
-
-            self.current_state.on_preedit_change(engine);
 
             // 候補があれば、選択肢を表示させる。
             if show_lookup_table {
@@ -713,8 +717,9 @@ impl AkazaContext {
     ) -> Result<()> {
         // 候補を設定
         let candidate = Candidate::new(yomi, surface, 0_f32);
-        self.current_state.set_clauses(vec![Vec::from([candidate])]);
-        self.current_state.clear_state();
+        self.current_state
+            .set_clauses(engine, vec![Vec::from([candidate])]);
+        self.current_state.clear_state(engine);
 
         // ルックアップテーブルに候補を設定
         self.lookup_table.clear();

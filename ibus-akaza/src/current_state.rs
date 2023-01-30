@@ -7,7 +7,9 @@ use ibus_sys::attribute::{
     IBusAttrType_IBUS_ATTR_TYPE_UNDERLINE, IBusAttrUnderline_IBUS_ATTR_UNDERLINE_SINGLE,
 };
 use ibus_sys::core::to_gboolean;
-use ibus_sys::engine::{ibus_engine_update_preedit_text, IBusEngine};
+use ibus_sys::engine::{
+    ibus_engine_hide_preedit_text, ibus_engine_update_preedit_text, IBusEngine,
+};
 use ibus_sys::glib::guint;
 use ibus_sys::text::{ibus_text_set_attributes, StringExt};
 use libakaza::extend_clause::{extend_left, extend_right};
@@ -52,11 +54,17 @@ impl CurrentState {
     }
 
     pub(crate) fn clear(&mut self, engine: *mut IBusEngine) {
-        self.preedit.clear();
-        self.on_preedit_change(engine);
-        self.clauses.clear();
+        if !self.preedit.is_empty() {
+            self.preedit.clear();
+            self.on_preedit_change(engine);
+        }
 
-        self.clear_state();
+        if !self.clauses.is_empty() {
+            self.clauses.clear();
+            self.on_clauses_change(engine);
+        }
+
+        self.clear_state(engine);
     }
 
     pub fn get_preedit(&self) -> &str {
@@ -64,8 +72,11 @@ impl CurrentState {
     }
 
     /// 入力内容以外のものをリセットする
-    pub fn clear_state(&mut self) {
-        self.current_clause = 0;
+    pub fn clear_state(&mut self, engine: *mut IBusEngine) {
+        if self.current_clause != 0 {
+            self.current_clause = 0;
+            self.on_current_clause_change(engine);
+        }
         self.node_selected.clear();
         self.force_selected_clause.clear();
     }
@@ -77,22 +88,35 @@ impl CurrentState {
 
     /// バックスペースで一文字削除した場合などに呼ばれる。
     pub(crate) fn set_preedit(&mut self, engine: *mut IBusEngine, preedit: String) {
-        self.preedit = preedit;
-        self.clauses.clear();
-        self.clear_state();
-        self.on_preedit_change(engine);
+        if self.preedit != preedit {
+            self.preedit = preedit;
+            self.on_preedit_change(engine);
+        }
+
+        if !self.clauses.is_empty() {
+            self.clauses.clear();
+            self.on_clauses_change(engine);
+        }
+
+        self.clear_state(engine);
     }
 
-    pub fn set_clauses(&mut self, clause: Vec<Vec<Candidate>>) {
-        self.clauses = clause;
+    pub fn set_clauses(&mut self, engine: *mut IBusEngine, clause: Vec<Vec<Candidate>>) {
+        if self.clauses != clause {
+            self.clauses = clause;
+            self.on_clauses_change(engine);
+        }
         self.node_selected.clear();
     }
 
     /// 変換しているときに backspace を入力した場合。
     /// 変換候補をクリアして、Conversion から Composition 状態に戻る。
-    pub fn clear_clauses(&mut self) {
-        self.clauses.clear();
-        self.clear_state();
+    pub fn clear_clauses(&mut self, engine: *mut IBusEngine) {
+        if !self.clauses.is_empty() {
+            self.clauses.clear();
+            self.on_clauses_change(engine);
+        }
+        self.clear_state(engine);
     }
 
     pub fn get_first_candidates(&self) -> Vec<Candidate> {
@@ -166,7 +190,24 @@ impl CurrentState {
         !self.clauses.is_empty()
     }
 
+    pub fn on_clauses_change(&self, engine: *mut IBusEngine) {
+        self.render_preedit(engine);
+    }
+
     pub fn on_preedit_change(&self, engine: *mut IBusEngine) {
+        self.render_preedit(engine);
+    }
+
+    pub fn on_current_clause_change(&self, engine: *mut IBusEngine) {
+        self.render_preedit(engine);
+    }
+
+    pub fn render_preedit(&self, engine: *mut IBusEngine) {
+        if self.clauses.is_empty() {
+            unsafe { ibus_engine_hide_preedit_text(engine) }
+            return;
+        }
+
         unsafe {
             let current_clause = &self.clauses[self.current_clause];
             let current_node = &(current_clause[0]);
