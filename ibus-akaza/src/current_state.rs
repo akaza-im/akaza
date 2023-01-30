@@ -279,6 +279,14 @@ impl CurrentState {
     ) {
         self.render_preedit(engine);
         self.render_lookup_table(lookup_table);
+
+        // -- auxiliary text(ポップアップしてるやつのほう)
+        let current_yomi = self.clauses[self.current_clause][0].yomi.clone();
+        self.set_auxiliary_text(engine, &current_yomi);
+
+        // 候補があれば、選択肢を表示させる。
+        let visible = lookup_table.get_number_of_candidates() > 0;
+        self.set_lookup_table_visible(engine, lookup_table, visible);
     }
 
     fn on_auxiliary_text_change(&self, engine: *mut IBusEngine) {

@@ -21,7 +21,6 @@ use ibus_sys::core::{
 use ibus_sys::engine::ibus_engine_commit_text;
 use ibus_sys::engine::ibus_engine_hide_lookup_table;
 use ibus_sys::engine::ibus_engine_hide_preedit_text;
-
 use ibus_sys::engine::ibus_engine_update_preedit_text;
 use ibus_sys::engine::IBusEngine;
 use ibus_sys::glib::gchar;
@@ -582,8 +581,6 @@ impl AkazaContext {
 
         self.current_state
             .select_right_clause(engine, &mut self.lookup_table);
-
-        self.refresh(engine, true);
     }
 
     /// 選択する分節を左にずらす。
