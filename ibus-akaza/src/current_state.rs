@@ -38,6 +38,7 @@ pub struct CurrentState {
     /// ライブコンバージョン
     pub live_conversion: bool,
     pub(crate) lookup_table_visible: bool,
+    pub lookup_table: IBusLookupTable,
 }
 
 impl CurrentState {
@@ -52,16 +53,12 @@ impl CurrentState {
             force_selected_clause: Vec::new(),
             live_conversion,
             lookup_table_visible: false,
+            lookup_table: IBusLookupTable::new(10, 0, 1, 1),
         }
     }
 
-    pub(crate) fn set_input_mode(
-        &mut self,
-        engine: *mut IBusEngine,
-        input_mode: &InputMode,
-        lookup_table: &mut IBusLookupTable,
-    ) {
-        self.clear(engine, lookup_table);
+    pub(crate) fn set_input_mode(&mut self, engine: *mut IBusEngine, input_mode: &InputMode) {
+        self.clear(engine);
         self.input_mode = *input_mode;
     }
 
@@ -71,15 +68,15 @@ impl CurrentState {
         self.render_preedit(engine);
     }
 
-    pub(crate) fn clear(&mut self, engine: *mut IBusEngine, lookup_table: &mut IBusLookupTable) {
+    pub(crate) fn clear(&mut self, engine: *mut IBusEngine) {
         if !self.raw_input.is_empty() {
             self.raw_input.clear();
             self.on_raw_input_change(engine);
         }
 
-        self.clear_clauses(engine, lookup_table);
+        self.clear_clauses(engine);
 
-        self.clear_state(engine, lookup_table);
+        self.clear_state(engine);
     }
 
     pub fn get_raw_input(&self) -> &str {
@@ -87,10 +84,10 @@ impl CurrentState {
     }
 
     /// 入力内容以外のものをリセットする
-    pub fn clear_state(&mut self, engine: *mut IBusEngine, lookup_table: &mut IBusLookupTable) {
+    pub fn clear_state(&mut self, engine: *mut IBusEngine) {
         if self.current_clause != 0 {
             self.current_clause = 0;
-            self.on_current_clause_change(engine, lookup_table);
+            self.on_current_clause_change(engine);
         }
         self.node_selected.clear();
         self.force_selected_clause.clear();
@@ -102,12 +99,7 @@ impl CurrentState {
     }
 
     /// バックスペースで一文字削除した場合などに呼ばれる。
-    pub(crate) fn set_raw_input(
-        &mut self,
-        engine: *mut IBusEngine,
-        raw_input: String,
-        lookup_table: &mut IBusLookupTable,
-    ) {
+    pub(crate) fn set_raw_input(&mut self, engine: *mut IBusEngine, raw_input: String) {
         if self.raw_input != raw_input {
             self.raw_input = raw_input;
             self.on_raw_input_change(engine);
@@ -115,10 +107,10 @@ impl CurrentState {
 
         if !self.clauses.is_empty() {
             self.clauses.clear();
-            self.on_clauses_change(engine, lookup_table);
+            self.on_clauses_change(engine);
         }
 
-        self.clear_state(engine, lookup_table);
+        self.clear_state(engine);
     }
 
     pub fn set_auxiliary_text(&mut self, engine: *mut IBusEngine, auxiliary_text: &str) {
@@ -128,43 +120,38 @@ impl CurrentState {
         }
     }
 
-    pub fn set_clauses(
-        &mut self,
-        engine: *mut IBusEngine,
-        clause: Vec<Vec<Candidate>>,
-        lookup_table: &mut IBusLookupTable,
-    ) {
+    pub fn set_clauses(&mut self, engine: *mut IBusEngine, clause: Vec<Vec<Candidate>>) {
         if self.clauses != clause {
             self.clauses = clause;
             self.node_selected.clear();
-            self.on_clauses_change(engine, lookup_table);
+            self.on_clauses_change(engine);
         }
     }
 
     /// 変換しているときに backspace を入力した場合。
     /// 変換候補をクリアして、Conversion から Composition 状態に戻る。
-    pub fn clear_clauses(&mut self, engine: *mut IBusEngine, lookup_table: &mut IBusLookupTable) {
+    pub fn clear_clauses(&mut self, engine: *mut IBusEngine) {
         if !self.clauses.is_empty() {
             self.clauses.clear();
-            self.on_clauses_change(engine, lookup_table);
+            self.on_clauses_change(engine);
         }
-        self.clear_state(engine, lookup_table);
+        self.clear_state(engine);
     }
 
     /**
      * 現在の候補選択状態から、 lookup table を構築する。
      */
-    fn render_lookup_table(&mut self, lookup_table: &mut IBusLookupTable) {
+    fn render_lookup_table(&mut self) {
         info!("render_lookup_table");
         // 一旦、ルックアップテーブルをクリアする
-        lookup_table.clear();
+        self.lookup_table.clear();
 
         // 現在の未変換情報を元に、候補を算出していく。
         if !self.clauses.is_empty() {
             // lookup table に候補を詰め込んでいく。
             for node in &self.clauses[self.current_clause] {
                 let candidate = &node.surface_with_dynamic();
-                lookup_table.append_candidate(candidate.to_ibus_text());
+                self.lookup_table.append_candidate(candidate.to_ibus_text());
             }
         }
     }
@@ -179,44 +166,32 @@ impl CurrentState {
     }
 
     /// 一個右の文節を選択する
-    pub fn select_right_clause(
-        &mut self,
-        engine: *mut IBusEngine,
-        lookup_table: &mut IBusLookupTable,
-    ) {
+    pub fn select_right_clause(&mut self, engine: *mut IBusEngine) {
         if self.current_clause == self.clauses.len() - 1 {
             // 既に一番右だった場合、一番左にいく。
             if self.current_clause != 0 {
                 self.current_clause = 0;
-                self.on_current_clause_change(engine, lookup_table);
+                self.on_current_clause_change(engine);
             }
         } else {
             self.current_clause += 1;
-            self.on_current_clause_change(engine, lookup_table);
+            self.on_current_clause_change(engine);
         }
     }
 
     /// 一個左の文節を選択する
-    pub fn select_left_clause(
-        &mut self,
-        engine: *mut IBusEngine,
-        lookup_table: &mut IBusLookupTable,
-    ) {
+    pub fn select_left_clause(&mut self, engine: *mut IBusEngine) {
         if self.current_clause == 0 {
             // 既に一番左だった場合、一番右にいく
             self.current_clause = self.clauses.len() - 1;
-            self.on_current_clause_change(engine, lookup_table);
+            self.on_current_clause_change(engine);
         } else {
             self.current_clause -= 1;
-            self.on_current_clause_change(engine, lookup_table);
+            self.on_current_clause_change(engine);
         }
     }
 
-    pub fn adjust_current_clause(
-        &mut self,
-        engine: *mut IBusEngine,
-        lookup_table: &mut IBusLookupTable,
-    ) {
+    pub fn adjust_current_clause(&mut self, engine: *mut IBusEngine) {
         // [a][bc]
         //    ^^^^
         // 上記の様にフォーカスが当たっている時に extend_clause_left した場合
@@ -224,7 +199,7 @@ impl CurrentState {
         // current_clause を動かす。
         if self.current_clause >= self.clauses.len() {
             self.current_clause = self.clauses.len() - 1;
-            self.on_current_clause_change(engine, lookup_table);
+            self.on_current_clause_change(engine);
         }
     }
 
@@ -259,24 +234,16 @@ impl CurrentState {
         !self.clauses.is_empty()
     }
 
-    pub fn on_clauses_change(
-        &mut self,
-        engine: *mut IBusEngine,
-        lookup_table: &mut IBusLookupTable,
-    ) {
+    pub fn on_clauses_change(&mut self, engine: *mut IBusEngine) {
         self.render_preedit(engine);
-        self.render_lookup_table(lookup_table);
+        self.render_lookup_table();
     }
 
     pub fn on_raw_input_change(&self, _engine: *mut IBusEngine) {}
 
-    pub fn on_current_clause_change(
-        &mut self,
-        engine: *mut IBusEngine,
-        lookup_table: &mut IBusLookupTable,
-    ) {
+    pub fn on_current_clause_change(&mut self, engine: *mut IBusEngine) {
         self.render_preedit(engine);
-        self.render_lookup_table(lookup_table);
+        self.render_lookup_table();
 
         // -- auxiliary text(ポップアップしてるやつのほう)
         if !self.clauses.is_empty() {
@@ -285,8 +252,8 @@ impl CurrentState {
         }
 
         // 候補があれば、選択肢を表示させる。
-        let visible = lookup_table.get_number_of_candidates() > 0;
-        self.set_lookup_table_visible(engine, lookup_table, visible);
+        let visible = self.lookup_table.get_number_of_candidates() > 0;
+        self.set_lookup_table_visible(engine, visible);
     }
 
     fn on_auxiliary_text_change(&self, engine: *mut IBusEngine) {
@@ -371,14 +338,13 @@ impl CurrentState {
         }
     }
 
-    pub fn set_lookup_table_visible(
-        &mut self,
-        engine: *mut IBusEngine,
-        lookup_table: *mut IBusLookupTable,
-        visible: bool,
-    ) {
+    pub fn set_lookup_table_visible(&mut self, engine: *mut IBusEngine, visible: bool) {
         unsafe {
-            ibus_engine_update_lookup_table(engine, lookup_table, to_gboolean(visible));
+            ibus_engine_update_lookup_table(
+                engine,
+                &mut self.lookup_table as *mut IBusLookupTable,
+                to_gboolean(visible),
+            );
         }
     }
 }
