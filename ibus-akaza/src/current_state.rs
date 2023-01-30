@@ -129,26 +129,32 @@ impl CurrentState {
     }
 
     /// 一個右の文節を選択する
-    pub fn select_right_clause(&mut self) {
+    pub fn select_right_clause(&mut self, engine: *mut IBusEngine) {
         if self.current_clause == self.clauses.len() - 1 {
             // 既に一番右だった場合、一番左にいく。
-            self.current_clause = 0;
+            if self.current_clause != 0 {
+                self.current_clause = 0;
+                self.on_current_clause_change(engine);
+            }
         } else {
             self.current_clause += 1;
+            self.on_current_clause_change(engine);
         }
     }
 
     /// 一個左の文節を選択する
-    pub fn select_left_clause(&mut self) {
+    pub fn select_left_clause(&mut self, engine: *mut IBusEngine) {
         if self.current_clause == 0 {
             // 既に一番左だった場合、一番右にいく
-            self.current_clause = self.clauses.len() - 1
+            self.current_clause = self.clauses.len() - 1;
+            self.on_current_clause_change(engine);
         } else {
-            self.current_clause -= 1
+            self.current_clause -= 1;
+            self.on_current_clause_change(engine);
         }
     }
 
-    pub fn adjust_current_clause(&mut self) {
+    pub fn adjust_current_clause(&mut self, engine: *mut IBusEngine) {
         // [a][bc]
         //    ^^^^
         // 上記の様にフォーカスが当たっている時に extend_clause_left した場合
@@ -156,6 +162,7 @@ impl CurrentState {
         // current_clause を動かす。
         if self.current_clause >= self.clauses.len() {
             self.current_clause = self.clauses.len() - 1;
+            self.on_current_clause_change(engine);
         }
     }
 

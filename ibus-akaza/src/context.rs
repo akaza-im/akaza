@@ -36,7 +36,6 @@ use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngine;
 use libakaza::graph::candidate::Candidate;
 use libakaza::kana_kanji::marisa_kana_kanji_dict::MarisaKanaKanjiDict;
-use libakaza::keymap::KeyState;
 use libakaza::lm::system_bigram::MarisaSystemBigramLM;
 use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use libakaza::romkan::RomKanConverter;
@@ -443,7 +442,7 @@ impl AkazaContext {
 
             self.current_state.set_clauses(engine, clauses);
 
-            self.current_state.adjust_current_clause();
+            self.current_state.adjust_current_clause(engine);
         }
         self.create_lookup_table();
         self.refresh(engine, show_lookup_table);
@@ -598,7 +597,7 @@ impl AkazaContext {
             return;
         }
 
-        self.current_state.select_right_clause();
+        self.current_state.select_right_clause(engine);
 
         self.create_lookup_table();
 
@@ -612,7 +611,7 @@ impl AkazaContext {
             return;
         }
 
-        self.current_state.select_left_clause();
+        self.current_state.select_left_clause(engine);
 
         self.create_lookup_table();
 
