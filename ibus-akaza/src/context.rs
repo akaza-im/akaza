@@ -247,8 +247,11 @@ impl AkazaContext {
                         // Append the character to preedit string.
                         let ch = char::from_u32(keyval).unwrap();
                         self.current_state.append_preedit(engine, ch);
-                        self._update_candidates(engine, false).unwrap();
-                        self.current_state.clear_state(engine);
+
+                        // And update the display status.
+                        self.update_preedit_text_in_precomposition(engine);
+
+                        self.update_candidates(engine, false);
                     } else {
                         // Append the character to preedit string.
                         let ch = char::from_u32(keyval).unwrap();
@@ -401,6 +404,11 @@ impl AkazaContext {
 
     pub fn commit_candidate(&mut self, engine: *mut IBusEngine) {
         self.commit_string(engine, self.current_state.build_string().as_str());
+    }
+
+    pub(crate) fn update_candidates(&mut self, engine: *mut IBusEngine, show_lookup_table: bool) {
+        self._update_candidates(engine, show_lookup_table).unwrap();
+        self.current_state.clear_state(engine);
     }
 
     fn _update_candidates(
@@ -725,7 +733,6 @@ impl AkazaContext {
     pub fn escape(&mut self, engine: *mut IBusEngine) {
         trace!("escape");
         self.current_state.clear(engine);
-        self._update_candidates(engine, false).unwrap();
-        self.current_state.clear_state(engine);
+        self.update_candidates(engine, false)
     }
 }
