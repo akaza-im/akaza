@@ -65,9 +65,10 @@ impl CurrentState {
         self.input_mode = *input_mode;
     }
 
-    pub fn select_candidate(&mut self, candidate_pos: usize) {
+    pub fn select_candidate(&mut self, engine: *mut IBusEngine, candidate_pos: usize) {
         self.node_selected
             .insert(self.current_clause, candidate_pos);
+        self.render_preedit(engine);
     }
 
     pub(crate) fn clear(&mut self, engine: *mut IBusEngine, lookup_table: &mut IBusLookupTable) {

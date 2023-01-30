@@ -129,7 +129,7 @@ impl AkazaContext {
         let idx = if nn == 0 { 9 } else { nn - 1 };
 
         if self.current_state.lookup_table_visible {
-            if self.set_lookup_table_cursor_pos_in_current_page(idx) {
+            if self.set_lookup_table_cursor_pos_in_current_page(engine, idx) {
                 self.refresh(engine, true);
                 true
             } else {
@@ -143,7 +143,11 @@ impl AkazaContext {
 
     /// Sets the cursor in the lookup table to index in the current page
     /// Returns True if successful, False if not.
-    fn set_lookup_table_cursor_pos_in_current_page(&mut self, idx: i32) -> bool {
+    fn set_lookup_table_cursor_pos_in_current_page(
+        &mut self,
+        engine: *mut IBusEngine,
+        idx: i32,
+    ) -> bool {
         trace!("set_lookup_table_cursor_pos_in_current_page: {}", idx);
 
         let page_size = self.lookup_table.get_page_size();
@@ -167,7 +171,7 @@ impl AkazaContext {
         }
         self.lookup_table.set_cursor_pos(new_pos);
         self.current_state
-            .select_candidate(self.lookup_table.get_cursor_pos() as usize);
+            .select_candidate(engine, self.lookup_table.get_cursor_pos() as usize);
 
         true
     }
@@ -536,7 +540,7 @@ impl AkazaContext {
     pub(crate) fn cursor_up(&mut self, engine: *mut IBusEngine) {
         if self.lookup_table.cursor_up() {
             self.current_state
-                .select_candidate(self.lookup_table.get_cursor_pos() as usize);
+                .select_candidate(engine, self.lookup_table.get_cursor_pos() as usize);
             self.refresh(engine, true);
         }
     }
@@ -545,7 +549,7 @@ impl AkazaContext {
     pub fn cursor_down(&mut self, engine: *mut IBusEngine) {
         if self.lookup_table.cursor_down() {
             self.current_state
-                .select_candidate(self.lookup_table.get_cursor_pos() as usize);
+                .select_candidate(engine, self.lookup_table.get_cursor_pos() as usize);
             self.refresh(engine, true);
         }
     }
@@ -553,7 +557,7 @@ impl AkazaContext {
     pub fn page_up(&mut self, engine: *mut IBusEngine) -> bool {
         if self.lookup_table.page_up() {
             self.current_state
-                .select_candidate(self.lookup_table.get_cursor_pos() as usize);
+                .select_candidate(engine, self.lookup_table.get_cursor_pos() as usize);
             self.refresh(engine, true);
             true
         } else {
@@ -564,7 +568,7 @@ impl AkazaContext {
     pub fn page_down(&mut self, engine: *mut IBusEngine) -> bool {
         if self.lookup_table.page_up() {
             self.current_state
-                .select_candidate(self.lookup_table.get_cursor_pos() as usize);
+                .select_candidate(engine, self.lookup_table.get_cursor_pos() as usize);
             self.refresh(engine, true);
             true
         } else {
@@ -618,7 +622,7 @@ impl AkazaContext {
         _state: guint,
     ) {
         info!("do_candidate_clicked");
-        if self.set_lookup_table_cursor_pos_in_current_page(index as i32) {
+        if self.set_lookup_table_cursor_pos_in_current_page(engine, index as i32) {
             self.commit_candidate(engine)
         }
     }
