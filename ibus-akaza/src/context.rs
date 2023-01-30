@@ -398,7 +398,7 @@ impl AkazaContext {
             self._update_lookup_table(engine, false);
 
             self.current_state.set_auxiliary_text(engine, "");
-            ibus_engine_hide_preedit_text(engine);
+            self.current_state.clear_clauses(engine);
         }
     }
 
