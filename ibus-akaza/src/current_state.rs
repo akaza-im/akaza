@@ -320,6 +320,13 @@ impl CurrentState {
         self.clear_force_selected_clause(engine);
 
         self.update_preedit(engine);
+
+        let visible = if self.live_conversion {
+            false
+        } else {
+            self.lookup_table.get_number_of_candidates() > 0
+        };
+        self.update_lookup_table(engine, visible);
     }
 
     pub fn on_current_clause_change(&mut self, engine: *mut IBusEngine) {
