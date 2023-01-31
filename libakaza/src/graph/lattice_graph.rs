@@ -134,9 +134,9 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> LatticeGraph<U, B> {
             // 労働者災害補償保険法 のように、システム辞書には wikipedia から採録されているが,
             // 言語モデルには採録されていない場合,漢字候補を先頭に持ってくる。
             // つまり、変換後のほうが短くなるもののほうをコストを安くしておく。
-            self.system_unigram_lm.get_default_cost_for_short()
+            self.system_unigram_lm.get_cost(1)
         } else {
-            self.system_unigram_lm.get_default_cost()
+            self.system_unigram_lm.get_cost(0)
         };
     }
 
