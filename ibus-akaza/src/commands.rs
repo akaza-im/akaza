@@ -25,8 +25,7 @@ pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaComman
     });
     // 無変換状態では、ひらがなに変換してコミットします
     register("commit_preedit", |context, engine| {
-        let (_, surface) = context.make_preedit_word();
-        context.commit_string(engine, surface.as_str());
+        context.commit_preedit(engine);
         true
     });
     register("escape", |context, engine| {
@@ -64,8 +63,7 @@ pub(crate) fn ibus_akaza_commands_map() -> HashMap<&'static str, IbusAkazaComman
     });
 
     register("update_candidates", |context, engine| {
-        context.update_candidates(engine);
-        true
+        context.update_candidates(engine)
     });
     register("erase_character_before_cursor", |context, engine| {
         context.erase_character_before_cursor(engine);
