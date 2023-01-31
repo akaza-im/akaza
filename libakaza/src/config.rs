@@ -50,10 +50,29 @@ fn default_keymap() -> String {
 
 fn default_engine_config() -> EngineConfig {
     EngineConfig {
-        dicts: [].to_vec(),
+        dicts: find_default_dicts(),
         dict_cache: true,
         model: default_model(),
     }
+}
+
+fn find_default_dicts() -> Vec<DictConfig> {
+    let mut dicts: Vec<DictConfig> = Vec::new();
+
+    if let Ok(dir) = xdg::BaseDirectories::with_prefix("skk") {
+        if let Some(file) = dir.find_data_files("SKK-JISYO.L").next() {
+            dicts.push(DictConfig {
+                path: file.to_string_lossy().to_string(),
+                encoding: DictEncoding::EucJp,
+                dict_type: DictType::SKK,
+                usage: Normal,
+            });
+        }
+    }
+
+    info!("default dictionaries: {:?}", dicts);
+
+    dicts
 }
 
 fn default_live_conversion() -> bool {
