@@ -308,6 +308,11 @@ impl CurrentState {
     }
 
     pub fn on_raw_input_change(&mut self, engine: *mut IBusEngine) {
+        // unicode character の境界じゃないところに force_selected が入った状態で hanken
+        // すると落ちる。
+        // なので、先にクリアする必要がある。
+        self.clear_force_selected_clause(engine);
+
         if self.live_conversion {
             self.henkan(engine).unwrap();
         } else if !self.clauses.is_empty() {
@@ -317,7 +322,6 @@ impl CurrentState {
 
         self.clear_current_clause(engine);
         self.clear_node_selected(engine);
-        self.clear_force_selected_clause(engine);
 
         self.update_preedit(engine);
 
