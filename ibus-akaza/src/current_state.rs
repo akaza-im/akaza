@@ -422,16 +422,20 @@ impl CurrentState {
 
     fn render_auxiliary_text(&self, engine: *mut IBusEngine) {
         unsafe {
-            if self.auxiliary_text.is_empty() {
-                ibus_engine_hide_auxiliary_text(engine);
+            if self.lookup_table_visible {
+                if self.auxiliary_text.is_empty() {
+                    ibus_engine_hide_auxiliary_text(engine);
+                } else {
+                    let auxiliary_text = self.auxiliary_text.to_ibus_text();
+                    ibus_text_set_attributes(auxiliary_text, ibus_attr_list_new());
+                    ibus_engine_update_auxiliary_text(
+                        engine,
+                        auxiliary_text,
+                        to_gboolean(!self.raw_input.is_empty()),
+                    );
+                }
             } else {
-                let auxiliary_text = self.auxiliary_text.to_ibus_text();
-                ibus_text_set_attributes(auxiliary_text, ibus_attr_list_new());
-                ibus_engine_update_auxiliary_text(
-                    engine,
-                    auxiliary_text,
-                    to_gboolean(!self.raw_input.is_empty()),
-                );
+                ibus_engine_hide_auxiliary_text(engine);
             }
         }
     }
