@@ -308,6 +308,11 @@ impl CurrentState {
     }
 
     pub fn on_raw_input_change(&mut self, engine: *mut IBusEngine) {
+        // unicode character の境界じゃないところに force_selected が入った状態で hanken
+        // すると落ちる。
+        // なので、先にクリアする必要がある。
+        self.clear_force_selected_clause(engine);
+
         if self.live_conversion {
             self.henkan(engine).unwrap();
         } else if !self.clauses.is_empty() {
@@ -317,9 +322,15 @@ impl CurrentState {
 
         self.clear_current_clause(engine);
         self.clear_node_selected(engine);
-        self.clear_force_selected_clause(engine);
 
         self.update_preedit(engine);
+
+        let visible = if self.live_conversion {
+            false
+        } else {
+            self.lookup_table.get_number_of_candidates() > 0
+        };
+        self.update_lookup_table(engine, visible);
     }
 
     pub fn on_current_clause_change(&mut self, engine: *mut IBusEngine) {
@@ -422,16 +433,20 @@ impl CurrentState {
 
     fn render_auxiliary_text(&self, engine: *mut IBusEngine) {
         unsafe {
-            if self.auxiliary_text.is_empty() {
-                ibus_engine_hide_auxiliary_text(engine);
+            if self.lookup_table_visible {
+                if self.auxiliary_text.is_empty() {
+                    ibus_engine_hide_auxiliary_text(engine);
+                } else {
+                    let auxiliary_text = self.auxiliary_text.to_ibus_text();
+                    ibus_text_set_attributes(auxiliary_text, ibus_attr_list_new());
+                    ibus_engine_update_auxiliary_text(
+                        engine,
+                        auxiliary_text,
+                        to_gboolean(!self.raw_input.is_empty()),
+                    );
+                }
             } else {
-                let auxiliary_text = self.auxiliary_text.to_ibus_text();
-                ibus_text_set_attributes(auxiliary_text, ibus_attr_list_new());
-                ibus_engine_update_auxiliary_text(
-                    engine,
-                    auxiliary_text,
-                    to_gboolean(!self.raw_input.is_empty()),
-                );
+                ibus_engine_hide_auxiliary_text(engine);
             }
         }
     }
