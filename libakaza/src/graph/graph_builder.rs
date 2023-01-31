@@ -172,8 +172,8 @@ mod tests {
             Arc::new(Mutex::new(UserData::default())),
             Rc::new(
                 MarisaSystemUnigramLMBuilder::default()
-                    .set_default_cost(20_f32)
-                    .set_default_cost_for_short(19_f32)
+                    .set_unique_words(20)
+                    .set_total_words(19)
                     .build(),
             ),
             Rc::new(
@@ -205,8 +205,8 @@ mod tests {
             Arc::new(Mutex::new(UserData::default())),
             Rc::new(
                 MarisaSystemUnigramLMBuilder::default()
-                    .set_default_cost(20_f32)
-                    .set_default_cost_for_short(19_f32)
+                    .set_unique_words(20)
+                    .set_total_words(19)
                     .build(),
             ),
             Rc::new(
@@ -238,8 +238,8 @@ mod tests {
             Arc::new(Mutex::new(UserData::default())),
             Rc::new(
                 MarisaSystemUnigramLMBuilder::default()
-                    .set_default_cost(20_f32)
-                    .set_default_cost_for_short(19_f32)
+                    .set_unique_words(20)
+                    .set_total_words(19)
                     .build(),
             ),
             Rc::new(

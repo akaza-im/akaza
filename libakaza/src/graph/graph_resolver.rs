@@ -319,8 +319,8 @@ mod tests {
         // -1  0  1  2
         // BOS a  b  c
         let system_unigram_lm = MarisaSystemUnigramLMBuilder::default()
-            .set_default_cost(20_f32)
-            .set_default_cost_for_short(19_f32)
+            .set_unique_words(20)
+            .set_total_words(19)
             .build();
         let system_bigram_lm = MarisaSystemBigramLMBuilder::default()
             .set_default_edge_cost(20_f32)
@@ -371,8 +371,8 @@ mod tests {
 
         let mut system_unigram_lm_builder = MarisaSystemUnigramLMBuilder::default();
         let system_unigram_lm = system_unigram_lm_builder
-            .set_default_cost(19_f32)
-            .set_default_cost_for_short(20_f32)
+            .set_unique_words(19)
+            .set_total_words(20)
             .build();
         let system_bigram_lm = MarisaSystemBigramLMBuilder::default()
             .set_default_edge_cost(20_f32)
@@ -452,8 +452,8 @@ mod tests {
 
         let mut system_unigram_lm_builder = MarisaSystemUnigramLMBuilder::default();
         let system_unigram_lm = system_unigram_lm_builder
-            .set_default_cost(19_f32)
-            .set_default_cost_for_short(20_f32)
+            .set_unique_words(19)
+            .set_total_words(20)
             .build();
         let system_bigram_lm = MarisaSystemBigramLMBuilder::default()
             .set_default_edge_cost(20_f32)

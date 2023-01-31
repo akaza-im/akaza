@@ -67,8 +67,6 @@ impl LearningService {
         }
         let system_unigram_lm = Rc::new(OnMemorySystemUnigramLM::new(
             Rc::new(RefCell::new(unigram_map)),
-            src_system_unigram_lm.get_default_cost(),
-            src_system_unigram_lm.get_default_cost_for_short(),
             src_system_unigram_lm.total_words,
             src_system_unigram_lm.unique_words,
         ));
@@ -190,9 +188,8 @@ impl LearningService {
         }
         // ↓本来なら現在のデータで再調整すべきだが、一旦元のものを使う。
         // TODO あとで整理する
-        unigram_builder.set_default_cost(self.system_unigram_lm.get_default_cost());
-        unigram_builder
-            .set_default_cost_for_short(self.system_unigram_lm.get_default_cost_for_short());
+        unigram_builder.set_unique_words(self.system_unigram_lm.unique_words);
+        unigram_builder.set_total_words(self.system_unigram_lm.total_words);
         info!("Save unigram to {}", dst_unigram);
         unigram_builder.save(dst_unigram)?;
         Ok(())

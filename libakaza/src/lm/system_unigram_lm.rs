@@ -5,6 +5,7 @@ use log::info;
 
 use marisa_sys::{Keyset, Marisa};
 
+use crate::cost::calc_cost;
 use crate::lm::base::SystemUnigramLM;
 
 /*
@@ -14,8 +15,8 @@ use crate::lm::base::SystemUnigramLM;
    packed float  # score: 4 bytes
 */
 
-const DEFAULT_COST_FOR_SHORT_KEY: &str = "__DEFAULT_COST_FOR_SHORT__";
-const DEFAULT_COST_KEY: &str = "__DEFAULT_COST__";
+const UNIQUE_WORDS_KEY: &str = "__UNIQUE_WORDS__";
+const TOTAL_WORDS_KEY: &str = "__TOTAL_WORDS__";
 
 /**
  * unigram 言語モデル。
@@ -48,13 +49,13 @@ impl MarisaSystemUnigramLMBuilder {
         keyset
     }
 
-    pub fn set_default_cost_for_short(&mut self, cost: f32) -> &mut Self {
-        self.add(DEFAULT_COST_FOR_SHORT_KEY, cost);
+    pub fn set_total_words(&mut self, total_words: u32) -> &mut Self {
+        self.add(TOTAL_WORDS_KEY, total_words as f32);
         self
     }
 
-    pub fn set_default_cost(&mut self, cost: f32) -> &mut Self {
-        self.add(DEFAULT_COST_KEY, cost);
+    pub fn set_unique_words(&mut self, unique_words: u32) -> &mut Self {
+        self.add(UNIQUE_WORDS_KEY, unique_words as f32);
         self
     }
 
@@ -68,22 +69,22 @@ impl MarisaSystemUnigramLMBuilder {
     pub fn build(&self) -> MarisaSystemUnigramLM {
         let mut marisa = Marisa::default();
         marisa.build(&self.keyset());
-        let (_, default_cost_for_short) =
-            MarisaSystemUnigramLM::find_from_trie(&marisa, DEFAULT_COST_FOR_SHORT_KEY).unwrap();
-        let (_, default_cost) =
-            MarisaSystemUnigramLM::find_from_trie(&marisa, DEFAULT_COST_FOR_SHORT_KEY).unwrap();
+        let (_, total_words) =
+            MarisaSystemUnigramLM::find_from_trie(&marisa, TOTAL_WORDS_KEY).unwrap();
+        let (_, unique_words) =
+            MarisaSystemUnigramLM::find_from_trie(&marisa, UNIQUE_WORDS_KEY).unwrap();
         MarisaSystemUnigramLM {
             marisa,
-            default_cost_for_short,
-            default_cost,
+            total_words: total_words as u32,
+            unique_words: unique_words as u32,
         }
     }
 }
 
 pub struct MarisaSystemUnigramLM {
     marisa: Marisa,
-    default_cost_for_short: f32,
-    default_cost: f32,
+    total_words: u32,
+    unique_words: u32,
 }
 
 impl MarisaSystemUnigramLM {
@@ -95,16 +96,16 @@ impl MarisaSystemUnigramLM {
         info!("Reading {}", fname);
         let mut marisa = Marisa::default();
         marisa.load(fname)?;
-        let Some((_, default_cost_for_short)) = Self::find_from_trie(&marisa, DEFAULT_COST_FOR_SHORT_KEY) else {
-            bail!("Missing key for {}", DEFAULT_COST_FOR_SHORT_KEY);
+        let Some((_, total_words)) = Self::find_from_trie(&marisa, TOTAL_WORDS_KEY) else {
+            bail!("Missing key for {}", TOTAL_WORDS_KEY);
         };
-        let Some((_, default_cost)) = Self::find_from_trie(&marisa, DEFAULT_COST_FOR_SHORT_KEY) else {
-            bail!("Missing key for {}", DEFAULT_COST_KEY);
+        let Some((_, unique_words)) = Self::find_from_trie(&marisa, UNIQUE_WORDS_KEY) else {
+            bail!("Missing key for {}", UNIQUE_WORDS_KEY);
         };
         Ok(MarisaSystemUnigramLM {
             marisa,
-            default_cost_for_short,
-            default_cost,
+            total_words: total_words as u32,
+            unique_words: unique_words as u32,
         })
     }
 
@@ -131,12 +132,8 @@ impl MarisaSystemUnigramLM {
 }
 
 impl SystemUnigramLM for MarisaSystemUnigramLM {
-    fn get_default_cost(&self) -> f32 {
-        self.default_cost
-    }
-
-    fn get_default_cost_for_short(&self) -> f32 {
-        self.default_cost_for_short
+    fn get_cost(&self, wordcnt: u32) -> f32 {
+        calc_cost(wordcnt, self.total_words, self.unique_words)
     }
 
     /// @return (word_id, score)。
@@ -173,8 +170,8 @@ mod tests {
         builder.add("hello", 0.4);
         builder.add("world", 0.2);
         builder
-            .set_default_cost(20_f32)
-            .set_default_cost_for_short(19_f32)
+            .set_total_words(2)
+            .set_unique_words(2)
             .save(&tmpfile)
             .unwrap();
 

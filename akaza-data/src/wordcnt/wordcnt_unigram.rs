@@ -48,8 +48,6 @@ impl WordcntUnigramBuilder {
 
 pub struct WordcntUnigram {
     marisa: Marisa,
-    default_cost: f32,
-    default_cost_for_short: f32,
     pub(crate) total_words: u32,
     pub(crate) unique_words: u32,
 }
@@ -88,13 +86,8 @@ impl WordcntUnigram {
         // 単語の種類数
         let unique_words = map.keys().count() as u32;
 
-        let default_cost = calc_cost(0, total_words, unique_words);
-        let default_cost_for_short = calc_cost(1, total_words, unique_words);
-
         Ok(WordcntUnigram {
             marisa,
-            default_cost,
-            default_cost_for_short,
             total_words,
             unique_words,
         })
@@ -102,12 +95,8 @@ impl WordcntUnigram {
 }
 
 impl SystemUnigramLM for WordcntUnigram {
-    fn get_default_cost(&self) -> f32 {
-        self.default_cost
-    }
-
-    fn get_default_cost_for_short(&self) -> f32 {
-        self.default_cost_for_short
+    fn get_cost(&self, wordcnt: u32) -> f32 {
+        calc_cost(wordcnt, self.total_words, self.unique_words)
     }
 
     /// @return (word_id, score)。
@@ -181,8 +170,8 @@ mod tests {
         );
         assert_eq!(wordcnt.total_words, 45); // 単語発生数
         assert_eq!(wordcnt.unique_words, 2); // ユニーク単語数
-        assert_eq!(wordcnt.get_default_cost(), 6.672098);
-        assert_eq!(wordcnt.get_default_cost_for_short(), 1.6720936);
+        assert_eq!(wordcnt.get_cost(0), 6.672098);
+        assert_eq!(wordcnt.get_cost(1), 1.6720936);
 
         assert_eq!(wordcnt.find("私/わたし"), Some((1_i32, 1.1949753)));
         assert_eq!(wordcnt.find("彼/かれ"), Some((0_i32, 0.048848562)));

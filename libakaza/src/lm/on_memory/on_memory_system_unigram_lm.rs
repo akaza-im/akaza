@@ -8,8 +8,6 @@ use crate::lm::base::SystemUnigramLM;
 pub struct OnMemorySystemUnigramLM {
     // word -> (word_id, cost)
     map: Rc<RefCell<HashMap<String, (i32, u32)>>>,
-    pub default_cost: f32,
-    pub default_cost_for_short: f32,
     pub total_words: u32,
     pub unique_words: u32,
 }
@@ -17,17 +15,13 @@ pub struct OnMemorySystemUnigramLM {
 impl OnMemorySystemUnigramLM {
     pub fn new(
         map: Rc<RefCell<HashMap<String, (i32, u32)>>>,
-        default_cost: f32,
-        default_cost_for_short: f32,
-        c: u32,
-        v: u32,
+        total_words: u32,
+        unique_words: u32,
     ) -> Self {
         OnMemorySystemUnigramLM {
             map,
-            default_cost,
-            default_cost_for_short,
-            total_words: c,
-            unique_words: v,
+            total_words,
+            unique_words,
         }
     }
 
@@ -57,12 +51,8 @@ impl OnMemorySystemUnigramLM {
 }
 
 impl SystemUnigramLM for OnMemorySystemUnigramLM {
-    fn get_default_cost(&self) -> f32 {
-        self.default_cost
-    }
-
-    fn get_default_cost_for_short(&self) -> f32 {
-        self.default_cost_for_short
+    fn get_cost(&self, wordcnt: u32) -> f32 {
+        calc_cost(wordcnt, self.total_words, self.unique_words)
     }
 
     fn find(&self, word: &str) -> Option<(i32, f32)> {
