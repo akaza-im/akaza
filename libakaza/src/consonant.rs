@@ -5,6 +5,7 @@
 /// "meny" のときは "めny" と表示すべき。
 use regex::Regex;
 
+#[derive(Debug)]
 pub struct ConsonantSuffixExtractor {
     pattern: Regex,
 }

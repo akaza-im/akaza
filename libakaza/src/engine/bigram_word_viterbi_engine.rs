@@ -1,3 +1,4 @@
+use std::fmt::{Debug, Formatter};
 use std::ops::Range;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
@@ -27,6 +28,14 @@ pub struct BigramWordViterbiEngine<U: SystemUnigramLM, B: SystemBigramLM, KD: Ka
     pub segmenter: Segmenter,
     pub graph_resolver: GraphResolver,
     pub user_data: Arc<Mutex<UserData>>,
+}
+
+impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> Debug
+    for BigramWordViterbiEngine<U, B, KD>
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("BigramWordViterbiEngine"))
+    }
 }
 
 impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> HenkanEngine

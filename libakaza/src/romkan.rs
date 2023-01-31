@@ -46,6 +46,7 @@ fn load_romkan_map(file_path: &str) -> anyhow::Result<HashMap<String, String>> {
     }
 }
 
+#[derive(Debug)]
 pub struct RomKanConverter {
     pub mapping_name: String,
     romkan_pattern: Regex,
