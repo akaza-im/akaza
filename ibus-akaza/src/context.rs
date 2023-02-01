@@ -209,9 +209,7 @@ impl AkazaContext {
                         self.current_state.get_raw_input()
                     );
 
-                    if !self.current_state.live_conversion
-                        && self.current_state.lookup_table.get_number_of_candidates() > 0
-                    {
+                    if self.current_state.lookup_table_visible {
                         // 変換の途中に別の文字が入力された。
                         // よって、現在の preedit 文字列は確定させる。
                         self.commit_candidate(engine);
