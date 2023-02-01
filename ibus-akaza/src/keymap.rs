@@ -7,20 +7,20 @@ use ibus_sys::core::{IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_S
 use ibus_sys::glib::guint;
 use ibus_sys::ibus_key::IBUS_KEY_VoidSymbol;
 use ibus_sys::keys::ibus_keyval_from_name;
-use libakaza::keymap::{KeyState, Keymap};
+use libakaza::keymap::{KeyPattern, KeyState};
 
 #[derive(Hash, PartialEq)]
-struct KeyPattern {
+struct IBusKeyPattern {
     key_state: KeyState,
     keyval: u32,
     modifier: u32,
 }
 
-impl Eq for KeyPattern {}
+impl Eq for IBusKeyPattern {}
 
-impl KeyPattern {
+impl IBusKeyPattern {
     fn new(key_state: KeyState, keyval: u32, modifier: u32) -> Self {
-        KeyPattern {
+        IBusKeyPattern {
             key_state,
             keyval,
             modifier,
@@ -28,19 +28,18 @@ impl KeyPattern {
     }
 }
 
-pub struct KeyMap {
-    keymap: HashMap<KeyPattern, String>,
+pub struct IBusKeyMap {
+    keymap: HashMap<IBusKeyPattern, String>,
 }
 
-impl KeyMap {
+impl IBusKeyMap {
     fn to_ibus_key(s: &str) -> guint {
         let cs = CString::new(s.to_string()).unwrap();
         unsafe { ibus_keyval_from_name(cs.as_ptr()) }
     }
 
-    pub(crate) fn new(keymap_path: String) -> anyhow::Result<Self> {
-        let keymap = Keymap::load(keymap_path.as_str())?;
-        let mut mapping: HashMap<KeyPattern, String> = HashMap::new();
+    pub(crate) fn new(keymap: HashMap<KeyPattern, String>) -> anyhow::Result<Self> {
+        let mut mapping: HashMap<IBusKeyPattern, String> = HashMap::new();
 
         for (key_pattern, command) in keymap {
             let key = &key_pattern.key;
@@ -58,16 +57,19 @@ impl KeyMap {
             }
             trace!("Insert: {} {} {} {:?}", modifier, keyval, key, key_pattern);
             for state in &key_pattern.states {
-                mapping.insert(KeyPattern::new(*state, keyval, modifier), command.clone());
+                mapping.insert(
+                    IBusKeyPattern::new(*state, keyval, modifier),
+                    command.clone(),
+                );
             }
         }
 
-        Ok(KeyMap { keymap: mapping })
+        Ok(IBusKeyMap { keymap: mapping })
     }
 
     pub fn get(&self, key_state: &KeyState, keyval: u32, modifier: u32) -> Option<&String> {
         trace!("MODIFIER: {}", modifier);
         self.keymap
-            .get(&KeyPattern::new(*key_state, keyval, modifier))
+            .get(&IBusKeyPattern::new(*key_state, keyval, modifier))
     }
 }

@@ -22,6 +22,7 @@ use libakaza::engine::base::HenkanEngine;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngine;
 use libakaza::graph::candidate::Candidate;
 use libakaza::kana_kanji::marisa_kana_kanji_dict::MarisaKanaKanjiDict;
+use libakaza::keymap::Keymap;
 use libakaza::lm::system_bigram::MarisaSystemBigramLM;
 use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 use libakaza::romkan::RomKanConverter;
@@ -31,13 +32,13 @@ use crate::current_state::CurrentState;
 use crate::input_mode::get_input_mode_from_prop_name;
 use crate::input_mode::InputMode;
 use crate::input_mode::INPUT_MODE_HIRAGANA;
-use crate::keymap::KeyMap;
+use crate::keymap::IBusKeyMap;
 use crate::ui::prop_controller::PropController;
 
 #[repr(C)]
 pub struct AkazaContext {
     // ==== 設定 ====
-    keymap: KeyMap,
+    keymap: IBusKeyMap,
     command_map: HashMap<&'static str, IbusAkazaCommand>,
 
     // ==== 現在の入力状態を保持 ====
@@ -58,11 +59,12 @@ impl AkazaContext {
     ) -> Result<Self> {
         let input_mode = INPUT_MODE_HIRAGANA;
         let romkan = RomKanConverter::new(config.romkan.as_str())?;
+        let keymap = Keymap::load(config.keymap.as_str())?;
 
         Ok(AkazaContext {
             current_state: CurrentState::new(input_mode, config.live_conversion, romkan, engine),
             command_map: ibus_akaza_commands_map(),
-            keymap: KeyMap::new(config.keymap)?,
+            keymap: IBusKeyMap::new(keymap)?,
             prop_controller: PropController::new(input_mode)?,
         })
     }
