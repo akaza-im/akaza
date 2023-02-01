@@ -130,10 +130,13 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> LatticeGraph<U, B> {
         return if let Some((_, system_unigram_cost)) = node.word_id_and_score {
             trace!("HIT!: {}, {}", node.key(), system_unigram_cost);
             system_unigram_cost
-        } else if node.surface.len() < node.yomi.len() {
-            // 労働者災害補償保険法 のように、システム辞書には wikipedia から採録されているが,
-            // 言語モデルには採録されていない場合,漢字候補を先頭に持ってくる。
-            // つまり、変換後のほうが短くなるもののほうをコストを安くしておく。
+        } else if node.surface == node.yomi {
+            // 「ひらがな」で、変換しないエントリーを優先する。
+            // 漢字で表現したい場合は、それを自分で変換して選択すればよろしい。
+            // このようにしないと、例えば新語辞書に変なものが入ってきたときに
+            // 優先されすぎてしまう。
+            //
+            // 新語には、短いものもあり、誤爆しがち。
             self.system_unigram_lm.get_cost(1)
         } else {
             self.system_unigram_lm.get_cost(0)
