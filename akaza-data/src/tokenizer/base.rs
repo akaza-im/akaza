@@ -1,5 +1,5 @@
 pub trait AkazaTokenizer {
-    fn tokenize(&self, src: &str) -> anyhow::Result<String>;
+    fn tokenize(&self, src: &str, kana_preferred: bool) -> anyhow::Result<String>;
 }
 
 /// マージ処理に利用する為の中間表現
