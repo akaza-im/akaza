@@ -16,6 +16,7 @@ pub fn tokenize(
     reader: String,
     system_dict: String,
     user_dict: Option<String>,
+    kana_preferred: bool,
     src_dir: &str,
     dst_dir: &str,
 ) -> anyhow::Result<()> {
@@ -34,7 +35,7 @@ pub fn tokenize(
                     processor.process_file(
                         Path::new(src),
                         Path::new(dst),
-                        &mut (|f| tokenizer.tokenize(f)),
+                        &mut (|f| tokenizer.tokenize(f, kana_preferred)),
                     )
                 })
                 .collect::<Vec<_>>();
@@ -52,7 +53,7 @@ pub fn tokenize(
                     processor.process_file(
                         Path::new(src),
                         Path::new(dst),
-                        &mut (|f| tokenizer.tokenize(f)),
+                        &mut (|f| tokenizer.tokenize(f, kana_preferred)),
                     )
                 })
                 .collect::<Vec<_>>();

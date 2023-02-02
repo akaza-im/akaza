@@ -42,7 +42,7 @@ impl VibratoTokenizer {
 
 impl AkazaTokenizer for VibratoTokenizer {
     /// Vibrato を利用してファイルをアノテーションします。
-    fn tokenize(&self, src: &str) -> anyhow::Result<String> {
+    fn tokenize(&self, src: &str, kana_preferred: bool) -> anyhow::Result<String> {
         let mut worker = self.tokenizer.new_worker();
 
         worker.reset_sentence(src);
@@ -70,8 +70,13 @@ impl AkazaTokenizer for VibratoTokenizer {
                 token.surface()
             };
             let yomi = kata2hira(yomi, ConvOption::default());
+            let surface = if should_be_kana(kana_preferred, hinshi, subhinshi) {
+                yomi.to_string()
+            } else {
+                token.surface().to_string()
+            };
             let intermediate = IntermediateToken::new(
-                token.surface().to_string(),
+                surface,
                 yomi.to_string(),
                 hinshi.to_string(),
                 subhinshi.to_string(),
@@ -85,6 +90,26 @@ impl AkazaTokenizer for VibratoTokenizer {
     }
 }
 
+/// かな優先モードの処理
+fn should_be_kana(kana_preferred: bool, hinshi: &str, subhinshi: &str) -> bool {
+    if !kana_preferred {
+        return false;
+    }
+
+    // 貴方    名詞,代名詞,一般,*,*,*,貴方,アナタ,アナタ
+    subhinshi == "代名詞"
+        // 美しい  形容詞,自立,*,*,形容詞・イ段,基本形,美しい,ウツクシイ,ウツ クシイ
+        || hinshi == "形容詞"
+        // 到底    副詞,一般,*,*,*,*,到底,トウテイ,トーテイ
+        || hinshi == "副詞"
+        // 及び    接続詞,*,*,*,*,*,及び,オヨビ,オヨビ
+        || hinshi == "接続詞"
+        // 嗚呼    感動詞,*,*,*,*,*,嗚呼,アア,アー
+        || hinshi == "感動詞"
+        // 仰ぐ    動詞,自立,*,*,五段・ガ行,基本形,仰ぐ,アオグ,アオグ
+        || hinshi == "動詞"
+}
+
 #[cfg(test)]
 mod tests {
     use log::LevelFilter;
@@ -92,9 +117,27 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_should_be_kana() -> anyhow::Result<()> {
+        assert!(!should_be_kana(false, "形容詞", "自立"));
+        assert!(should_be_kana(true, "形容詞", "自立"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_with_kana() -> anyhow::Result<()> {
+        let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic", None)?;
+        let got = runner.tokenize("私の名前は中野です。", true)?;
+        assert_eq!(
+            got,
+            "わたし/わたし の/の 名前/なまえ は/は 中野/なかの です/です 。/。"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn test() -> anyhow::Result<()> {
         let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic", None)?;
-        runner.tokenize("私の名前は中野です。")?;
+        runner.tokenize("私の名前は中野です。", false)?;
         Ok(())
     }
 
@@ -118,7 +161,7 @@ mod tests {
 
         let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic", None)?;
         assert_eq!(
-            runner.tokenize("書いていたものである")?,
+            runner.tokenize("書いていたものである", false)?,
             "書いて/かいて いた/いた もの/もの である/である"
         );
         Ok(())
@@ -146,7 +189,7 @@ mod tests {
             .try_init();
 
         let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic", None)?;
-        assert_eq!(runner.tokenize("井伊家")?, "井伊家/いいけ");
+        assert_eq!(runner.tokenize("井伊家", false)?, "井伊家/いいけ");
         Ok(())
     }
 }

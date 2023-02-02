@@ -72,6 +72,8 @@ struct TokenizeArgs {
     user_dict: Option<String>,
     #[arg(short, long)]
     system_dict: String,
+    #[arg(long)]
+    kana_preferred: bool,
     src_dir: String,
     dst_dir: String,
 }
@@ -212,6 +214,7 @@ fn main() -> anyhow::Result<()> {
             opt.reader,
             opt.system_dict,
             opt.user_dict,
+            opt.kana_preferred,
             opt.src_dir.as_str(),
             opt.dst_dir.as_str(),
         ),
