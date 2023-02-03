@@ -59,6 +59,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "akaza-dict"
+version = "0.1.7"
+dependencies = [
+ "anyhow",
+ "encoding_rs",
+ "env_logger",
+ "gtk4",
+ "libakaza",
+ "log",
+ "serde",
+ "serde_yaml",
+ "xdg",
+]
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -482,9 +497,9 @@ checksum = "7fcaabb2fef8c910e7f4c7ce9f67a1283a1715879a7c230ca9d6d1ae31f16d91"
 
 [[package]]
 name = "encoding_rs"
-version = "0.8.31"
+version = "0.8.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9852635589dc9f9ea1b6fe9f05b50ef208c85c834a562f0c6abb1c475736ec2b"
+checksum = "071a31f4ee85403370b58aca746f01041ede6f0da2730960ad001edc2b71b394"
 dependencies = [
  "cfg-if",
 ]
