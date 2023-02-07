@@ -30,8 +30,10 @@ akaza-debug.xml: akaza.xml.in
 install: akaza.xml config.h ../target/release/ibus-akaza
 	install -m 0644 ../target/release/ibus-akaza $(PREFIX)/bin/
 
-	install -m 0644 akaza.svg $(DESTDIR)$(DATADIR)/ibus-akaza
-	install -m 0644 akaza.xml $(DESTDIR)$(DATADIR)/ibus/component
+	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-akaza
+	install -m 0644 akaza.svg $(DESTDIR)$(DATADIR)/ibus-akaza/
+	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus/component
+	install -m 0644 akaza.xml $(DESTDIR)$(DATADIR)/ibus/component/
 
 ../target/release/ibus-akaza:
 	cargo build --release
