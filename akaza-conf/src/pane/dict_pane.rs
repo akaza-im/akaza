@@ -1,4 +1,4 @@
-use std::borrow::BorrowMut;
+
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
@@ -7,7 +7,7 @@ use gtk4::prelude::{
     ButtonExt, ComboBoxExt, DialogExt, EntryBufferExt, EntryBufferExtManual, FileChooserExt,
     FileExt, GridExt, GtkWindowExt, TextBufferExt, WidgetExt,
 };
-use gtk4::AccessibleRole::AlertDialog;
+
 use gtk4::{
     Button, ComboBoxText, FileChooserAction, FileChooserDialog, Grid, Label, MessageType,
     ResponseType, ScrolledWindow, Text, TextBuffer, TextView, Window,
@@ -36,7 +36,7 @@ pub fn build_dict_pane(config: Arc<Mutex<Config>>) -> anyhow::Result<ScrolledWin
         parent_grid.attach(&add_system_dict_btn, 0, 1, 1, 1);
     }
     {
-        let add_user_dict_btn = build_add_user_dict_btn(grid.clone(), config);
+        let add_user_dict_btn = build_add_user_dict_btn(grid, config);
         parent_grid.attach(&add_user_dict_btn, 0, 2, 1, 1);
     }
     scroll.set_child(Some(&parent_grid));
@@ -207,7 +207,7 @@ fn build_add_system_dict_btn(config: Arc<Mutex<Config>>, grid: Grid) -> Button {
 fn build_add_user_dict_btn(dict_list_grid: Grid, config: Arc<Mutex<Config>>) -> Button {
     let add_btn = Button::with_label("ユーザー辞書の追加");
     let config = config;
-    let dict_list_grid = dict_list_grid.clone();
+    let dict_list_grid = dict_list_grid;
     add_btn.connect_clicked(move |_| {
         let window = Window::builder()
             .title("ユーザー辞書の追加")
