@@ -11,9 +11,7 @@ use gtk4::prelude::FileChooserExt;
 use gtk4::prelude::FileExt;
 use gtk4::prelude::GridExt;
 use gtk4::prelude::GtkWindowExt;
-use gtk4::prelude::TextBufferExt;
 use gtk4::prelude::WidgetExt;
-
 use gtk4::{
     Button, ComboBoxText, FileChooserAction, FileChooserDialog, Grid, Label, MessageType,
     ResponseType, ScrolledWindow, Text, TextBuffer, TextView, Window,
