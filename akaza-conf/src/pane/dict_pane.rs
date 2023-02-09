@@ -2,10 +2,17 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use gtk4::builders::MessageDialogBuilder;
-use gtk4::prelude::{
-    ButtonExt, ComboBoxExt, DialogExt, EntryBufferExt, EntryBufferExtManual, FileChooserExt,
-    FileExt, GridExt, GtkWindowExt, TextBufferExt, WidgetExt,
-};
+use gtk4::prelude::ButtonExt;
+use gtk4::prelude::ComboBoxExt;
+use gtk4::prelude::DialogExt;
+use gtk4::prelude::EntryBufferExt;
+use gtk4::prelude::EntryBufferExtManual;
+use gtk4::prelude::FileChooserExt;
+use gtk4::prelude::FileExt;
+use gtk4::prelude::GridExt;
+use gtk4::prelude::GtkWindowExt;
+use gtk4::prelude::TextBufferExt;
+use gtk4::prelude::WidgetExt;
 
 use gtk4::{
     Button, ComboBoxText, FileChooserAction, FileChooserDialog, Grid, Label, MessageType,
