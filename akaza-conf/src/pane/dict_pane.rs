@@ -1,15 +1,21 @@
+use std::borrow::BorrowMut;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
+use gtk4::builders::MessageDialogBuilder;
 use gtk4::prelude::{
-    ButtonExt, ComboBoxExt, DialogExt, FileChooserExt, FileExt, GridExt, GtkWindowExt, WidgetExt,
+    ButtonExt, ComboBoxExt, DialogExt, EntryBufferExt, EntryBufferExtManual, FileChooserExt,
+    FileExt, GridExt, GtkWindowExt, TextBufferExt, WidgetExt,
 };
+use gtk4::AccessibleRole::AlertDialog;
 use gtk4::{
-    Button, ComboBoxText, FileChooserAction, FileChooserDialog, Grid, Label, ResponseType,
-    ScrolledWindow, Window,
+    Button, ComboBoxText, FileChooserAction, FileChooserDialog, Grid, Label, MessageType,
+    ResponseType, ScrolledWindow, Text, TextBuffer, TextView, Window,
 };
 use log::info;
 
 use libakaza::config::{Config, DictConfig, DictEncoding, DictType, DictUsage};
+use libakaza::dict::skk::write::write_skk_dict;
 
 pub fn build_dict_pane(config: Arc<Mutex<Config>>) -> anyhow::Result<ScrolledWindow> {
     let scroll = ScrolledWindow::new();
@@ -26,8 +32,12 @@ pub fn build_dict_pane(config: Arc<Mutex<Config>>) -> anyhow::Result<ScrolledWin
     parent_grid.attach(&grid, 0, 0, 1, 1);
 
     {
-        let add_system_dict_btn = build_add_system_dict_btn(config, grid);
+        let add_system_dict_btn = build_add_system_dict_btn(config.clone(), grid.clone());
         parent_grid.attach(&add_system_dict_btn, 0, 1, 1, 1);
+    }
+    {
+        let add_user_dict_btn = build_add_user_dict_btn(grid.clone(), config);
+        parent_grid.attach(&add_user_dict_btn, 0, 2, 1, 1);
     }
     scroll.set_child(Some(&parent_grid));
     Ok(scroll)
@@ -138,7 +148,7 @@ fn add_row(grid: &Grid, dict_config: &DictConfig, config: &Arc<Mutex<Config>>, i
 }
 
 fn build_add_system_dict_btn(config: Arc<Mutex<Config>>, grid: Grid) -> Button {
-    let add_btn = Button::with_label("Add");
+    let add_btn = Button::with_label("システム辞書の追加");
     let config = config;
     let grid = grid;
     add_btn.connect_clicked(move |_| {
@@ -192,4 +202,97 @@ fn build_add_system_dict_btn(config: Arc<Mutex<Config>>, grid: Grid) -> Button {
         dialog.show();
     });
     add_btn
+}
+
+fn build_add_user_dict_btn(dict_list_grid: Grid, config: Arc<Mutex<Config>>) -> Button {
+    let add_btn = Button::with_label("ユーザー辞書の追加");
+    let config = config;
+    let dict_list_grid = dict_list_grid.clone();
+    add_btn.connect_clicked(move |_| {
+        let window = Window::builder()
+            .title("ユーザー辞書の追加")
+            .default_width(300)
+            .default_height(100)
+            .destroy_with_parent(true)
+            .modal(true)
+            .build();
+
+        let grid = Grid::builder().build();
+
+        let label = TextView::builder()
+            .buffer(&TextBuffer::builder().text("辞書名: ").build())
+            .build();
+        grid.attach(&label, 0, 0, 1, 1);
+
+        let text = Text::builder().build();
+        grid.attach(&text, 1, 0, 2, 1);
+
+        let ok_btn = {
+            let window = window.clone();
+            let ok_btn = Button::with_label("OK");
+            let text = text.clone();
+            let config = config.clone();
+            let dict_list_grid = dict_list_grid.clone();
+            ok_btn.set_sensitive(false);
+            ok_btn.connect_clicked(move |_| match create_user_dict(&text.buffer().text()) {
+                Ok(path) => {
+                    let dict_config = DictConfig {
+                        path: path.to_string_lossy().to_string(),
+                        encoding: DictEncoding::Utf8,
+                        dict_type: DictType::SKK,
+                        usage: DictUsage::Normal,
+                    };
+                    let mut locked_conf = config.lock().unwrap();
+                    add_row(
+                        &dict_list_grid,
+                        &dict_config,
+                        &config,
+                        locked_conf.engine.dicts.len(),
+                    );
+                    locked_conf.engine.dicts.push(dict_config);
+                    window.close();
+                }
+                Err(err) => {
+                    let dialog = MessageDialogBuilder::new()
+                        .message_type(MessageType::Error)
+                        .text(&format!("Error: {err}"))
+                        .build();
+                    dialog.show();
+                }
+            });
+            grid.attach(&ok_btn, 1, 1, 1, 1);
+            ok_btn
+        };
+
+        {
+            let window = window.clone();
+            let cancel_btn = Button::with_label("Cancel");
+            cancel_btn.connect_clicked(move |_| {
+                window.close();
+            });
+            grid.attach(&cancel_btn, 2, 1, 1, 1);
+        }
+
+        // 辞書名を入力していない場合は OK ボタンを押せない。
+        text.buffer().connect_length_notify(move |t| {
+            ok_btn.set_sensitive(!t.text().is_empty());
+        });
+
+        window.set_child(Some(&grid));
+        window.show();
+    });
+    add_btn
+}
+
+fn create_user_dict(name: &str) -> anyhow::Result<PathBuf> {
+    let base = xdg::BaseDirectories::with_prefix("akaza")?;
+
+    let userdictdir = base.create_data_directory("userdict")?;
+    let path = userdictdir.join(name);
+    if !path.as_path().exists() {
+        // ファイルがなければカラの SKK 辞書をつくっておく。
+        write_skk_dict(&path.to_string_lossy(), vec![])?;
+    }
+
+    Ok(path)
 }
