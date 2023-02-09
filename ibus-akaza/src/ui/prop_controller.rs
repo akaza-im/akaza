@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::path::Path;
 
 use anyhow::Result;
 
@@ -13,6 +14,7 @@ use ibus_sys::property::{
     IBusProperty,
 };
 use ibus_sys::text::{IBusText, StringExt};
+use libakaza::config::{Config, DictConfig};
 
 use crate::input_mode::{get_all_input_modes, InputMode};
 
@@ -25,8 +27,8 @@ pub struct PropController {
 }
 
 impl PropController {
-    pub fn new(initial_input_mode: InputMode) -> Result<Self> {
-        let (input_mode_prop, prop_list, prop_dict) = Self::init_props(initial_input_mode);
+    pub fn new(initial_input_mode: InputMode, config: Config) -> Result<Self> {
+        let (input_mode_prop, prop_list, prop_dict) = Self::init_props(initial_input_mode, config)?;
 
         Ok(PropController {
             prop_list,
@@ -47,11 +49,12 @@ impl PropController {
     /// * `initial_input_mode`: 初期状態の input_mode
     fn init_props(
         initial_input_mode: InputMode,
-    ) -> (
+        config: Config,
+    ) -> Result<(
         *mut IBusProperty,
         *mut IBusPropList,
         HashMap<String, *mut IBusProperty>,
-    ) {
+    )> {
         unsafe {
             let prop_list =
                 g_object_ref_sink(ibus_prop_list_new() as gpointer) as *mut IBusPropList;
@@ -90,25 +93,83 @@ impl PropController {
                 prop_map.insert(input_mode.prop_name.to_string(), prop);
                 ibus_prop_list_append(props, prop);
             }
-
             ibus_property_set_sub_props(input_mode_prop, props);
 
+            // ユーザー辞書
+            Self::build_user_dict(prop_list, config)?;
+
             // 設定ファイルを開くというやつ
-            let preference_prop = g_object_ref_sink(ibus_property_new(
-                "PrefPane\0".as_ptr() as *const gchar,
+            Self::build_preference_menu(prop_list);
+
+            Ok((input_mode_prop, prop_list, prop_map))
+        }
+    }
+
+    unsafe fn build_user_dict(prop_list: *mut IBusPropList, config: Config) -> Result<()> {
+        let user_dict_prop = g_object_ref_sink(ibus_property_new(
+            "UserDict\0".as_ptr() as *const gchar,
+            IBusPropType_PROP_TYPE_MENU,
+            "ユーザー辞書".to_ibus_text(),
+            "\0".as_ptr() as *const gchar,
+            "User dict".to_ibus_text(),
+            to_gboolean(true),
+            to_gboolean(true),
+            IBusPropState_PROP_STATE_UNCHECKED,
+            std::ptr::null_mut() as *mut IBusPropList,
+        ) as gpointer) as *mut IBusProperty;
+        ibus_prop_list_append(prop_list, user_dict_prop);
+
+        let props = g_object_ref_sink(ibus_prop_list_new() as gpointer) as *mut IBusPropList;
+        for dict in Self::find_user_dicts(config)? {
+            let prop = g_object_ref_sink(ibus_property_new(
+                ("UserDict.".to_string() + dict.path.as_str() + "\0").as_ptr() as *const gchar,
                 IBusPropType_PROP_TYPE_MENU,
-                "設定".to_ibus_text(),
+                Path::new(&dict.path)
+                    .file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_ibus_text(),
                 "\0".as_ptr() as *const gchar,
-                "Preference".to_ibus_text(),
+                std::ptr::null_mut() as *mut IBusText,
                 to_gboolean(true),
                 to_gboolean(true),
                 IBusPropState_PROP_STATE_UNCHECKED,
                 std::ptr::null_mut() as *mut IBusPropList,
             ) as gpointer) as *mut IBusProperty;
-            ibus_prop_list_append(prop_list, preference_prop);
-
-            (input_mode_prop, prop_list, prop_map)
+            // prop_map.insert(input_mode.prop_name.to_string(), prop);
+            ibus_prop_list_append(props, prop);
         }
+        ibus_property_set_sub_props(user_dict_prop, props);
+        Ok(())
+    }
+
+    fn find_user_dicts(config: Config) -> anyhow::Result<Vec<DictConfig>> {
+        let dir = xdg::BaseDirectories::with_prefix("akaza")?;
+        let dir = dir.create_data_directory("userdict")?;
+        let dicts = config
+            .engine
+            .dicts
+            .iter()
+            .filter(|f| f.path.contains(&dir.to_string_lossy().to_string()))
+            .cloned()
+            .collect::<Vec<_>>();
+
+        Ok(dicts)
+    }
+
+    unsafe fn build_preference_menu(prop_list: *mut IBusPropList) {
+        let preference_prop = g_object_ref_sink(ibus_property_new(
+            "PrefPane\0".as_ptr() as *const gchar,
+            IBusPropType_PROP_TYPE_MENU,
+            "設定".to_ibus_text(),
+            "\0".as_ptr() as *const gchar,
+            "Preference".to_ibus_text(),
+            to_gboolean(true),
+            to_gboolean(true),
+            IBusPropState_PROP_STATE_UNCHECKED,
+            std::ptr::null_mut() as *mut IBusPropList,
+        ) as gpointer) as *mut IBusProperty;
+        ibus_prop_list_append(prop_list, preference_prop);
     }
 
     /// input_mode の切り替え時に実行される処理

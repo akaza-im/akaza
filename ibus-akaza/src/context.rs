@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 use kelp::{h2z, hira2kata, z2h, ConvOption};
-use log::{debug, error, info, trace, warn};
+use log::{error, info, trace, warn};
 
 use akaza_conf::conf::open_configuration_window;
 use ibus_sys::core::{
@@ -65,7 +65,7 @@ impl AkazaContext {
             current_state: CurrentState::new(input_mode, config.live_conversion, romkan, engine),
             command_map: ibus_akaza_commands_map(),
             keymap: IBusKeyMap::new(keymap)?,
-            prop_controller: PropController::new(input_mode)?,
+            prop_controller: PropController::new(input_mode, config)?,
         })
     }
 
@@ -76,7 +76,7 @@ impl AkazaContext {
         prop_name: String,
         prop_state: guint,
     ) {
-        debug!("do_property_activate: {}, {}", prop_name, prop_state);
+        info!("do_property_activate: {}, {}", prop_name, prop_state);
         if prop_name == "PrefPane" {
             match open_configuration_window() {
                 Ok(_) => {}
@@ -86,6 +86,10 @@ impl AkazaContext {
             && prop_name.starts_with("InputMode.")
         {
             self.input_mode_activate(engine, prop_name, prop_state);
+        } else if prop_name.starts_with("UserDict.") {
+            let dict_path = prop_name.replace("UserDict.", "");
+            info!("Edit the {}", dict_path);
+            // TODO open the dictionary editing dialog.
         }
     }
 
