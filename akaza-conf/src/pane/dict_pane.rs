@@ -138,61 +138,58 @@ fn add_row(grid: &Grid, dict_config: &DictConfig, config: &Arc<Mutex<Config>>, i
 }
 
 fn build_add_system_dict_btn(config: Arc<Mutex<Config>>, grid: Grid) -> Button {
-    let add_system_dict_btn = {
-        let add_btn = Button::with_label("Add");
-        let config = config;
-        let grid = grid;
-        add_btn.connect_clicked(move |_| {
-            let dialog = FileChooserDialog::new(
-                Some("辞書の選択"),
-                None::<&Window>,
-                FileChooserAction::Open,
-                &[
-                    ("開く", ResponseType::Accept),
-                    ("キャンセル", ResponseType::None),
-                ],
-            );
-            let config = config.clone();
-            let grid = grid.clone();
-            dialog.connect_response(move |dialog, resp| match resp {
-                ResponseType::Accept => {
-                    let file = dialog.file().unwrap();
-                    let path = file.path().unwrap();
+    let add_btn = Button::with_label("Add");
+    let config = config;
+    let grid = grid;
+    add_btn.connect_clicked(move |_| {
+        let dialog = FileChooserDialog::new(
+            Some("辞書の選択"),
+            None::<&Window>,
+            FileChooserAction::Open,
+            &[
+                ("開く", ResponseType::Accept),
+                ("キャンセル", ResponseType::None),
+            ],
+        );
+        let config = config.clone();
+        let grid = grid.clone();
+        dialog.connect_response(move |dialog, resp| match resp {
+            ResponseType::Accept => {
+                let file = dialog.file().unwrap();
+                let path = file.path().unwrap();
 
-                    info!("File: {:?}", path);
-                    let dict_config = &DictConfig {
-                        path: path.to_string_lossy().to_string(),
-                        encoding: DictEncoding::Utf8,
-                        usage: DictUsage::Normal,
-                        dict_type: DictType::SKK,
-                    };
-                    config
-                        .lock()
-                        .unwrap()
-                        .engine
-                        .dicts
-                        .push(dict_config.clone());
-                    add_row(
-                        &grid,
-                        dict_config,
-                        &config.clone(),
-                        config.lock().unwrap().engine.dicts.len(),
-                    );
-                    dialog.close();
-                }
-                ResponseType::Close
-                | ResponseType::Reject
-                | ResponseType::Yes
-                | ResponseType::No
-                | ResponseType::None
-                | ResponseType::DeleteEvent => {
-                    dialog.close();
-                }
-                _ => {}
-            });
-            dialog.show();
+                info!("File: {:?}", path);
+                let dict_config = &DictConfig {
+                    path: path.to_string_lossy().to_string(),
+                    encoding: DictEncoding::Utf8,
+                    usage: DictUsage::Normal,
+                    dict_type: DictType::SKK,
+                };
+                config
+                    .lock()
+                    .unwrap()
+                    .engine
+                    .dicts
+                    .push(dict_config.clone());
+                add_row(
+                    &grid,
+                    dict_config,
+                    &config.clone(),
+                    config.lock().unwrap().engine.dicts.len(),
+                );
+                dialog.close();
+            }
+            ResponseType::Close
+            | ResponseType::Reject
+            | ResponseType::Yes
+            | ResponseType::No
+            | ResponseType::None
+            | ResponseType::DeleteEvent => {
+                dialog.close();
+            }
+            _ => {}
         });
-        add_btn
-    };
-    add_system_dict_btn
+        dialog.show();
+    });
+    add_btn
 }
