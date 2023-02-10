@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+use std::fs;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 
@@ -7,13 +9,16 @@ use gtk::glib::signal::Inhibit;
 use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow, Button, ListStore};
 use gtk4 as gtk;
+use gtk4::builders::MessageDialogBuilder;
 use gtk4::gio::ApplicationFlags;
 use gtk4::glib::Type;
-use gtk4::{CellRendererText, Grid, TreeView, TreeViewColumn};
+use gtk4::AccessibleRole::AlertDialog;
+use gtk4::{CellRendererText, Grid, MessageType, TreeView, TreeViewColumn};
 use log::{info, trace};
 
 use libakaza::config::Config;
 use libakaza::dict::skk::read::read_skkdict;
+use libakaza::dict::skk::write::write_skk_dict;
 
 pub fn open_userdict_window(user_dict_path: &str) -> Result<()> {
     let config = Arc::new(Mutex::new(Config::load()?));
@@ -83,17 +88,60 @@ fn connect_activate(
     }
     grid.attach(&add_button, 4, 1, 1, 1);
 
-    let delete_btn = Button::with_label("削除");
     {
+        let delete_btn = Button::with_label("削除");
+        let list_store = list_store.clone();
+        let tree_view = tree_view.clone();
         delete_btn.connect_clicked(move |_| {
             let selection = tree_view.selection();
             let Some((_, tree_iter)) = selection.selected() else {
-                return
+                return;
             };
             list_store.remove(&tree_iter);
         });
+        grid.attach(&delete_btn, 5, 1, 1, 1);
     }
-    grid.attach(&delete_btn, 5, 1, 1, 1);
+
+    {
+        let save_btn = Button::with_label("保存");
+        let user_dict_path = user_dict_path.to_string();
+        save_btn.connect_clicked(move |_| {
+            let Some(iter) = list_store.iter_first() else {
+                return;
+            };
+
+            let mut dict: HashMap<String, Vec<String>> = HashMap::new();
+
+            loop {
+                let yomi: String = list_store.get(&iter, 0);
+                let surface: String = list_store.get(&iter, 1);
+                info!("Got: {}, {}", yomi, surface);
+
+                dict.entry(yomi).or_insert_with(Vec::new).push(surface);
+
+                if !list_store.iter_next(&iter) {
+                    break;
+                }
+            }
+
+            if let Err(err) = write_skk_dict(&(user_dict_path.to_string() + ".tmp"), vec![dict]) {
+                let dialog = MessageDialogBuilder::new()
+                    .message_type(MessageType::Error)
+                    .text(&format!("Error: {err}"))
+                    .build();
+                dialog.show();
+            }
+            info!("Renaming file");
+            if let Err(err) = fs::rename(user_dict_path.to_string() + ".tmp", &user_dict_path) {
+                let dialog = MessageDialogBuilder::new()
+                    .message_type(MessageType::Error)
+                    .text(&format!("Error: {err}"))
+                    .build();
+                dialog.show();
+            }
+        });
+        grid.attach(&save_btn, 6, 1, 1, 1);
+    }
 
     window.set_child(Some(&grid));
 
