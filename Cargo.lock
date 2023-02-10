@@ -59,6 +59,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "akaza-dict"
+version = "0.1.7"
+dependencies = [
+ "anyhow",
+ "encoding_rs",
+ "env_logger",
+ "gtk4",
+ "libakaza",
+ "log",
+ "serde",
+ "serde_yaml",
+ "xdg",
+]
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -963,6 +978,7 @@ name = "ibus-akaza"
 version = "0.1.7"
 dependencies = [
  "akaza-conf",
+ "akaza-dict",
  "anyhow",
  "cc",
  "chrono",

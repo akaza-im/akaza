@@ -5,6 +5,7 @@ use kelp::{h2z, hira2kata, z2h, ConvOption};
 use log::{error, info, trace, warn};
 
 use akaza_conf::conf::open_configuration_window;
+use akaza_dict::conf::open_userdict_window;
 use ibus_sys::core::{
     IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_HYPER_MASK,
     IBusModifierType_IBUS_META_MASK, IBusModifierType_IBUS_MOD1_MASK,
@@ -89,7 +90,11 @@ impl AkazaContext {
         } else if prop_name.starts_with("UserDict.") {
             let dict_path = prop_name.replace("UserDict.", "");
             info!("Edit the {}", dict_path);
-            // TODO open the dictionary editing dialog.
+
+            match open_userdict_window(&dict_path) {
+                Ok(_) => {}
+                Err(e) => error!("Err: {}", e),
+            }
         }
     }
 
