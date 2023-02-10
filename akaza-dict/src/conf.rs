@@ -12,7 +12,7 @@ use gtk4 as gtk;
 use gtk4::builders::MessageDialogBuilder;
 use gtk4::gio::ApplicationFlags;
 use gtk4::glib::Type;
-use gtk4::AccessibleRole::AlertDialog;
+
 use gtk4::{CellRendererText, Grid, MessageType, TreeView, TreeViewColumn};
 use log::{info, trace};
 
@@ -36,7 +36,7 @@ pub fn open_userdict_window(user_dict_path: &str) -> Result<()> {
 
 fn connect_activate(
     app: &Application,
-    config: Arc<Mutex<Config>>,
+    _config: Arc<Mutex<Config>>,
     user_dict_path: &str,
 ) -> Result<()> {
     let window = ApplicationWindow::builder()
@@ -91,7 +91,7 @@ fn connect_activate(
     {
         let delete_btn = Button::with_label("削除");
         let list_store = list_store.clone();
-        let tree_view = tree_view.clone();
+        let tree_view = tree_view;
         delete_btn.connect_clicked(move |_| {
             let selection = tree_view.selection();
             let Some((_, tree_iter)) = selection.selected() else {
