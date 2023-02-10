@@ -72,22 +72,29 @@ fn connect_activate(
     // https://gitlab.gnome.org/GNOME/gtk/-/issues/3561
     grid.attach(&tree_view, 0, 0, 6, 1);
 
+    // TODO このへんは Menu にしたい。gtk4-rs で menu を使う方法が分からん。
     let add_button = Button::with_label("追加");
-    add_button.connect_clicked(move |_| {
-        info!("Add new row...");
-        list_store.set(&list_store.append(), &[(0, &""), (1, &"")]);
-    });
-    grid.attach(&add_button, 4, 1, 1, 1);
-
-    let delete_button = Button::with_label("Cancel");
     {
-        let window_clone = window.clone();
-        delete_button.connect_clicked(move |_| {
-            eprintln!("Close the configuration window!");
-            window_clone.close();
+        let list_store = list_store.clone();
+        add_button.connect_clicked(move |_| {
+            info!("Add new row...");
+            list_store.set(&list_store.append(), &[(0, &""), (1, &"")]);
         });
     }
-    grid.attach(&delete_button, 5, 1, 1, 1);
+    grid.attach(&add_button, 4, 1, 1, 1);
+
+    let delete_btn = Button::with_label("削除");
+    {
+        delete_btn.connect_clicked(move |_| {
+            let selection = tree_view.selection();
+            let Some((a,b)) = selection.selected() else {
+                return
+            };
+            list_store.remove(&b);
+            info!("Delete {:?}, {:?}", a, b);
+        });
+    }
+    grid.attach(&delete_btn, 5, 1, 1, 1);
 
     window.set_child(Some(&grid));
 
