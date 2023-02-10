@@ -9,12 +9,10 @@ use gtk::{Application, ApplicationWindow, Button, ListStore};
 use gtk4 as gtk;
 use gtk4::gio::ApplicationFlags;
 use gtk4::glib::Type;
-use gtk4::subclass::cell_renderer;
 use gtk4::{CellRendererText, Grid, TreeView, TreeViewColumn};
-use log::info;
+use log::{info, trace};
 
 use libakaza::config::Config;
-use libakaza::config::DictEncoding::Utf8;
 use libakaza::dict::skk::read::read_skkdict;
 
 pub fn open_userdict_window(user_dict_path: &str) -> Result<()> {
@@ -64,22 +62,22 @@ fn connect_activate(
     // list_store.set(&list_store.append(), &[(0, &"world".to_string())]);
     let tree_view = TreeView::builder().model(&list_store).build();
     {
-        let tree_view_column =
-            TreeViewColumn::with_attributes("読み", &CellRendererText::new(), &[("text", 0)]);
+        let tree_view_column = build_tree_view_column("読み", 0, list_store.clone());
         tree_view.append_column(&tree_view_column);
     }
     {
-        let tree_view_column =
-            TreeViewColumn::with_attributes("表記", &CellRendererText::new(), &[("text", 1)]);
+        let tree_view_column = build_tree_view_column("表記", 1, list_store.clone());
         tree_view.append_column(&tree_view_column);
     }
+    // https://gitlab.gnome.org/GNOME/gtk/-/issues/3561
     grid.attach(&tree_view, 0, 0, 6, 1);
 
     let add_button = Button::with_label("追加");
     add_button.connect_clicked(move |_| {
-        eprintln!("Save the configuration...");
-        // TODO: 保存処理
+        info!("Add new row...");
+        list_store.set(&list_store.append(), &[(0, &""), (1, &"")]);
     });
+    grid.attach(&add_button, 4, 1, 1, 1);
 
     let delete_button = Button::with_label("Cancel");
     {
@@ -89,7 +87,6 @@ fn connect_activate(
             window_clone.close();
         });
     }
-    grid.attach(&add_button, 4, 1, 1, 1);
     grid.attach(&delete_button, 5, 1, 1, 1);
 
     window.set_child(Some(&grid));
@@ -103,4 +100,23 @@ fn connect_activate(
 
     window.show();
     Ok(())
+}
+
+fn build_tree_view_column(title: &str, column: u32, list_store: ListStore) -> TreeViewColumn {
+    let cell_renderer = CellRendererText::builder()
+        .editable(true)
+        .xpad(20)
+        .ypad(20)
+        .build();
+    cell_renderer.connect_edited(move |_cell_renderer, _treepath, _str| {
+        trace!("{:?}, {:?}", _treepath, _str);
+        if _str.is_empty() {
+            return;
+        }
+        let Some(iter) = list_store.iter(&_treepath) else {
+            return;
+        };
+        list_store.set_value(&iter, column, &_str.to_value());
+    });
+    TreeViewColumn::with_attributes(title, &cell_renderer, &[("text", column as i32)])
 }
