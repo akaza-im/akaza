@@ -87,11 +87,10 @@ fn connect_activate(
     {
         delete_btn.connect_clicked(move |_| {
             let selection = tree_view.selection();
-            let Some((a,b)) = selection.selected() else {
+            let Some((_, tree_iter)) = selection.selected() else {
                 return
             };
-            list_store.remove(&b);
-            info!("Delete {:?}, {:?}", a, b);
+            list_store.remove(&tree_iter);
         });
     }
     grid.attach(&delete_btn, 5, 1, 1, 1);
