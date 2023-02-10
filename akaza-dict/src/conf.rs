@@ -52,17 +52,27 @@ fn connect_activate(
         .flat_map(|(yomi, surfaces)| {
             surfaces
                 .iter()
-                .map(|surface| (yomi.clone(), surface.clone()))
+                .map(|surface| (yomi.to_string(), surface.to_string()))
+                .collect::<Vec<_>>()
         })
         .collect::<Vec<_>>();
 
-    let list_store = ListStore::new(&[Type::STRING]);
-    list_store.set(&list_store.append(), &[(0, &"hello".to_string())]);
-    list_store.set(&list_store.append(), &[(0, &"world".to_string())]);
+    let list_store = ListStore::new(&[Type::STRING, Type::STRING]);
+    for (yomi, surface) in dict {
+        list_store.set(&list_store.append(), &[(0, &yomi), (1, &surface)]);
+    }
+    // list_store.set(&list_store.append(), &[(0, &"world".to_string())]);
     let tree_view = TreeView::builder().model(&list_store).build();
-    let tree_view_column =
-        TreeViewColumn::with_attributes("読み", &CellRendererText::new(), &[("text", 0)]);
-    tree_view.append_column(&tree_view_column);
+    {
+        let tree_view_column =
+            TreeViewColumn::with_attributes("読み", &CellRendererText::new(), &[("text", 0)]);
+        tree_view.append_column(&tree_view_column);
+    }
+    {
+        let tree_view_column =
+            TreeViewColumn::with_attributes("表記", &CellRendererText::new(), &[("text", 1)]);
+        tree_view.append_column(&tree_view_column);
+    }
     grid.attach(&tree_view, 0, 0, 6, 1);
 
     let add_button = Button::with_label("追加");
