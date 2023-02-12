@@ -19,7 +19,7 @@
             <author>Tokuhiro Matsuno &lt;tokuhirom@gmail.com&gt;</author>
             <icon>@DATADIR@/ibus-akaza/akaza.svg</icon>
             <icon_prop_key>InputMode</icon_prop_key>
-            <layout>us</layout>
+            <layout>default</layout>
             <layout_variant></layout_variant>
             <layout_option></layout_option>
             <hotkeys></hotkeys>
