@@ -3,7 +3,6 @@ use std::sync::{Arc, Mutex};
 
 use gtk4::builders::MessageDialogBuilder;
 use gtk4::glib::{ToValue, Type};
-use gtk4::prelude::ComboBoxExt;
 use gtk4::prelude::DialogExt;
 use gtk4::prelude::EntryBufferExt;
 use gtk4::prelude::EntryBufferExtManual;
@@ -13,10 +12,11 @@ use gtk4::prelude::GridExt;
 use gtk4::prelude::GtkWindowExt;
 use gtk4::prelude::WidgetExt;
 use gtk4::prelude::{ButtonExt, CellRendererTextExt, TreeModelExt, TreeViewExt};
+use gtk4::prelude::{ComboBoxExt, TreeModelExtManual};
 use gtk4::{
-    Button, CellRendererText, ComboBoxText, FileChooserAction, FileChooserDialog, Grid, Label,
-    ListStore, MessageType, ResponseType, ScrolledWindow, Text, TextBuffer, TextView, TreeView,
-    TreeViewColumn, Window,
+    Button, CellRendererCombo, CellRendererMode, CellRendererText, ComboBoxText, FileChooserAction,
+    FileChooserDialog, Grid, Label, ListStore, MessageType, ResponseType, ScrolledWindow, Text,
+    TextBuffer, TextView, TreeView, TreeViewColumn, Window,
 };
 use log::{info, trace};
 
@@ -47,20 +47,40 @@ pub fn build_dict_pane(config: Arc<Mutex<Config>>) -> anyhow::Result<ScrolledWin
     // parent_grid.attach(&grid, 0, 0, 1, 1);
     let tree_view = TreeView::builder().model(&list_store).build();
     {
-        let tree_view_column = build_tree_view_column("パス", 0, list_store.clone());
+        let tree_view_column = build_tree_view_text_column("パス", 0, list_store.clone());
         tree_view.append_column(&tree_view_column);
     }
     {
-        let tree_view_column = build_tree_view_column("使用法", 1, list_store.clone());
+        let usage_column = build_tree_view_combo_column(
+            "使用法",
+            1,
+            list_store.clone(),
+            &vec![
+                DictUsage::Normal,
+                DictUsage::SingleTerm,
+                DictUsage::Disabled,
+            ]
+            .iter()
+            .map(|it| it.as_str().to_string())
+            .collect::<Vec<String>>(),
+        );
+        tree_view.append_column(&usage_column);
+    }
+    {
+        let tree_view_column = build_tree_view_text_column("フォーマット", 2, list_store.clone());
         tree_view.append_column(&tree_view_column);
     }
     {
-        let tree_view_column = build_tree_view_column("フォーマット", 2, list_store.clone());
-        tree_view.append_column(&tree_view_column);
-    }
-    {
-        let tree_view_column = build_tree_view_column("エンコーディング", 3, list_store);
-        tree_view.append_column(&tree_view_column);
+        let encoding = build_tree_view_combo_column(
+            "エンコーディング",
+            3,
+            list_store,
+            &vec![DictEncoding::Utf8, DictEncoding::EucJp]
+                .iter()
+                .map(|it| it.as_str().to_string())
+                .collect::<Vec<String>>(),
+        );
+        tree_view.append_column(&encoding);
     }
     // https://gitlab.gnome.org/GNOME/gtk/-/issues/3561
     parent_grid.attach(&tree_view, 0, 0, 1, 1);
@@ -77,7 +97,7 @@ pub fn build_dict_pane(config: Arc<Mutex<Config>>) -> anyhow::Result<ScrolledWin
     Ok(scroll)
 }
 
-fn build_tree_view_column(title: &str, column: u32, list_store: ListStore) -> TreeViewColumn {
+fn build_tree_view_text_column(title: &str, column: u32, list_store: ListStore) -> TreeViewColumn {
     let cell_renderer = CellRendererText::builder()
         .editable(true)
         .xpad(2)
@@ -92,8 +112,52 @@ fn build_tree_view_column(title: &str, column: u32, list_store: ListStore) -> Tr
             return;
         };
         list_store.set_value(&iter, column, &_str.to_value());
+
+        // このタイミングで、Config オブジェクト側をいじったほうがいい? 本当に?
     });
     TreeViewColumn::with_attributes(title, &cell_renderer, &[("text", column as i32)])
+}
+
+fn build_tree_view_combo_column(
+    title: &str,
+    column: u32,
+    list_store: ListStore,
+    choice_items: &Vec<String>,
+) -> TreeViewColumn {
+    // let cbt = ComboBoxText::builder().build();
+    let combo_model = ListStore::new(&[Type::STRING, Type::STRING]);
+    for usage in choice_items {
+        combo_model.set(
+            &combo_model.append(),
+            &[(0, &usage.as_str()), (1, &usage.as_str())],
+        );
+    }
+    let cell_renderer = CellRendererCombo::builder()
+        .editable(true)
+        .mode(CellRendererMode::Editable)
+        .xpad(2)
+        .ypad(2)
+        .model(&combo_model)
+        .text_column(1)
+        .build();
+    cell_renderer.connect_edited(move |_cell_renderer, _treepath, _str| {
+        info!("{:?}, {:?}", _treepath, _str);
+        if _str.is_empty() {
+            return;
+        }
+        let Some(iter) = list_store.iter(&_treepath) else {
+            return;
+        };
+        list_store.set_value(&iter, column, &_str.to_value());
+
+        let dict_path: String = list_store.get_value(&iter, 0).get().unwrap();
+
+        // このタイミングで、Config オブジェクト側をいじったほうがいい。
+        info!("Path: {:?}", dict_path);
+    });
+    let tvc = TreeViewColumn::with_attributes(title, &cell_renderer, &[("text", column as i32)]);
+    tvc.set_expand(true);
+    tvc
 }
 
 // TODO ここは TreeView 使った方がすっきり書けるはずだが、僕の GTK+ 力が引くすぎて対応できていない。
