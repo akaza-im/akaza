@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use gtk4::builders::MessageDialogBuilder;
-use gtk4::prelude::ButtonExt;
+use gtk4::glib::{ToValue, Type};
 use gtk4::prelude::ComboBoxExt;
 use gtk4::prelude::DialogExt;
 use gtk4::prelude::EntryBufferExt;
@@ -12,11 +12,13 @@ use gtk4::prelude::FileExt;
 use gtk4::prelude::GridExt;
 use gtk4::prelude::GtkWindowExt;
 use gtk4::prelude::WidgetExt;
+use gtk4::prelude::{ButtonExt, CellRendererTextExt, TreeModelExt, TreeViewExt};
 use gtk4::{
-    Button, ComboBoxText, FileChooserAction, FileChooserDialog, Grid, Label, MessageType,
-    ResponseType, ScrolledWindow, Text, TextBuffer, TextView, Window,
+    Button, CellRendererText, ComboBoxText, FileChooserAction, FileChooserDialog, Grid, Label,
+    ListStore, MessageType, ResponseType, ScrolledWindow, Text, TextBuffer, TextView, TreeView,
+    TreeViewColumn, Window,
 };
-use log::info;
+use log::{info, trace};
 
 use libakaza::config::{Config, DictConfig, DictEncoding, DictType, DictUsage};
 use libakaza::dict::skk::write::write_skk_dict;
@@ -29,11 +31,39 @@ pub fn build_dict_pane(config: Arc<Mutex<Config>>) -> anyhow::Result<ScrolledWin
 
     let dicts = config.lock().unwrap().engine.dicts.clone();
 
-    for (i, dict_config) in dicts.iter().enumerate() {
-        add_row(&grid, dict_config, &config.clone(), i);
+    let list_store = ListStore::new(&[Type::STRING, Type::STRING, Type::STRING, Type::STRING]);
+    for (_, dict_config) in dicts.iter().enumerate() {
+        list_store.set(
+            &list_store.append(),
+            &[
+                (0, &dict_config.path),
+                (1, &dict_config.usage.as_str()),
+                (2, &dict_config.dict_type.as_str()),
+                (3, &dict_config.encoding.as_str()),
+            ],
+        );
     }
 
-    parent_grid.attach(&grid, 0, 0, 1, 1);
+    // parent_grid.attach(&grid, 0, 0, 1, 1);
+    let tree_view = TreeView::builder().model(&list_store).build();
+    {
+        let tree_view_column = build_tree_view_column("パス", 0, list_store.clone());
+        tree_view.append_column(&tree_view_column);
+    }
+    {
+        let tree_view_column = build_tree_view_column("使用法", 1, list_store.clone());
+        tree_view.append_column(&tree_view_column);
+    }
+    {
+        let tree_view_column = build_tree_view_column("フォーマット", 2, list_store.clone());
+        tree_view.append_column(&tree_view_column);
+    }
+    {
+        let tree_view_column = build_tree_view_column("エンコーディング", 3, list_store);
+        tree_view.append_column(&tree_view_column);
+    }
+    // https://gitlab.gnome.org/GNOME/gtk/-/issues/3561
+    parent_grid.attach(&tree_view, 0, 0, 1, 1);
 
     {
         let add_system_dict_btn = build_add_system_dict_btn(config.clone(), grid.clone());
@@ -45,6 +75,25 @@ pub fn build_dict_pane(config: Arc<Mutex<Config>>) -> anyhow::Result<ScrolledWin
     }
     scroll.set_child(Some(&parent_grid));
     Ok(scroll)
+}
+
+fn build_tree_view_column(title: &str, column: u32, list_store: ListStore) -> TreeViewColumn {
+    let cell_renderer = CellRendererText::builder()
+        .editable(true)
+        .xpad(2)
+        .ypad(2)
+        .build();
+    cell_renderer.connect_edited(move |_cell_renderer, _treepath, _str| {
+        trace!("{:?}, {:?}", _treepath, _str);
+        if _str.is_empty() {
+            return;
+        }
+        let Some(iter) = list_store.iter(&_treepath) else {
+            return;
+        };
+        list_store.set_value(&iter, column, &_str.to_value());
+    });
+    TreeViewColumn::with_attributes(title, &cell_renderer, &[("text", column as i32)])
 }
 
 // TODO ここは TreeView 使った方がすっきり書けるはずだが、僕の GTK+ 力が引くすぎて対応できていない。

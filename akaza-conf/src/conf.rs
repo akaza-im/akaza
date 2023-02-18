@@ -30,7 +30,7 @@ pub fn open_configuration_window() -> Result<()> {
 fn connect_activate(app: &Application, config: Arc<Mutex<Config>>) -> Result<()> {
     let window = ApplicationWindow::builder()
         .application(app)
-        .default_width(520)
+        .default_width(680)
         .default_height(500)
         .title("Akaza の設定")
         .build();
