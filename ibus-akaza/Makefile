@@ -28,7 +28,7 @@ akaza-debug.xml: akaza.xml.in
 	    -e "s:@DATADIR@:$(DATADIR)/:g" $< > $@
 
 install: akaza.xml config.h ../target/release/ibus-akaza
-	install -m 0644 ../target/release/ibus-akaza $(PREFIX)/bin/
+	install -m 0755 ../target/release/ibus-akaza $(PREFIX)/bin/
 
 	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-akaza
 	install -m 0644 akaza.svg $(DESTDIR)$(DATADIR)/ibus-akaza/
