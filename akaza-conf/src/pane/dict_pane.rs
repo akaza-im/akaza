@@ -258,7 +258,7 @@ fn build_add_user_dict_btn(dict_list_grid: Grid, config: Arc<Mutex<Config>>) -> 
                 Err(err) => {
                     let dialog = MessageDialog::builder()
                         .message_type(MessageType::Error)
-                        .text(&format!("Error: {err}"))
+                        .text(format!("Error: {err}"))
                         .build();
                     dialog.show();
                 }
