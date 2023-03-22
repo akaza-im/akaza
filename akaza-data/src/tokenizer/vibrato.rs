@@ -16,7 +16,8 @@ impl VibratoTokenizer {
     pub fn new(dictpath: &str, user_dict: Option<String>) -> anyhow::Result<VibratoTokenizer> {
         // システム辞書のロードには14秒ぐらいかかります。
         let t1 = SystemTime::now();
-        let mut dict = Dictionary::read(File::open(dictpath)?)?;
+        let reader = zstd::Decoder::new(File::open(dictpath)?)?;
+        let mut dict = Dictionary::read(reader)?;
         let t2 = SystemTime::now();
         println!(
             "Loaded {} in {}msec",
