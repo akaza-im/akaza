@@ -4,6 +4,9 @@ DATADIR ?= $(PREFIX)/share
 DESTDIR ?=
 AKAZA_DATA_DIR ?= $(DATADIR)/akaza/
 
+MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+MKFILE_DIR := $(dir $(MKFILE_PATH))
+
 all: akaza.xml config.h ../target/release/ibus-akaza
 
 #   ibus_akaza/config.py: ibus_akaza/config.py.in
@@ -24,7 +27,7 @@ akaza.xml: akaza.xml.in
 
 akaza-debug.xml: akaza.xml.in
 	sed \
-	    -e "s:@BINARY@:$(PWD)/ibus-akaza-debug.sh:g" \
+	    -e "s:@BINARY@:$(MKFILE_DIR)/ibus-akaza-debug.sh:g" \
 	    -e "s:@DATADIR@:$(DATADIR)/:g" $< > $@
 
 install: akaza.xml config.h ../target/release/ibus-akaza
