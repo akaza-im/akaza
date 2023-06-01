@@ -127,7 +127,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> LatticeGraph<U, B> {
             return user_cost;
         }
 
-        return if let Some((_, system_unigram_cost)) = node.word_id_and_score {
+        if let Some((_, system_unigram_cost)) = node.word_id_and_score {
             trace!("HIT!: {}, {}", node.key(), system_unigram_cost);
             system_unigram_cost
         } else if node.surface.len() < node.yomi.len() {
@@ -137,7 +137,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> LatticeGraph<U, B> {
             self.system_unigram_lm.get_cost(1)
         } else {
             self.system_unigram_lm.get_cost(0)
-        };
+        }
     }
 
     pub(crate) fn get_edge_cost(&self, prev: &WordNode, node: &WordNode) -> f32 {

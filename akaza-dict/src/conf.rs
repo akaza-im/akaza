@@ -9,11 +9,10 @@ use gtk::glib::signal::Inhibit;
 use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow, Button, ListStore};
 use gtk4 as gtk;
-use gtk4::builders::MessageDialogBuilder;
 use gtk4::gio::ApplicationFlags;
 use gtk4::glib::Type;
 
-use gtk4::{CellRendererText, Grid, MessageType, TreeView, TreeViewColumn};
+use gtk4::{CellRendererText, Grid, MessageDialog, MessageType, TreeView, TreeViewColumn};
 use log::{info, trace};
 
 use libakaza::config::Config;
@@ -125,17 +124,17 @@ fn connect_activate(
             }
 
             if let Err(err) = write_skk_dict(&(user_dict_path.to_string() + ".tmp"), vec![dict]) {
-                let dialog = MessageDialogBuilder::new()
+                let dialog = MessageDialog::builder()
                     .message_type(MessageType::Error)
-                    .text(&format!("Error: {err}"))
+                    .text(format!("Error: {err}"))
                     .build();
                 dialog.show();
             }
             info!("Renaming file");
             if let Err(err) = fs::rename(user_dict_path.to_string() + ".tmp", &user_dict_path) {
-                let dialog = MessageDialogBuilder::new()
+                let dialog = MessageDialog::builder()
                     .message_type(MessageType::Error)
-                    .text(&format!("Error: {err}"))
+                    .text(format!("Error: {err}"))
                     .build();
                 dialog.show();
             }

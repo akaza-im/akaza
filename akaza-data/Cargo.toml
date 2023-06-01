@@ -19,9 +19,10 @@ regex = "1"
 kelp = "0.4.0"
 lcs = "0.2.0"
 chrono = "0.4.23"
-vibrato = "0.3.3"
+vibrato = "0.5.0"
 walkdir = "2"
 rayon = "1.6.1"
+zstd = "0.12"
 marisa-sys = { path = "../marisa-sys" }
 
 [build-dependencies]

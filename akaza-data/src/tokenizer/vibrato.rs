@@ -16,7 +16,8 @@ impl VibratoTokenizer {
     pub fn new(dictpath: &str, user_dict: Option<String>) -> anyhow::Result<VibratoTokenizer> {
         // システム辞書のロードには14秒ぐらいかかります。
         let t1 = SystemTime::now();
-        let mut dict = Dictionary::read(File::open(dictpath)?)?;
+        let reader = zstd::Decoder::new(File::open(dictpath)?)?;
+        let mut dict = Dictionary::read(reader)?;
         let t2 = SystemTime::now();
         println!(
             "Loaded {} in {}msec",
@@ -125,7 +126,7 @@ mod tests {
 
     #[test]
     fn test_with_kana() -> anyhow::Result<()> {
-        let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic", None)?;
+        let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic.zst", None)?;
         let got = runner.tokenize("私の名前は中野です。", true)?;
         assert_eq!(
             got,
@@ -136,7 +137,7 @@ mod tests {
 
     #[test]
     fn test() -> anyhow::Result<()> {
-        let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic", None)?;
+        let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic.zst", None)?;
         runner.tokenize("私の名前は中野です。", false)?;
         Ok(())
     }
@@ -159,7 +160,7 @@ mod tests {
             .is_test(true)
             .try_init();
 
-        let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic", None)?;
+        let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic.zst", None)?;
         assert_eq!(
             runner.tokenize("書いていたものである", false)?,
             "書いて/かいて いた/いた もの/もの である/である"
@@ -188,7 +189,7 @@ mod tests {
             .is_test(true)
             .try_init();
 
-        let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic", None)?;
+        let runner = VibratoTokenizer::new("work/vibrato/ipadic-mecab-2_7_0/system.dic.zst", None)?;
         assert_eq!(runner.tokenize("井伊家", false)?, "井伊家/いいけ");
         Ok(())
     }
