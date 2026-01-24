@@ -180,16 +180,11 @@ fn default_dict_usage() -> DictUsage {
     DictUsage::Disabled
 }
 
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Default)]
 pub enum DictEncoding {
     EucJp,
+    #[default]
     Utf8,
-}
-
-impl Default for DictEncoding {
-    fn default() -> Self {
-        Utf8
-    }
 }
 
 impl Display for DictEncoding {
@@ -215,20 +210,15 @@ impl DictEncoding {
     }
 }
 
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Default)]
 pub enum DictType {
+    #[default]
     SKK,
 }
 
 impl Display for DictType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.as_str())
-    }
-}
-
-impl Default for DictType {
-    fn default() -> Self {
-        DictType::SKK
     }
 }
 
@@ -240,17 +230,12 @@ impl DictType {
     }
 }
 
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Default)]
 pub enum DictUsage {
+    #[default]
     Normal,
     SingleTerm,
     Disabled,
-}
-
-impl Default for DictUsage {
-    fn default() -> Self {
-        Normal
-    }
 }
 
 impl DictUsage {

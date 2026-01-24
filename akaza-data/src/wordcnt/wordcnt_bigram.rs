@@ -109,9 +109,7 @@ impl SystemBigramLM for WordcntBigram {
             });
             true
         });
-        let Some(result) = got.first() else {
-            return None;
-        };
+        let result = got.first()?;
         let last2: [u8; 4] = result.keyword[result.keyword.len() - 4..result.keyword.len()]
             .try_into()
             .unwrap();

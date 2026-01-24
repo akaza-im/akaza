@@ -1,12 +1,12 @@
 test-data: work/vibrato/ipadic-mecab-2_7_0/system.dic
 
-work/vibrato/ipadic-mecab-2_7_0.tar.gz:
+work/vibrato/ipadic-mecab-2_7_0.tar.xz:
 	mkdir -p work/vibrato/
-	wget --no-verbose --no-clobber -O work/vibrato/ipadic-mecab-2_7_0.tar.gz https://github.com/daac-tools/vibrato/releases/download/v0.3.1/ipadic-mecab-2_7_0.tar.gz
+	wget --no-verbose --no-clobber -O work/vibrato/ipadic-mecab-2_7_0.tar.xz https://github.com/daac-tools/vibrato/releases/download/v0.5.0/ipadic-mecab-2_7_0.tar.xz
 
-work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.gz
+work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0.tar.xz
 	mkdir -p work/vibrato/
-	tar -xmzf work/vibrato/ipadic-mecab-2_7_0.tar.gz -C work/vibrato/
+	tar -xmJf work/vibrato/ipadic-mecab-2_7_0.tar.xz -C work/vibrato/
 
 evaluate:
 	cargo run --release -- evaluate \

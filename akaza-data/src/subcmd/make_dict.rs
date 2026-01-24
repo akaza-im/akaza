@@ -122,9 +122,7 @@ mod system_dict {
             HashMap::new(),
             |mut acc: HashMap<String, Vec<String>>, t: &(String, String)| {
                 let (p, q) = t;
-                acc.entry(p.to_string())
-                    .or_insert_with(Vec::new)
-                    .push(q.to_string());
+                acc.entry(p.to_string()).or_default().push(q.to_string());
                 acc
             },
         )

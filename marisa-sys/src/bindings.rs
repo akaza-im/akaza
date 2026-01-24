@@ -242,7 +242,7 @@ mod tests {
 
             let mut i = 0;
             let mut got: Vec<(String, usize)> = Vec::new();
-            assert_eq!("a".as_bytes().len(), 1);
+            assert_eq!("a".len(), 1);
 
             marisa.predictive_search("a".as_bytes(), |bytes, id| {
                 i += 1;

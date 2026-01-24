@@ -63,7 +63,7 @@ fn add_row(grid: &Grid, dict_config: &DictConfig, config: &Arc<Mutex<Config>>, i
 
     {
         let cbt = ComboBoxText::builder().build();
-        for usage in vec![
+        for usage in [
             DictUsage::Normal,
             DictUsage::SingleTerm,
             DictUsage::Disabled,
@@ -77,7 +77,7 @@ fn add_row(grid: &Grid, dict_config: &DictConfig, config: &Arc<Mutex<Config>>, i
             cbt.connect_changed(move |f| {
                 if let Some(id) = f.active_id() {
                     let mut config = config.lock().unwrap();
-                    for mut dict in &mut config.engine.dicts {
+                    for dict in &mut config.engine.dicts {
                         if dict.path == path {
                             dict.usage = DictUsage::from(&id).unwrap();
                             return;
@@ -104,7 +104,7 @@ fn add_row(grid: &Grid, dict_config: &DictConfig, config: &Arc<Mutex<Config>>, i
     );
     {
         let cbt = ComboBoxText::builder().build();
-        for encoding in vec![DictEncoding::EucJp, DictEncoding::Utf8] {
+        for encoding in [DictEncoding::EucJp, DictEncoding::Utf8] {
             cbt.append(
                 Some(&encoding.to_string()),
                 encoding.as_str().replace('_', "-").as_str(),
@@ -117,7 +117,7 @@ fn add_row(grid: &Grid, dict_config: &DictConfig, config: &Arc<Mutex<Config>>, i
             cbt.connect_changed(move |f| {
                 if let Some(id) = f.active_id() {
                     let mut config = config.lock().unwrap();
-                    for mut dict in &mut config.engine.dicts {
+                    for dict in &mut config.engine.dicts {
                         if dict.path == path {
                             dict.encoding = DictEncoding::from(&id).unwrap();
                             break;
@@ -153,8 +153,6 @@ fn add_row(grid: &Grid, dict_config: &DictConfig, config: &Arc<Mutex<Config>>, i
 
 fn build_add_system_dict_btn(config: Arc<Mutex<Config>>, grid: Grid) -> Button {
     let add_btn = Button::with_label("システム辞書の追加");
-    let config = config;
-    let grid = grid;
     add_btn.connect_clicked(move |_| {
         let dialog = FileChooserDialog::new(
             Some("辞書の選択"),
@@ -210,8 +208,6 @@ fn build_add_system_dict_btn(config: Arc<Mutex<Config>>, grid: Grid) -> Button {
 
 fn build_add_user_dict_btn(dict_list_grid: Grid, config: Arc<Mutex<Config>>) -> Button {
     let add_btn = Button::with_label("ユーザー辞書の追加");
-    let config = config;
-    let dict_list_grid = dict_list_grid;
     add_btn.connect_clicked(move |_| {
         let window = Window::builder()
             .title("ユーザー辞書の追加")

@@ -117,7 +117,7 @@ fn connect_activate(
                 let surface: String = list_store.get(&iter, 1);
                 info!("Got: {}, {}", yomi, surface);
 
-                dict.entry(yomi).or_insert_with(Vec::new).push(surface);
+                dict.entry(yomi).or_default().push(surface);
 
                 if !list_store.iter_next(&iter) {
                     break;

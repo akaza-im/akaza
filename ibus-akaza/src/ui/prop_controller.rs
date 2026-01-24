@@ -1,11 +1,12 @@
 use std::collections::HashMap;
+use std::ffi::CString;
 use std::path::Path;
 
 use anyhow::Result;
 
 use ibus_sys::core::to_gboolean;
 use ibus_sys::engine::{ibus_engine_register_properties, ibus_engine_update_property, IBusEngine};
-use ibus_sys::glib::{g_object_ref_sink, gchar, gpointer};
+use ibus_sys::glib::{g_object_ref_sink, gpointer};
 use ibus_sys::prop_list::{ibus_prop_list_append, ibus_prop_list_new, IBusPropList};
 use ibus_sys::property::{
     ibus_property_new, ibus_property_set_label, ibus_property_set_state,
@@ -13,7 +14,7 @@ use ibus_sys::property::{
     IBusPropState_PROP_STATE_UNCHECKED, IBusPropType_PROP_TYPE_MENU, IBusPropType_PROP_TYPE_RADIO,
     IBusProperty,
 };
-use ibus_sys::text::{IBusText, StringExt};
+use ibus_sys::text::StringExt;
 use libakaza::config::{Config, DictConfig};
 
 use crate::input_mode::{get_all_input_modes, InputMode};
@@ -60,27 +61,28 @@ impl PropController {
                 g_object_ref_sink(ibus_prop_list_new() as gpointer) as *mut IBusPropList;
 
             let input_mode_prop = g_object_ref_sink(ibus_property_new(
-                "InputMode\0".as_ptr() as *const gchar,
+                c"InputMode".as_ptr(),
                 IBusPropType_PROP_TYPE_MENU,
                 format!("入力モード: {}", initial_input_mode.symbol).to_ibus_text(),
-                "\0".as_ptr() as *const gchar,
+                c"".as_ptr(),
                 "Switch input mode".to_ibus_text(),
                 to_gboolean(true),
                 to_gboolean(true),
                 IBusPropState_PROP_STATE_UNCHECKED,
-                std::ptr::null_mut() as *mut IBusPropList,
+                std::ptr::null_mut(),
             ) as gpointer) as *mut IBusProperty;
             ibus_prop_list_append(prop_list, input_mode_prop);
 
             let props = g_object_ref_sink(ibus_prop_list_new() as gpointer) as *mut IBusPropList;
             let mut prop_map: HashMap<String, *mut IBusProperty> = HashMap::new();
             for input_mode in get_all_input_modes() {
+                let prop_name = CString::new(input_mode.prop_name.to_string()).unwrap();
                 let prop = g_object_ref_sink(ibus_property_new(
-                    (input_mode.prop_name.to_string() + "\0").as_ptr() as *const gchar,
+                    prop_name.as_ptr(),
                     IBusPropType_PROP_TYPE_RADIO,
                     input_mode.label.to_ibus_text(),
-                    "\0".as_ptr() as *const gchar,
-                    std::ptr::null_mut() as *mut IBusText,
+                    c"".as_ptr(),
+                    std::ptr::null_mut(),
                     to_gboolean(true),
                     to_gboolean(true),
                     if input_mode.mode_code == initial_input_mode.mode_code {
@@ -88,7 +90,7 @@ impl PropController {
                     } else {
                         IBusPropState_PROP_STATE_UNCHECKED
                     },
-                    std::ptr::null_mut() as *mut IBusPropList,
+                    std::ptr::null_mut(),
                 ) as gpointer) as *mut IBusProperty;
                 prop_map.insert(input_mode.prop_name.to_string(), prop);
                 ibus_prop_list_append(props, prop);
@@ -107,34 +109,35 @@ impl PropController {
 
     unsafe fn build_user_dict(prop_list: *mut IBusPropList, config: Config) -> Result<()> {
         let user_dict_prop = g_object_ref_sink(ibus_property_new(
-            "UserDict\0".as_ptr() as *const gchar,
+            c"UserDict".as_ptr(),
             IBusPropType_PROP_TYPE_MENU,
             "ユーザー辞書".to_ibus_text(),
-            "\0".as_ptr() as *const gchar,
+            c"".as_ptr(),
             "User dict".to_ibus_text(),
             to_gboolean(true),
             to_gboolean(true),
             IBusPropState_PROP_STATE_UNCHECKED,
-            std::ptr::null_mut() as *mut IBusPropList,
+            std::ptr::null_mut(),
         ) as gpointer) as *mut IBusProperty;
         ibus_prop_list_append(prop_list, user_dict_prop);
 
         let props = g_object_ref_sink(ibus_prop_list_new() as gpointer) as *mut IBusPropList;
         for dict in Self::find_user_dicts(config)? {
+            let prop_name = CString::new(format!("UserDict.{}", dict.path)).unwrap();
             let prop = g_object_ref_sink(ibus_property_new(
-                ("UserDict.".to_string() + dict.path.as_str() + "\0").as_ptr() as *const gchar,
+                prop_name.as_ptr(),
                 IBusPropType_PROP_TYPE_MENU,
                 Path::new(&dict.path)
                     .file_name()
                     .unwrap()
                     .to_string_lossy()
                     .to_ibus_text(),
-                "\0".as_ptr() as *const gchar,
-                std::ptr::null_mut() as *mut IBusText,
+                c"".as_ptr(),
+                std::ptr::null_mut(),
                 to_gboolean(true),
                 to_gboolean(true),
                 IBusPropState_PROP_STATE_UNCHECKED,
-                std::ptr::null_mut() as *mut IBusPropList,
+                std::ptr::null_mut(),
             ) as gpointer) as *mut IBusProperty;
             // prop_map.insert(input_mode.prop_name.to_string(), prop);
             ibus_prop_list_append(props, prop);
@@ -159,15 +162,15 @@ impl PropController {
 
     unsafe fn build_preference_menu(prop_list: *mut IBusPropList) {
         let preference_prop = g_object_ref_sink(ibus_property_new(
-            "PrefPane\0".as_ptr() as *const gchar,
+            c"PrefPane".as_ptr(),
             IBusPropType_PROP_TYPE_MENU,
             "設定".to_ibus_text(),
-            "\0".as_ptr() as *const gchar,
+            c"".as_ptr(),
             "Preference".to_ibus_text(),
             to_gboolean(true),
             to_gboolean(true),
             IBusPropState_PROP_STATE_UNCHECKED,
-            std::ptr::null_mut() as *mut IBusPropList,
+            std::ptr::null_mut(),
         ) as gpointer) as *mut IBusProperty;
         ibus_prop_list_append(prop_list, preference_prop);
     }

@@ -110,7 +110,7 @@ impl MarisaSystemBigramLM {
             false
         });
 
-        let Some(key) = keys.get(0) else {
+        let Some(key) = keys.first() else {
             bail!("Cannot read default cost from bigram-trie");
         };
 
@@ -144,9 +144,7 @@ impl SystemBigramLM for MarisaSystemBigramLM {
             });
             true
         });
-        let Some(result) = got.first() else {
-            return None;
-        };
+        let result = got.first()?;
         let last2: [u8; 2] = result.keyword[result.keyword.len() - 2..result.keyword.len()]
             .try_into()
             .unwrap();
