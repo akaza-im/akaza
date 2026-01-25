@@ -126,7 +126,7 @@ mod tests {
     #[test]
     fn test_with_kana() -> anyhow::Result<()> {
         let runner = VibratoTokenizer::new(
-            "akaza-data/work/vibrato/ipadic-mecab-2_7_0/system.dic.zst",
+            "akaza-data/work/vibrato/ipadic-mecab-2_7_0/system.dic",
             None,
         )?;
         let got = runner.tokenize("私の名前は中野です。", true)?;
@@ -140,7 +140,7 @@ mod tests {
     #[test]
     fn test() -> anyhow::Result<()> {
         let runner = VibratoTokenizer::new(
-            "akaza-data/work/vibrato/ipadic-mecab-2_7_0/system.dic.zst",
+            "akaza-data/work/vibrato/ipadic-mecab-2_7_0/system.dic",
             None,
         )?;
         runner.tokenize("私の名前は中野です。", false)?;
@@ -166,7 +166,7 @@ mod tests {
             .try_init();
 
         let runner = VibratoTokenizer::new(
-            "akaza-data/work/vibrato/ipadic-mecab-2_7_0/system.dic.zst",
+            "akaza-data/work/vibrato/ipadic-mecab-2_7_0/system.dic",
             None,
         )?;
         assert_eq!(
@@ -198,7 +198,7 @@ mod tests {
             .try_init();
 
         let runner = VibratoTokenizer::new(
-            "akaza-data/work/vibrato/ipadic-mecab-2_7_0/system.dic.zst",
+            "akaza-data/work/vibrato/ipadic-mecab-2_7_0/system.dic",
             None,
         )?;
         assert_eq!(runner.tokenize("井伊家", false)?, "井伊家/いいけ");

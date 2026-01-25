@@ -1,4 +1,4 @@
-test-data: work/vibrato/ipadic-mecab-2_7_0/system.dic.zst
+test-data: work/vibrato/ipadic-mecab-2_7_0/system.dic
 
 work/vibrato/ipadic-mecab-2_7_0.tar.xz:
 	mkdir -p work/vibrato/
@@ -7,6 +7,9 @@ work/vibrato/ipadic-mecab-2_7_0.tar.xz:
 work/vibrato/ipadic-mecab-2_7_0/system.dic.zst: work/vibrato/ipadic-mecab-2_7_0.tar.xz
 	mkdir -p work/vibrato/
 	tar -xmJf work/vibrato/ipadic-mecab-2_7_0.tar.xz -C work/vibrato/
+
+work/vibrato/ipadic-mecab-2_7_0/system.dic: work/vibrato/ipadic-mecab-2_7_0/system.dic.zst
+	zstd -d work/vibrato/ipadic-mecab-2_7_0/system.dic.zst -o work/vibrato/ipadic-mecab-2_7_0/system.dic
 
 evaluate:
 	cargo run --release -- evaluate \
