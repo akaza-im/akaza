@@ -1,19 +1,17 @@
-extern crate cc;
-
-use std::io::Read;
-use std::process::{Command, Stdio};
+use std::process::Command;
 
 fn pkgconfig(module: &str, flag: &str) -> Vec<String> {
-    let child = Command::new("pkg-config")
+    let output = Command::new("pkg-config")
         .arg(module)
         .arg(flag)
-        .stdout(Stdio::piped())
-        .spawn()
-        .expect("Failed to spawn child process");
-    let mut buf = String::new();
-    child.stdout.unwrap().read_to_string(&mut buf).unwrap();
-    let args: Vec<&str> = buf.trim().split(' ').collect();
-    args.iter().map(|f| f.to_string()).collect()
+        .output()
+        .expect("Failed to execute pkg-config");
+    let buf = String::from_utf8(output.stdout).expect("Invalid UTF-8 from pkg-config");
+    buf.trim()
+        .split(' ')
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .collect()
 }
 
 fn main() {

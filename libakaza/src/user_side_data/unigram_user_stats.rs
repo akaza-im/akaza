@@ -32,9 +32,7 @@ impl UniGramUserStats {
      * ノードコストを計算する。
      */
     pub(crate) fn get_cost(&self, key: String) -> Option<f32> {
-        let Some(count) = self.word_count.get(key.as_str()) else {
-            return None;
-        };
+        let count = self.word_count.get(key.as_str())?;
 
         Some(calc_cost(*count, self.unique_words, self.total_words))
     }

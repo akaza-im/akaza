@@ -79,8 +79,7 @@ impl Segmenter {
         // 終了位置ごとの候補単語リスト
         let mut words_ends_at: BTreeMap<usize, Vec<String>> = BTreeMap::new();
 
-        'queue_processing: while !queue.is_empty() {
-            let start_pos = queue.pop().unwrap();
+        'queue_processing: while let Some(start_pos) = queue.pop() {
             if seen.contains(&start_pos) {
                 continue;
             } else {

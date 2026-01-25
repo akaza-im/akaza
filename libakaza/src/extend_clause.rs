@@ -16,7 +16,7 @@ fn keep_current(clauses: &[Vec<Candidate>]) -> Vec<Range<usize>> {
 
 /// 文節の選択範囲を右に拡張する。
 /// current_clause は現在選択されている分節。左から 0 origin である。
-pub fn extend_right(clauses: &Vec<Vec<Candidate>>, current_clause: usize) -> Vec<Range<usize>> {
+pub fn extend_right(clauses: &[Vec<Candidate>], current_clause: usize) -> Vec<Range<usize>> {
     // カラだったらなにもできない。
     if clauses.is_empty() {
         return Vec::new();
@@ -68,7 +68,7 @@ pub fn extend_right(clauses: &Vec<Vec<Candidate>>, current_clause: usize) -> Vec
 
 /// 文節の選択範囲を **左** に拡張する。
 /// current_clause は現在選択されている分節。左から 0 origin である。
-pub fn extend_left(clauses: &Vec<Vec<Candidate>>, current_clause: usize) -> Vec<Range<usize>> {
+pub fn extend_left(clauses: &[Vec<Candidate>], current_clause: usize) -> Vec<Range<usize>> {
     if clauses.is_empty() {
         return Vec::new();
     }

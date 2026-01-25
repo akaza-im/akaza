@@ -110,9 +110,7 @@ impl MarisaSystemBigramLM {
             false
         });
 
-        let Some(key) = keys.get(0) else {
-            bail!("Cannot read default cost from bigram-trie");
-        };
+        let key = keys.first().context("Cannot read default cost from bigram-trie")?;
 
         let key = String::from_utf8_lossy(key);
         if let Some((_, score)) = key.split_once('\t') {
@@ -144,9 +142,7 @@ impl SystemBigramLM for MarisaSystemBigramLM {
             });
             true
         });
-        let Some(result) = got.first() else {
-            return None;
-        };
+        let result = got.first()?;
         let last2: [u8; 2] = result.keyword[result.keyword.len() - 2..result.keyword.len()]
             .try_into()
             .unwrap();

@@ -17,7 +17,7 @@ impl Eq for Candidate {}
 
 impl PartialOrd<Self> for Candidate {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.cost.partial_cmp(&other.cost)
+        Some(self.cmp(other))
     }
 }
 

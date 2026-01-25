@@ -57,10 +57,10 @@ impl GraphResolver {
                     // コストが最小な経路を選ぶようにする。
                     // そういうふうにコストを付与しているので。
                     if cost > tmp_cost {
-                        if shortest_prev.is_none() {
-                            trace!("Replace None by {}", prev);
+                        if let Some(prev_val) = shortest_prev {
+                            trace!("Replace {} by {}", prev_val, prev);
                         } else {
-                            trace!("Replace {} by {}", shortest_prev.unwrap(), prev);
+                            trace!("Replace None by {}", prev);
                         }
                         cost = tmp_cost;
                         shortest_prev = Some(prev);
@@ -75,9 +75,9 @@ impl GraphResolver {
         let eos = lattice
             .get((yomi.len() + 1) as i32)
             .unwrap()
-            .get(0)
+            .first()
             .unwrap();
-        let bos = lattice.get(0).unwrap().get(0).unwrap();
+        let bos = lattice.get(0).unwrap().first().unwrap();
         let mut node = eos;
         let mut result: Vec<Vec<Candidate>> = Vec::new();
         while node != bos {
@@ -262,7 +262,7 @@ impl Eq for BreakDown {}
 
 impl PartialOrd<Self> for BreakDown {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        (self.head_cost + self.tail_cost).partial_cmp(&(other.head_cost + other.tail_cost))
+        Some(self.cmp(other))
     }
 }
 
