@@ -19,7 +19,7 @@ regex = "1"
 kelp = "0.4.0"
 lcs = "0.2.0"
 chrono = "0.4.31"
-vibrato = "0.5"
+vibrato = { version = "0.5", features = ["zstd"] }
 walkdir = "2"
 rayon = "1.6.1"
 marisa-sys = { path = "../marisa-sys" }
