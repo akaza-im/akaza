@@ -5,7 +5,6 @@ use kelp::{h2z, hira2kata, z2h, ConvOption};
 use log::{error, info, trace, warn};
 
 use akaza_conf::conf::open_configuration_window;
-use akaza_dict::conf::open_userdict_window;
 use ibus_sys::core::{
     IBusModifierType_IBUS_CONTROL_MASK, IBusModifierType_IBUS_HYPER_MASK,
     IBusModifierType_IBUS_META_MASK, IBusModifierType_IBUS_MOD1_MASK,
@@ -94,9 +93,12 @@ impl AkazaContext {
             let dict_path = prop_name.replace("UserDict.", "");
             info!("Edit the {}", dict_path);
 
-            match open_userdict_window(&dict_path) {
+            match std::process::Command::new("akaza-dict")
+                .arg(dict_path)
+                .spawn()
+            {
                 Ok(_) => {}
-                Err(e) => error!("Err: {}", e),
+                Err(e) => error!("Failed to launch akaza-dict: {}", e),
             }
         }
     }
