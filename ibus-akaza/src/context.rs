@@ -97,8 +97,16 @@ impl AkazaContext {
                 .arg(dict_path)
                 .spawn()
             {
-                Ok(_) => {}
-                Err(e) => error!("Failed to launch akaza-dict: {}", e),
+                Ok(_) => {
+                    self.current_state.set_auxiliary_text(engine, "");
+                }
+                Err(e) => {
+                    error!("Failed to launch akaza-dict: {}", e);
+                    self.current_state.set_auxiliary_text(
+                        engine,
+                        &format!("ユーザー辞書を起動できません: {}", e),
+                    );
+                }
             }
         }
     }
