@@ -151,20 +151,22 @@ rerank_cost = 1.0 × Σ unigram_cost
 
 ### デフォルト重み
 
-| パラメータ | デフォルト値 | 役割 |
-|---|---|---|
-| `bigram_weight` | 1.0 | 既知バイグラムの重み |
-| `unknown_bigram_weight` | 1.0 | 未知バイグラムの重み |
-| `length_weight` | 2.0 | トークン数によるペナルティ（短い分割を優先） |
-| `skip_bigram_weight` | 0.2 | スキップバイグラムの重み |
+| パラメータ | デフォルト値 | 役割 | 根拠 |
+|---|---|---|---|
+| `bigram_weight` | 1.0 | 既知バイグラムの重み | 同音異義語判別に不可欠。下げると「板が厚い」vs「お湯が熱い」等の判別力が低下 |
+| `unknown_bigram_weight` | 1.0 | 未知バイグラムの重み | 0.3 や 0.1 では Good が 496〜647 件悪化。デフォルト 1.0 が最良 ([#434](https://github.com/akaza-im/akaza/pull/434)) |
+| `length_weight` | 2.0 | トークン数によるペナルティ（短い分割を優先） | 2.0〜3.0 でピーク（+45〜47 件）。5.0 以上で逆効果。悪化は全て Good→Top-5 で Good→Bad は 0 件 ([#434](https://github.com/akaza-im/akaza/pull/434), [#435](https://github.com/akaza-im/akaza/pull/435)) |
+| `skip_bigram_weight` | 0.2 | スキップバイグラムの重み | 隣接 bigram より疎な信号のため控えめな重み。Viterbi DP に統合後のグリッドサーチで決定 ([#437](https://github.com/akaza-im/akaza/pull/437), [#440](https://github.com/akaza-im/akaza/pull/440)) |
 
-`unigram_weight` は基準スケールとして **1.0 に固定**し、他の重みを相対的に探索する設計になっている。
+`unigram_weight` は基準スケールとして **1.0 に固定**し、他の重みを相対的に探索する設計になっている。これにより探索空間を 1 次元減らし、グリッドサーチが安定する。
 
 ### 設計意図
 
 ビタビは等重み（unigram + bigram の単純加算）で多様な候補を生成し、リランキングで最終選択に最適化された重みを適用する。候補生成と最終選択で最適な重みが異なるのは自然であり、この 2 段階構成により柔軟なチューニングが可能になる。
 
-`length_weight = 2.0` により、トークン数が少ない（= 長い単位でまとめた）分割が優先される。評価の結果、`length_weight` を 2.0〜3.0 に設定することで baseline 比 +45〜47 件の改善が得られている。
+`length_weight = 2.0` により、トークン数が少ない（= 長い単位でまとめた）分割が優先される。`Σcost` はトークン数に比例して増えるため、分節パターンが異なる候補が混ざると短い分割が不当に有利になる副作用があり、`length_weight` でこれを補正する。例えば「とうきょうと」→「東京都」（1トークン）が「東京と」（2トークン）より選ばれやすくなる。
+
+各重みの詳細な評価結果は[リランキング評価レポート](notes/reranking-evaluation-report.md)を参照。リランキング機構全体の設計方針は[リランキング設計メモ](notes/reranking.md)を参照。
 
 **実装**: `libakaza/src/graph/reranking.rs` — `ReRankingWeights::rerank()`
 
