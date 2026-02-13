@@ -1,0 +1,19 @@
+[package]
+name = "akaza-conf"
+version = "0.1.7"
+edition = "2021"
+license = "MIT"
+
+[dependencies]
+gtk4 = "0.10.3"
+xdg = "2.5"
+log = "0.4"
+env_logger = "0.11"
+libakaza = { path = "../libakaza" }
+anyhow = "1.0"
+serde = "1.0"
+serde_yaml = "0.9"
+
+[[bin]]
+name = "akaza-conf"
+path = "src/bin/akaza-conf.rs"

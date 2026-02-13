@@ -1,0 +1,36 @@
+FROM ubuntu:24.04
+
+# 非対話モードに設定
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 必要な依存関係をインストール
+RUN apt-get update && apt-get install -y \
+    # X11とテスト用ツール
+    xvfb xdotool dbus-x11 at-spi2-core \
+    # IBus関連
+    ibus libibus-1.0-dev \
+    # GTK4とその他の依存関係
+    libgtk-4-dev libgirepository1.0-dev libmarisa-dev \
+    # ビルドツール
+    clang unzip zstd wget \
+    # Rust toolchain
+    curl git build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Rustのインストール
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.92.0
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# 作業ディレクトリを設定
+WORKDIR /akaza
+
+# 環境変数を設定
+ENV DISPLAY=:99
+ENV DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus-test-session
+
+# エントリーポイントスクリプトをコピー
+COPY ibus-akaza/docker-test-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-test-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/docker-test-entrypoint.sh"]
+CMD ["test"]

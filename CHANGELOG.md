@@ -1,0 +1,169 @@
+# Changelog
+
+## [v0.5.0](https://github.com/akaza-im/akaza/compare/v0.4.0...v0.5.0) - 2026-02-12
+- docs: k-best リランキング機構の設計方針 by @tokuhirom in https://github.com/akaza-im/akaza/pull/430
+- feat: k-best リランキング機構を実装 by @tokuhirom in https://github.com/akaza-im/akaza/pull/432
+- fix: evaluate/check でリランキングが反映されるように修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/433
+- docs: リランキング評価レポートを追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/434
+- feat: length-weight のデフォルト値を 2.0 に設定 by @tokuhirom in https://github.com/akaza-im/akaza/pull/435
+- feat: skip-bigram リランキングの実装 by @tokuhirom in https://github.com/akaza-im/akaza/pull/436
+- feat: skip-bigram を Viterbi DP に統合し変換精度を向上 by @tokuhirom in https://github.com/akaza-im/akaza/pull/437
+- feat: learn-corpus で skip-bigram の学習に対応 by @tokuhirom in https://github.com/akaza-im/akaza/pull/439
+- feat: lefthook による pre-commit フック設定を追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/438
+- fix: check/evaluate の skip-bigram-weight デフォルトを 0.2 に修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/440
+- feat: ユーザー適応学習に skip-bigram を追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/441
+- perf: with_capacity 追加とバッファ再利用でメモリアロケーション削減 by @tokuhirom in https://github.com/akaza-im/akaza/pull/442
+- perf: libakaza の HashMap/HashSet を FxHashMap/FxHashSet に置き換え by @tokuhirom in https://github.com/akaza-im/akaza/pull/443
+
+## [v0.4.0](https://github.com/akaza-im/akaza/compare/v0.3.0...v0.4.0) - 2026-02-11
+- feat: 数字トークンの <NUM> 正規化による LM スコア集約 by @tokuhirom in https://github.com/akaza-im/akaza/pull/426
+- fix: 裸の数字トークンを <NUM> 正規化から除外 by @tokuhirom in https://github.com/akaza-im/akaza/pull/428
+- docs: 数字トークンの <NUM> 正規化について README に追記 by @tokuhirom in https://github.com/akaza-im/akaza/pull/429
+
+## [v0.3.0](https://github.com/akaza-im/akaza/compare/v0.2.4...v0.3.0) - 2026-02-10
+- akaza-data check コマンドを改善 by @tokuhirom in https://github.com/akaza-im/akaza/pull/380
+- update deps by @tokuhirom in https://github.com/akaza-im/akaza/pull/383
+- wordcnt-unigram: homograph_hack / score_hack を除去 by @tokuhirom in https://github.com/akaza-im/akaza/pull/385
+- get_edge_cost のパフォーマンス改善 by @tokuhirom in https://github.com/akaza-im/akaza/pull/388
+- add tokenize-line subcommand by @tokuhirom in https://github.com/akaza-im/akaza/pull/390
+- use rsmarisa-0.3.0 for performance by @tokuhirom in https://github.com/akaza-im/akaza/pull/389
+- learn-corpus コマンドのコーパスファイル説明を README に追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/391
+- evaluate: [BAD] ログ行に入力の読みを追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/392
+- tokenize-line: stdin からの複数行入力に対応 by @tokuhirom in https://github.com/akaza-im/akaza/pull/393
+- evaluate: [BAD] ログを2行形式に簡潔化 by @tokuhirom in https://github.com/akaza-im/akaza/pull/394
+- check: stdin からの複数行入力に対応 by @tokuhirom in https://github.com/akaza-im/akaza/pull/395
+- README: かな漢字変換の仕組み・現状の制約・改善案を追記 by @tokuhirom in https://github.com/akaza-im/akaza/pull/396
+- segmenter: unwrap() を除去し空文字列でのクラッシュを防止 by @tokuhirom in https://github.com/akaza-im/akaza/pull/397
+- akaza-data tokenize のメモリアロケーション最適化 by @tokuhirom in https://github.com/akaza-im/akaza/pull/400
+- k-best ビタビを導入し Tab キーで分節パターンを切り替え可能に by @tokuhirom in https://github.com/akaza-im/akaza/pull/398
+- check: --k-best オプションで分節パターンを確認可能に by @tokuhirom in https://github.com/akaza-im/akaza/pull/401
+- k-best 分節パターンとサジェスト機能の導入 by @tokuhirom in https://github.com/akaza-im/akaza/pull/403
+- suggest 設定フラグを削除し、サジェストを常時有効化 by @tokuhirom in https://github.com/akaza-im/akaza/pull/404
+- rsmarisa を 0.4.0 に更新 by @tokuhirom in https://github.com/akaza-im/akaza/pull/405
+- README: 数字の動的変換の仕組みを追記 by @tokuhirom in https://github.com/akaza-im/akaza/pull/406
+- BOS/EOS bigram を導入し、文頭・文末の文脈情報を活用 by @tokuhirom in https://github.com/akaza-im/akaza/pull/407
+- akaza-data tokenize のメモリ確保を削減し高速化 by @tokuhirom in https://github.com/akaza-im/akaza/pull/408
+- wfreq のメモリ確保を削減し高速化 by @tokuhirom in https://github.com/akaza-im/akaza/pull/410
+- wordcnt-bigram の count_bigram を Vec 排除・1パス化で高速化 by @tokuhirom in https://github.com/akaza-im/akaza/pull/411
+- wfreq/wordcnt-bigram の HashMap を FxHashMap に切り替え by @tokuhirom in https://github.com/akaza-im/akaza/pull/412
+- evaluate: k-best スコアリングで BAD の重大度を分類 by @tokuhirom in https://github.com/akaza-im/akaza/pull/409
+- 変換パイプラインのアロケーション削減 by @tokuhirom in https://github.com/akaza-im/akaza/pull/413
+- 変換パイプラインの自明なアロケーション削減 by @tokuhirom in https://github.com/akaza-im/akaza/pull/414
+- evaluate: 全角数字を半角に正規化してから変換する by @tokuhirom in https://github.com/akaza-im/akaza/pull/415
+- evaluate: std::thread::scope でコーパス評価を並列化 by @tokuhirom in https://github.com/akaza-im/akaza/pull/416
+- wfreq: fold+reduce で逐次マージし OOM を防止 by @tokuhirom in https://github.com/akaza-im/akaza/pull/417
+- wfreq: redb でオンディスク集計し OOM を防止 by @tokuhirom in https://github.com/akaza-im/akaza/pull/418
+- wfreq: バッチ commit でトランザクションオーバーヘッドを削減 by @tokuhirom in https://github.com/akaza-im/akaza/pull/419
+- wfreq: 制御文字を含むワードのスキップ + parse_wfreq 堅牢化 by @tokuhirom in https://github.com/akaza-im/akaza/pull/420
+- wordcnt-bigram: redb でオンディスク集計し OOM を防止 by @tokuhirom in https://github.com/akaza-im/akaza/pull/421
+- vocab: wfreq パース時の unwrap panic を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/422
+- vocab: 日本語文字を含まない surface をフィルタ by @tokuhirom in https://github.com/akaza-im/akaza/pull/423
+- k-best コスト表示バグ修正: 累積コストの二重カウントを解消 by @tokuhirom in https://github.com/akaza-im/akaza/pull/424
+- feat: コーパスソースの重み付け対応 (path:weight 形式) by @tokuhirom in https://github.com/akaza-im/akaza/pull/425
+
+## [v0.2.3](https://github.com/akaza-im/akaza/compare/v0.2.2...v0.2.3) - 2026-02-05
+- Guard crash risks and stabilize cache tests by @tokuhirom in https://github.com/akaza-im/akaza/pull/361
+- AGENTS.md に cargo fmt 実行の注意を追記 by @tokuhirom in https://github.com/akaza-im/akaza/pull/362
+- akaza-dict の引数不足クラッシュを回避 by @tokuhirom in https://github.com/akaza-im/akaza/pull/364
+- make install で akaza-conf/akaza-dict もインストール by @tokuhirom in https://github.com/akaza-im/akaza/pull/365
+- 設定保存時にconfigディレクトリを作成 by @tokuhirom in https://github.com/akaza-im/akaza/pull/366
+- cargo-deny-action をCIで利用 by @tokuhirom in https://github.com/akaza-im/akaza/pull/367
+- akaza-conf のOK後にウィンドウを閉じる by @tokuhirom in https://github.com/akaza-im/akaza/pull/368
+- Shift+矢印で文節フォーカスを維持 by @tokuhirom in https://github.com/akaza-im/akaza/pull/369
+- 入力モードメニューのチェック状態を同期 by @tokuhirom in https://github.com/akaza-im/akaza/pull/371
+- README に ibus restart の記載を追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/370
+- Clippy 警告の解消 by @tokuhirom in https://github.com/akaza-im/akaza/pull/373
+- デバッグ用スクリプト名を整理 by @tokuhirom in https://github.com/akaza-im/akaza/pull/375
+- ユーザー辞書メニューの初期表示と作成 by @tokuhirom in https://github.com/akaza-im/akaza/pull/372
+- 設定メニューが動作しない問題を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/376
+- preedit テキストが黒背景に黒文字で見えない問題を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/377
+- Bump time from 0.3.46 to 0.3.47 by @dependabot[bot] in https://github.com/akaza-im/akaza/pull/378
+
+## [v0.2.2](https://github.com/akaza-im/akaza/compare/v0.2.1...v0.2.2) - 2026-02-03
+- Migrate from marisa-sys to rsmarisa by @tokuhirom in https://github.com/akaza-im/akaza/pull/343
+- Remove marisa-sys directory by @tokuhirom in https://github.com/akaza-im/akaza/pull/345
+- Add comprehensive test coverage for conversion engine by @tokuhirom in https://github.com/akaza-im/akaza/pull/346
+- Add CLAUDE.md with development guidelines by @tokuhirom in https://github.com/akaza-im/akaza/pull/347
+- Fix crash risk with invalid keyval in ibus-akaza by @tokuhirom in https://github.com/akaza-im/akaza/pull/349
+- Fix crash risk in extend_clause with empty yomi by @tokuhirom in https://github.com/akaza-im/akaza/pull/348
+- Fix panic in build_string with out-of-bounds node_selected by @tokuhirom in https://github.com/akaza-im/akaza/pull/350
+- CLAUDE.md の更新: PR 言語ポリシーとテストガイドラインの追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/352
+- Phase 1: Convert ibus-akaza to lib+bin structure for testing by @tokuhirom in https://github.com/akaza-im/akaza/pull/356
+- make install-model ターゲットを追加し、make install に統合 by @tokuhirom in https://github.com/akaza-im/akaza/pull/357
+- gnome-terminal で日本語入力時にクラッシュする問題を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/358
+- Fix crash risks in graph_resolver with proper error handling by @tokuhirom in https://github.com/akaza-im/akaza/pull/351
+- プリエディット属性の範囲指定ミスによる gnome-terminal クラッシュを修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/360
+- ibus-akaza の unwrap/panic を穏当なエラーハンドリングに置換 by @tokuhirom in https://github.com/akaza-im/akaza/pull/359
+
+## [v0.2.1](https://github.com/akaza-im/akaza/compare/v0.2.0...v0.2.1) - 2026-01-27
+- fix off by one for lookup table selection. by @tokuhirom in https://github.com/akaza-im/akaza/pull/257
+- Refactor _update_lookup_table by @tokuhirom in https://github.com/akaza-im/akaza/pull/261
+- ライブコンバージョンのルックアップテーブル処理を変更 Close #259 by @tokuhirom in https://github.com/akaza-im/akaza/pull/262
+- kk /株式会社/ のようなアルファベットのみのものを辞書から読まないように by @tokuhirom in https://github.com/akaza-im/akaza/pull/264
+- 数字を分節として取り出すようにする Close #263 by @tokuhirom in https://github.com/akaza-im/akaza/pull/265
+- Optmize cargo deny by @tokuhirom in https://github.com/akaza-im/akaza/pull/266
+- 漢数字入力機能 Close #67 by @tokuhirom in https://github.com/akaza-im/akaza/pull/267
+- Refactor ibus by @tokuhirom in https://github.com/akaza-im/akaza/pull/269
+- Use "default" layout. Close #244 by @tokuhirom in https://github.com/akaza-im/akaza/pull/270
+- Ibus refactor2 by @tokuhirom in https://github.com/akaza-im/akaza/pull/272
+- SKK-JISYO.L をデフォルトで読み込むようにする Close #258 by @tokuhirom in https://github.com/akaza-im/akaza/pull/273
+- ibus-akaza をリファクタリングしたことによりエンバグした部分を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/274
+- [非互換] コストの計算を利用時にするように変更。 by @tokuhirom in https://github.com/akaza-im/akaza/pull/275
+- 平仮名を優先する。 #252 by @tokuhirom in https://github.com/akaza-im/akaza/pull/276
+- add TUT romkan map #239 by @tokuhirom in https://github.com/akaza-im/akaza/pull/277
+- ライブコンバージョンモードでも、lookup table by @tokuhirom in https://github.com/akaza-im/akaza/pull/278
+- refactor keymap by @tokuhirom in https://github.com/akaza-im/akaza/pull/279
+- add kana-preferred mode for akaza-data tokenizer. by @tokuhirom in https://github.com/akaza-im/akaza/pull/280
+- make a directory before install files by @tkng in https://github.com/akaza-im/akaza/pull/283
+- refactor akaza-conf by @tokuhirom in https://github.com/akaza-im/akaza/pull/284
+- User dict by @tokuhirom in https://github.com/akaza-im/akaza/pull/286
+- change keyboard layout to "default" by @tkng in https://github.com/akaza-im/akaza/pull/287
+- Revert "平仮名を優先する。 #252" by @tokuhirom in https://github.com/akaza-im/akaza/pull/290
+- add executable bit for ibus-akaza installation by @tokuhirom in https://github.com/akaza-im/akaza/pull/292
+- fix the current directory retrieving feature by @tokuhirom in https://github.com/akaza-im/akaza/pull/295
+- Fix rustfmt formatting issues by @tokuhirom in https://github.com/akaza-im/akaza/pull/301
+- Separate lint and test jobs in CI workflow by @tokuhirom in https://github.com/akaza-im/akaza/pull/304
+- Pin Rust version to 1.67.0 by @tokuhirom in https://github.com/akaza-im/akaza/pull/306
+- Fix clippy warnings for Rust 1.67.0 by @tokuhirom in https://github.com/akaza-im/akaza/pull/307
+- Upgrade Rust to 1.68.0 by @tokuhirom in https://github.com/akaza-im/akaza/pull/309
+- Upgrade Rust to 1.69.0 by @tokuhirom in https://github.com/akaza-im/akaza/pull/310
+- Upgrade Rust to 1.70.0 by @tokuhirom in https://github.com/akaza-im/akaza/pull/311
+- Upgrade Rust to 1.71.0 by @tokuhirom in https://github.com/akaza-im/akaza/pull/312
+- Upgrade Rust to 1.72.0 by @tokuhirom in https://github.com/akaza-im/akaza/pull/313
+- Upgrade Rust to 1.73.0 by @tokuhirom in https://github.com/akaza-im/akaza/pull/314
+- Upgrade Rust from 1.73.0 to 1.74.0 by @tokuhirom in https://github.com/akaza-im/akaza/pull/315
+- Upgrade Rust from 1.74.0 to 1.75.0 by @tokuhirom in https://github.com/akaza-im/akaza/pull/316
+- Upgrade Rust from 1.75.0 to 1.77.0 by @tokuhirom in https://github.com/akaza-im/akaza/pull/317
+- Add cargo-deny job to CI by @tokuhirom in https://github.com/akaza-im/akaza/pull/318
+- Bump rustix from 0.36.9 to 0.36.16 by @dependabot[bot] in https://github.com/akaza-im/akaza/pull/296
+- Bump unsafe-libyaml from 0.2.7 to 0.2.10 by @dependabot[bot] in https://github.com/akaza-im/akaza/pull/297
+- Upgrade Rust from 1.77.0 to 1.81.0 by @tokuhirom in https://github.com/akaza-im/akaza/pull/320
+- Upgrade Rust from 1.81.0 to 1.88.0 by @tokuhirom in https://github.com/akaza-im/akaza/pull/321
+- Fix cargo-deny by installing manually by @tokuhirom in https://github.com/akaza-im/akaza/pull/319
+- Upgrade Rust from 1.88.0 to 1.92.0 by @tokuhirom in https://github.com/akaza-im/akaza/pull/322
+- Update dependencies to latest compatible versions by @tokuhirom in https://github.com/akaza-im/akaza/pull/300
+- Fix cargo-deny: Add Apache-2.0 WITH LLVM-exception to allowed licenses by @tokuhirom in https://github.com/akaza-im/akaza/pull/323
+- Add Renovate configuration by @tokuhirom in https://github.com/akaza-im/akaza/pull/325
+- Add Unicode-3.0 to allowed licenses by @tokuhirom in https://github.com/akaza-im/akaza/pull/324
+- Update kelp from 0.4.0 to 0.6.0 to remove atty dependency by @tokuhirom in https://github.com/akaza-im/akaza/pull/327
+- Update vibrato from 0.3.3 to 0.4.0 by @tokuhirom in https://github.com/akaza-im/akaza/pull/328
+- Add workspace resolver = "2" setting by @tokuhirom in https://github.com/akaza-im/akaza/pull/298
+- Update vibrato from 0.4.0 to 0.5.0 by @tokuhirom in https://github.com/akaza-im/akaza/pull/329
+- Update vibrato to 0.5.2 by @tokuhirom in https://github.com/akaza-im/akaza/pull/330
+- Remove unnecessary extern crate declarations by @tokuhirom in https://github.com/akaza-im/akaza/pull/299
+- Update GTK4 dependencies to 0.6.6 by @tokuhirom in https://github.com/akaza-im/akaza/pull/331
+- Update GTK4 dependencies to 0.7.3 by @tokuhirom in https://github.com/akaza-im/akaza/pull/332
+- Update GTK4 dependencies to 0.8.2 by @tokuhirom in https://github.com/akaza-im/akaza/pull/333
+- Update GTK4 dependencies to 0.9.7 by @tokuhirom in https://github.com/akaza-im/akaza/pull/334
+- Update GTK4 dependencies from 0.9.7 to 0.10.3 by @tokuhirom in https://github.com/akaza-im/akaza/pull/335
+- Update dependencies to latest versions by @tokuhirom in https://github.com/akaza-im/akaza/pull/336
+- Add tagpr and update README by @tokuhirom in https://github.com/akaza-im/akaza/pull/337
+- Update README with comprehensive improvements by @tokuhirom in https://github.com/akaza-im/akaza/pull/338
+- Fix tagpr workflow to use GitHub App token by @tokuhirom in https://github.com/akaza-im/akaza/pull/339
+- Update renovate.json by @tokuhirom in https://github.com/akaza-im/akaza/pull/340
+- Make Renovate more aggressive with frequent updates by @tokuhirom in https://github.com/akaza-im/akaza/pull/341
+
+## [v0.1.7](https://github.com/akaza-im/akaza/compare/v0.1.6...v0.1.7) - 2026-01-27
+- Update GTK4 dependencies from 0.5.5 to 0.10.3
+- Update common dependencies to latest versions
+- Fix env_logger 0.11 API compatibility

@@ -1,0 +1,13 @@
+[workspace]
+resolver = "2"
+members = ["libakaza", "ibus-akaza", "ibus-sys", "akaza-data", "akaza-conf", "akaza-dict"]
+[profile.release]
+debug = true
+
+# 開発用プロファイル: release より高速にビルドでき、IME として十分な実行速度を持つ
+[profile.dev-install]
+inherits = "release"
+opt-level = 2
+codegen-units = 16
+debug = true
+lto = false

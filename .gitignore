@@ -3,3 +3,17 @@ __pycache__
 /comb.xml
 /hello.*
 /test_graph2.py
+/akaza.xml
+*.egg-info/
+dist/
+*.lprof
+*.so
+perf.data
+callgrind.*
+target/
+/.idea/
+perf.data
+perf.data.old
+docs/book/
+docs/mermaid.min.js
+docs/mermaid-init.js

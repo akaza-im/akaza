@@ -1,0 +1,14 @@
+[book]
+title = "Akaza ドキュメント"
+authors = ["akaza-im"]
+language = "ja"
+src = "src"
+
+[build]
+build-dir = "book"
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
+
+[output.html]
+additional-js = ["mermaid.min.js", "mermaid-init.js"]

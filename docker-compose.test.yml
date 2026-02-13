@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  test:
+    build:
+      context: .
+      dockerfile: ibus-akaza/Dockerfile.test
+    volumes:
+      - .:/akaza
+      - cargo-cache:/root/.cargo/registry
+      - target-cache:/akaza/target
+    environment:
+      - DISPLAY=:99
+      - DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus-test-session
+    # デバッグ用にコンテナを残す
+    stdin_open: true
+    tty: true
+
+volumes:
+  cargo-cache:
+  target-cache:

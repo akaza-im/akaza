@@ -1,0 +1,1 @@
+#define PKGDATADIR "@DATADIR@/ibus-akaza/"

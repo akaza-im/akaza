@@ -1,88 +1,76 @@
-# only really known to work on ubuntu, if you're using anything else, hopefully
-# it should at least give you a clue how to install it by hand
-
 PREFIX ?= /usr
-SYSCONFDIR ?= /etc
 DATADIR ?= $(PREFIX)/share
-DESTDIR ?=
 
-PYTHON ?= /usr/bin/python3
+build:
+	cargo build --release -p ibus-akaza -p akaza-conf -p akaza-dict -p akaza-data
 
-all: comb.xml comb/config.py comb model/jawiki.1gram
+# 開発用ビルド: release より高速（opt-level=2, codegen-units=16, lto=false）
+dev:
+	cargo build --profile dev-install -p ibus-akaza -p akaza-conf -p akaza-dict -p akaza-data
 
-check:
-	python -m py_compile ibus.py
-	python -m py_compile comb/combromkan.py
-	python -m py_compile comb/engine.py
-	python -m py_compile comb/skkdict.py
-	pytest
+all: build
+	$(MAKE) -C ibus-akaza all
 
-comb.xml: comb.xml.in
-	sed -e "s:@PYTHON@:$(PYTHON):g;" \
-	    -e "s:@DATADIR@:$(DATADIR):g" $< > $@
+# install はビルド済みバイナリのコピーのみ行う。
+# ビルドは事前に `make` で実行しておくこと。
+#   make && sudo make install
+# sudo で cargo build が走って target/ が root 所有になるのを防ぐ。
+install: install-resources install-model
+	install -m 0755 target/release/ibus-akaza $(PREFIX)/bin/
+	install -m 0755 target/release/akaza-conf $(PREFIX)/bin/
+	install -m 0755 target/release/akaza-dict $(PREFIX)/bin/
+	install -m 0755 target/release/akaza-data $(PREFIX)/bin/
+	$(MAKE) -C ibus-akaza install
 
-comb/config.py: comb/config.py.in
-	sed -e "s:@SYSCONFDIR@:$(SYSCONFDIR):g" \
-	    -e "s:@MODELDIR@:$(DESTDIR)/$(DATADIR)/ibus-comb/model:g" \
-	    -e "s:@DICTIONARYDIR@:$(DESTDIR)/$(DATADIR)/ibus-comb/dictionary:g" \
-		$< > $@
+# 開発用: ビルド + ibus restart のみ（install 不要）
+# 初回は make dev-setup で debug 用 xml をインストールしておくこと
+dev-run: dev
+	ibus restart
 
-model/jawiki.1gram: model/bin/create-ngram-from-json.py
-	make -C model jawiki.1gram
+# 開発環境の初期セットアップ: debug 用 xml をインストール
+# ibus が target/ のバイナリを直接起動するようになる
+dev-setup: install-resources
+	$(MAKE) -C ibus-akaza akaza-debug.xml
+	$(MAKE) -C ibus-akaza install-debug
 
-model/system_dict.trie:
-	make -C model system_dict.trie
+install-model:
+	mkdir -p $(DATADIR)/akaza/model/default/
+	curl -L https://github.com/akaza-im/akaza-default-model/releases/latest/download/akaza-default-model.tar.gz | \
+		tar xzv --strip-components=1 -C $(DATADIR)/akaza/model/default/
 
-install-dict: model/system_dict.trie
-	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-comb/dictionary
-	install -p -m 0644 model/system_dict.trie $(DESTDIR)$(DATADIR)/ibus-comb/dictionary/
-
-install: all comb/config.py model/jawiki.1gram install-dict
-	install -m 0755 -d $(DESTDIR)$(DATADIR)/ibus-comb/comb $(DESTDIR)$(SYSCONFDIR)/xdg/comb $(DESTDIR)$(DATADIR)/ibus/component $(DESTDIR)$(DATADIR)/ibus-comb/model $(DESTDIR)$(DATADIR)/ibus-comb/dictionary
-	install -m 0644 model/jawiki.1gram $(DESTDIR)$(DATADIR)/ibus-comb/model/
-	install -m 0644 model/jawiki.2gram $(DESTDIR)$(DATADIR)/ibus-comb/model/
-
-	install -m 0644 comb.svg $(DESTDIR)$(DATADIR)/ibus-comb
-	install -m 0644 comb/__init__.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
-	install -m 0644 comb/graph.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
-	install -m 0644 comb/language_model.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
-	install -m 0644 comb/node.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
-	install -m 0644 comb/config.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
-	install -m 0644 comb/skkdict.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
-	install -m 0644 comb/combromkan.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
-	install -m 0644 ibus.py $(DESTDIR)$(DATADIR)/ibus-comb
-	install -m 0644 comb/engine.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
-	install -m 0644 comb/ui.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
-	install -m 0644 comb/user_language_model.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
-	install -m 0644 comb/system_language_model.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
-	install -m 0644 comb/system_dict.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
-	install -m 0644 comb/user_dict.py $(DESTDIR)$(DATADIR)/ibus-comb/comb/
-	install -m 0644 comb.xml $(DESTDIR)$(DATADIR)/ibus/component
-
-uninstall:
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb.svg
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/config.py
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/engine.py
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/skkdict.py
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/combromkan.py
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/graph.py
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/language_model.py
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/node.py
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/ui.py
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/user_language_model.py
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/system_language_model.py
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/user_dict.py
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/comb/system_dict.py
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/ibus.py
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/model/jawiki.1gram
-	rm -f $(DESTDIR)$(DATADIR)/ibus-comb/model/jawiki.2gram
-	rmdir $(DESTDIR)$(DATADIR)/ibus-comb
-	rmdir $(DESTDIR)$(SYSCONFDIR)/xdg/comb
-	rm -f $(DESTDIR)$(DATADIR)/ibus/component/comb.xml
+install-resources:
+	install -m 0644 -v -D -t $(DATADIR)/akaza/romkan romkan/*
+	install -m 0644 -v -D -t $(DATADIR)/akaza/keymap keymap/*
 
 clean:
-	rm -f comb.xml
-	rm -f comb/config.py
+	cargo clean
+	$(MAKE) -C ibus-akaza clean
 
-.PHONY: all check install uninstall
+# Docker test targets
+docker-test-build:
+	docker compose -f docker-compose.test.yml build
 
+docker-test:
+	docker compose -f docker-compose.test.yml run --rm test test
+
+docker-test-unit:
+	docker compose -f docker-compose.test.yml run --rm test test-unit
+
+docker-test-integration:
+	docker compose -f docker-compose.test.yml run --rm test test-integration
+
+docker-test-e2e:
+	docker compose -f docker-compose.test.yml run --rm test test-e2e
+
+docker-test-shell:
+	docker compose -f docker-compose.test.yml run --rm test bash
+
+docs-build:
+	cd docs && mdbook build
+
+docs-serve:
+	cd docs && mdbook serve --open
+
+.PHONY: all build dev dev-run dev-setup install install-model install-resources clean \
+	docker-test-build docker-test docker-test-unit docker-test-integration docker-test-e2e docker-test-shell \
+	docs-build docs-serve

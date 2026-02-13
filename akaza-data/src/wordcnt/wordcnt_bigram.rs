@@ -1,0 +1,174 @@
+use std::collections::HashMap;
+
+use anyhow::Result;
+use log::info;
+
+use libakaza::cost::calc_cost;
+use libakaza::lm::base::SystemBigramLM;
+use rsmarisa::{Agent, Keyset, Trie};
+
+/**
+ * bigram 言語モデル。
+ * unigram の生成のときに得られた単語IDを利用することで、圧縮している。
+ */
+pub struct WordcntBigramBuilder {
+    keyset: Keyset,
+}
+
+impl Default for WordcntBigramBuilder {
+    fn default() -> Self {
+        Self {
+            keyset: Keyset::new(),
+        }
+    }
+}
+
+impl WordcntBigramBuilder {
+    pub fn add(&mut self, word_id1: i32, word_id2: i32, cnt: u32) {
+        let id1_bytes = word_id1.to_le_bytes();
+        let id2_bytes = word_id2.to_le_bytes();
+
+        assert_eq!(id1_bytes[3], 0);
+        assert_eq!(id2_bytes[3], 0);
+
+        let mut key: Vec<u8> = Vec::new();
+        key.extend(id1_bytes[0..3].iter());
+        key.extend(id2_bytes[0..3].iter());
+        key.extend(cnt.to_le_bytes());
+        self.keyset.push_back_bytes(&key, 1.0).unwrap();
+    }
+
+    pub fn save(&mut self, ofname: &str) -> anyhow::Result<()> {
+        let mut trie = Trie::new();
+        trie.build(&mut self.keyset, 0);
+        trie.save(ofname)?;
+        Ok(())
+    }
+}
+
+pub struct WordcntBigram {
+    trie: Trie,
+    default_edge_cost: f32,
+    pub total_words: u32,
+    pub unique_words: u32,
+}
+
+impl WordcntBigram {
+    pub fn to_cnt_map(&self) -> HashMap<(i32, i32), u32> {
+        Self::_to_map(&self.trie)
+    }
+
+    fn _to_map(trie: &Trie) -> HashMap<(i32, i32), u32> {
+        let mut map: HashMap<(i32, i32), u32> = HashMap::new();
+        let mut agent = Agent::new();
+        agent.set_query_str("");
+
+        while trie.predictive_search(&mut agent) {
+            let word = agent.key().as_bytes();
+            if word.len() == 10 {
+                let word_id1 = i32::from_le_bytes([word[0], word[1], word[2], 0]);
+                let word_id2 = i32::from_le_bytes([word[3], word[4], word[5], 0]);
+                let cost = u32::from_le_bytes([word[6], word[7], word[8], word[9]]);
+                map.insert((word_id1, word_id2), cost);
+            }
+        }
+        map
+    }
+
+    pub fn load(filename: &str) -> Result<WordcntBigram> {
+        info!("Loading system-bigram: {}", filename);
+        let mut trie = Trie::new();
+        trie.load(filename)?;
+
+        let map: HashMap<(i32, i32), u32> = Self::_to_map(&trie);
+
+        // 総出現単語数
+        let total_words = map.iter().map(|((_, _), cnt)| *cnt).sum();
+        // 単語の種類数
+        let unique_words = map.keys().count() as u32;
+        let default_edge_cost = calc_cost(0, total_words, unique_words);
+
+        Ok(WordcntBigram {
+            trie,
+            default_edge_cost,
+            total_words,
+            unique_words,
+        })
+    }
+}
+
+impl SystemBigramLM for WordcntBigram {
+    fn get_default_edge_cost(&self) -> f32 {
+        self.default_edge_cost
+    }
+
+    /**
+     * edge cost を得る。
+     * この ID は、unigram の trie でふられたもの。
+     */
+    fn get_edge_cost(&self, word_id1: i32, word_id2: i32) -> Option<f32> {
+        let mut key: Vec<u8> = Vec::new();
+        key.extend(word_id1.to_le_bytes()[0..3].iter());
+        key.extend(word_id2.to_le_bytes()[0..3].iter());
+
+        let mut agent = Agent::new();
+        agent.set_query_bytes(&key);
+
+        if self.trie.predictive_search(&mut agent) {
+            let keyword = agent.key().as_bytes();
+            let last4: [u8; 4] = keyword[keyword.len() - 4..keyword.len()]
+                .try_into()
+                .unwrap();
+            let score: u32 = u32::from_le_bytes(last4);
+            return Some(calc_cost(score, self.total_words, self.unique_words));
+        }
+
+        None
+    }
+
+    fn as_hash_map(&self) -> HashMap<(i32, i32), f32> {
+        let mut map: HashMap<(i32, i32), f32> = HashMap::new();
+        let mut agent = Agent::new();
+        agent.set_query_str("");
+
+        while self.trie.predictive_search(&mut agent) {
+            let word = agent.key().as_bytes();
+            if word.len() == 10 {
+                let word_id1 = i32::from_le_bytes([word[0], word[1], word[2], 0]);
+                let word_id2 = i32::from_le_bytes([word[3], word[4], word[5], 0]);
+                let cnt = u32::from_le_bytes([word[6], word[7], word[8], word[9]]);
+                map.insert(
+                    (word_id1, word_id2),
+                    calc_cost(cnt, self.total_words, self.unique_words),
+                );
+            }
+        }
+        map
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use tempfile::NamedTempFile;
+
+    use super::*;
+
+    #[test]
+    fn test_build() -> Result<()> {
+        let named_tmpfile = NamedTempFile::new().unwrap();
+        let tmpfile = named_tmpfile.path().to_str().unwrap().to_string();
+
+        let mut builder = WordcntBigramBuilder::default();
+        builder.add(4, 5, 29);
+        builder.add(8, 9, 32);
+        builder.save(tmpfile.as_str())?;
+
+        let bigram = WordcntBigram::load(tmpfile.as_str())?;
+        assert_eq!(
+            bigram.to_cnt_map(),
+            HashMap::from([((4, 5), 29), ((8, 9), 32),])
+        );
+
+        Ok(())
+    }
+}

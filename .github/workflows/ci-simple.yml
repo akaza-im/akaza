@@ -1,0 +1,102 @@
+name: Akaza basic test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+    - uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.lock') }}
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install ibus libgirepository1.0-dev libmarisa-dev clang libibus-1.0-dev unzip libgtk-4-dev
+    - name: make some configuration files for ibus-akaza
+      run: |
+        cd ibus-akaza/ && make akaza.xml config.h
+    - uses: dtolnay/rust-toolchain@master
+      with:
+          toolchain: "1.92.0"
+          components: clippy, rustfmt
+    - name: Check formatting
+      run: cargo fmt --all --check
+    - name: Run clippy
+      run: cargo clippy -- -D warnings
+
+  cargo-deny:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - uses: EmbarkStudios/cargo-deny-action@v2
+      with:
+        rust-version: "1.92.0"
+        command: check
+
+  test:
+    runs-on: ubuntu-latest
+    env:
+      DISPLAY: ":99"
+      DBUS_SESSION_BUS_ADDRESS: "unix:path=/tmp/dbus-test-session"
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+    - uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          xvfb xdotool dbus-x11 at-spi2-core \
+          ibus libibus-1.0-dev libgtk-4-dev \
+          libgirepository1.0-dev libmarisa-dev clang unzip zstd
+    - name: Start Xvfb
+      run: |
+        Xvfb :99 -screen 0 1024x768x24 &
+        sleep 2
+    - name: Start D-Bus session
+      run: |
+        dbus-daemon --session --fork \
+          --address="unix:path=/tmp/dbus-test-session"
+        sleep 1
+    - name: make test data
+      run: |
+        cd akaza-data/ && make test-data
+    - name: make some configuration files for ibus-akaza
+      run: |
+        cd ibus-akaza/ && make akaza.xml config.h
+    - uses: dtolnay/rust-toolchain@master
+      with:
+          toolchain: "1.92.0"
+    - name: Run unit tests
+      run: cargo test --lib
+      timeout-minutes: 2
+    - name: Run integration tests
+      run: cargo test --test integration
+      timeout-minutes: 5
+    - name: Run all other tests
+      run: cargo test --bins --tests
+      timeout-minutes: 10
