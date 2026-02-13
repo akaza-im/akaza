@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.5.1](https://github.com/akaza-im/akaza/compare/v0.5.0...v0.5.1) - 2026-02-13
+- docs: mdBook によるドキュメントサイト基盤を構築 by @tokuhirom in https://github.com/akaza-im/akaza/pull/444
+- docs: データフロー図の全面改訂と introduction の改善 by @tokuhirom in https://github.com/akaza-im/akaza/pull/446
+- docs: 内部構造ドキュメントの再構成 by @tokuhirom in https://github.com/akaza-im/akaza/pull/447
+- docs: コーパス学習 (learn-corpus) のドキュメントを追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/448
+- docs: learn-corpus ドキュメントと改善実験レポートの追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/449
+- docs: 構造化パーセプトロン評価レポートと前回実験の評価方法修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/451
+- docs: CC-100 の重み 0.3 の根拠をデータフロー図に追記 by @tokuhirom in https://github.com/akaza-im/akaza/pull/452
+- docs: リランキング重みの根拠と評価PRへのリンクを追記 by @tokuhirom in https://github.com/akaza-im/akaza/pull/453
+
 ## [v0.5.0](https://github.com/akaza-im/akaza/compare/v0.4.0...v0.5.0) - 2026-02-12
 - docs: k-best リランキング機構の設計方針 by @tokuhirom in https://github.com/akaza-im/akaza/pull/430
 - feat: k-best リランキング機構を実装 by @tokuhirom in https://github.com/akaza-im/akaza/pull/432
