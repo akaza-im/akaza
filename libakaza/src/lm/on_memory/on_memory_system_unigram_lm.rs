@@ -10,6 +10,7 @@ pub struct OnMemorySystemUnigramLM {
     map: Rc<RefCell<HashMap<String, (i32, u32)>>>,
     pub total_words: u32,
     pub unique_words: u32,
+    adjustment: RefCell<HashMap<String, f32>>,
 }
 
 impl OnMemorySystemUnigramLM {
@@ -22,7 +23,16 @@ impl OnMemorySystemUnigramLM {
             map,
             total_words,
             unique_words,
+            adjustment: RefCell::new(HashMap::new()),
         }
+    }
+
+    pub fn adjust_cost(&self, word: &str, delta: f32) {
+        *self
+            .adjustment
+            .borrow_mut()
+            .entry(word.to_string())
+            .or_insert(0.0) += delta;
     }
 
     pub fn update(&self, word: &str, cnt: u32) {
@@ -56,21 +66,22 @@ impl SystemUnigramLM for OnMemorySystemUnigramLM {
     }
 
     fn find(&self, word: &str) -> Option<(i32, f32)> {
-        self.map
-            .borrow()
-            .get(word)
-            .map(|(id, cnt)| (*id, calc_cost(*cnt, self.total_words, self.unique_words)))
+        self.map.borrow().get(word).map(|(id, cnt)| {
+            let base_cost = calc_cost(*cnt, self.total_words, self.unique_words);
+            let adj = self.adjustment.borrow().get(word).copied().unwrap_or(0.0);
+            (*id, base_cost + adj)
+        })
     }
 
     fn as_hash_map(&self) -> HashMap<String, (i32, f32)> {
+        let adj = self.adjustment.borrow();
         self.map
             .borrow()
             .iter()
             .map(|(key, (id, cnt))| {
-                (
-                    key.to_string(),
-                    (*id, calc_cost(*cnt, self.total_words, self.unique_words)),
-                )
+                let base_cost = calc_cost(*cnt, self.total_words, self.unique_words);
+                let a = adj.get(key).copied().unwrap_or(0.0);
+                (key.to_string(), (*id, base_cost + a))
             })
             .collect()
     }

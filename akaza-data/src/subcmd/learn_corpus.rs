@@ -120,12 +120,12 @@ impl LearningService {
         })
     }
 
-    pub fn try_learn(&self, epochs: i32, delta: u32, corpus: &str) -> anyhow::Result<()> {
+    pub fn try_learn(&self, epochs: i32, step_size: f32, corpus: &str) -> anyhow::Result<()> {
         let corpuses = read_corpus_file(Path::new(corpus))?;
         for _ in 1..epochs {
             let mut ok_cnt = 0;
             for teacher in corpuses.iter() {
-                let succeeded = self.learn(delta, teacher)?;
+                let succeeded = self.learn(step_size, teacher)?;
 
                 if succeeded {
                     ok_cnt += 1;
@@ -141,7 +141,72 @@ impl LearningService {
         Ok(())
     }
 
-    pub fn learn(&self, delta: u32, teacher: &FullAnnotationCorpus) -> anyhow::Result<bool> {
+    /// 予測パスからキー列を抽出する（"surface/yomi" 形式）
+    fn extract_pred_keys(got: &[Vec<libakaza::graph::candidate::Candidate>]) -> Vec<String> {
+        got.iter()
+            .map(|candidates| format!("{}/{}", candidates[0].surface, candidates[0].yomi))
+            .collect()
+    }
+
+    /// 教師パスからキー列を抽出する（"surface/yomi" 形式）
+    fn extract_teacher_keys(teacher: &FullAnnotationCorpus) -> Vec<String> {
+        teacher.nodes.iter().map(|node| node.key()).collect()
+    }
+
+    /// キー列から bigram の word_id ペアを抽出する（BOS/EOS 含む）
+    fn extract_bigram_ids(&self, keys: &[String]) -> Vec<(i32, i32)> {
+        let mut pairs = Vec::new();
+
+        if keys.is_empty() {
+            return pairs;
+        }
+
+        // BOS → 最初の単語
+        if let Some((bos_id, _)) = self.system_unigram_lm.find(BOS_TOKEN_KEY) {
+            if let Some((first_id, _)) = self.system_unigram_lm.find(&keys[0]) {
+                pairs.push((bos_id, first_id));
+            }
+        }
+
+        // 隣接ペア
+        for i in 1..keys.len() {
+            if let Some((id1, _)) = self.system_unigram_lm.find(&keys[i - 1]) {
+                if let Some((id2, _)) = self.system_unigram_lm.find(&keys[i]) {
+                    pairs.push((id1, id2));
+                }
+            }
+        }
+
+        // 最後の単語 → EOS
+        if let Some((eos_id, _)) = self.system_unigram_lm.find(EOS_TOKEN_KEY) {
+            if let Some((last_id, _)) = self.system_unigram_lm.find(keys.last().unwrap()) {
+                pairs.push((last_id, eos_id));
+            }
+        }
+
+        pairs
+    }
+
+    /// キー列から skip-bigram の word_id ペアを抽出する（i-2, i）
+    fn extract_skip_bigram_ids(&self, keys: &[String]) -> Vec<(i32, i32)> {
+        let mut pairs = Vec::new();
+
+        if keys.len() <= 2 {
+            return pairs;
+        }
+
+        for i in 2..keys.len() {
+            if let Some((id1, _)) = self.system_unigram_lm.find(&keys[i - 2]) {
+                if let Some((id2, _)) = self.system_unigram_lm.find(&keys[i]) {
+                    pairs.push((id1, id2));
+                }
+            }
+        }
+
+        pairs
+    }
+
+    pub fn learn(&self, step_size: f32, teacher: &FullAnnotationCorpus) -> anyhow::Result<bool> {
         let yomi = teacher.yomi();
         let surface = teacher.surface();
         let segmentation_result = self.segmenter.build(&yomi, None);
@@ -156,99 +221,45 @@ impl LearningService {
 
         println!("{result}");
 
-        // 正解じゃないときには出現頻度の確率が正しくないということだと思いますんで
-        // 頻度を増やす。
         if result != surface {
-            // learn unigram
-            if !teacher.nodes.is_empty() {
-                for i in 0..teacher.nodes.len() {
-                    let key = teacher.nodes[i].key();
-                    let (_, cost) = self
-                        .system_unigram_lm
-                        .find_cnt(&key.to_string())
-                        .unwrap_or((-1, 0_u32));
-                    self.system_unigram_lm.update(key.as_str(), cost - delta);
-                }
+            let pred_keys = Self::extract_pred_keys(&got);
+            let teacher_keys = Self::extract_teacher_keys(teacher);
+
+            // --- unigram 調整 ---
+            // 教師パス: コスト減算（選ばれやすくする）
+            for key in &teacher_keys {
+                self.system_unigram_lm.adjust_cost(key, -step_size);
+            }
+            // 予測パス: コスト加算（選ばれにくくする）
+            for key in &pred_keys {
+                self.system_unigram_lm.adjust_cost(key, step_size);
             }
 
-            // learn bigram
-            if teacher.nodes.len() > 1 {
-                for i in 1..teacher.nodes.len() {
-                    let key1 = teacher.nodes[i - 1].key();
-                    let key2 = teacher.nodes[i].key();
-                    let Some((word_id1, _)) = self.system_unigram_lm.find(key1.as_str()) else {
-                        continue;
-                    };
-                    let Some((word_id2, _)) = self.system_unigram_lm.find(key2.as_str()) else {
-                        continue;
-                    };
-                    let v = self
-                        .system_bigram_lm
-                        .get_edge_cnt(word_id1, word_id2)
-                        .unwrap_or(0_u32);
-                    info!(
-                        "Update bigram cost: {}={},{}={}, v={}",
-                        key1, word_id1, key2, word_id2, v
-                    );
-                    self.system_bigram_lm.update(word_id1, word_id2, v - delta);
-                }
+            // --- bigram 調整 ---
+            let teacher_bigrams = self.extract_bigram_ids(&teacher_keys);
+            let pred_bigrams = self.extract_bigram_ids(&pred_keys);
+
+            for (id1, id2) in &teacher_bigrams {
+                info!("Adjust bigram (teacher, -step): ({}, {})", id1, id2);
+                self.system_bigram_lm.adjust_cost(*id1, *id2, -step_size);
+            }
+            for (id1, id2) in &pred_bigrams {
+                info!("Adjust bigram (pred, +step): ({}, {})", id1, id2);
+                self.system_bigram_lm.adjust_cost(*id1, *id2, step_size);
             }
 
-            // learn skip-bigram
+            // --- skip-bigram 調整 ---
             if let Some(skip_bigram_lm) = &self.system_skip_bigram_lm {
-                if teacher.nodes.len() > 2 {
-                    for i in 2..teacher.nodes.len() {
-                        let key1 = teacher.nodes[i - 2].key();
-                        let key2 = teacher.nodes[i].key();
-                        let Some((word_id1, _)) = self.system_unigram_lm.find(key1.as_str()) else {
-                            continue;
-                        };
-                        let Some((word_id2, _)) = self.system_unigram_lm.find(key2.as_str()) else {
-                            continue;
-                        };
-                        let v = skip_bigram_lm
-                            .get_skip_cnt(word_id1, word_id2)
-                            .unwrap_or(0_u32);
-                        info!(
-                            "Update skip-bigram cost: {}={},{}={}, v={}",
-                            key1, word_id1, key2, word_id2, v
-                        );
-                        skip_bigram_lm.update(word_id1, word_id2, v - delta);
-                    }
-                }
-            }
+                let teacher_skip = self.extract_skip_bigram_ids(&teacher_keys);
+                let pred_skip = self.extract_skip_bigram_ids(&pred_keys);
 
-            // learn BOS/EOS bigram
-            if !teacher.nodes.is_empty() {
-                // BOS → 最初の単語
-                if let Some((bos_id, _)) = self.system_unigram_lm.find(BOS_TOKEN_KEY) {
-                    let first_key = teacher.nodes[0].key();
-                    if let Some((first_id, _)) = self.system_unigram_lm.find(first_key.as_str()) {
-                        let v = self
-                            .system_bigram_lm
-                            .get_edge_cnt(bos_id, first_id)
-                            .unwrap_or(0_u32);
-                        info!(
-                            "Update BOS bigram cost: BOS={},{}={}, v={}",
-                            bos_id, first_key, first_id, v
-                        );
-                        self.system_bigram_lm.update(bos_id, first_id, v - delta);
-                    }
+                for (id1, id2) in &teacher_skip {
+                    info!("Adjust skip-bigram (teacher, -step): ({}, {})", id1, id2);
+                    skip_bigram_lm.adjust_cost(*id1, *id2, -step_size);
                 }
-                // 最後の単語 → EOS
-                if let Some((eos_id, _)) = self.system_unigram_lm.find(EOS_TOKEN_KEY) {
-                    let last_key = teacher.nodes.last().unwrap().key();
-                    if let Some((last_id, _)) = self.system_unigram_lm.find(last_key.as_str()) {
-                        let v = self
-                            .system_bigram_lm
-                            .get_edge_cnt(last_id, eos_id)
-                            .unwrap_or(0_u32);
-                        info!(
-                            "Update EOS bigram cost: {}={}->EOS={}, v={}",
-                            last_key, last_id, eos_id, v
-                        );
-                        self.system_bigram_lm.update(last_id, eos_id, v - delta);
-                    }
+                for (id1, id2) in &pred_skip {
+                    info!("Adjust skip-bigram (pred, +step): ({}, {})", id1, id2);
+                    skip_bigram_lm.adjust_cost(*id1, *id2, step_size);
                 }
             }
 
@@ -289,6 +300,23 @@ impl LearningService {
             .collect::<HashMap<i32, String>>();
 
         for ((word_id1, word_id2), cost) in skip_bigram_lm.as_hash_map() {
+            let Some(word1) = src_wordid2key.get(&word_id1) else {
+                continue;
+            };
+            let Some(word2) = src_wordid2key.get(&word_id2) else {
+                continue;
+            };
+            let Some((new_word_id1, _)) = new_unigram.find(word1) else {
+                continue;
+            };
+            let Some((new_word_id2, _)) = new_unigram.find(word2) else {
+                continue;
+            };
+            builder.add(new_word_id1, new_word_id2, cost);
+        }
+
+        // adjustment-only エントリを追加
+        for ((word_id1, word_id2), cost) in skip_bigram_lm.adjustment_only_entries() {
             let Some(word1) = src_wordid2key.get(&word_id1) else {
                 continue;
             };
@@ -348,6 +376,28 @@ impl LearningService {
             };
             bigram_builder.add(new_word_id1, new_word_id2, cost);
         }
+
+        // adjustment-only エントリを追加
+        for ((word_id1, word_id2), cost) in self.system_bigram_lm.adjustment_only_entries() {
+            let Some(word1) = src_wordid2key.get(&word_id1) else {
+                info!("Unknown word_id (adj-only): {}", word_id1);
+                continue;
+            };
+            let Some((new_word_id1, _)) = new_unigram.find(word1) else {
+                info!("Unknown word (adj-only): {}", word1);
+                continue;
+            };
+            let Some(word2) = src_wordid2key.get(&word_id2) else {
+                info!("Unknown word_id (adj-only): {}", word_id2);
+                continue;
+            };
+            let Some((new_word_id2, _)) = new_unigram.find(word2) else {
+                info!("Unknown word (adj-only): {}", word2);
+                continue;
+            };
+            bigram_builder.add(new_word_id1, new_word_id2, cost);
+        }
+
         // ↓本来なら現在のデータで再調整すべきだが、一旦元のものを使う。
         // TODO あとで整理する
         bigram_builder.set_default_edge_cost(self.system_bigram_lm.get_default_edge_cost());
@@ -361,7 +411,7 @@ impl LearningService {
 /// コーパスを元にした学習を行います。
 #[allow(clippy::too_many_arguments)]
 pub fn learn_corpus(
-    delta: u32,
+    step_size: f32,
     may_epochs: i32,
     should_epochs: i32,
     must_epochs: i32,
@@ -388,7 +438,7 @@ pub fn learn_corpus(
         (should_epochs, should_corpus),
         (must_epochs, must_corpus),
     ] {
-        service.try_learn(epoch, delta, corpus)?;
+        service.try_learn(epoch, step_size, corpus)?;
     }
 
     // 保存していく

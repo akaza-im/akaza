@@ -171,11 +171,11 @@ struct WordcntSkipBigramArgs {
     skip_bigram_trie_file: String,
 }
 
-/// コーパスから言語モデルを学習する
+/// コーパスから言語モデルを学習する（構造化パーセプトロン）
 #[derive(Debug, clap::Args)]
 struct LearnCorpusArgs {
-    #[arg(short, long)]
-    delta: u32,
+    #[arg(short, long, default_value_t = 0.5)]
+    step_size: f32,
     #[arg(long, default_value_t = 10)]
     may_epochs: i32,
     #[arg(long, default_value_t = 100)]
@@ -371,7 +371,7 @@ fn main() -> anyhow::Result<()> {
             make_stats_system_unigram_lm(opt.src_file.as_str(), opt.dst_file.as_str())
         }
         Commands::LearnCorpus(opts) => learn_corpus(
-            opts.delta,
+            opts.step_size,
             opts.may_epochs,
             opts.should_epochs,
             opts.must_epochs,
