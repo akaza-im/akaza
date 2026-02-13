@@ -10,6 +10,7 @@
 - [リランキング評価レポート](reranking-evaluation-report.md) — リランキングパラメータの評価結果
 - [構造化パーセプトロン](structured-perceptron.md) — 識別学習によるチューニングの検討メモ
 - [learn-corpus 改善実験](learn-corpus-improvement.md) — 学習ロジック（加算/減算）の変更実験と評価結果
+- [構造化パーセプトロン評価レポート](structured-perceptron-evaluation.md) — スコアベース構造化パーセプトロンの実装と評価結果
 - 前処理
   - [漢方薬の読み問題](preproc/kanpoyaku.md) — kytea の分割誤り対応
   - [MeCab 形態素解析](preproc/mecab.md) — 形態素解析の粒度問題
