@@ -31,6 +31,7 @@
       - [CC-100 クリーニング戦略](internals/notes/corpus-stats/cc100-cleaning-strategy.md)
       - [CirrusSearch 日本語コーパス調査](internals/notes/corpus-stats/cirrus-japanese-corpora.md)
       - [jawiktionary 評価](internals/notes/corpus-stats/jawiktionary-evaluation.md)
+      - [v2026.0216.0 比較レポート](internals/notes/corpus-stats/v2026.0216.0-comparison.md)
     - [デフォルトモデル]()
       - [変換精度改善の方針](internals/notes/default-model/conversion-improvement-strategy.md)
       - [CC-100 重み付き統合レポート](internals/notes/default-model/cc100-weighted-integration.md)
