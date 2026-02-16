@@ -39,23 +39,25 @@ dist-full: all-full
 # =========================================================================
 
 release: dist dist-full
-	@PREFIX="v$$(date +%Y.%m%d)"; \
-	EXISTING=$$(git tag -l "$${PREFIX}.*" | sort -t. -k3 -n | tail -1); \
+	@VER_PREFIX="v$$(date +%Y.%m%d)"; \
+	GIT_PREFIX="corpus-stats/$${VER_PREFIX}"; \
+	EXISTING=$$(git tag -l "$${GIT_PREFIX}.*" | sort -t. -k4 -n | tail -1); \
 	if [ -z "$$EXISTING" ]; then \
-		TAG="$${PREFIX}.0"; \
+		PATCH=0; \
 	else \
-		PATCH=$$(echo "$$EXISTING" | rev | cut -d. -f1 | rev); \
-		TAG="$${PREFIX}.$$((PATCH + 1))"; \
+		PATCH=$$(( $$(echo "$$EXISTING" | rev | cut -d. -f1 | rev) + 1 )); \
 	fi; \
-	echo "Creating release $$TAG ..."; \
+	GIT_TAG="$${GIT_PREFIX}.$${PATCH}"; \
+	RELEASE_TAG="$${VER_PREFIX}.$${PATCH}"; \
+	echo "Creating git tag $$GIT_TAG, release $$RELEASE_TAG ..."; \
 	tar czvf akaza-corpus-stats.tar.gz -C dist . && \
 	tar czvf akaza-corpus-stats-full.tar.gz -C dist-full . && \
-	git tag "$$TAG" && \
-	git push origin "$$TAG" && \
-	gh release create "$$TAG" akaza-corpus-stats.tar.gz akaza-corpus-stats-full.tar.gz \
-		--title "$$TAG" --generate-notes && \
+	git tag "$$GIT_TAG" && \
+	git push origin "$$GIT_TAG" && \
+	gh release create "$$RELEASE_TAG" akaza-corpus-stats.tar.gz akaza-corpus-stats-full.tar.gz \
+		--repo akaza-im/akaza-corpus-stats --title "$$RELEASE_TAG" --generate-notes && \
 	rm -f akaza-corpus-stats.tar.gz akaza-corpus-stats-full.tar.gz && \
-	echo "Released $$TAG"
+	echo "Released $$RELEASE_TAG (git tag: $$GIT_TAG)"
 
 # =========================================================================
 #  Wikipedia (CirrusSearch ダンプ)
