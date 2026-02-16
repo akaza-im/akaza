@@ -85,16 +85,7 @@ data/SKK-JISYO.akaza: work/corpus-stats/_SUCCESS dict/SKK-JISYO.akaza training-c
 
 # corpus.4.txt は誤変換をおさめたものなので評価用には使わない
 evaluate: data/bigram.model
-	akaza-data evaluate \
-		 --corpus=anthy-corpus/corpus.0.txt \
-		 --corpus=anthy-corpus/corpus.1.txt \
-		 --corpus=anthy-corpus/corpus.2.txt \
-		 --corpus=anthy-corpus/corpus.3.txt \
-		 --corpus=anthy-corpus/corpus.5.txt \
-		 --eucjp-dict=../model/skk-dev-dict/SKK-JISYO.L \
-		 --utf8-dict=data/SKK-JISYO.akaza \
-		 --model-dir=data/ \
-		 -vv
+	CORPUS_STATS_VERSION=$(CORPUS_STATS_VERSION) scripts/run-evaluate.sh
 
 # -------------------------------------------------------------------------
 
