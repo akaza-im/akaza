@@ -191,6 +191,10 @@ make evaluate
 3. **システム辞書構築** — vocab + corpus + UniDic → `default-model/data/SKK-JISYO.akaza`
 4. **評価** — anthy-corpus テストセットで評価 (corpus.4.txt は除外)
 
+### 評価スコア履歴
+
+`default-model/README.md` の「評価スコア履歴」セクションに、`make evaluate` による再現率の推移が記録されている。モデル変更時はここを参照して退行がないか確認すること。
+
 ### データフォーマット
 
 #### default-model/training-corpus/*.txt (学習コーパス)

@@ -3,7 +3,7 @@ DATADIR ?= $(PREFIX)/share
 DESTDIR ?=
 MODELDIR ?= $(DESTDIR)$(DATADIR)/akaza/model/default/
 
-CORPUS_STATS_VERSION ?= v2026.0211.1
+CORPUS_STATS_VERSION ?= v2026.0216.0
 
 # ローカルビルドの akaza-data を優先的に使う
 export PATH := $(CURDIR)/../target/release:$(PATH)
