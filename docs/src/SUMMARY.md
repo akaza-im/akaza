@@ -37,3 +37,4 @@
       - [CC-100 重み付き統合レポート](internals/notes/default-model/cc100-weighted-integration.md)
       - [`<NUM>` トークン正規化レポート](internals/notes/default-model/num-token-normalization.md)
       - [失敗記録: bigram バックオフ補間](internals/notes/default-model/failed-bigram-backoff-interpolation.md)
+      - [BAD 傾向分析 (2026-02-16)](internals/notes/default-model/bad-trend-analysis-2026-0216.md)
