@@ -241,11 +241,17 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> GraphBuilder<U, B
                             key_buf.push_str(&ascii_surface);
                             key_buf.push('/');
                             key_buf.push_str(&reading_for_lm);
-                            let word_id_and_score =
-                                self.system_unigram_lm.find(&key_buf).or_else(|| {
-                                    normalize_surface_for_lm(&key_buf)
-                                        .and_then(|nk| self.system_unigram_lm.find(&nk))
-                                });
+                            let word_id_and_score = {
+                                let direct = self.system_unigram_lm.find(&key_buf);
+                                let normalized = normalize_surface_for_lm(&key_buf)
+                                    .and_then(|nk| self.system_unigram_lm.find(&nk));
+                                match (direct, normalized) {
+                                    (Some(d), Some(n)) => Some(if d.1 <= n.1 { d } else { n }),
+                                    (d @ Some(_), None) => d,
+                                    (None, n @ Some(_)) => n,
+                                    (None, None) => None,
+                                }
+                            };
 
                             for surface in [&ascii_surface, &fullwidth_surface, &kansuji_surface] {
                                 if seen.contains(surface) {
@@ -509,6 +515,95 @@ mod tests {
         assert!(got_surfaces5.contains(&"10分".to_string()));
         assert!(got_surfaces5.contains(&"１０分".to_string()));
         assert!(got_surfaces5.contains(&"十分".to_string()));
+        Ok(())
+    }
+
+    /// 数値複合語の LM スコア選択で、リテラルと <NUM> 正規化版の両方を検索し、
+    /// スコアが良い方（値が小さい方）を採用することを確認する。
+    #[test]
+    fn test_numeric_compound_picks_better_score() -> anyhow::Result<()> {
+        let mut unigram_builder = MarisaSystemUnigramLMBuilder::default();
+        unigram_builder.set_unique_words(100);
+        unigram_builder.set_total_words(1000);
+        // リテラル "1日/1にち" は悪いスコア（高い値）
+        unigram_builder.add("1日/1にち", 9.386);
+        // 正規化版 "<NUM>日/<NUM>にち" は良いスコア（低い値）
+        unigram_builder.add("<NUM>日/<NUM>にち", 2.123);
+
+        let graph_builder = GraphBuilder::new(
+            HashmapVecKanaKanjiDict::new(HashMap::from([(
+                "にち".to_string(),
+                vec!["日".to_string()],
+            )])),
+            HashmapVecKanaKanjiDict::new(HashMap::new()),
+            Arc::new(Mutex::new(UserData::default())),
+            Rc::new(unigram_builder.build()?),
+            Rc::new(
+                MarisaSystemBigramLMBuilder::default()
+                    .set_default_edge_cost(20_f32)
+                    .build()?,
+            ),
+        );
+
+        let yomi = "1にち";
+        let end_pos = yomi.len(); // 7 bytes: 1(1) + に(3) + ち(3)
+        let got = graph_builder.construct(
+            yomi,
+            &SegmentationResult::new(BTreeMap::from([(end_pos, vec![yomi.to_string()])])),
+        );
+        let nodes = got.node_list(end_pos as i32).unwrap();
+        let node_1nichi = nodes.iter().find(|n| n.surface == "1日").unwrap();
+        // 正規化版の良いスコア (2.123) が採用されるべき
+        let (_word_id, score) = node_1nichi.word_id_and_score.unwrap();
+        assert!(
+            (score - 2.123_f32).abs() < 0.001,
+            "Expected normalized score 2.123, got {}",
+            score
+        );
+        Ok(())
+    }
+
+    /// リテラルのスコアが正規化版より良い場合は、リテラルが採用されることを確認する。
+    #[test]
+    fn test_numeric_compound_keeps_better_literal_score() -> anyhow::Result<()> {
+        let mut unigram_builder = MarisaSystemUnigramLMBuilder::default();
+        unigram_builder.set_unique_words(100);
+        unigram_builder.set_total_words(1000);
+        // リテラル "1日/1にち" は良いスコア（低い値）
+        unigram_builder.add("1日/1にち", 2.0);
+        // 正規化版 "<NUM>日/<NUM>にち" は悪いスコア（高い値）
+        unigram_builder.add("<NUM>日/<NUM>にち", 9.0);
+
+        let graph_builder = GraphBuilder::new(
+            HashmapVecKanaKanjiDict::new(HashMap::from([(
+                "にち".to_string(),
+                vec!["日".to_string()],
+            )])),
+            HashmapVecKanaKanjiDict::new(HashMap::new()),
+            Arc::new(Mutex::new(UserData::default())),
+            Rc::new(unigram_builder.build()?),
+            Rc::new(
+                MarisaSystemBigramLMBuilder::default()
+                    .set_default_edge_cost(20_f32)
+                    .build()?,
+            ),
+        );
+
+        let yomi = "1にち";
+        let end_pos = yomi.len(); // 7 bytes: 1(1) + に(3) + ち(3)
+        let got = graph_builder.construct(
+            yomi,
+            &SegmentationResult::new(BTreeMap::from([(end_pos, vec![yomi.to_string()])])),
+        );
+        let nodes = got.node_list(end_pos as i32).unwrap();
+        let node_1nichi = nodes.iter().find(|n| n.surface == "1日").unwrap();
+        // リテラルの良いスコア (2.0) が採用されるべき
+        let (_word_id, score) = node_1nichi.word_id_and_score.unwrap();
+        assert!(
+            (score - 2.0_f32).abs() < 0.001,
+            "Expected literal score 2.0, got {}",
+            score
+        );
         Ok(())
     }
 }
