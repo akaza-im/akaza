@@ -32,6 +32,7 @@
       - [CirrusSearch 日本語コーパス調査](internals/notes/corpus-stats/cirrus-japanese-corpora.md)
       - [jawiktionary 評価](internals/notes/corpus-stats/jawiktionary-evaluation.md)
       - [v2026.0216.0 比較レポート](internals/notes/corpus-stats/v2026.0216.0-comparison.md)
+      - [小文字かな辞書エントリの混入問題](internals/notes/corpus-stats/small-kana-dict-contamination.md)
     - [デフォルトモデル]()
       - [変換精度改善の方針](internals/notes/default-model/conversion-improvement-strategy.md)
       - [CC-100 重み付き統合レポート](internals/notes/default-model/cc100-weighted-integration.md)
