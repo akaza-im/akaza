@@ -22,7 +22,9 @@ impl ExtractedWikipediaProcessor {
 
         // 上級個人情報保護士（じょうきゅうこじんじょうほうほごし）は、財団法人全日本情報学習振興協会が設けている民間資格の称号。
         // → 上級個人情報保護士は、財団法人全日本情報学習振興協会が設けている民間資格の称号。
-        let yomigana_pattern = Regex::new(r"[（\(][\u3041-\u309F、]+[）)]")?;
+        // カタカナ混じりの読みがなにも対応する
+        // 例: コロンバイン高校銃乱射事件（コロンバインこうこうじゅうらんしゃじけん、英: ...）
+        let yomigana_pattern = Regex::new(r"[（\(][\u3041-\u309F\u30A0-\u30FF、]+[）)]")?;
 
         Ok(ExtractedWikipediaProcessor {
             alnum_pattern,
@@ -90,6 +92,17 @@ mod tests {
         let got =
             runner.remove_yomigana("上級個人情報保護士（じょうきゅうこじんじょうほうほごし）は");
         assert_eq!(got, "上級個人情報保護士は");
+        Ok(())
+    }
+
+    #[test]
+    fn test_remove_yomigana_katakana_mixed() -> anyhow::Result<()> {
+        // カタカナ混じりの読みがなも除去できること
+        let runner = ExtractedWikipediaProcessor::new()?;
+        let got = runner.remove_yomigana(
+            "コロンバイン高校銃乱射事件（コロンバインこうこうじゅうらんしゃじけん）は",
+        );
+        assert_eq!(got, "コロンバイン高校銃乱射事件は");
         Ok(())
     }
 }

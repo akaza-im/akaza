@@ -17,6 +17,34 @@ fn contains_japanese(s: &str) -> bool {
     })
 }
 
+/// 小文字かな（拗音・促音）で始まるかどうかを判定する。
+/// vibrato の分節ミスで生まれる不正なトークンを弾くために使う。
+fn starts_with_small_kana(s: &str) -> bool {
+    let Some(c) = s.chars().next() else {
+        return false;
+    };
+    matches!(
+        c,
+        'ぁ' | 'ぃ'
+            | 'ぅ'
+            | 'ぇ'
+            | 'ぉ'
+            | 'ゃ'
+            | 'ゅ'
+            | 'ょ'
+            | 'っ'
+            | 'ァ'
+            | 'ィ'
+            | 'ゥ'
+            | 'ェ'
+            | 'ォ'
+            | 'ャ'
+            | 'ュ'
+            | 'ョ'
+            | 'ッ'
+    )
+}
+
 /// wfreq (単語の発生頻度表)から vocab (語彙ファイル)を作成する。
 pub fn vocab(src_file: &str, dst_file: &str, threshold: u32) -> anyhow::Result<()> {
     info!(
@@ -44,6 +72,10 @@ pub fn vocab(src_file: &str, dst_file: &str, threshold: u32) -> anyhow::Result<(
         let surface = word.split('/').next().unwrap_or("");
         if !contains_japanese(surface) {
             warn!("Skipping non-Japanese surface: {:?}", word);
+            continue;
+        }
+        if starts_with_small_kana(surface) {
+            warn!("Skipping small-kana-initial word: {:?}", word);
             continue;
         }
         let cnt: u32 = cnt.parse()?;
@@ -147,6 +179,36 @@ mod tests {
         assert_eq!(lines[0], "東京/トウキョウ");
         assert_eq!(lines[1], "カタカナ/カタカナ");
         assert_eq!(lines[2], "ひらがな/ヒラガナ");
+    }
+
+    #[test]
+    fn test_starts_with_small_kana() {
+        assert!(starts_with_small_kana("ゅうらんしゃじけん"));
+        assert!(starts_with_small_kana("ッテ"));
+        assert!(starts_with_small_kana("ぁいう"));
+        assert!(!starts_with_small_kana("あいう"));
+        assert!(!starts_with_small_kana("カタカナ"));
+        assert!(!starts_with_small_kana("漢字"));
+        assert!(!starts_with_small_kana(""));
+    }
+
+    #[test]
+    fn test_vocab_filters_small_kana_initial() {
+        let mut src = NamedTempFile::new().unwrap();
+        writeln!(src, "東京/とうきょう\t10").unwrap();
+        writeln!(src, "ゅうらんしゃじけん/ゅうらんしゃじけん\t10").unwrap();
+        writeln!(src, "ッテ/って\t10").unwrap();
+        src.flush().unwrap();
+
+        let dst = NamedTempFile::new().unwrap();
+        let dst_path = dst.path().to_str().unwrap().to_string();
+
+        vocab(src.path().to_str().unwrap(), &dst_path, 0).unwrap();
+
+        let result = fs::read_to_string(&dst_path).unwrap();
+        let lines: Vec<&str> = result.lines().collect();
+        assert_eq!(lines.len(), 1);
+        assert_eq!(lines[0], "東京/とうきょう");
     }
 
     #[test]
