@@ -58,3 +58,4 @@
 	vPrefix = true
 	releaseBranch = main
 	versionFile = -
+	calendarVersioning = true
