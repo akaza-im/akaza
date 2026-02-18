@@ -1,5 +1,30 @@
 # Changelog
 
+## [v2026.218.0](https://github.com/akaza-im/akaza/compare/v0.5.0...v2026.218.0) - 2026-02-18
+- docs: 評価方法のドキュメントを追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/454
+- fix: convert メソッドでリランキングが適用されない問題を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/455
+- feat: 数字+接尾辞の複合トークン正規化改善 by @tokuhirom in https://github.com/akaza-im/akaza/pull/457
+- refactor: KANSUJI 動的マーカーを廃止し静的候補生成に統一 by @tokuhirom in https://github.com/akaza-im/akaza/pull/458
+- akaza-default-model と akaza-corpus-stats をモノレポに統合 by @tokuhirom in https://github.com/akaza-im/akaza/pull/459
+- fix: UniDic CSJ ダウンロードを GitHub Release ミラーに変更 by @tokuhirom in https://github.com/akaza-im/akaza/pull/460
+- docs: README 重複整理（リポジトリ統合後） by @tokuhirom in https://github.com/akaza-im/akaza/pull/461
+- docs: corpus-stats/docs/ を docs/ に移動 by @tokuhirom in https://github.com/akaza-im/akaza/pull/462
+- docs: default-model/docs/ を docs/ に移動 by @tokuhirom in https://github.com/akaza-im/akaza/pull/463
+- docs: UniDic カタカナ語抽出の説明を data-flow.md に追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/464
+- 実装完了: 数値+助数詞変換を再設計して動的候補生成を拡張 by @tokuhirom in https://github.com/akaza-im/akaza/pull/465
+- 百の位の促音便形をかな数詞パーサに追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/467
+- fix: corpus-stats release 先を akaza-im/akaza-corpus-stats に修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/468
+- chore: corpus-stats v2026.0216.0 に更新 + 評価履歴の参照先を追記 by @tokuhirom in https://github.com/akaza-im/akaza/pull/469
+- feat: evaluate 結果のファイル保存改善（ブランチ名・corpus-stats バージョン追加） by @tokuhirom in https://github.com/akaza-im/akaza/pull/470
+- docs: corpus-stats v2026.0216.0 比較レポート by @tokuhirom in https://github.com/akaza-im/akaza/pull/471
+- BAD 傾向分析スクリプトと分析レポートの追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/472
+- fix: 小文字かな始まりの不正辞書エントリの混入を防止 by @tokuhirom in https://github.com/akaza-im/akaza/pull/473
+- docs: 四字熟語ソース調査結果をBAD傾向分析レポートに追記 by @tokuhirom in https://github.com/akaza-im/akaza/pull/474
+- fix: 数値複合語の LM スコア選択でリテラルと正規化版の良い方を採用 by @tokuhirom in https://github.com/akaza-im/akaza/pull/475
+- chore: tagpr を CalVer モードに変更 by @tokuhirom in https://github.com/akaza-im/akaza/pull/477
+- fix: 「失敗しないように」が「失敗し内容に」になる分節崩壊を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/476
+- chore: tagpr を v1.17.0 に更新 by @tokuhirom in https://github.com/akaza-im/akaza/pull/479
+
 ## [v0.5.0](https://github.com/akaza-im/akaza/compare/v0.4.0...v0.5.0) - 2026-02-12
 - docs: k-best リランキング機構の設計方針 by @tokuhirom in https://github.com/akaza-im/akaza/pull/430
 - feat: k-best リランキング機構を実装 by @tokuhirom in https://github.com/akaza-im/akaza/pull/432
