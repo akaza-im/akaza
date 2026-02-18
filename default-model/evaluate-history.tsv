@@ -5,3 +5,5 @@ datetime	commit	branch	corpus_stats	good	top5	bad	recall
 2026-02-16 16:50	d317969d	docs/corpus-stats-v2026.0216.0-comparison	v2026.0216.0	6727	345	3993	93.18957
 2026-02-17 01:15	cdeae673	fix/small-kana-dict-entries	v2026.0216.0	6724	345	3996	93.18637
 2026-02-17 10:08	d3a5dbbe	main	v2026.0216.0	6728	345	3992	93.19349
+2026-02-18 21:09	d1dbeefb	docs/vocab-jukujikun-notes	v2026.0216.0	6719	346	4000	93.18564
+2026-02-18 21:12	d1dbeefb	docs/vocab-jukujikun-notes	v2026.0216.0	6719	346	4000	93.18564
