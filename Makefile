@@ -1,5 +1,6 @@
 PREFIX ?= /usr
 DATADIR ?= $(PREFIX)/share
+MODEL_VERSION ?= v2026.218.0
 
 build:
 	cargo build --release -p ibus-akaza -p akaza-conf -p akaza-dict -p akaza-data
@@ -35,7 +36,7 @@ dev-setup: install-resources
 
 install-model:
 	mkdir -p $(DATADIR)/akaza/model/default/
-	curl -L https://github.com/akaza-im/akaza-default-model/releases/latest/download/akaza-default-model.tar.gz | \
+	curl -L https://github.com/akaza-im/akaza/releases/download/$(MODEL_VERSION)/akaza-default-model.tar.gz | \
 		tar xzv --strip-components=1 -C $(DATADIR)/akaza/model/default/
 
 install-resources:
