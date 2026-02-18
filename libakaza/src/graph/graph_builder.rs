@@ -34,6 +34,17 @@ fn normalize_surface_for_lm(key: &str) -> Option<String> {
     let slash_pos = key.find('/')?;
     let surface = &key[..slash_pos];
     let reading = &key[slash_pos + 1..];
+
+    // 助数詞単漢字フォールバック: "年/ねん" → "<NUM>年/<NUM>ねん"
+    // 数字なしでも助数詞表面が辞書候補にある場合、<NUM> 正規化版のスコアを参照する。
+    if let Some(canonical_yomi) = normalize_counter_yomi(reading) {
+        if let Some(surfaces) = counter_surfaces_for(canonical_yomi) {
+            if surfaces.contains(&surface) {
+                return Some(format!("<NUM>{surface}/<NUM>{canonical_yomi}"));
+            }
+        }
+    }
+
     let surface_prefix_end = parse_numeric_prefix_surface(surface)
         .map(|p| p.consumed_len)
         .unwrap_or(0);
@@ -438,8 +449,25 @@ mod tests {
             normalize_surface_for_lm("0匹/ぜろひき"),
             Some("<NUM>匹/<NUM>ひき".to_string())
         );
-        assert_eq!(normalize_surface_for_lm("匹/ひき"), None);
+        // 助数詞単漢字フォールバックにより <NUM> 正規化版を返す
+        assert_eq!(
+            normalize_surface_for_lm("匹/ひき"),
+            Some("<NUM>匹/<NUM>ひき".to_string())
+        );
         assert_eq!(normalize_surface_for_lm("第1回/だい1かい"), None);
+        // 助数詞単漢字フォールバック
+        assert_eq!(
+            normalize_surface_for_lm("年/ねん"),
+            Some("<NUM>年/<NUM>ねん".to_string())
+        );
+        assert_eq!(
+            normalize_surface_for_lm("円/えん"),
+            Some("<NUM>円/<NUM>えん".to_string())
+        );
+        // 「月/つき」は COUNTER_DEFS にないので None
+        assert_eq!(normalize_surface_for_lm("月/つき"), None);
+        // 「念/ねん」は助数詞 surface ではないので None
+        assert_eq!(normalize_surface_for_lm("念/ねん"), None);
     }
 
     #[test]
@@ -602,6 +630,47 @@ mod tests {
         assert!(
             (score - 2.0_f32).abs() < 0.001,
             "Expected literal score 2.0, got {}",
+            score
+        );
+        Ok(())
+    }
+
+    /// 助数詞単漢字（"年/ねん" 等）が数字プレフィックスなしでも
+    /// <NUM> 正規化版の LM スコアにフォールバックすることを確認する。
+    #[test]
+    fn test_counter_bare_kanji_lm_fallback() -> anyhow::Result<()> {
+        let mut unigram_builder = MarisaSystemUnigramLMBuilder::default();
+        unigram_builder.set_unique_words(100);
+        unigram_builder.set_total_words(1000);
+        unigram_builder.add("<NUM>年/<NUM>ねん", 3.5);
+
+        let graph_builder = GraphBuilder::new(
+            HashmapVecKanaKanjiDict::new(HashMap::from([(
+                "ねん".to_string(),
+                vec!["年".to_string()],
+            )])),
+            HashmapVecKanaKanjiDict::new(HashMap::new()),
+            Arc::new(Mutex::new(UserData::default())),
+            Rc::new(unigram_builder.build()?),
+            Rc::new(
+                MarisaSystemBigramLMBuilder::default()
+                    .set_default_edge_cost(20_f32)
+                    .build()?,
+            ),
+        );
+
+        let yomi = "ねん";
+        let end_pos = yomi.len(); // 6 bytes
+        let got = graph_builder.construct(
+            yomi,
+            &SegmentationResult::new(BTreeMap::from([(end_pos, vec![yomi.to_string()])])),
+        );
+        let nodes = got.node_list(end_pos as i32).unwrap();
+        let node_nen = nodes.iter().find(|n| n.surface == "年").unwrap();
+        let (_word_id, score) = node_nen.word_id_and_score.unwrap();
+        assert!(
+            (score - 3.5_f32).abs() < 0.001,
+            "Expected <NUM> fallback score 3.5, got {}",
             score
         );
         Ok(())
