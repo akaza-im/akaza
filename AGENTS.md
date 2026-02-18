@@ -195,6 +195,25 @@ make evaluate
 
 `default-model/README.md` の「評価スコア履歴」セクションに、`make evaluate` による再現率の推移が記録されている。モデル変更時はここを参照して退行がないか確認すること。
 
+### 変換テスト（akaza-data check）
+
+`akaza-data check` で CLI からかな漢字変換の動作を確認できる。
+
+```bash
+# 基本的な変換テスト
+cargo run --release -p akaza-data -- check "ごじょうほう"
+# => ご/情報
+
+# 各文節の候補を表示（-n で候補数指定）
+cargo run --release -p akaza-data -- check -n 3 "ごじょうほう"
+
+# JSON 形式で候補とコストを表示（分節・候補の詳細確認に便利）
+cargo run --release -p akaza-data -- check -n 3 -f json "ごじょうほう"
+
+# k-best: 上位 k 個の分節パターンをスコア付きで表示
+cargo run --release -p akaza-data -- check -k 3 "ごじょうほう"
+```
+
 ### データフォーマット
 
 #### default-model/training-corpus/*.txt (学習コーパス)
