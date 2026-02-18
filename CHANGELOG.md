@@ -1,5 +1,12 @@
 # Changelog
 
+## [v2026.218.1](https://github.com/akaza-im/akaza/compare/v2026.218.0...v2026.218.1) - 2026-02-18
+- fix: install-model のダウンロード元をモノレポに修正しタグを固定 by @tokuhirom in https://github.com/akaza-im/akaza/pull/481
+- fix: 助数詞単漢字の LM スコアフォールバックを追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/483
+- feat: 「誤情報」の辞書登録 + チューニング知見・check使い方追記 + vibrato辞書ターゲット追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/484
+- feat: 「誤情報」の辞書登録・コーパス追加 + vibrato辞書ターゲット追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/485
+- fix: 「誤情報」コーパスを複合語登録に修正（ご→誤 退行修正） by @tokuhirom in https://github.com/akaza-im/akaza/pull/486
+
 ## [v2026.218.0](https://github.com/akaza-im/akaza/compare/v0.5.0...v2026.218.0) - 2026-02-18
 - docs: 評価方法のドキュメントを追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/454
 - fix: convert メソッドでリランキングが適用されない問題を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/455
