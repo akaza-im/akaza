@@ -5,6 +5,7 @@ use log::info;
 use rsmarisa::{Agent, Keyset, Trie};
 
 use crate::lm::base::SystemSkipBigramLM;
+use crate::lm::model_metadata::{add_metadata_to_keyset, read_metadata_from_trie, ModelMetadata};
 
 /*
    {word1 ID}    # 3 bytes (w_{i-2})
@@ -18,12 +19,14 @@ const DEFAULT_COST_KEY: &str = "__DEFAULT_SKIP_COST__";
 /// bigram LM と同一キー形式 `[3B id1][3B id2][2B f16_score]` を使用。
 pub struct MarisaSystemSkipBigramLMBuilder {
     keyset: Keyset,
+    metadata: ModelMetadata,
 }
 
 impl Default for MarisaSystemSkipBigramLMBuilder {
     fn default() -> Self {
         Self {
             keyset: Keyset::new(),
+            metadata: ModelMetadata::default(),
         }
     }
 }
@@ -49,7 +52,13 @@ impl MarisaSystemSkipBigramLMBuilder {
         self
     }
 
+    pub fn set_metadata(&mut self, metadata: ModelMetadata) -> &mut Self {
+        self.metadata = metadata;
+        self
+    }
+
     pub fn build(&mut self) -> Result<MarisaSystemSkipBigramLM> {
+        add_metadata_to_keyset(&mut self.keyset, &self.metadata);
         let mut trie = Trie::new();
         trie.build(&mut self.keyset, 0);
         let default_skip_cost = MarisaSystemSkipBigramLM::read_default_skip_cost(&trie)?;
@@ -60,6 +69,7 @@ impl MarisaSystemSkipBigramLMBuilder {
     }
 
     pub fn save(&mut self, ofname: &str) -> Result<()> {
+        add_metadata_to_keyset(&mut self.keyset, &self.metadata);
         let mut trie = Trie::new();
         trie.build(&mut self.keyset, 0);
         trie.save(ofname)?;
@@ -73,6 +83,10 @@ pub struct MarisaSystemSkipBigramLM {
 }
 
 impl MarisaSystemSkipBigramLM {
+    pub fn metadata(&self) -> ModelMetadata {
+        read_metadata_from_trie(&self.trie)
+    }
+
     pub fn load(filename: &str) -> Result<MarisaSystemSkipBigramLM> {
         info!("Loading system-skip-bigram: {}", filename);
         let mut trie = Trie::new();

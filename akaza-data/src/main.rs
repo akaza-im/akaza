@@ -21,6 +21,7 @@ use crate::subcmd::make_dict::make_system_dict;
 use crate::subcmd::make_stats_system_bigram_lm::make_stats_system_bigram_lm;
 use crate::subcmd::make_stats_system_skip_bigram_lm::make_stats_system_skip_bigram_lm;
 use crate::subcmd::make_stats_system_unigram_lm::make_stats_system_unigram_lm;
+use crate::subcmd::model_info::model_info;
 use crate::subcmd::tokenize::tokenize;
 use crate::subcmd::tokenize_line::tokenize_line;
 use crate::subcmd::vocab::vocab;
@@ -80,6 +81,10 @@ enum Commands {
     /// wordcnt skip-bigram trie → skip_bigram.model に変換
     #[clap(arg_required_else_help = true)]
     ConvertSkipBigramModel(ConvertSkipBigramModelArgs),
+
+    /// モデルファイルのメタデータを表示する
+    #[clap(arg_required_else_help = true)]
+    ModelInfo(ModelInfoArgs),
 }
 
 /// コーパスを形態素解析機でトーカナイズする
@@ -300,6 +305,13 @@ struct DumpBigramDictArgs {
     bigram_file: String,
 }
 
+/// モデルファイルのメタデータを表示する
+#[derive(Debug, clap::Args)]
+struct ModelInfoArgs {
+    /// モデルファイルのパス（.model または SKK-JISYO.*）
+    file: String,
+}
+
 /// wordcnt skip-bigram trie を skip_bigram.model に変換する
 #[derive(Debug, clap::Args)]
 struct ConvertSkipBigramModelArgs {
@@ -433,5 +445,6 @@ fn main() -> anyhow::Result<()> {
             opt.dst_unigram_model.as_str(),
             opt.dst.as_str(),
         ),
+        Commands::ModelInfo(opt) => model_info(opt.file.as_str()),
     }
 }

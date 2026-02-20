@@ -9,6 +9,7 @@ pub mod make_dict;
 pub mod make_stats_system_bigram_lm;
 pub mod make_stats_system_skip_bigram_lm;
 pub mod make_stats_system_unigram_lm;
+pub mod model_info;
 pub mod tokenize;
 pub mod tokenize_line;
 pub mod vocab;

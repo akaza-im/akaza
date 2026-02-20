@@ -7,6 +7,7 @@ use rsmarisa::{Agent, Keyset, Trie};
 
 use crate::cost::calc_cost;
 use crate::lm::base::SystemUnigramLM;
+use crate::lm::model_metadata::{add_metadata_to_keyset, read_metadata_from_trie, ModelMetadata};
 
 /*
    {word} # in utf-8
@@ -25,6 +26,7 @@ const TOTAL_WORDS_KEY: &str = "__TOTAL_WORDS__";
 #[derive(Default)]
 pub struct MarisaSystemUnigramLMBuilder {
     data: Vec<(String, f32)>,
+    metadata: ModelMetadata,
 }
 
 impl MarisaSystemUnigramLMBuilder {
@@ -59,8 +61,14 @@ impl MarisaSystemUnigramLMBuilder {
         self
     }
 
+    pub fn set_metadata(&mut self, metadata: ModelMetadata) -> &mut Self {
+        self.metadata = metadata;
+        self
+    }
+
     pub fn save(&mut self, fname: &str) -> Result<()> {
         let mut keyset = self.keyset()?;
+        add_metadata_to_keyset(&mut keyset, &self.metadata);
         let mut trie = Trie::new();
         trie.build(&mut keyset, 0);
         trie.save(fname)?;
@@ -97,6 +105,10 @@ pub struct MarisaSystemUnigramLM {
 impl MarisaSystemUnigramLM {
     pub fn num_keys(&self) -> usize {
         self.trie.num_keys()
+    }
+
+    pub fn metadata(&self) -> ModelMetadata {
+        read_metadata_from_trie(&self.trie)
     }
 
     pub fn load(fname: &str) -> Result<MarisaSystemUnigramLM> {

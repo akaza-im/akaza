@@ -29,7 +29,7 @@ mod system_dict {
 
     use libakaza::corpus::read_corpus_file;
     use libakaza::dict::skk::read::read_skkdict;
-    use libakaza::dict::skk::write::write_skk_dict;
+    use libakaza::dict::skk::write::write_skk_dict_with_header;
 
     use super::*;
 
@@ -68,7 +68,13 @@ mod system_dict {
             validate_dict(make_unidic_dict(unidic_file)?)
                 .with_context(|| "make_corpus_dict".to_string())?,
         );
-        write_skk_dict(txt_file, dicts)?;
+        let now = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+        let version = env!("CARGO_PKG_VERSION");
+        let header_comments = vec![
+            format!("AKAZA_DATA_VERSION: {version}"),
+            format!("BUILD_TIMESTAMP: {now}"),
+        ];
+        write_skk_dict_with_header(txt_file, dicts, &header_comments)?;
         copy_snapshot(Path::new(txt_file))?;
         post_validate(txt_file)?;
         Ok(())

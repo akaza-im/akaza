@@ -10,10 +10,21 @@ pub fn write_skk_dict(
     ofname: &str,
     dicts: Vec<HashMap<String, Vec<String>>>,
 ) -> anyhow::Result<()> {
+    write_skk_dict_with_header(ofname, dicts, &[])
+}
+
+pub fn write_skk_dict_with_header(
+    ofname: &str,
+    dicts: Vec<HashMap<String, Vec<String>>>,
+    header_comments: &[String],
+) -> anyhow::Result<()> {
     info!("Writing {}", ofname);
     let merged_dict = merge_dict(dicts);
     {
         let mut wfp = File::create(ofname)?;
+        for comment in header_comments {
+            wfp.write_fmt(format_args!(";; {comment}\n"))?;
+        }
         wfp.write_all(";; okuri-ari entries.\n".as_bytes())?;
         wfp.write_all(";; okuri-nasi entries.\n".as_bytes())?;
         let mut keys = merged_dict.keys().collect::<Vec<_>>();
