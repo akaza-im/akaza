@@ -118,6 +118,12 @@ impl MarisaSystemBigramLM {
         self.trie.num_keys()
     }
 
+    /// bigram に (word_id1, word_id2) のエントリが含まれているか検索する。
+    /// @return Some(score) if found, None otherwise.
+    pub fn lookup(&self, word_id1: i32, word_id2: i32) -> Option<f32> {
+        self.get_edge_cost(word_id1, word_id2)
+    }
+
     pub fn metadata(&self) -> ModelMetadata {
         read_metadata_from_trie(&self.trie)
     }
