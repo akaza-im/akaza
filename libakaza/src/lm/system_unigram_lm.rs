@@ -107,6 +107,13 @@ impl MarisaSystemUnigramLM {
         self.trie.num_keys()
     }
 
+    /// unigram に word が含まれているか検索する。
+    /// word は "surface/yomi" の形式。
+    /// @return Some((word_id, score)) if found, None otherwise.
+    pub fn lookup(&self, word: &str) -> Option<(i32, f32)> {
+        self.find(word)
+    }
+
     pub fn metadata(&self) -> ModelMetadata {
         read_metadata_from_trie(&self.trie)
     }
