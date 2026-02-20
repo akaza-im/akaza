@@ -95,6 +95,15 @@ mod system_dict {
                     .to_string(),
             );
         }
+        // 読みが通常のひらがな (ぁ-ゔ) で始まらないエントリはかな漢字変換辞書として無意味なので除外
+        let dicts = dicts
+            .into_iter()
+            .map(|dict| {
+                dict.into_iter()
+                    .filter(|(yomi, _)| yomi.starts_with(|c: char| is_hiragana(c)))
+                    .collect()
+            })
+            .collect();
         write_skk_dict_with_header(txt_file, dicts, &header_comments)?;
         copy_snapshot(Path::new(txt_file))?;
         post_validate(txt_file)?;
@@ -251,6 +260,16 @@ mod system_dict {
                     continue;
                 }
 
+                // 表層形に日本語文字（ひらがな・カタカナ・漢字）を含まないものはスキップ
+                if !surface.chars().any(|c| {
+                    is_hiragana(c)
+                        || ('\u{30A0}'..='\u{30FF}').contains(&c)
+                        || ('\u{4E00}'..='\u{9FFF}').contains(&c)
+                        || ('\u{3400}'..='\u{4DBF}').contains(&c)
+                }) {
+                    continue;
+                }
+
                 let yomi = crate::tokenizer::base::kata2hira_string(yomi_kata);
                 if yomi.is_empty() {
                     continue;
@@ -263,6 +282,12 @@ mod system_dict {
         let dict = grouping_words(words);
         info!("Got {} entries from Sudachi dictionaries", dict.len());
         Ok(dict)
+    }
+
+    /// 通常のひらがな文字 (ぁ〜ゔ) かどうか判定する。
+    /// 濁点・半濁点記号 (U+3099-U+309C) 等の特殊文字は除外。
+    fn is_hiragana(c: char) -> bool {
+        ('\u{3041}'..='\u{3094}').contains(&c)
     }
 }
 
