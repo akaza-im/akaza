@@ -7,3 +7,4 @@ datetime	commit	branch	corpus_stats	good	top5	bad	recall
 2026-02-17 10:08	d3a5dbbe	main	v2026.0216.0	6728	345	3992	93.19349
 2026-02-18 17:57	f5b80ec9	fix/counter-bare-kanji-lm-fallback	v2026.0216.0	6728	345	3992	93.19349
 2026-02-20 15:41	97d45752	sync-cargo-version-on-release	v2026.0216.0	6728	345	3992	93.19349
+2026-02-20 16:17	949361cc	main	v2026.0216.0	6728	345	3992	93.19349
