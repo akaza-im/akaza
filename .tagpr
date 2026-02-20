@@ -59,3 +59,4 @@
 	releaseBranch = main
 	versionFile = -
 	calendarVersioning = true
+	command = scripts/update-cargo-versions.sh
