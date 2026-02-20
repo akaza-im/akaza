@@ -5,6 +5,7 @@ use log::trace;
 use rsmarisa::{Agent, Keyset, Trie};
 
 use crate::kana_kanji::base::KanaKanjiDict;
+use crate::lm::model_metadata::{add_metadata_to_keyset, read_metadata_from_trie, ModelMetadata};
 
 pub struct MarisaKanaKanjiDict {
     trie: Trie,
@@ -31,6 +32,23 @@ impl MarisaKanaKanjiDict {
         let mut trie = Trie::new();
         trie.build(&mut keyset, 0);
         Ok(MarisaKanaKanjiDict { trie })
+    }
+
+    pub fn build_with_metadata(
+        dict: HashMap<String, Vec<String>>,
+        path: &str,
+        metadata: &ModelMetadata,
+    ) -> anyhow::Result<MarisaKanaKanjiDict> {
+        let mut keyset = Self::build_keyset(dict);
+        add_metadata_to_keyset(&mut keyset, metadata);
+        let mut trie = Trie::new();
+        trie.build(&mut keyset, 0);
+        trie.save(path)?;
+        Ok(MarisaKanaKanjiDict { trie })
+    }
+
+    pub fn metadata(&self) -> ModelMetadata {
+        read_metadata_from_trie(&self.trie)
     }
 
     pub fn build_keyset(dict: HashMap<String, Vec<String>>) -> Keyset {
@@ -68,7 +86,10 @@ impl MarisaKanaKanjiDict {
 
         while self.trie.predictive_search(&mut agent) {
             let word = agent.key().as_bytes();
-            if !word.starts_with(b"__CACHE_SERIALIZED__\t") {
+            if !word.starts_with(b"__CACHE_SERIALIZED__\t")
+                && !word.starts_with(b"__BUILD_TIMESTAMP__\t")
+                && !word.starts_with(b"__AKAZA_DATA_VERSION__\t")
+            {
                 if let Some(idx) = word.iter().position(|f| *f == b'\t') {
                     yomis.push(String::from_utf8_lossy(&word[0..idx]).to_string());
                 }

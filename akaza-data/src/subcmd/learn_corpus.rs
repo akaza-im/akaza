@@ -19,6 +19,7 @@ use libakaza::graph::word_node::{BOS_TOKEN_KEY, EOS_TOKEN_KEY};
 use libakaza::kana_kanji::hashmap_vec::HashmapVecKanaKanjiDict;
 use libakaza::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 use libakaza::lm::base::{SystemBigramLM, SystemSkipBigramLM, SystemUnigramLM};
+use libakaza::lm::model_metadata::ModelMetadata;
 use libakaza::lm::on_memory::on_memory_system_bigram_lm::OnMemorySystemBigramLM;
 use libakaza::lm::on_memory::on_memory_system_skip_bigram_lm::OnMemorySystemSkipBigramLM;
 use libakaza::lm::on_memory::on_memory_system_unigram_lm::OnMemorySystemUnigramLM;
@@ -261,6 +262,7 @@ impl LearningService {
     }
 
     pub fn save_unigram(&self, dst_unigram: &str) -> anyhow::Result<()> {
+        let metadata = ModelMetadata::now(env!("CARGO_PKG_VERSION"));
         // unigram
         let mut unigram_builder = MarisaSystemUnigramLMBuilder::default();
         for (key, (_, cost)) in self.system_unigram_lm.as_hash_map() {
@@ -270,6 +272,7 @@ impl LearningService {
         // TODO あとで整理する
         unigram_builder.set_unique_words(self.system_unigram_lm.unique_words);
         unigram_builder.set_total_words(self.system_unigram_lm.total_words);
+        unigram_builder.set_metadata(metadata);
         info!("Save unigram to {}", dst_unigram);
         unigram_builder.save(dst_unigram)?;
         Ok(())
@@ -280,8 +283,10 @@ impl LearningService {
             return Ok(());
         };
 
+        let metadata = ModelMetadata::now(env!("CARGO_PKG_VERSION"));
         let new_unigram = MarisaSystemUnigramLM::load(dst_unigram)?;
         let mut builder = MarisaSystemSkipBigramLMBuilder::default();
+        builder.set_metadata(metadata);
         let srcmap = self.system_unigram_lm.as_hash_map();
         let src_wordid2key = srcmap
             .iter()
@@ -311,9 +316,11 @@ impl LearningService {
     }
 
     pub fn save_bigram(&self, dst_unigram: &str, dst_bigram: &str) -> anyhow::Result<()> {
+        let metadata = ModelMetadata::now(env!("CARGO_PKG_VERSION"));
         // bigram の保存
         let new_unigram = MarisaSystemUnigramLM::load(dst_unigram)?;
         let mut bigram_builder = MarisaSystemBigramLMBuilder::default();
+        bigram_builder.set_metadata(metadata);
         let srcmap = self.system_unigram_lm.as_hash_map();
         let src_wordid2key = srcmap
             .iter()

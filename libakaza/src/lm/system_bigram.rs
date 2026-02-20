@@ -7,6 +7,7 @@ use log::{info, warn};
 use rsmarisa::{Agent, Keyset, Trie};
 
 use crate::lm::base::SystemBigramLM;
+use crate::lm::model_metadata::{add_metadata_to_keyset, read_metadata_from_trie, ModelMetadata};
 
 /*
    {word1 ID}    # 3 bytes
@@ -22,12 +23,14 @@ const DEFAULT_COST_KEY: &str = "__DEFAULT_EDGE_COST__";
  */
 pub struct MarisaSystemBigramLMBuilder {
     keyset: Keyset,
+    metadata: ModelMetadata,
 }
 
 impl Default for MarisaSystemBigramLMBuilder {
     fn default() -> Self {
         Self {
             keyset: Keyset::new(),
+            metadata: ModelMetadata::default(),
         }
     }
 }
@@ -69,7 +72,13 @@ impl MarisaSystemBigramLMBuilder {
         self
     }
 
+    pub fn set_metadata(&mut self, metadata: ModelMetadata) -> &mut Self {
+        self.metadata = metadata;
+        self
+    }
+
     pub fn build(&mut self) -> Result<MarisaSystemBigramLM> {
+        add_metadata_to_keyset(&mut self.keyset, &self.metadata);
         let mut trie = Trie::new();
         trie.build(&mut self.keyset, 0);
         let default_edge_cost = MarisaSystemBigramLM::read_default_edge_cost(&trie)?;
@@ -80,6 +89,7 @@ impl MarisaSystemBigramLMBuilder {
     }
 
     pub fn save(&mut self, ofname: &str) -> Result<()> {
+        add_metadata_to_keyset(&mut self.keyset, &self.metadata);
         let mut trie = Trie::new();
         trie.build(&mut self.keyset, 0);
         trie.save(ofname)?;
@@ -106,6 +116,10 @@ impl MarisaSystemBigramLM {
 
     pub fn num_keys(&self) -> usize {
         self.trie.num_keys()
+    }
+
+    pub fn metadata(&self) -> ModelMetadata {
+        read_metadata_from_trie(&self.trie)
     }
 
     fn read_default_edge_cost(trie: &Trie) -> Result<f32> {

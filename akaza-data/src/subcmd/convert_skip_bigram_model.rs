@@ -4,6 +4,7 @@ use rustc_hash::FxHashMap;
 
 use libakaza::cost::calc_cost;
 use libakaza::lm::base::SystemUnigramLM;
+use libakaza::lm::model_metadata::ModelMetadata;
 use libakaza::lm::system_skip_bigram::MarisaSystemSkipBigramLMBuilder;
 use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
 
@@ -48,6 +49,7 @@ pub fn convert_skip_bigram_model(
 
     // 4. 旧 word_id → 新 word_id にマッピングしながらモデルを構築
     let mut builder = MarisaSystemSkipBigramLMBuilder::default();
+    builder.set_metadata(ModelMetadata::now(env!("CARGO_PKG_VERSION")));
     let mut mapped = 0_usize;
     let mut skipped = 0_usize;
 
