@@ -225,7 +225,7 @@ mod system_dict {
             for line in BufReader::new(file).lines() {
                 let line = line?;
                 let csv: Vec<&str> = line.split(',').collect();
-                if csv.len() < 12 {
+                if csv.len() < 13 {
                     trace!("Sudachi: incomplete line: {:?}", line);
                     continue;
                 }
@@ -239,7 +239,7 @@ mod system_dict {
                     continue;
                 }
 
-                let surface = csv[4]; // 表示用表層形
+                let surface = csv[12]; // 表記形（表示用表層形）
                 let yomi_kata = csv[11]; // 読み（カタカナ）
 
                 if surface.is_empty() || yomi_kata.is_empty() {
