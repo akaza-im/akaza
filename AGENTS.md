@@ -2,6 +2,8 @@
 
 このファイルには、Claude Code を使用してこのプロジェクトを開発する際のガイドラインを記載します。
 
+**注意**: `CLAUDE.md` は `AGENTS.md` への symlink です。実体は `AGENTS.md` にあるので、編集時は `AGENTS.md` を変更してください。
+
 ## コミット前のチェックリスト
 
 ### 必須: コードフォーマット
@@ -231,7 +233,7 @@ Three tiers with different training epoch counts:
 
 Words in corpus files are automatically registered in the system dictionary. Delta parameter (2000) controls corpus influence strength.
 
-**重要**: コーパスの単語境界は vibrato (ipadic) のトークナイズ結果に合わせること。ただし読みは vibrato の出力を鵜呑みにせず、文脈に合った正しい読みを書くこと。vibrato は「行って」を「おこなって」、「日本」を「にっぽん」と読むなど、文脈を無視した読みを返すことがある。`default-model/scripts/tokenize-line.sh` で単語境界を確認し、読みは自分で正しく付ける。
+**重要**: コーパスの単語境界は vibrato (ipadic) のトークナイズ結果に合わせること。ただし読みは vibrato の出力を鵜呑みにせず、文脈に合った正しい読みを書くこと。vibrato は「行って」を「おこなって」、「日本」を「にっぽん」と読むなど、文脈を無視した読みを返すことがある。`default-model/scripts/tokenize-line.sh` で単語境界を確認し、読みは自分で正しく付ける。vibrato の辞書は `default-model/work/vibrato/ipadic-mecab-2_7_0/system.dic` にある（`make -C default-model` 実行後に生成される）。
 
 **重要**: bigram モデルは BOS（文頭）・EOS（文末）をトークンとして使用するため、コーパスには原則として完全な文を追加すること。
 
