@@ -1,5 +1,8 @@
 # Changelog
 
+## [v2026.220.1](https://github.com/akaza-im/akaza/compare/v2026.220.0...v2026.220.1) - 2026-02-20
+- feat: tagpr リリース時に Cargo.toml のバージョンを自動更新 by @tokuhirom in https://github.com/akaza-im/akaza/pull/489
+
 ## [v2026.220.0](https://github.com/akaza-im/akaza/compare/v2026.218.1...v2026.220.0) - 2026-02-20
 - feat: モデルファイルにバージョン情報を埋め込む by @tokuhirom in https://github.com/akaza-im/akaza/pull/487
 
