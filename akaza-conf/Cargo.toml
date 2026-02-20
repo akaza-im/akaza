@@ -1,6 +1,6 @@
 [package]
 name = "akaza-conf"
-version = "2026.220.1"
+version = "2026.220.2"
 edition = "2021"
 license = "MIT"
 
