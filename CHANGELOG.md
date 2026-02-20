@@ -1,5 +1,8 @@
 # Changelog
 
+## [v2026.220.0](https://github.com/akaza-im/akaza/compare/v2026.218.1...v2026.220.0) - 2026-02-20
+- feat: モデルファイルにバージョン情報を埋め込む by @tokuhirom in https://github.com/akaza-im/akaza/pull/487
+
 ## [v2026.218.1](https://github.com/akaza-im/akaza/compare/v2026.218.0...v2026.218.1) - 2026-02-18
 - fix: install-model のダウンロード元をモノレポに修正しタグを固定 by @tokuhirom in https://github.com/akaza-im/akaza/pull/481
 - fix: 助数詞単漢字の LM スコアフォールバックを追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/483
