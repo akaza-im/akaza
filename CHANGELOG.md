@@ -1,5 +1,11 @@
 # Changelog
 
+## [v2026.220.3](https://github.com/akaza-im/akaza/compare/v2026.220.2...v2026.220.3) - 2026-02-20
+- 「他責」を辞書・コーパスに追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/494
+- 「あらいだそう」→「洗い出そう」の変換を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/496
+- feat: Sudachi 辞書から固有名詞を SKK-JISYO.akaza に統合 by @tokuhirom in https://github.com/akaza-im/akaza/pull/497
+- fix: 辞書エントリのクリーンアップフィルタを追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/498
+
 ## [v2026.220.2](https://github.com/akaza-im/akaza/compare/v2026.220.1...v2026.220.2) - 2026-02-20
 - Add pub lookup methods to unigram and bigram LM by @tokuhirom in https://github.com/akaza-im/akaza/pull/492
 
