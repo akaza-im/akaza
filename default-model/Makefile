@@ -4,6 +4,7 @@ DESTDIR ?=
 MODELDIR ?= $(DESTDIR)$(DATADIR)/akaza/model/default/
 
 CORPUS_STATS_VERSION ?= v2026.0216.0
+SUDACHI_VERSION ?= 20260116
 
 # ローカルビルドの akaza-data を優先的に使う
 export PATH := $(CURDIR)/../target/release:$(PATH)
@@ -80,11 +81,24 @@ data/unigram.model: data/bigram.model
 data/skip_bigram.model: data/bigram.model
 
 # -------------------------------------------------------------------------
+#  Sudachi 辞書ダウンロード（固有名詞の取り込み用）
+# -------------------------------------------------------------------------
+
+work/sudachi/notcore_lex.csv: | work/sudachi
+	wget -O work/sudachi/notcore_lex.zip \
+		http://sudachi.s3-website-ap-northeast-1.amazonaws.com/sudachidict-raw/$(SUDACHI_VERSION)/notcore_lex.zip
+	unzip -o work/sudachi/notcore_lex.zip -d work/sudachi/
+	rm work/sudachi/notcore_lex.zip
+
+work/sudachi:
+	mkdir -p work/sudachi
+
+# -------------------------------------------------------------------------
 
 # システム辞書の構築。dict/SKK-JISYO.akaza、コーパスに書かれている語彙および work/vibrato-ipadic.vocab にある語彙。
 # から、SKK-JISYO.L に含まれる語彙を除いたものが登録されている。
 
-data/SKK-JISYO.akaza: work/corpus-stats/_SUCCESS dict/SKK-JISYO.akaza training-corpus/must.txt training-corpus/should.txt training-corpus/may.txt work/unidic/lex_3_1.csv
+data/SKK-JISYO.akaza: work/corpus-stats/_SUCCESS dict/SKK-JISYO.akaza training-corpus/must.txt training-corpus/should.txt training-corpus/may.txt work/unidic/lex_3_1.csv work/sudachi/notcore_lex.csv
 	mkdir -p data
 	akaza-data make-dict \
 		--corpus training-corpus/must.txt \
@@ -92,6 +106,7 @@ data/SKK-JISYO.akaza: work/corpus-stats/_SUCCESS dict/SKK-JISYO.akaza training-c
 		--corpus training-corpus/may.txt \
 		--unidic work/unidic/lex_3_1.csv \
 		--vocab work/vibrato-ipadic.vocab \
+		--sudachi-lex work/sudachi/notcore_lex.csv \
 		data/SKK-JISYO.akaza \
 		-vvv
 
