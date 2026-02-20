@@ -1,5 +1,8 @@
 # Changelog
 
+## [v2026.220.2](https://github.com/akaza-im/akaza/compare/v2026.220.1...v2026.220.2) - 2026-02-20
+- Add pub lookup methods to unigram and bigram LM by @tokuhirom in https://github.com/akaza-im/akaza/pull/492
+
 ## [v2026.220.1](https://github.com/akaza-im/akaza/compare/v2026.220.0...v2026.220.1) - 2026-02-20
 - feat: tagpr リリース時に Cargo.toml のバージョンを自動更新 by @tokuhirom in https://github.com/akaza-im/akaza/pull/489
 
