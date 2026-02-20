@@ -143,6 +143,9 @@ struct MakeDictArgs {
     unidic: String,
     #[arg(long)]
     vocab: String,
+    /// Sudachi 辞書 CSV ファイル（固有名詞の取り込み用、複数指定可能）
+    #[arg(long)]
+    sudachi_lex: Vec<String>,
     /// デバッグのための中間テキストファイル
     txt_file: String,
 }
@@ -366,6 +369,7 @@ fn main() -> anyhow::Result<()> {
             Some(opt.vocab.as_str()),
             opt.corpus,
             opt.unidic,
+            opt.sudachi_lex,
         ),
         Commands::WordcntBigram(opt) => make_stats_system_bigram_lm(
             opt.threshold,

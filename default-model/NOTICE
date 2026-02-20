@@ -1,0 +1,35 @@
+akaza-default-model — Data Source Notice
+========================================
+
+This model contains data derived from the following sources:
+
+
+1. SKK-JISYO.L
+---------------
+Source: https://skk-dev.github.io/dict/
+License: GPL-2.0
+
+
+2. UniDic
+---------
+Source: https://clrd.ninjal.ac.jp/unidic/
+License: BSD-3-Clause / GPL-2.0 dual license
+
+
+3. akaza-corpus-stats
+---------------------
+Source: https://github.com/akaza-im/akaza-corpus-stats
+See corpus-stats/NOTICE for upstream data source details.
+
+
+4. Sudachi Dictionary
+---------------------
+Source: https://github.com/WorksApplications/SudachiDict
+License: Apache License, Version 2.0
+         https://www.apache.org/licenses/LICENSE-2.0
+Copyright: WAQ LLC (Works Applications Co., Ltd.)
+
+The notcore_lex data from SudachiDict is used to supplement proper noun
+entries (名詞-固有名詞-一般) in the system dictionary. Only general
+proper nouns (corporate names, brand names, etc.) are included; personal
+names and place names are excluded.

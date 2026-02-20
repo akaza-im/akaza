@@ -15,8 +15,15 @@ pub fn make_system_dict(
     vocab_file_path: Option<&str>,
     corpus_files: Vec<String>,
     unidic_file: String,
+    sudachi_lex_files: Vec<String>,
 ) -> Result<()> {
-    system_dict::make_system_dict(txt_file, vocab_file_path, corpus_files, unidic_file)?;
+    system_dict::make_system_dict(
+        txt_file,
+        vocab_file_path,
+        corpus_files,
+        unidic_file,
+        sudachi_lex_files,
+    )?;
     Ok(())
 }
 
@@ -38,6 +45,7 @@ mod system_dict {
         vocab_file_path: Option<&str>,
         corpus_files: Vec<String>,
         unidic_file: String,
+        sudachi_lex_files: Vec<String>,
     ) -> Result<()> {
         // vocab, corpus, dict/SKK-JISYO.akaza から辞書を生成する
         let mut dicts = Vec::new();
@@ -66,14 +74,27 @@ mod system_dict {
         // unidic からも語彙を追加する
         dicts.push(
             validate_dict(make_unidic_dict(unidic_file)?)
-                .with_context(|| "make_corpus_dict".to_string())?,
+                .with_context(|| "make_unidic_dict".to_string())?,
         );
+        // Sudachi 辞書から固有名詞を追加する（最低優先度）
+        if !sudachi_lex_files.is_empty() {
+            dicts.push(
+                validate_dict(make_sudachi_dict(&sudachi_lex_files)?)
+                    .with_context(|| "make_sudachi_dict".to_string())?,
+            );
+        }
         let now = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
         let version = env!("CARGO_PKG_VERSION");
-        let header_comments = vec![
+        let mut header_comments = vec![
             format!("AKAZA_DATA_VERSION: {version}"),
             format!("BUILD_TIMESTAMP: {now}"),
         ];
+        if !sudachi_lex_files.is_empty() {
+            header_comments.push(
+                "Contains proper noun data from Sudachi dictionary (Apache-2.0, WAQ LLC)"
+                    .to_string(),
+            );
+        }
         write_skk_dict_with_header(txt_file, dicts, &header_comments)?;
         copy_snapshot(Path::new(txt_file))?;
         post_validate(txt_file)?;
@@ -190,6 +211,57 @@ mod system_dict {
             }
         }
         info!("Got {} entries from unidic", dict.len());
+        Ok(dict)
+    }
+
+    /// Sudachi 辞書 CSV から固有名詞（名詞-固有名詞-一般）を読み込む。
+    /// 人名・地名は同音異義語の衝突リスクがあるため除外する。
+    fn make_sudachi_dict(paths: &[String]) -> Result<HashMap<String, Vec<String>>> {
+        let mut words: Vec<(String, String)> = Vec::new();
+
+        for path in paths {
+            let file = File::open(path)
+                .with_context(|| format!("Failed to open Sudachi lex file: {}", path))?;
+            for line in BufReader::new(file).lines() {
+                let line = line?;
+                let csv: Vec<&str> = line.split(',').collect();
+                if csv.len() < 12 {
+                    trace!("Sudachi: incomplete line: {:?}", line);
+                    continue;
+                }
+
+                let pos1 = csv[5]; // 品詞大分類
+                let pos2 = csv[6]; // 品詞中分類
+                let pos3 = csv[7]; // 品詞小分類
+
+                // 名詞-固有名詞-一般 のみ取り込む
+                if pos1 != "名詞" || pos2 != "固有名詞" || pos3 != "一般" {
+                    continue;
+                }
+
+                let surface = csv[4]; // 表示用表層形
+                let yomi_kata = csv[11]; // 読み（カタカナ）
+
+                if surface.is_empty() || yomi_kata.is_empty() {
+                    continue;
+                }
+
+                // 全角空白を含むエントリはスキップ
+                if surface.contains('\u{3000}') || yomi_kata.contains('\u{3000}') {
+                    continue;
+                }
+
+                let yomi = crate::tokenizer::base::kata2hira_string(yomi_kata);
+                if yomi.is_empty() {
+                    continue;
+                }
+
+                words.push((yomi, surface.to_string()));
+            }
+        }
+
+        let dict = grouping_words(words);
+        info!("Got {} entries from Sudachi dictionaries", dict.len());
         Ok(dict)
     }
 }
