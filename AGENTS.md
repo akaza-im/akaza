@@ -313,6 +313,16 @@ accept.tsv に入れてはいけないもの:
   - 2.0x: `ご → 豆汁/豆油`
   - 1.5x: `ぐみ → 胡頽子`、`けら → 啄木鳥`、`しめ → 七五三`、`びん → 保栄茂`、`ふし → 五倍子`、`ぶな → 山毛欅`、`もず → 百舌鳥`
   - 1.06〜1.25x: 中黒（・）を含む企業名・新聞名（ル・マン後、アイ・オー・データ機器 等）
+- **BOS bigram の過剰学習に注意**: コーパスエントリが文頭（BOS）から始まると、`BOS→最初の単語` の bigram が epochs × delta 分だけ加算される。should.txt (100 epochs × delta 2000 = 200,000) でも bigram コストが負の値になりうる。これにより、本来低頻度の単語が文頭で最優先候補になるバグが発生する。実例: `肢体/したい 不自由/ふじゆう の/の 方/かた` により `BOS→肢体` のコストが -0.30 まで下がり、「したい」と入力すると常に「肢体」が1位になった。**対策**: 特定の bigram を強化したい場合は、その単語を文頭に置かず、前に別の単語を付けて文中に配置する（例: `重度/じゅうど の/の 肢体/したい ...`）。同じ理由で、EOS bigram（最後の単語→EOS）も文末の単語が過剰に強化されうる
+- **check コマンドのモデルパス**: `akaza-data check` はデフォルトでインストール済みモデルを読み込む。ビルドしたモデルで動作確認するには `--model-dir default-model/data` を指定すること
+- **変換結果の調査方法**: 変換がおかしい場合の調査手順:
+  1. `akaza-data check -n 5 -f json --model-dir default-model/data "よみ"` で候補とコストを確認
+  2. `akaza-data check -k 5 --model-dir default-model/data "よみ"` で k-best パスの viterbi/unigram/bigram コスト内訳を確認
+  3. `akaza-data dump-unigram-dict default-model/data/unigram.model | grep "問題の単語"` で unigram LM のエントリとコストを確認
+  4. `akaza-data dump-bigram-dict default-model/data/unigram.model default-model/data/bigram.model | grep "問題の単語"` で bigram のエントリを確認（特に `__BOS__` や `__EOS__` との組み合わせ）
+  5. wfreq の生データは `akaza-corpus-stats/work/vibrato-ipadic.wfreq` で確認可能
+- **コスト計算の仕組み**: 最終的な候補コスト = Σ(unigram node cost + bigram edge cost) の累積。unigram コストは `-log₁₀((count + α) / (total + α + unique))` で計算。bigram edge が LM にない場合はデフォルト edge cost（約14.3）が適用される。unigram が LM にない場合は `calc_cost(0, ...)` のフォールバック値（約10〜12）が適用される
+- **ひらがな候補のLM参照**: graph_builder で、ひらがな候補が SKK 辞書に登録されている場合は辞書候補パスで処理され LM スコアが参照される。辞書に未登録のひらがな候補はフォールバックパス（`word_id_and_score=None`）で処理され、LM の実際の頻度に関係なく固定の高コストが適用される
 
 ### デフォルトモデルの Release
 
