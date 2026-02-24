@@ -11,20 +11,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
-    - uses: actions/cache@v3
+    - name: Cache apt packages
+      uses: actions/cache@v4
+      id: apt-cache
+      with:
+        path: ~/apt-cache
+        key: ${{ runner.os }}-apt-lint-v1
+    - name: Install dependencies
+      run: |
+        if [ -d ~/apt-cache ]; then
+          sudo cp ~/apt-cache/*.deb /var/cache/apt/archives/ 2>/dev/null || true
+        fi
+        sudo apt-get update
+        sudo apt-get install -y ibus libgirepository1.0-dev libmarisa-dev clang libibus-1.0-dev unzip libgtk-4-dev
+        mkdir -p ~/apt-cache
+        cp /var/cache/apt/archives/*.deb ~/apt-cache/ 2>/dev/null || true
+    - uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
           target
         key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.lock') }}
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install ibus libgirepository1.0-dev libmarisa-dev clang libibus-1.0-dev unzip libgtk-4-dev
     - name: make some configuration files for ibus-akaza
       run: |
         cd ibus-akaza/ && make akaza.xml config.h
@@ -56,23 +67,34 @@ jobs:
       DBUS_SESSION_BUS_ADDRESS: "unix:path=/tmp/dbus-test-session"
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
-    - uses: actions/cache@v3
+    - name: Cache apt packages
+      uses: actions/cache@v4
+      id: apt-cache
+      with:
+        path: ~/apt-cache
+        key: ${{ runner.os }}-apt-test-v1
+    - name: Install dependencies
+      run: |
+        if [ -d ~/apt-cache ]; then
+          sudo cp ~/apt-cache/*.deb /var/cache/apt/archives/ 2>/dev/null || true
+        fi
+        sudo apt-get update
+        sudo apt-get install -y \
+          xvfb xdotool dbus-x11 at-spi2-core \
+          ibus libibus-1.0-dev libgtk-4-dev \
+          libgirepository1.0-dev libmarisa-dev clang unzip zstd
+        mkdir -p ~/apt-cache
+        cp /var/cache/apt/archives/*.deb ~/apt-cache/ 2>/dev/null || true
+    - uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
           target
         key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          xvfb xdotool dbus-x11 at-spi2-core \
-          ibus libibus-1.0-dev libgtk-4-dev \
-          libgirepository1.0-dev libmarisa-dev clang unzip zstd
     - name: Start Xvfb
       run: |
         Xvfb :99 -screen 0 1024x768x24 &
