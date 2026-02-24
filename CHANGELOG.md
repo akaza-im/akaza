@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2026.224.0](https://github.com/akaza-im/akaza/compare/v2026.220.3...v2026.224.0) - 2026-02-24
+- fix: 「したい」→「肢体」の誤変換を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/499
+- ci: apt パッケージキャッシュで CI を高速化 by @tokuhirom in https://github.com/akaza-im/akaza/pull/501
+- fix: 「さい」→「賽」の誤変換を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/502
+
 ## [v2026.220.3](https://github.com/akaza-im/akaza/compare/v2026.220.2...v2026.220.3) - 2026-02-20
 - 「他責」を辞書・コーパスに追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/494
 - 「あらいだそう」→「洗い出そう」の変換を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/496
