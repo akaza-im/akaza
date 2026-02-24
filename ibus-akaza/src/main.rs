@@ -27,6 +27,10 @@ unsafe extern "C" fn process_key_event(
     keycode: guint,
     modifiers: guint,
 ) -> bool {
+    if context.is_null() {
+        error!("process_key_event: context is null");
+        return false;
+    }
     let context_ref = &mut *(context as *mut AkazaContext);
     context_ref.process_key_event(engine, keyval, keycode, modifiers)
 }
@@ -38,11 +42,19 @@ unsafe extern "C" fn candidate_clicked(
     button: guint,
     state: guint,
 ) {
+    if context.is_null() {
+        error!("candidate_clicked: context is null");
+        return;
+    }
     let context_ref = &mut *(context as *mut AkazaContext);
     context_ref.do_candidate_clicked(engine, index, button, state);
 }
 
 unsafe extern "C" fn focus_in(context: *mut c_void, engine: *mut IBusEngine) {
+    if context.is_null() {
+        error!("focus_in: context is null");
+        return;
+    }
     let context_ref = &mut *(context as *mut AkazaContext);
     context_ref.do_focus_in(engine);
 }
@@ -53,6 +65,14 @@ unsafe extern "C" fn property_activate(
     prop_name: *mut gchar,
     prop_state: guint,
 ) {
+    if context.is_null() {
+        error!("property_activate: context is null");
+        return;
+    }
+    if prop_name.is_null() {
+        error!("property_activate: prop_name is null");
+        return;
+    }
     let prop_name_str = CStr::from_ptr(prop_name as *mut c_char)
         .to_string_lossy()
         .to_string();
