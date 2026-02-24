@@ -144,6 +144,11 @@ pub fn evaluate(
 
     let total_t1 = SystemTime::now();
 
+    if lines.is_empty() {
+        log::warn!("No evaluation lines found in corpus files. Skipping evaluation.");
+        return Ok(());
+    }
+
     let num_threads = std::thread::available_parallelism()
         .map(|n| n.get())
         .unwrap_or(1);
