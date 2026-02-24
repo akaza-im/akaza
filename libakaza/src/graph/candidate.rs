@@ -16,7 +16,7 @@ impl Eq for Candidate {}
 
 impl Ord for Candidate {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.cost.partial_cmp(&other.cost).unwrap()
+        self.cost.total_cmp(&other.cost)
     }
 }
 
