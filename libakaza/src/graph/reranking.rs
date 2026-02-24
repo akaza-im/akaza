@@ -38,7 +38,7 @@ impl ReRankingWeights {
                 + self.length_weight * path.token_count as f32
                 + self.skip_bigram_weight * path.skip_bigram_cost;
         }
-        paths.sort_by(|a, b| a.rerank_cost.partial_cmp(&b.rerank_cost).unwrap());
+        paths.sort_by(|a, b| a.rerank_cost.total_cmp(&b.rerank_cost));
     }
 
     /// デフォルト重みかどうか
