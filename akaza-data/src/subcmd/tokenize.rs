@@ -2,7 +2,7 @@ use std::fs;
 use std::path::Path;
 
 use anyhow::bail;
-use log::info;
+use log::{error, info};
 use rayon::prelude::*;
 use walkdir::WalkDir;
 
@@ -25,44 +25,65 @@ pub fn tokenize(
     let tokenizer = VibratoTokenizer::new(system_dict.as_str(), user_dict)?;
     let file_list = get_file_list(Path::new(src_dir), Path::new(dst_dir))?;
 
-    match reader.as_str() {
+    let errors: Vec<(String, anyhow::Error)> = match reader.as_str() {
         "jawiki" => {
             let processor = ExtractedWikipediaProcessor::new()?;
-            let result = file_list
+            file_list
                 .par_iter()
                 .map(|(src, dst)| {
                     info!("GOT: {:?} {:?}", src, dst);
-                    processor.process_file(
+                    let result = processor.process_file(
                         Path::new(src),
                         Path::new(dst),
                         &mut (|f| tokenizer.tokenize(f, kana_preferred)),
-                    )
+                    );
+                    (src.clone(), result)
                 })
-                .collect::<Vec<_>>();
-
-            for r in result {
-                r.unwrap();
-            }
+                .collect::<Vec<_>>()
+                .into_iter()
+                .filter_map(|(src, result)| match result {
+                    Ok(()) => None,
+                    Err(e) => {
+                        error!("Failed to tokenize {}: {:#}", src, e);
+                        Some((src, e))
+                    }
+                })
+                .collect()
         }
         "aozora_bunko" => {
             let processor = AozoraBunkoProcessor::new()?;
-            let result = file_list
+            file_list
                 .par_iter()
                 .map(|(src, dst)| {
                     info!("GOT: {:?} {:?}", src, dst);
-                    processor.process_file(
+                    let result = processor.process_file(
                         Path::new(src),
                         Path::new(dst),
                         &mut (|f| tokenizer.tokenize(f, kana_preferred)),
-                    )
+                    );
+                    (src.clone(), result)
                 })
-                .collect::<Vec<_>>();
-
-            for r in result {
-                r.unwrap();
-            }
+                .collect::<Vec<_>>()
+                .into_iter()
+                .filter_map(|(src, result)| match result {
+                    Ok(()) => None,
+                    Err(e) => {
+                        error!("Failed to tokenize {}: {:#}", src, e);
+                        Some((src, e))
+                    }
+                })
+                .collect()
         }
         _ => bail!("Unknown reader :{}", reader),
+    };
+
+    if !errors.is_empty() {
+        let file_list: Vec<&str> = errors.iter().map(|(src, _)| src.as_str()).collect();
+        bail!(
+            "{} file(s) failed to tokenize: {}",
+            errors.len(),
+            file_list.join(", ")
+        );
     }
 
     write_success_file(Path::new(dst_dir))?;
