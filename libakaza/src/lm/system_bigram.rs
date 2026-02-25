@@ -1,4 +1,6 @@
 use std::cell::RefCell;
+use std::fs::File;
+use std::io::{BufReader, BufWriter, Read as _, Write as _};
 
 use rustc_hash::FxHashMap;
 
@@ -12,9 +14,13 @@ use crate::lm::base::SystemBigramLM;
 use crate::lm::model_metadata::{add_metadata_to_keyset, read_metadata_from_trie, ModelMetadata};
 
 /*
+   trie key:
    {word1 ID}    # 3 bytes
    {word2 ID}    # 3 bytes
-   packed float  # score: 4 bytes
+
+   scores file (separate):
+   [4B] num_entries (u32 LE)
+   [2B × num_entries] f16 scores (LE)
 */
 
 const DEFAULT_COST_KEY: &str = "__DEFAULT_EDGE_COST__";
@@ -26,6 +32,7 @@ const DEFAULT_COST_KEY: &str = "__DEFAULT_EDGE_COST__";
 pub struct MarisaSystemBigramLMBuilder {
     keyset: Keyset,
     metadata: ModelMetadata,
+    entries: Vec<(i32, i32, f32)>,
 }
 
 impl Default for MarisaSystemBigramLMBuilder {
@@ -33,39 +40,29 @@ impl Default for MarisaSystemBigramLMBuilder {
         Self {
             keyset: Keyset::new(),
             metadata: ModelMetadata::default(),
+            entries: Vec::new(),
         }
     }
 }
 
 impl MarisaSystemBigramLMBuilder {
     pub fn add(&mut self, word_id1: i32, word_id2: i32, score: f32) {
-        // edge cost 言語モデルファイルの容量を小さく保つために
-        // 3 byte に ID を収めるようにする。
-        // 最大でも 8,388,608 単語までになるように vocab を制限すること。
-        // 現実的な線で切っても、500万単語ぐらいで十分だと思われる。
-
-        // -rw-r--r-- 1 tokuhirom tokuhirom  28M Dec 31 23:56 bigram.model
-        // ↓ 1MB 節約できる。
-        // -rw-r--r-- 1 tokuhirom tokuhirom  27M Jan  1 02:05 bigram.model
-
-        // 4+4+4=12バイト必要だったところが、3+3+4=10バイトになって、10/12=5/6 なので、
-        // 本来なら 23.3 MB ぐらいまで減ってほしいところだけど、そこまではいかない。
-        // TRIE 構造だからそういう感じには減らない。
-
-        // さらに、スコアを f16 にしてみたが、あまりかわらない。
-        // -rw-r--r-- 1 tokuhirom tokuhirom  27M Jan  1 02:14 bigram.model
-
         let id1_bytes = word_id1.to_le_bytes();
         let id2_bytes = word_id2.to_le_bytes();
 
         assert_eq!(id1_bytes[3], 0);
         assert_eq!(id2_bytes[3], 0);
 
-        let mut key: Vec<u8> = Vec::new();
-        key.extend(id1_bytes[0..3].iter());
-        key.extend(id2_bytes[0..3].iter());
-        key.extend(f16::from_f32(score).to_le_bytes());
+        let key: [u8; 6] = [
+            id1_bytes[0],
+            id1_bytes[1],
+            id1_bytes[2],
+            id2_bytes[0],
+            id2_bytes[1],
+            id2_bytes[2],
+        ];
         self.keyset.push_back_bytes(&key, 1.0).unwrap();
+        self.entries.push((word_id1, word_id2, score));
     }
 
     pub fn set_default_edge_cost(&mut self, score: f32) -> &mut Self {
@@ -79,14 +76,44 @@ impl MarisaSystemBigramLMBuilder {
         self
     }
 
+    fn build_scores(trie: &Trie, entries: &[(i32, i32, f32)]) -> Vec<f16> {
+        // エントリの (id1, id2) → score マップを構築
+        let mut entry_map: FxHashMap<(i32, i32), f32> = FxHashMap::default();
+        for &(id1, id2, score) in entries {
+            entry_map.insert((id1, id2), score);
+        }
+
+        // trie の全キーを走査して key_id 順に scores を構築
+        let num_keys = trie.num_keys();
+        let mut scores = vec![f16::ZERO; num_keys];
+
+        let mut agent = Agent::new();
+        agent.set_query_str("");
+        while trie.predictive_search(&mut agent) {
+            let key_bytes = agent.key().as_bytes();
+            let key_id = agent.key().id();
+            if key_bytes.len() == 6 {
+                let word_id1 = i32::from_le_bytes([key_bytes[0], key_bytes[1], key_bytes[2], 0]);
+                let word_id2 = i32::from_le_bytes([key_bytes[3], key_bytes[4], key_bytes[5], 0]);
+                if let Some(&score) = entry_map.get(&(word_id1, word_id2)) {
+                    scores[key_id] = f16::from_f32(score);
+                }
+            }
+        }
+
+        scores
+    }
+
     pub fn build(&mut self) -> Result<MarisaSystemBigramLM> {
         add_metadata_to_keyset(&mut self.keyset, &self.metadata);
         let mut trie = Trie::new();
         trie.build(&mut self.keyset, 0);
         let default_edge_cost = MarisaSystemBigramLM::read_default_edge_cost(&trie)?;
+        let scores = Self::build_scores(&trie, &self.entries);
         Ok(MarisaSystemBigramLM {
             trie,
             default_edge_cost,
+            scores,
             agent: RefCell::new(Agent::new()),
         })
     }
@@ -96,6 +123,19 @@ impl MarisaSystemBigramLMBuilder {
         let mut trie = Trie::new();
         trie.build(&mut self.keyset, 0);
         trie.save(ofname)?;
+
+        // scores ファイルを書き出す
+        let scores = Self::build_scores(&trie, &self.entries);
+        let scores_path = format!("{ofname}.scores");
+        let mut writer = BufWriter::new(File::create(&scores_path)?);
+        let num_entries = scores.len() as u32;
+        writer.write_all(&num_entries.to_le_bytes())?;
+        for s in &scores {
+            writer.write_all(&s.to_le_bytes())?;
+        }
+        writer.flush()?;
+        info!("Saved {} score entries to {}", num_entries, scores_path);
+
         Ok(())
     }
 }
@@ -103,6 +143,7 @@ impl MarisaSystemBigramLMBuilder {
 pub struct MarisaSystemBigramLM {
     trie: Trie,
     default_edge_cost: f32,
+    scores: Vec<f16>,
     /// 検索用 Agent の再利用（毎回のアロケーションを避ける）
     agent: RefCell<Agent>,
 }
@@ -113,11 +154,32 @@ impl MarisaSystemBigramLM {
         let mut trie = Trie::new();
         trie.load(filename)?;
         let default_edge_cost = Self::read_default_edge_cost(&trie)?;
+
+        // scores ファイルを読み込む
+        let scores_path = format!("{filename}.scores");
+        let scores = Self::load_scores(&scores_path)?;
+        info!("Loaded {} score entries from {}", scores.len(), scores_path);
+
         Ok(MarisaSystemBigramLM {
             trie,
             default_edge_cost,
+            scores,
             agent: RefCell::new(Agent::new()),
         })
+    }
+
+    fn load_scores(path: &str) -> Result<Vec<f16>> {
+        let mut reader = BufReader::new(File::open(path)?);
+        let mut buf4 = [0u8; 4];
+        reader.read_exact(&mut buf4)?;
+        let num_entries = u32::from_le_bytes(buf4) as usize;
+        let mut scores = Vec::with_capacity(num_entries);
+        let mut buf2 = [0u8; 2];
+        for _ in 0..num_entries {
+            reader.read_exact(&mut buf2)?;
+            scores.push(f16::from_le_bytes(buf2));
+        }
+        Ok(scores)
     }
 
     pub fn num_keys(&self) -> usize {
@@ -173,18 +235,17 @@ impl SystemBigramLM for MarisaSystemBigramLM {
         let mut agent = self.agent.borrow_mut();
         agent.set_query_bytes(&key);
 
-        if self.trie.predictive_search(&mut agent) {
-            let keyword = agent.key().as_bytes();
-            if keyword.len() < 2 {
-                warn!("Malformed bigram entry: len={}", keyword.len());
-                return None;
+        if self.trie.lookup(&mut agent) {
+            let key_id = agent.key().id();
+            if key_id < self.scores.len() {
+                return Some(self.scores[key_id].to_f32());
+            } else {
+                warn!(
+                    "Bigram key_id {} out of bounds (scores len={})",
+                    key_id,
+                    self.scores.len()
+                );
             }
-            let last2: [u8; 2] = match keyword[keyword.len() - 2..keyword.len()].try_into() {
-                Ok(bytes) => bytes,
-                Err(_) => return None,
-            };
-            let score: f16 = f16::from_le_bytes(last2);
-            return Some(score.to_f32());
         }
 
         None
@@ -197,11 +258,14 @@ impl SystemBigramLM for MarisaSystemBigramLM {
 
         while self.trie.predictive_search(&mut agent) {
             let word = agent.key().as_bytes();
-            if word.len() == 8 {
+            let key_id = agent.key().id();
+            if word.len() == 6 {
                 let word_id1 = i32::from_le_bytes([word[0], word[1], word[2], 0]);
                 let word_id2 = i32::from_le_bytes([word[3], word[4], word[5], 0]);
-                let cost = f16::from_le_bytes([word[6], word[7]]).to_f32();
-                map.insert((word_id1, word_id2), cost);
+                if key_id < self.scores.len() {
+                    let cost = self.scores[key_id].to_f32();
+                    map.insert((word_id1, word_id2), cost);
+                }
             }
         }
         map
@@ -211,6 +275,7 @@ impl SystemBigramLM for MarisaSystemBigramLM {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempfile::NamedTempFile;
 
     #[test]
     fn build_and_load() -> anyhow::Result<()> {
@@ -225,6 +290,47 @@ mod tests {
         assert!(map.contains_key(&(4649, 5963)));
         let g = *map.get(&(4649, 5963)).unwrap();
         assert!(5.10_f32 < g && g < 5.12_f32);
+
+        Ok(())
+    }
+
+    #[test]
+    fn save_and_load_roundtrip() -> anyhow::Result<()> {
+        let mut builder = MarisaSystemBigramLMBuilder::default();
+        builder.set_default_edge_cost(14.3);
+        builder.add(100, 200, 3.5);
+        builder.add(100, 300, 7.25);
+        builder.add(500, 600, 1.0);
+
+        let tmpfile = NamedTempFile::new()?;
+        let path = tmpfile.path().to_str().unwrap().to_string();
+        builder.save(&path)?;
+
+        let lm = MarisaSystemBigramLM::load(&path)?;
+
+        // default edge cost
+        assert!((lm.get_default_edge_cost() - 14.3).abs() < 0.01);
+
+        // lookup
+        let c1 = lm.get_edge_cost(100, 200).unwrap();
+        assert!(3.4 < c1 && c1 < 3.6, "got {c1}");
+
+        let c2 = lm.get_edge_cost(100, 300).unwrap();
+        assert!(7.2 < c2 && c2 < 7.3, "got {c2}");
+
+        let c3 = lm.get_edge_cost(500, 600).unwrap();
+        assert!(0.9 < c3 && c3 < 1.1, "got {c3}");
+
+        // miss
+        assert!(lm.get_edge_cost(999, 888).is_none());
+
+        // as_hash_map
+        let map = lm.as_hash_map();
+        assert_eq!(map.len(), 3);
+        assert!(map.contains_key(&(100, 200)));
+
+        // cleanup scores file
+        let _ = std::fs::remove_file(format!("{path}.scores"));
 
         Ok(())
     }
