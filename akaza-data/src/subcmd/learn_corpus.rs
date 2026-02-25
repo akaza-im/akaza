@@ -122,21 +122,44 @@ impl LearningService {
     }
 
     pub fn try_learn(&self, epochs: i32, delta: u32, corpus: &str) -> anyhow::Result<()> {
+        const FULL_CHECK_INTERVAL: i32 = 10;
         let corpuses = read_corpus_file(Path::new(corpus))?;
-        for _ in 1..epochs {
-            let mut ok_cnt = 0;
-            for teacher in corpuses.iter() {
-                let succeeded = self.learn(delta, teacher)?;
+        // 最初は全文が対象
+        let mut failed_indices: Vec<usize> = (0..corpuses.len()).collect();
 
-                if succeeded {
-                    ok_cnt += 1;
+        for epoch in 1..epochs {
+            let is_full_check = epoch % FULL_CHECK_INTERVAL == 0;
+            let mut new_failed = Vec::new();
+
+            if is_full_check {
+                // 全文チェック（退行検出）
+                for (i, teacher) in corpuses.iter().enumerate() {
+                    if !self.learn(delta, teacher)? {
+                        new_failed.push(i);
+                    }
+                }
+            } else {
+                // 不正解文だけ処理
+                for &i in &failed_indices {
+                    if !self.learn(delta, &corpuses[i])? {
+                        new_failed.push(i);
+                    }
                 }
             }
-            info!("ok_cnt={} corpuses.len()={}", ok_cnt, corpuses.len());
-            if ok_cnt == corpuses.len() {
-                info!("Learning process finished.");
+
+            info!(
+                "epoch={} failed={} total={} full_check={}",
+                epoch,
+                new_failed.len(),
+                corpuses.len(),
+                is_full_check
+            );
+
+            if new_failed.is_empty() {
+                info!("Learning process finished at epoch {}", epoch);
                 break;
             }
+            failed_indices = new_failed;
         }
 
         Ok(())
@@ -155,7 +178,7 @@ impl LearningService {
         let terms: Vec<String> = got.iter().map(|f| f[0].surface.clone()).collect();
         let result = terms.join("");
 
-        println!("{result}");
+        debug!("{result}");
 
         // 正解じゃないときには出現頻度の確率が正しくないということだと思いますんで
         // 頻度を増やす。
