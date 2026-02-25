@@ -1,5 +1,16 @@
 # Changelog
 
+## [v2026.225.0](https://github.com/akaza-im/akaza/compare/v2026.224.0...v2026.225.0) - 2026-02-25
+- fix: 空コーパスで evaluate が panic する問題を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/504
+- fix: 「ろぐ」→「ログ」の変換を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/506
+- fix: FFI コールバックの null ポインタチェックを追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/507
+- fix: f32 ソートの NaN panic 防止と config.h 自動生成 by @tokuhirom in https://github.com/akaza-im/akaza/pull/509
+- fix: 「すき」→「数寄」のBOS bigram過剰学習を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/508
+- fix: tokenize の並列処理でエラー集約し即 panic を防止 by @tokuhirom in https://github.com/akaza-im/akaza/pull/510
+- perf: learn-corpus の高速化 — 収束済みの文をスキップ by @tokuhirom in https://github.com/akaza-im/akaza/pull/511
+- perf: HashMap を FxHashMap (rustc-hash) に統一 by @tokuhirom in https://github.com/akaza-im/akaza/pull/512
+- Sudachi 辞書からカタカナ普通名詞を取り込み by @tokuhirom in https://github.com/akaza-im/akaza/pull/513
+
 ## [v2026.224.0](https://github.com/akaza-im/akaza/compare/v2026.220.3...v2026.224.0) - 2026-02-24
 - fix: 「したい」→「肢体」の誤変換を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/499
 - ci: apt パッケージキャッシュで CI を高速化 by @tokuhirom in https://github.com/akaza-im/akaza/pull/501
