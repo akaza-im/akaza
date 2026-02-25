@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 use anyhow::{bail, Result};
 use log::{info, warn};
@@ -172,8 +172,8 @@ impl SystemUnigramLM for MarisaSystemUnigramLM {
         Self::find_from_trie(&self.trie, word)
     }
 
-    fn as_hash_map(&self) -> HashMap<String, (i32, f32)> {
-        let mut map = HashMap::new();
+    fn as_hash_map(&self) -> FxHashMap<String, (i32, f32)> {
+        let mut map = FxHashMap::default();
         let mut agent = Agent::new();
         agent.set_query_str("");
 

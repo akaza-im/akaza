@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 
 use encoding_rs::UTF_8;
 use log::{debug, info};
+use rustc_hash::FxHashMap;
 
 use crate::wordcnt::wordcnt_bigram::WordcntBigram;
 use crate::wordcnt::wordcnt_skip_bigram::WordcntSkipBigram;
@@ -314,7 +315,7 @@ impl LearningService {
         let src_wordid2key = srcmap
             .iter()
             .map(|(key, (word_id, _))| (*word_id, key.to_string()))
-            .collect::<HashMap<i32, String>>();
+            .collect::<FxHashMap<i32, String>>();
 
         for ((word_id1, word_id2), cost) in skip_bigram_lm.as_hash_map() {
             let Some(word1) = src_wordid2key.get(&word_id1) else {
@@ -348,7 +349,7 @@ impl LearningService {
         let src_wordid2key = srcmap
             .iter()
             .map(|(key, (word_id, _))| (*word_id, key.to_string()))
-            .collect::<HashMap<i32, String>>();
+            .collect::<FxHashMap<i32, String>>();
         // info!("src_wordid2key: {:?}", src_wordid2key);
         for ((word_id1, word_id2), cost) in self.system_bigram_lm.as_hash_map() {
             // このへんで落ちるときはデータの整合性がとれてないことがあるので、work/ 以下のデータを一度全部作り直した方が

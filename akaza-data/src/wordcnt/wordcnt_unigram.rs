@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 use anyhow::Result;
 use log::info;
@@ -58,12 +58,12 @@ impl WordcntUnigram {
         self.trie.num_keys()
     }
 
-    pub fn to_count_hashmap(&self) -> HashMap<String, (i32, u32)> {
+    pub fn to_count_hashmap(&self) -> FxHashMap<String, (i32, u32)> {
         Self::_to_count_hashmap(&self.trie)
     }
 
-    fn _to_count_hashmap(trie: &Trie) -> HashMap<String, (i32, u32)> {
-        let mut map: HashMap<String, (i32, u32)> = HashMap::new();
+    fn _to_count_hashmap(trie: &Trie) -> FxHashMap<String, (i32, u32)> {
+        let mut map: FxHashMap<String, (i32, u32)> = FxHashMap::default();
         let mut agent = Agent::new();
         agent.set_query_str("");
 
@@ -132,8 +132,8 @@ impl SystemUnigramLM for WordcntUnigram {
         None
     }
 
-    fn as_hash_map(&self) -> HashMap<String, (i32, f32)> {
-        let mut map = HashMap::new();
+    fn as_hash_map(&self) -> FxHashMap<String, (i32, f32)> {
+        let mut map = FxHashMap::default();
         let mut agent = Agent::new();
         agent.set_query_str("");
 
@@ -176,7 +176,7 @@ mod tests {
         let wordcnt = WordcntUnigram::load(tmpfile.as_str())?;
         assert_eq!(
             wordcnt.to_count_hashmap(),
-            HashMap::from([
+            FxHashMap::from_iter([
                 ("私/わたし".to_string(), (1_i32, 3_u32)),
                 ("彼/かれ".to_string(), (0_i32, 42_u32)),
             ])
@@ -191,7 +191,7 @@ mod tests {
 
         assert_eq!(
             wordcnt.as_hash_map(),
-            HashMap::from([
+            FxHashMap::from_iter([
                 ("私/わたし".to_string(), (1_i32, 1.1949753)),
                 ("彼/かれ".to_string(), (0_i32, 0.048848562)),
             ])

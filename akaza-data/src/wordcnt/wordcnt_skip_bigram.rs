@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 use anyhow::Result;
 use log::info;
@@ -69,12 +69,12 @@ impl WordcntSkipBigram {
         })
     }
 
-    pub fn to_cnt_map(&self) -> HashMap<(i32, i32), u32> {
+    pub fn to_cnt_map(&self) -> FxHashMap<(i32, i32), u32> {
         Self::to_cnt_map_inner(&self.trie)
     }
 
-    fn to_cnt_map_inner(trie: &Trie) -> HashMap<(i32, i32), u32> {
-        let mut map: HashMap<(i32, i32), u32> = HashMap::new();
+    fn to_cnt_map_inner(trie: &Trie) -> FxHashMap<(i32, i32), u32> {
+        let mut map: FxHashMap<(i32, i32), u32> = FxHashMap::default();
         let mut agent = Agent::new();
         agent.set_query_str("");
 
@@ -136,7 +136,7 @@ mod tests {
         let skip_bigram = WordcntSkipBigram::load(tmpfile.as_str())?;
         assert_eq!(
             skip_bigram.to_cnt_map(),
-            HashMap::from([((4, 5), 29), ((8, 9), 32),])
+            FxHashMap::from_iter([((4, 5), 29), ((8, 9), 32),])
         );
 
         Ok(())
