@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use rustc_hash::FxHashMap;
 
 use anyhow::{bail, Result};
@@ -85,6 +87,7 @@ impl MarisaSystemBigramLMBuilder {
         Ok(MarisaSystemBigramLM {
             trie,
             default_edge_cost,
+            agent: RefCell::new(Agent::new()),
         })
     }
 
@@ -100,6 +103,8 @@ impl MarisaSystemBigramLMBuilder {
 pub struct MarisaSystemBigramLM {
     trie: Trie,
     default_edge_cost: f32,
+    /// 検索用 Agent の再利用（毎回のアロケーションを避ける）
+    agent: RefCell<Agent>,
 }
 
 impl MarisaSystemBigramLM {
@@ -111,6 +116,7 @@ impl MarisaSystemBigramLM {
         Ok(MarisaSystemBigramLM {
             trie,
             default_edge_cost,
+            agent: RefCell::new(Agent::new()),
         })
     }
 
@@ -153,7 +159,6 @@ impl SystemBigramLM for MarisaSystemBigramLM {
      * この ID は、unigram の trie でふられたもの。
      */
     fn get_edge_cost(&self, word_id1: i32, word_id2: i32) -> Option<f32> {
-        // スタック上に固定サイズの配列を確保してアロケーションを避ける
         let id1_bytes = word_id1.to_le_bytes();
         let id2_bytes = word_id2.to_le_bytes();
         let key: [u8; 6] = [
@@ -165,7 +170,7 @@ impl SystemBigramLM for MarisaSystemBigramLM {
             id2_bytes[2],
         ];
 
-        let mut agent = Agent::new();
+        let mut agent = self.agent.borrow_mut();
         agent.set_query_bytes(&key);
 
         if self.trie.predictive_search(&mut agent) {
