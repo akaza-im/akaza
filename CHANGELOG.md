@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2026.225.1](https://github.com/akaza-im/akaza/compare/v2026.225.0...v2026.225.1) - 2026-02-25
+- corpus-stats: Fix normalization examples in README by @omasanori in https://github.com/akaza-im/akaza/pull/515
+- refactor: must.txt のエントリを should.txt に移動 by @tokuhirom in https://github.com/akaza-im/akaza/pull/517
+- 辞書: 「誤検知」を追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/514
+
 ## [v2026.225.0](https://github.com/akaza-im/akaza/compare/v2026.224.0...v2026.225.0) - 2026-02-25
 - fix: 空コーパスで evaluate が panic する問題を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/504
 - fix: 「ろぐ」→「ログ」の変換を修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/506
