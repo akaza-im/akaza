@@ -46,8 +46,8 @@ avg=46.1ms, median=27.3ms, p95=164.5ms, p99=267.2ms, max=423.2ms
 | コンポーネント | サイズ | キー形式 | 実際の操作 |
 |---|---|---|---|
 | Unigram LM | 16 MB | `"漢字/かな\xff<4B f32>"` | 事実上 exact match |
-| Bigram LM | 69 MB | `[3B id1][3B id2][2B f16]` (固定 8B) | 事実上 exact match |
-| Skip-bigram LM | 114 MB | `[3B id1][3B id2][2B f16]` (固定 8B) | 事実上 exact match |
+| Bigram LM | 69 MB | `[3B id1][3B id2]` (固定 6B) + 外部 scores | lookup (exact match) |
+| Skip-bigram LM | 114 MB | `[3B id1][3B id2]` (固定 6B) + 外部 scores | lookup (exact match) |
 | 辞書 | 43 MB | `"かな\t候補1/候補2/..."` | prefix search（本当に必要） |
 
 毎回の検索で `Agent::new()` → `Box<State>` アロケーション → drop を行っている。再利用なし。
@@ -98,23 +98,15 @@ select1/select0 は binary search + popcount で O(log n)。
 
 ### 改善余地のある箇所
 
-#### 1. exact match 専用 API の追加 (最大効果)
+#### 1. exact match (lookup) API の利用 → **実施済み (PR #520)**
 
-現在 `predictive_search` は全子孫を列挙する API。Akaza の bigram/skip-bigram は
-1 件だけ欲しいのに、列挙用のステート管理（History, key_buf 等）をセットアップしている。
+rsmarisa には元々 `lookup` (exact match) API が存在していたが、スコアがキーに
+埋め込まれていたため `predictive_search` を使わざるを得なかった。
+key/value 分離により `lookup` に切り替え済み。
 
-**提案**: `lookup(key) -> Option<(key_id, key_bytes)>` のような exact match 専用 API。
-- History 管理が不要（バックトラック不要）
-- `restore_` が不要（結果キーは入力キーのスーパーセット = 入力 6B + 末尾 2B）
-- State の Box アロケーションも不要にできる可能性
+#### 2. Agent の再利用 → **実施済み**
 
-#### 2. Agent の再利用 / State アロケーション削減
-
-毎回 `Agent::new()` → `state: None` → 初回 predictive_search で `Box<State>` を作成 → drop。
-- `State` は内部に `Vec<History>`, `Vec<u8>` (key_buf) を持つ
-- 再利用すれば alloc/free を削減可能
-- rsmarisa 側で `set_query_bytes` 時に state を reset する機構は既にある
-- ただし Akaza 側で exact match API があれば Agent 自体が不要
+`RefCell<Agent>` として構造体に保持し、毎回のアロケーションを回避。
 
 #### 3. select1/select0 の高速化
 
@@ -132,15 +124,11 @@ if node_id == self.cache[cache_id].parent() { ... }
 ```
 キャッシュミス時は `select0` + 線形探索。ビルド時の `cache_size` パラメータで改善可能。
 
-#### 5. 値の格納方法の見直し（Akaza 側）
+#### 5. 値の格納方法の見直し（Akaza 側） → **実施済み (PR #520)**
 
-現在スコアをキーの末尾に埋め込んでいるため、検索後に `restore_` でキー全体を復元し
-末尾 2B を取り出す必要がある。
-
-**提案**: スコアを trie の外に持つ（key_id → score の flat array）。
-- `predictive_search` で key_id が取れた時点でスコアが引ける
-- `restore_` が不要になる（結果キーの内容を見る必要がない）
-- trie のキーが 6B (id1+id2 のみ) になり、trie 自体も小さくなる
+スコアを trie の外に持つ（key_id → score の flat array）方式に変更。
+trie のキーが 6B (id1+id2 のみ) になり、`lookup` で key_id を取得後
+`scores[key_id]` でスコアを引く。
 
 ## Microbenchmark: rsmarisa vs fst vs sorted-array
 
@@ -170,25 +158,36 @@ rsmarisa が 69MB なのは LOUDS の再帰 patricia trie による圧縮が実�
 - word_id 範囲: 0〜1,058,889 (21bit で収まる、現状は 24bit = 3B)
 - Bigram エントリ数: 18,333,516
 
-## 改善方針の優先順位
+## 実施済みの改善
 
-### rsmarisa 側の改善 (最優先)
+### 1. Agent 再利用
 
-1. **exact match / lookup 専用 API** — predictive_search のオーバーヘッドを回避。
-   restore_ 不要、History 不要、State アロケーション不要にできる
-2. **値をキーから分離** — key_id → score の外部配列。trie サイズ削減 + restore_ 不要
-3. **Agent 再利用対応の改善** — reset が軽量になるよう State を再利用可能に
-4. **select の高速化** — broadword/pdep ベースの O(1) select
+`Agent::new()` を毎回呼ぶのではなく、`RefCell<Agent>` として構造体に保持し再利用。
+`set_query_bytes` が内部で state を reset するため、安全に再利用可能。
 
-### Akaza 側の改善
+### 2. bigram/skip-bigram の key/value 分離 + lookup 切り替え (PR #520)
 
-1. exact match API を使うように bigram/skip-bigram LM を書き換え
-2. 値の外部配列化に対応
-3. Agent 再利用（rsmarisa 側で API が整うまでの暫定）
+trie キーからスコア (f16) を除去し、スコアは `key_id` をインデックスにした flat array
+（別ファイル `.scores`）で保持するように変更。これにより、rsmarisa に元々存在していた
+`lookup` (exact match) API が使えるようになった。
+
+```
+旧: trie key = [3B id1][3B id2][2B f16_score]  → predictive_search
+新: trie key = [3B id1][3B id2]                 → lookup → scores[key_id]
+```
+
+- trie キーが 8B → 6B に縮小（trie サイズも削減）
+- `predictive_search` → `lookup` に切り替え（restore_ 不要、History 不要）
+- scores ファイルフォーマット: `[u32 LE num_entries][f16 LE × N]`
+
+## 残りの改善候補
+
+1. **select の高速化** — broadword/pdep ベースの O(1) select（現状 ~4% なので ROI は低い）
+2. **エントリ数削減** — 低頻度 bigram の枝刈りの影響調査
 
 ### 未調査事項
 
-- exact match API 実装後の実測効果
+- key/value 分離 + lookup 切り替えの実測効果（ベンチマーク未完了）
 - 値の外部配列化による trie サイズ変化の実測
-- select 高速化の実効果（現状 ~4% なので ROI は低い）
+- select 高速化の実効果
 - エントリ数削減（低頻度 bigram の枝刈り）の影響
