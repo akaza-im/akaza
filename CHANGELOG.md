@@ -1,5 +1,9 @@
 # Changelog
 
+## [v2026.225.2](https://github.com/akaza-im/akaza/compare/v2026.225.1...v2026.225.2) - 2026-02-25
+- perf: rsmarisa Agent を再利用して trie 検索のアロケーションを削減 by @tokuhirom in https://github.com/akaza-im/akaza/pull/518
+- perf: bigram/skip-bigram の key/value 分離で lookup 高速化 by @tokuhirom in https://github.com/akaza-im/akaza/pull/520
+
 ## [v2026.225.1](https://github.com/akaza-im/akaza/compare/v2026.225.0...v2026.225.1) - 2026-02-25
 - corpus-stats: Fix normalization examples in README by @omasanori in https://github.com/akaza-im/akaza/pull/515
 - refactor: must.txt のエントリを should.txt に移動 by @tokuhirom in https://github.com/akaza-im/akaza/pull/517
