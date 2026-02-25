@@ -84,6 +84,18 @@ data/skip_bigram.model: data/bigram.model
 #  Sudachi 辞書ダウンロード（固有名詞の取り込み用）
 # -------------------------------------------------------------------------
 
+work/sudachi/small_lex.csv: | work/sudachi
+	wget -O work/sudachi/small_lex.zip \
+		http://sudachi.s3-website-ap-northeast-1.amazonaws.com/sudachidict-raw/$(SUDACHI_VERSION)/small_lex.zip
+	unzip -o work/sudachi/small_lex.zip -d work/sudachi/
+	rm work/sudachi/small_lex.zip
+
+work/sudachi/core_lex.csv: | work/sudachi
+	wget -O work/sudachi/core_lex.zip \
+		http://sudachi.s3-website-ap-northeast-1.amazonaws.com/sudachidict-raw/$(SUDACHI_VERSION)/core_lex.zip
+	unzip -o work/sudachi/core_lex.zip -d work/sudachi/
+	rm work/sudachi/core_lex.zip
+
 work/sudachi/notcore_lex.csv: | work/sudachi
 	wget -O work/sudachi/notcore_lex.zip \
 		http://sudachi.s3-website-ap-northeast-1.amazonaws.com/sudachidict-raw/$(SUDACHI_VERSION)/notcore_lex.zip
@@ -98,7 +110,7 @@ work/sudachi:
 # システム辞書の構築。dict/SKK-JISYO.akaza、コーパスに書かれている語彙および work/vibrato-ipadic.vocab にある語彙。
 # から、SKK-JISYO.L に含まれる語彙を除いたものが登録されている。
 
-data/SKK-JISYO.akaza: work/corpus-stats/_SUCCESS dict/SKK-JISYO.akaza training-corpus/must.txt training-corpus/should.txt training-corpus/may.txt work/unidic/lex_3_1.csv work/sudachi/notcore_lex.csv
+data/SKK-JISYO.akaza: work/corpus-stats/_SUCCESS dict/SKK-JISYO.akaza training-corpus/must.txt training-corpus/should.txt training-corpus/may.txt work/unidic/lex_3_1.csv work/sudachi/small_lex.csv work/sudachi/core_lex.csv work/sudachi/notcore_lex.csv
 	mkdir -p data
 	akaza-data make-dict \
 		--corpus training-corpus/must.txt \
@@ -106,6 +118,8 @@ data/SKK-JISYO.akaza: work/corpus-stats/_SUCCESS dict/SKK-JISYO.akaza training-c
 		--corpus training-corpus/may.txt \
 		--unidic work/unidic/lex_3_1.csv \
 		--vocab work/vibrato-ipadic.vocab \
+		--sudachi-lex work/sudachi/small_lex.csv \
+		--sudachi-lex work/sudachi/core_lex.csv \
 		--sudachi-lex work/sudachi/notcore_lex.csv \
 		data/SKK-JISYO.akaza \
 		-vvv
