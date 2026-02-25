@@ -1,6 +1,6 @@
 [package]
 name = "ibus-sys"
-version = "2026.225.1"
+version = "2026.225.2"
 edition = "2021"
 license = "MIT"
 
