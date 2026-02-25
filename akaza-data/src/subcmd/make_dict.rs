@@ -223,9 +223,11 @@ mod system_dict {
         Ok(dict)
     }
 
-    /// Sudachi 辞書 CSV から固有名詞（名詞-固有名詞-一般）を読み込む。
-    /// 人名・地名は同音異義語の衝突リスクがあるため除外する。
+    /// Sudachi 辞書 CSV から以下を読み込む:
+    /// - 名詞-固有名詞-一般（人名・地名は同音異義語の衝突リスクがあるため除外）
+    /// - カタカナ普通名詞（表層形が全カタカナの名詞-普通名詞）
     fn make_sudachi_dict(paths: &[String]) -> Result<HashMap<String, Vec<String>>> {
+        let katakana_pattern = Regex::new(r"^[\p{wb=Katakana}ー]+$")?;
         let mut words: Vec<(String, String)> = Vec::new();
 
         for path in paths {
@@ -239,29 +241,45 @@ mod system_dict {
                     continue;
                 }
 
+                let surface = csv[0]; // 見出し形
                 let pos1 = csv[5]; // 品詞大分類
                 let pos2 = csv[6]; // 品詞中分類
                 let pos3 = csv[7]; // 品詞小分類
+                let display_surface = csv[12]; // 表記形（表示用表層形）
+                let yomi_kata = csv[11]; // 読み（カタカナ）
 
-                // 名詞-固有名詞-一般 のみ取り込む
-                if pos1 != "名詞" || pos2 != "固有名詞" || pos3 != "一般" {
+                if pos1 != "名詞" {
                     continue;
                 }
 
-                let surface = csv[12]; // 表記形（表示用表層形）
-                let yomi_kata = csv[11]; // 読み（カタカナ）
+                let is_proper_noun = pos2 == "固有名詞" && pos3 == "一般";
+                let is_katakana_common_noun =
+                    pos2 == "普通名詞" && katakana_pattern.is_match(surface);
 
-                if surface.is_empty() || yomi_kata.is_empty() {
+                if !is_proper_noun && !is_katakana_common_noun {
+                    continue;
+                }
+
+                // カタカナ普通名詞は見出し形（csv[0]）を使う。
+                // 読み（csv[11]）と見出し形は長音記号のあり/なしが揃っているため。
+                // 固有名詞は表記形（csv[12]）を使う（漢字表記等があるため）。
+                let entry_surface = if is_katakana_common_noun {
+                    surface
+                } else {
+                    display_surface
+                };
+
+                if entry_surface.is_empty() || yomi_kata.is_empty() {
                     continue;
                 }
 
                 // 全角空白を含むエントリはスキップ
-                if surface.contains('\u{3000}') || yomi_kata.contains('\u{3000}') {
+                if entry_surface.contains('\u{3000}') || yomi_kata.contains('\u{3000}') {
                     continue;
                 }
 
                 // 表層形に日本語文字（ひらがな・カタカナ・漢字）を含まないものはスキップ
-                if !surface.chars().any(|c| {
+                if !entry_surface.chars().any(|c| {
                     is_hiragana(c)
                         || ('\u{30A0}'..='\u{30FF}').contains(&c)
                         || ('\u{4E00}'..='\u{9FFF}').contains(&c)
@@ -275,7 +293,7 @@ mod system_dict {
                     continue;
                 }
 
-                words.push((yomi, surface.to_string()));
+                words.push((yomi, entry_surface.to_string()));
             }
         }
 
