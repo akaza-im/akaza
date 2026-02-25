@@ -1,7 +1,7 @@
 use libakaza::lm::base::{SystemBigramLM, SystemUnigramLM};
 use libakaza::lm::system_bigram::MarisaSystemBigramLM;
 use libakaza::lm::system_unigram_lm::MarisaSystemUnigramLM;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 pub fn dump_bigram_dict(unigram_file: &str, bigram_file: &str) -> anyhow::Result<()> {
     let unigram = MarisaSystemUnigramLM::load(unigram_file)?;
@@ -9,7 +9,7 @@ pub fn dump_bigram_dict(unigram_file: &str, bigram_file: &str) -> anyhow::Result
         .as_hash_map()
         .iter()
         .map(|(key, (id, _))| (*id, key.to_string()))
-        .collect::<HashMap<i32, String>>();
+        .collect::<FxHashMap<i32, String>>();
 
     let bigram = MarisaSystemBigramLM::load(bigram_file)?;
     for ((word_id1, word_id2), cost) in bigram.as_hash_map() {

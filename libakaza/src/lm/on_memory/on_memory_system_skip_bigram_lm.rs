@@ -1,13 +1,14 @@
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::rc::Rc;
+
+use rustc_hash::FxHashMap;
 
 use crate::cost::calc_cost;
 use crate::lm::base::SystemSkipBigramLM;
 
 pub struct OnMemorySystemSkipBigramLM {
     // (word_id, word_id) -> count
-    map: Rc<RefCell<HashMap<(i32, i32), u32>>>,
+    map: Rc<RefCell<FxHashMap<(i32, i32), u32>>>,
     default_skip_cost: f32,
     pub total_words: u32,
     pub unique_words: u32,
@@ -15,7 +16,7 @@ pub struct OnMemorySystemSkipBigramLM {
 
 impl OnMemorySystemSkipBigramLM {
     pub fn new(
-        map: Rc<RefCell<HashMap<(i32, i32), u32>>>,
+        map: Rc<RefCell<FxHashMap<(i32, i32), u32>>>,
         default_skip_cost: f32,
         total_words: u32,
         unique_words: u32,
@@ -36,7 +37,7 @@ impl OnMemorySystemSkipBigramLM {
         self.map.borrow().get(&(word_id1, word_id2)).copied()
     }
 
-    pub fn as_hash_map(&self) -> HashMap<(i32, i32), f32> {
+    pub fn as_hash_map(&self) -> FxHashMap<(i32, i32), f32> {
         self.map
             .borrow()
             .iter()

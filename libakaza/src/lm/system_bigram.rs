@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 use anyhow::{bail, Result};
 use half::f16;
@@ -185,8 +185,8 @@ impl SystemBigramLM for MarisaSystemBigramLM {
         None
     }
 
-    fn as_hash_map(&self) -> HashMap<(i32, i32), f32> {
-        let mut map: HashMap<(i32, i32), f32> = HashMap::new();
+    fn as_hash_map(&self) -> FxHashMap<(i32, i32), f32> {
+        let mut map: FxHashMap<(i32, i32), f32> = FxHashMap::default();
         let mut agent = Agent::new();
         agent.set_query_str("");
 

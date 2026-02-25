@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 use anyhow::Result;
 use log::info;
@@ -54,12 +54,12 @@ pub struct WordcntBigram {
 }
 
 impl WordcntBigram {
-    pub fn to_cnt_map(&self) -> HashMap<(i32, i32), u32> {
+    pub fn to_cnt_map(&self) -> FxHashMap<(i32, i32), u32> {
         Self::_to_map(&self.trie)
     }
 
-    fn _to_map(trie: &Trie) -> HashMap<(i32, i32), u32> {
-        let mut map: HashMap<(i32, i32), u32> = HashMap::new();
+    fn _to_map(trie: &Trie) -> FxHashMap<(i32, i32), u32> {
+        let mut map: FxHashMap<(i32, i32), u32> = FxHashMap::default();
         let mut agent = Agent::new();
         agent.set_query_str("");
 
@@ -80,7 +80,7 @@ impl WordcntBigram {
         let mut trie = Trie::new();
         trie.load(filename)?;
 
-        let map: HashMap<(i32, i32), u32> = Self::_to_map(&trie);
+        let map: FxHashMap<(i32, i32), u32> = Self::_to_map(&trie);
 
         // 総出現単語数
         let total_words = map.iter().map(|((_, _), cnt)| *cnt).sum();
@@ -126,8 +126,8 @@ impl SystemBigramLM for WordcntBigram {
         None
     }
 
-    fn as_hash_map(&self) -> HashMap<(i32, i32), f32> {
-        let mut map: HashMap<(i32, i32), f32> = HashMap::new();
+    fn as_hash_map(&self) -> FxHashMap<(i32, i32), f32> {
+        let mut map: FxHashMap<(i32, i32), f32> = FxHashMap::default();
         let mut agent = Agent::new();
         agent.set_query_str("");
 
@@ -166,7 +166,7 @@ mod tests {
         let bigram = WordcntBigram::load(tmpfile.as_str())?;
         assert_eq!(
             bigram.to_cnt_map(),
-            HashMap::from([((4, 5), 29), ((8, 9), 32),])
+            FxHashMap::from_iter([((4, 5), 29), ((8, 9), 32),])
         );
 
         Ok(())

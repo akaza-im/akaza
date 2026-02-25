@@ -1,13 +1,14 @@
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::rc::Rc;
+
+use rustc_hash::FxHashMap;
 
 use crate::cost::calc_cost;
 use crate::lm::base::SystemBigramLM;
 
 pub struct OnMemorySystemBigramLM {
     // (word_id, word_id) -> cost
-    map: Rc<RefCell<HashMap<(i32, i32), u32>>>,
+    map: Rc<RefCell<FxHashMap<(i32, i32), u32>>>,
     default_edge_cost: f32,
     pub total_words: u32,
     pub unique_words: u32,
@@ -15,7 +16,7 @@ pub struct OnMemorySystemBigramLM {
 
 impl OnMemorySystemBigramLM {
     pub fn new(
-        map: Rc<RefCell<HashMap<(i32, i32), u32>>>,
+        map: Rc<RefCell<FxHashMap<(i32, i32), u32>>>,
         default_edge_cost: f32,
         c: u32,
         v: u32,
@@ -50,7 +51,7 @@ impl SystemBigramLM for OnMemorySystemBigramLM {
             .map(|f| calc_cost(*f, self.total_words, self.unique_words))
     }
 
-    fn as_hash_map(&self) -> HashMap<(i32, i32), f32> {
+    fn as_hash_map(&self) -> FxHashMap<(i32, i32), f32> {
         self.map
             .borrow()
             .iter()

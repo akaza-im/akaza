@@ -1,20 +1,21 @@
-use crate::cost::calc_cost;
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::rc::Rc;
 
+use rustc_hash::FxHashMap;
+
+use crate::cost::calc_cost;
 use crate::lm::base::SystemUnigramLM;
 
 pub struct OnMemorySystemUnigramLM {
     // word -> (word_id, cost)
-    map: Rc<RefCell<HashMap<String, (i32, u32)>>>,
+    map: Rc<RefCell<FxHashMap<String, (i32, u32)>>>,
     pub total_words: u32,
     pub unique_words: u32,
 }
 
 impl OnMemorySystemUnigramLM {
     pub fn new(
-        map: Rc<RefCell<HashMap<String, (i32, u32)>>>,
+        map: Rc<RefCell<FxHashMap<String, (i32, u32)>>>,
         total_words: u32,
         unique_words: u32,
     ) -> Self {
@@ -62,7 +63,7 @@ impl SystemUnigramLM for OnMemorySystemUnigramLM {
             .map(|(id, cnt)| (*id, calc_cost(*cnt, self.total_words, self.unique_words)))
     }
 
-    fn as_hash_map(&self) -> HashMap<String, (i32, f32)> {
+    fn as_hash_map(&self) -> FxHashMap<String, (i32, f32)> {
         self.map
             .borrow()
             .iter()

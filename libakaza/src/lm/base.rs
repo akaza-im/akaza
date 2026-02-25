@@ -1,16 +1,16 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 pub trait SystemBigramLM {
     fn get_default_edge_cost(&self) -> f32;
     fn get_edge_cost(&self, word_id1: i32, word_id2: i32) -> Option<f32>;
-    fn as_hash_map(&self) -> HashMap<(i32, i32), f32>;
+    fn as_hash_map(&self) -> FxHashMap<(i32, i32), f32>;
 }
 
 pub trait SystemUnigramLM {
     fn get_cost(&self, wordcnt: u32) -> f32;
 
     fn find(&self, word: &str) -> Option<(i32, f32)>;
-    fn as_hash_map(&self) -> HashMap<String, (i32, f32)>;
+    fn as_hash_map(&self) -> FxHashMap<String, (i32, f32)>;
 }
 
 pub trait SystemSkipBigramLM {
