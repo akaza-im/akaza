@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use rustc_hash::FxHashMap;
 
 use anyhow::{bail, Result};
@@ -92,6 +94,7 @@ impl MarisaSystemUnigramLMBuilder {
             trie,
             total_words: total_words as u32,
             unique_words: unique_words as u32,
+            agent: RefCell::new(Agent::new()),
         })
     }
 }
@@ -100,6 +103,8 @@ pub struct MarisaSystemUnigramLM {
     trie: Trie,
     total_words: u32,
     unique_words: u32,
+    /// 検索用 Agent の再利用（毎回のアロケーションを避ける）
+    agent: RefCell<Agent>,
 }
 
 impl MarisaSystemUnigramLM {
@@ -132,6 +137,7 @@ impl MarisaSystemUnigramLM {
             trie,
             total_words: total_words as u32,
             unique_words: unique_words as u32,
+            agent: RefCell::new(Agent::new()),
         })
     }
 
@@ -169,7 +175,29 @@ impl SystemUnigramLM for MarisaSystemUnigramLM {
 
     /// @return (word_id, score)。
     fn find(&self, word: &str) -> Option<(i32, f32)> {
-        Self::find_from_trie(&self.trie, word)
+        assert!(!word.is_empty());
+
+        let mut key = word.as_bytes().to_vec();
+        key.push(0xff);
+        let mut agent = self.agent.borrow_mut();
+        agent.set_query_bytes(&key);
+
+        if self.trie.predictive_search(&mut agent) {
+            let word = agent.key().as_bytes();
+            let kanji_id = agent.key().id();
+
+            if let Some(idx) = word.iter().position(|f| *f == b'\xff') {
+                let start = idx + 1;
+                if word.len() < start + 4 {
+                    warn!("Malformed unigram entry: len={}, idx={}", word.len(), idx);
+                    return None;
+                }
+                let bytes: [u8; 4] = word[start..start + 4].try_into().ok()?;
+                let score = f32::from_le_bytes(bytes);
+                return Some((kanji_id as i32, score));
+            }
+        }
+        None
     }
 
     fn as_hash_map(&self) -> FxHashMap<String, (i32, f32)> {

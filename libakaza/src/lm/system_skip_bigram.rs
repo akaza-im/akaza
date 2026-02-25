@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use anyhow::{bail, Result};
 use half::f16;
 use log::info;
@@ -65,6 +67,7 @@ impl MarisaSystemSkipBigramLMBuilder {
         Ok(MarisaSystemSkipBigramLM {
             trie,
             default_skip_cost,
+            agent: RefCell::new(Agent::new()),
         })
     }
 
@@ -80,6 +83,8 @@ impl MarisaSystemSkipBigramLMBuilder {
 pub struct MarisaSystemSkipBigramLM {
     trie: Trie,
     default_skip_cost: f32,
+    /// 検索用 Agent の再利用（毎回のアロケーションを避ける）
+    agent: RefCell<Agent>,
 }
 
 impl MarisaSystemSkipBigramLM {
@@ -99,6 +104,7 @@ impl MarisaSystemSkipBigramLM {
         Ok(MarisaSystemSkipBigramLM {
             trie,
             default_skip_cost,
+            agent: RefCell::new(Agent::new()),
         })
     }
 
@@ -130,7 +136,7 @@ impl SystemSkipBigramLM for MarisaSystemSkipBigramLM {
             id2_bytes[2],
         ];
 
-        let mut agent = Agent::new();
+        let mut agent = self.agent.borrow_mut();
         agent.set_query_bytes(&key);
 
         if self.trie.predictive_search(&mut agent) {
