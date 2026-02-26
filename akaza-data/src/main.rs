@@ -245,6 +245,9 @@ struct CheckArgs {
     /// リランキング: skip-bigram コストの重み
     #[arg(long, default_value_t = 0.2)]
     skip_bigram_weight: f32,
+    /// リランキング: 1語候補の未知 bigram 割引率
+    #[arg(long, default_value_t = 0.5)]
+    single_token_unk_discount: f32,
 }
 
 /// 変換精度を評価する
@@ -273,6 +276,9 @@ struct EvaluateArgs {
     /// リランキング: skip-bigram コストの重み
     #[arg(long, default_value_t = 0.2)]
     skip_bigram_weight: f32,
+    /// リランキング: 1語候補の未知 bigram 割引率
+    #[arg(long, default_value_t = 0.5)]
+    single_token_unk_discount: f32,
 }
 
 /// インクリメンタル変換のベンチマーク
@@ -416,6 +422,7 @@ fn main() -> anyhow::Result<()> {
                 length_weight: opt.length_weight,
                 unknown_bigram_weight: opt.unknown_bigram_weight,
                 skip_bigram_weight: opt.skip_bigram_weight,
+                single_token_unk_discount: opt.single_token_unk_discount,
             },
         }),
         Commands::Evaluate(opt) => evaluate(
@@ -429,6 +436,7 @@ fn main() -> anyhow::Result<()> {
                 length_weight: opt.length_weight,
                 unknown_bigram_weight: opt.unknown_bigram_weight,
                 skip_bigram_weight: opt.skip_bigram_weight,
+                single_token_unk_discount: opt.single_token_unk_discount,
             },
         ),
         Commands::Bench(opt) => bench(BenchOptions {
