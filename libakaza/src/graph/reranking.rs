@@ -15,6 +15,13 @@ pub struct ReRankingWeights {
     /// skip-bigram コストの重み（デフォルト 0.0 = 無効）
     #[serde(default)]
     pub skip_bigram_weight: f32,
+    /// 1語候補（BOS/EOS bigram が両方未知）の unk_bi 割引率（デフォルト 0.5）
+    #[serde(default = "default_single_token_unk_discount")]
+    pub single_token_unk_discount: f32,
+}
+
+fn default_single_token_unk_discount() -> f32 {
+    0.5
 }
 
 impl Default for ReRankingWeights {
@@ -24,6 +31,7 @@ impl Default for ReRankingWeights {
             length_weight: 2.0,
             unknown_bigram_weight: 1.0,
             skip_bigram_weight: 0.2,
+            single_token_unk_discount: 0.5,
         }
     }
 }
@@ -32,9 +40,15 @@ impl ReRankingWeights {
     /// パスの rerank_cost を再計算し、スコア昇順にソートする。
     pub fn rerank(&self, paths: &mut [KBestPath]) {
         for path in paths.iter_mut() {
+            let unk_weight = if path.token_count == 1 && path.unknown_bigram_count == 2 {
+                self.unknown_bigram_weight * self.single_token_unk_discount
+            } else {
+                self.unknown_bigram_weight
+            };
+
             path.rerank_cost = path.unigram_cost
                 + self.bigram_weight * path.bigram_cost
-                + self.unknown_bigram_weight * path.unknown_bigram_cost
+                + unk_weight * path.unknown_bigram_cost
                 + self.length_weight * path.token_count as f32
                 + self.skip_bigram_weight * path.skip_bigram_cost;
         }
@@ -105,6 +119,7 @@ mod tests {
             length_weight: 0.0,
             unknown_bigram_weight: 0.1,
             skip_bigram_weight: 0.0,
+            single_token_unk_discount: 1.0, // no discount
         };
 
         // path A: unigram=3, bigram=2, unknown=10 → 3 + 0.5*2 + 0.1*10 = 5.0
@@ -126,6 +141,7 @@ mod tests {
             length_weight: 2.0,
             unknown_bigram_weight: 1.0,
             skip_bigram_weight: 0.0,
+            single_token_unk_discount: 1.0,
         };
 
         // path A: unigram=3, bigram=2, unknown=1, tokens=5 → 3+2+1+2*5 = 16
@@ -141,6 +157,64 @@ mod tests {
     }
 
     #[test]
+    fn test_single_token_unk_discount_applied() {
+        let weights = ReRankingWeights {
+            bigram_weight: 1.0,
+            length_weight: 2.0,
+            unknown_bigram_weight: 1.0,
+            skip_bigram_weight: 0.0,
+            single_token_unk_discount: 0.5,
+        };
+
+        // 1語候補: token_count=1, unknown_bigram_count=2 → discount 適用
+        // rerank = 1.0 + 1.0*0.0 + (1.0*0.5)*28.0 + 2.0*1 = 17.0
+        let mut paths = vec![make_path(29.0, 1.0, 0.0, 28.0, 2, 1)];
+        weights.rerank(&mut paths);
+        assert!(
+            (paths[0].rerank_cost - 17.0).abs() < f32::EPSILON,
+            "got {}",
+            paths[0].rerank_cost
+        );
+    }
+
+    #[test]
+    fn test_single_token_unk_discount_not_applied_to_multi_token() {
+        let weights = ReRankingWeights {
+            bigram_weight: 1.0,
+            length_weight: 2.0,
+            unknown_bigram_weight: 1.0,
+            skip_bigram_weight: 0.0,
+            single_token_unk_discount: 0.5,
+        };
+
+        // 2語候補: token_count=2 → discount 不適用
+        // rerank = 3.0 + 1.0*2.0 + 1.0*5.0 + 2.0*2 = 14.0
+        let mut paths = vec![make_path(10.0, 3.0, 2.0, 5.0, 1, 2)];
+        weights.rerank(&mut paths);
+        assert!(
+            (paths[0].rerank_cost - 14.0).abs() < f32::EPSILON,
+            "got {}",
+            paths[0].rerank_cost
+        );
+    }
+
+    #[test]
+    fn test_single_token_discount_changes_ranking() {
+        let weights = ReRankingWeights::default(); // discount=0.5
+
+        // 1語候補 (複合語): unigram=-0.25, bigram=0, unk_bi=28.67, tokens=1
+        let single = make_path(28.4, -0.25, 0.0, 28.67, 2, 1);
+        // 2語候補: unigram=8.33, bigram=10.0, unk_bi=0.0, tokens=2
+        let multi = make_path(19.1, 8.33, 10.0, 0.0, 0, 2);
+
+        let mut paths = vec![multi, single];
+        weights.rerank(&mut paths);
+
+        // 1語候補が1位になるはず
+        assert_eq!(paths[0].token_count, 1);
+    }
+
+    #[test]
     fn test_is_default() {
         assert!(ReRankingWeights::default().is_default());
         assert!(!ReRankingWeights {
@@ -148,6 +222,7 @@ mod tests {
             length_weight: 0.0,
             unknown_bigram_weight: 1.0,
             skip_bigram_weight: 0.0,
+            single_token_unk_discount: 0.5,
         }
         .is_default());
     }
