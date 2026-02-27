@@ -391,6 +391,20 @@ impl GraphResolver {
             .collect();
         strict_results.sort();
 
+        // Viterbi パス上のノードを先頭に配置する。
+        // costmap はノード単体の 1-best コストなので、bigram を考慮した最適パス上のノードと
+        // costmap でのソート順が一致しない場合がある。パス上のノードを優先表示する。
+        let path_surface = &node.surface;
+        if let Some(pos) = strict_results
+            .iter()
+            .position(|c| &c.surface == path_surface)
+        {
+            if pos > 0 {
+                let path_candidate = strict_results.remove(pos);
+                strict_results.insert(0, path_candidate);
+            }
+        }
+
         // もし、候補が著しく少ない場合は、その文節を分割する。
         // 分割した場合の単語は strict_results に追加される。
         // ここの閾値はめちゃくちゃヒューリスティックな値です。
