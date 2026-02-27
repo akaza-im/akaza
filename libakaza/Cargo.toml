@@ -1,6 +1,6 @@
 [package]
 name = "libakaza"
-version = "2026.225.2"
+version = "2026.227.0"
 edition = "2021"
 license = "MIT"
 
