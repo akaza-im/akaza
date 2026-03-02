@@ -2,6 +2,7 @@ use rustc_hash::FxHashMap;
 
 use crate::cost::calc_cost;
 use crate::graph::candidate::Candidate;
+use crate::graph::word_node::BOS_TOKEN_KEY;
 use crate::numeric_counter::normalize_counter_key_for_lm;
 
 #[derive(Default)]
@@ -51,30 +52,84 @@ impl SkipBigramUserStats {
         Some(calc_cost(*count, self.unique_words, self.total_words))
     }
 
+    fn record_pair(&mut self, key1: &str, key2: &str) {
+        let key = format!("{}\t{}", key1, key2);
+        if let Some(cnt) = self.word_count.get(&key) {
+            self.word_count.insert(key, cnt + 1);
+        } else {
+            self.word_count.insert(key, 1);
+            self.unique_words += 1;
+        }
+        self.total_words += 1;
+    }
+
     /// candidates から skip-bigram ペア (i-2, i) を記録する。
+    /// BOS を仮想的な位置 -1 として扱い、BOS→candidates[1] も記録する。
     pub(crate) fn record_entries(&mut self, candidates: &[Candidate]) {
-        if candidates.len() < 3 {
-            return;
+        // BOS → candidates[1] (BOS が位置 -1、candidates[0] が位置 0、candidates[1] が位置 1)
+        if candidates.len() >= 2 {
+            let key2 =
+                normalize_counter_key_for_lm(&candidates[1].key()).unwrap_or(candidates[1].key());
+            self.record_pair(BOS_TOKEN_KEY, &key2);
         }
 
+        // 通常の skip-bigram (i-2, i)
         for i in 2..candidates.len() {
-            let Some(candidate1) = candidates.get(i - 2) else {
-                continue;
-            };
-            let Some(candidate2) = candidates.get(i) else {
-                continue;
-            };
-
-            let key1 = normalize_counter_key_for_lm(&candidate1.key()).unwrap_or(candidate1.key());
-            let key2 = normalize_counter_key_for_lm(&candidate2.key()).unwrap_or(candidate2.key());
-            let key = key1 + "\t" + key2.as_str();
-            if let Some(cnt) = self.word_count.get(&key) {
-                self.word_count.insert(key, cnt + 1);
-            } else {
-                self.word_count.insert(key, 1);
-                self.unique_words += 1;
-            }
-            self.total_words += 1;
+            let key1 = normalize_counter_key_for_lm(&candidates[i - 2].key())
+                .unwrap_or(candidates[i - 2].key());
+            let key2 =
+                normalize_counter_key_for_lm(&candidates[i].key()).unwrap_or(candidates[i].key());
+            self.record_pair(&key1, &key2);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_bos_skip_bigram_with_two_candidates() {
+        let mut stats = SkipBigramUserStats::default();
+        // 2語: BOS→candidates[1] の skip-bigram が記録される
+        stats.record_entries(&[
+            Candidate::new("わたし", "私", 0.0),
+            Candidate::new("は", "は", 0.0),
+        ]);
+
+        assert_eq!(stats.word_count.get("__BOS__/__BOS__\tは/は"), Some(&1));
+        assert_eq!(stats.total_words, 1);
+    }
+
+    #[test]
+    fn test_bos_skip_bigram_with_three_candidates() {
+        let mut stats = SkipBigramUserStats::default();
+        // 3語: BOS→candidates[1] と candidates[0]→candidates[2]
+        stats.record_entries(&[
+            Candidate::new("きょう", "今日", 0.0),
+            Candidate::new("は", "は", 0.0),
+            Candidate::new("いい", "良い", 0.0),
+        ]);
+
+        // BOS → は (skip-bigram)
+        assert_eq!(stats.word_count.get("__BOS__/__BOS__\tは/は"), Some(&1));
+        // 今日 → 良い (通常 skip-bigram)
+        assert_eq!(stats.word_count.get("今日/きょう\t良い/いい"), Some(&1));
+        assert_eq!(stats.total_words, 2);
+    }
+
+    #[test]
+    fn test_single_candidate_no_skip_bigram() {
+        let mut stats = SkipBigramUserStats::default();
+        // 1語では skip-bigram は記録されない
+        stats.record_entries(&[Candidate::new("ごかん", "互換", 0.0)]);
+        assert_eq!(stats.total_words, 0);
+    }
+
+    #[test]
+    fn test_empty_candidates() {
+        let mut stats = SkipBigramUserStats::default();
+        stats.record_entries(&[]);
+        assert_eq!(stats.total_words, 0);
     }
 }
