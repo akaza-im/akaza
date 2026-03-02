@@ -16,6 +16,8 @@ pub struct LatticeGraph<U: SystemUnigramLM, B: SystemBigramLM> {
     pub(crate) user_data: Arc<Mutex<UserData>>,
     pub(crate) system_unigram_lm: Rc<U>,
     pub(crate) system_bigram_lm: Rc<B>,
+    /// Jelinek-Mercer スムージングによる未知 bigram コスト: -log₁₀(1 - λ)
+    pub(crate) unknown_bigram_cost: f32,
 }
 
 impl<U: SystemUnigramLM, B: SystemBigramLM> Debug for LatticeGraph<U, B> {
@@ -171,15 +173,15 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> LatticeGraph<U, B> {
         }
 
         let Some((prev_id, _)) = prev.word_id_and_score else {
-            return self.system_bigram_lm.get_default_edge_cost();
+            return self.unknown_bigram_cost;
         };
         let Some((node_id, _)) = node.word_id_and_score else {
-            return self.system_bigram_lm.get_default_edge_cost();
+            return self.unknown_bigram_cost;
         };
         if let Some(cost) = self.system_bigram_lm.get_edge_cost(prev_id, node_id) {
             cost
         } else {
-            self.system_bigram_lm.get_default_edge_cost()
+            self.unknown_bigram_cost
         }
     }
 
@@ -196,20 +198,20 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> LatticeGraph<U, B> {
         }
 
         let Some((prev_id, _)) = prev.word_id_and_score else {
-            return (self.system_bigram_lm.get_default_edge_cost(), false);
+            return (self.unknown_bigram_cost, false);
         };
         let Some((node_id, _)) = node.word_id_and_score else {
-            return (self.system_bigram_lm.get_default_edge_cost(), false);
+            return (self.unknown_bigram_cost, false);
         };
         if let Some(cost) = self.system_bigram_lm.get_edge_cost(prev_id, node_id) {
             (cost, true)
         } else {
-            (self.system_bigram_lm.get_default_edge_cost(), false)
+            (self.unknown_bigram_cost, false)
         }
     }
 
     pub fn get_default_edge_cost(&self) -> f32 {
-        self.system_bigram_lm.get_default_edge_cost()
+        self.unknown_bigram_cost
     }
 
     /// user_data のロックを取得する。
@@ -270,12 +272,14 @@ mod tests {
 
         graph.insert(31, vec![WordNode::create_eos(30)]);
 
+        let unknown_bigram_cost = system_bigram_lm.get_default_edge_cost();
         Ok(LatticeGraph {
             yomi: "わたしかれひらがな".to_string(),
             graph,
             user_data: Arc::new(Mutex::new(UserData::default())),
             system_unigram_lm: Rc::new(system_unigram_lm),
             system_bigram_lm: Rc::new(system_bigram_lm),
+            unknown_bigram_cost,
         })
     }
 
