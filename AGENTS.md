@@ -323,6 +323,7 @@ accept.tsv に入れてはいけないもの:
   5. wfreq の生データは `akaza-corpus-stats/work/vibrato-ipadic.wfreq` で確認可能
 - **コスト計算の仕組み**: 最終的な候補コスト = Σ(unigram node cost + bigram edge cost) の累積。unigram コストは `-log₁₀((count + α) / (total + α + unique))` で計算。bigram edge が LM にない場合はデフォルト edge cost（約14.3）が適用される。unigram が LM にない場合は `calc_cost(0, ...)` のフォールバック値（約10〜12）が適用される
 - **ひらがな候補のLM参照**: graph_builder で、ひらがな候補が SKK 辞書に登録されている場合は辞書候補パスで処理され LM スコアが参照される。辞書に未登録のひらがな候補はフォールバックパス（`word_id_and_score=None`）で処理され、LM の実際の頻度に関係なく固定の高コストが適用される
+- **k-best の k 値の制約**: convert 時の k-best パス数は速度面の制約から k=5 程度が現実的な上限。k を大きくすると候補パターンは増えるが、パフォーマンスが悪化する。辞書複合語の登録だけでは viterbi コストが高く k-best に乗らないケースがあるため、k を増やすのではなく unigram/bigram のスコア調整で対処すること
 
 ### デフォルトモデルの Release
 
