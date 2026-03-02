@@ -74,6 +74,7 @@ pub struct GraphBuilder<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict
     user_data: Arc<Mutex<UserData>>,
     system_unigram_lm: Rc<U>,
     system_bigram_lm: Rc<B>,
+    unknown_bigram_cost: f32,
 }
 
 impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> GraphBuilder<U, B, KD> {
@@ -84,13 +85,20 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> GraphBuilder<U, B
         system_unigram_lm: Rc<U>,
         system_bigram_lm: Rc<B>,
     ) -> GraphBuilder<U, B, KD> {
+        let unknown_bigram_cost = system_bigram_lm.get_default_edge_cost();
         GraphBuilder {
             system_kana_kanji_dict,
             system_single_term_dict,
             user_data,
             system_unigram_lm,
             system_bigram_lm,
+            unknown_bigram_cost,
         }
+    }
+
+    pub fn with_unknown_bigram_cost(mut self, cost: f32) -> Self {
+        self.unknown_bigram_cost = cost;
+        self
     }
 
     pub fn construct(&self, yomi: &str, words_ends_at: &SegmentationResult) -> LatticeGraph<U, B> {
@@ -313,6 +321,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> GraphBuilder<U, B
             user_data: self.user_data.clone(),
             system_unigram_lm: self.system_unigram_lm.clone(),
             system_bigram_lm: self.system_bigram_lm.clone(),
+            unknown_bigram_cost: self.unknown_bigram_cost,
         }
     }
 }
