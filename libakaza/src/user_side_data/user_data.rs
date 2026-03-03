@@ -326,6 +326,57 @@ mod tests {
     }
 
     #[test]
+    fn test_record_entries_records_bos_eos_bigram() {
+        let mut user_data = UserData::default();
+        // 「互換」を確定
+        user_data.record_entries(&[Candidate::new("ごかん", "互換", 0.0)]);
+
+        // BOS→互換 のユーザー bigram が記録されていること
+        let bos_node = WordNode::create_bos();
+        let gokan_node = WordNode::new(0, "互換", "ごかん", None, false);
+        let bos_cost = user_data.get_bigram_cost(&bos_node, &gokan_node);
+        assert!(
+            bos_cost.is_some(),
+            "BOS→互換 のユーザー bigram が記録されていない"
+        );
+
+        // 互換→EOS のユーザー bigram も記録されていること
+        let eos_node = WordNode::create_eos(6);
+        let eos_cost = user_data.get_bigram_cost(&gokan_node, &eos_node);
+        assert!(
+            eos_cost.is_some(),
+            "互換→EOS のユーザー bigram が記録されていない"
+        );
+    }
+
+    /// ユーザーが「互換」を多く選択した場合、「五感」よりBOS bigram コストが低くなること
+    #[test]
+    fn test_bos_bigram_reflects_user_preference() {
+        let mut user_data = UserData::default();
+        // 「互換」を5回、「五感」を2回確定
+        for _ in 0..5 {
+            user_data.record_entries(&[Candidate::new("ごかん", "互換", 0.0)]);
+        }
+        for _ in 0..2 {
+            user_data.record_entries(&[Candidate::new("ごかん", "五感", 0.0)]);
+        }
+
+        let bos_node = WordNode::create_bos();
+        let gokan_node = WordNode::new(0, "互換", "ごかん", None, false);
+        let gokan2_node = WordNode::new(0, "五感", "ごかん", None, false);
+
+        let cost_gokan = user_data.get_bigram_cost(&bos_node, &gokan_node).unwrap();
+        let cost_gokan2 = user_data.get_bigram_cost(&bos_node, &gokan2_node).unwrap();
+
+        assert!(
+            cost_gokan < cost_gokan2,
+            "BOS→互換({}) のコストが BOS→五感({}) より低くなるべき",
+            cost_gokan,
+            cost_gokan2
+        );
+    }
+
+    #[test]
     fn test_counter_learning_generalizes_across_numbers() {
         let mut user_data = UserData::default();
         user_data.record_entries(&[Candidate::new("3しゅうかん", "3週間", 0.0)]);
