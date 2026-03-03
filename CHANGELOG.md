@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2026.303.0](https://github.com/akaza-im/akaza/compare/v2026.228.0...v2026.303.0) - 2026-03-03
+- 「各項目」「各プロジェクト」の辞書複合語登録 by @tokuhirom in https://github.com/akaza-im/akaza/pull/527
+- LatticeGraph に unknown_bigram_cost フィールドを追加 + 辞書複合語登録 by @tokuhirom in https://github.com/akaza-im/akaza/pull/529
+- ユーザー bigram 学習に BOS/EOS を追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/530
+
 ## [v2026.227.0](https://github.com/akaza-im/akaza/compare/v2026.225.2...v2026.227.0) - 2026-02-27
 - 「うつりこんでる」の分節崩壊を修正し、tokenize-line.sh を改善 by @tokuhirom in https://github.com/akaza-im/akaza/pull/521
 - 辞書に「開ける/ひらける」「サイドバー」を追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/523
