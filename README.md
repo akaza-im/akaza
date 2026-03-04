@@ -492,4 +492,17 @@ MIT License
 
 * [ibus-uniemoji](https://github.com/salty-horse/ibus-uniemoji) を参考に初期の実装を行いました
 * [日本語入力を支える技術](https://gihyo.jp/book/2012/978-4-7741-4993-6) を読み込んで実装しました。この本がなかったら実装しようと思わなかったと思います
-* 形態素解析器 [Vibrato](https://github.com/daac-tools/vibrato) を使用しています
+
+### 言語リソース・ツール
+
+デフォルト言語モデルの構築にあたり、以下の言語リソースを利用しています。各プロジェクトの開発者・提供者の皆様に感謝いたします。
+
+* **[日本語 Wikipedia](https://ja.wikipedia.org/)** — コーパス統計データの主要な元データとして利用しています（CC BY-SA 4.0、Wikimedia Foundation および各執筆者）
+* **[青空文庫](https://www.aozora.gr.jp/)** — コーパス統計データの元データとして利用しています（著作権消滅作品）
+* **[CC-100 Japanese](https://data.statmt.org/cc-100/)** — コーパス統計データの補助データとして利用しています（Common Crawl 由来、Conneau et al., ACL 2020）
+* **[Vibrato](https://github.com/daac-tools/vibrato)** — 形態素解析器として使用しています（Apache-2.0）
+* **[IPADIC (MeCab)](https://taku910.github.io/mecab/)** — Vibrato の辞書としてモデルビルド時に使用しています（NAIST/ICOT BSD-style ライセンス、奈良先端科学技術大学院大学）
+* **[UniDic CSJ](https://clrd.ninjal.ac.jp/unidic/)** — システム辞書の読み情報の補完に使用しています（BSD-3-Clause / GPL / LGPL、UniDic Consortium）
+* **[SudachiDict](https://github.com/WorksApplications/SudachiDict)** — システム辞書の固有名詞データの補完に使用しています（Apache-2.0、WAQ LLC）
+* **[SKK-JISYO.L](https://skk-dev.github.io/dict/)** — かな漢字変換の主辞書として利用しています。同梱はしておらず、ユーザーが別途インストールします（GPL-2.0）
+* **[anthy-unicode](https://github.com/fujiwarat/anthy-unicode)** — 変換精度の評価コーパスとして利用しています（Public Domain）
