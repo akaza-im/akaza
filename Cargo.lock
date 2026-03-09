@@ -1026,7 +1026,6 @@ dependencies = [
  "kelp",
  "libakaza",
  "log",
- "rand",
  "regex",
  "serial_test",
  "tempfile",

@@ -2,10 +2,9 @@
 
 use std::ffi::{c_char, c_void, CStr};
 use std::io::Write;
-use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
-use std::{fs, fs::OpenOptions, thread, time};
+use std::{fs::OpenOptions, thread, time};
 
 use anyhow::Result;
 use clap::Parser;
@@ -16,6 +15,7 @@ use ibus_sys::engine::IBusEngine;
 use ibus_sys::glib::{gchar, guint};
 use libakaza::config::Config;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
+use libakaza::user_side_data::encryption_key::load_or_create_default_encryption_key;
 use libakaza::user_side_data::user_data::UserData;
 
 use ibus_akaza_lib::context::AkazaContext;
@@ -85,42 +85,6 @@ unsafe extern "C" fn property_activate(
     context_ref.do_property_activate(engine, prop_name_str, prop_state);
 }
 
-/// 暗号化鍵を読み込む。なければ生成して保存する。
-fn load_or_create_encryption_key() -> Result<Vec<u8>> {
-    let basedir = xdg::BaseDirectories::with_prefix("akaza")?;
-    let key_path = basedir.place_data_file(Path::new("encryption.key"))?;
-
-    if key_path.exists() {
-        let key = fs::read(&key_path)?;
-        if key.len() == 32 {
-            info!("Loaded encryption key from {}", key_path.display());
-            return Ok(key);
-        }
-        warn!(
-            "Invalid encryption key size ({} bytes), regenerating",
-            key.len()
-        );
-    }
-
-    // 新しい鍵を生成
-    use rand::RngCore;
-    let mut key = vec![0u8; 32];
-    rand::thread_rng().fill_bytes(&mut key);
-
-    // 0600 で保存
-    use std::os::unix::fs::OpenOptionsExt;
-    let mut file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .mode(0o600)
-        .open(&key_path)?;
-    file.write_all(&key)?;
-    info!("Generated new encryption key at {}", key_path.display());
-
-    Ok(key)
-}
-
 fn load_user_data(key: Option<&[u8]>) -> Arc<Mutex<UserData>> {
     match UserData::load_from_default_path(key) {
         Ok(user_data) => Arc::new(Mutex::new(user_data)),
@@ -172,7 +136,7 @@ fn main() -> Result<()> {
 
     info!("Starting ibus-akaza(rust version)");
 
-    let encryption_key = match load_or_create_encryption_key() {
+    let encryption_key = match load_or_create_default_encryption_key() {
         Ok(key) => Some(key),
         Err(err) => {
             warn!(

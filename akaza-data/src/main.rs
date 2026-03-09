@@ -215,6 +215,9 @@ struct CheckArgs {
     /// ユーザーデータ（学習データ）を使用する
     #[arg(short, long, default_value_t = false)]
     user_data: bool,
+    /// 暗号化鍵ファイルのパス（--user-data と併用。省略時はデフォルトパスを使用）
+    #[arg(long)]
+    key_file: Option<String>,
     /// 出力形式
     #[arg(short, long, value_enum, default_value_t = OutputFormat::Text)]
     format: OutputFormat,
@@ -411,6 +414,7 @@ fn main() -> anyhow::Result<()> {
             yomi: opt.yomi,
             expected: opt.expected,
             use_user_data: opt.user_data,
+            key_file: opt.key_file,
             eucjp_dict: &opt.eucjp_dict,
             utf8_dict: &opt.utf8_dict,
             model_dir: opt.model_dir.as_deref(),

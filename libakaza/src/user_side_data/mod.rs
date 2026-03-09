@@ -1,4 +1,5 @@
 mod bigram_user_stats;
+pub mod encryption_key;
 mod skip_bigram_user_stats;
 mod unigram_user_stats;
 // 調整めんどくさいのでいったんオフ。

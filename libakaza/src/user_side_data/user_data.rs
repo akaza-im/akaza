@@ -58,12 +58,12 @@ fn load_user_stats(
     v2_path: &str,
     key: Option<&[u8]>,
     label: &str,
-) -> (Vec<(String, u32)>, bool) {
+) -> Vec<(String, u32)> {
     // v2 ファイルがあり、鍵もあれば v2 を試す
     if let Some(key) = key {
         if Path::new(v2_path).exists() {
             match read_user_stats_file_v2(v2_path, key) {
-                Ok(dat) => return (dat, true),
+                Ok(dat) => return dat,
                 Err(err) => {
                     warn!("Cannot load v2 {} data from {}: {}", label, v2_path, err);
                 }
@@ -72,10 +72,10 @@ fn load_user_stats(
     }
     // v1 にフォールバック
     match read_user_stats_file(&v1_path.to_string()) {
-        Ok(dat) => (dat, false),
+        Ok(dat) => dat,
         Err(err) => {
             warn!("Cannot load {} data from {}: {}", label, v1_path, err);
-            (Vec::new(), false)
+            Vec::new()
         }
     }
 }
@@ -180,13 +180,13 @@ impl UserData {
         // ユーザーデータが読み込めないことは fatal エラーではない。
         // 初回起動時にはデータがないので。
         // データがなければ初期状態から始める
-        let (unigram_dat, _) = load_user_stats(unigram_path, unigram_v2_path, key, "unigram");
+        let unigram_dat = load_user_stats(unigram_path, unigram_v2_path, key, "unigram");
         let unigram_user_stats = build_unigram_stats(unigram_dat);
 
-        let (bigram_dat, _) = load_user_stats(bigram_path, bigram_v2_path, key, "bigram");
+        let bigram_dat = load_user_stats(bigram_path, bigram_v2_path, key, "bigram");
         let bigram_user_stats = build_bigram_stats(bigram_dat);
 
-        let (skip_bigram_dat, _) =
+        let skip_bigram_dat =
             load_user_stats(skip_bigram_path, skip_bigram_v2_path, key, "skip-bigram");
         let skip_bigram_user_stats = build_skip_bigram_stats(skip_bigram_dat);
 

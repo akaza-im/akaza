@@ -58,6 +58,9 @@ pub(crate) fn write_user_stats_file(path: &str, word_count: &FxHashMap<String, u
 /// Read v2 encrypted binary file.
 /// Format: [magic 4B: "AKZ\x01"][IV 16B][encrypted bincode(Vec<(String, u32)>)]
 pub(crate) fn read_user_stats_file_v2(path: &str, key: &[u8]) -> Result<Vec<(String, u32)>> {
+    if key.len() != 32 {
+        bail!("encryption key must be 32 bytes, got {} bytes", key.len());
+    }
     let data = fs::read(path)?;
     if data.len() < V2_MAGIC.len() + IV_LEN {
         bail!("v2 file too short: {}", path);
@@ -85,6 +88,9 @@ pub(crate) fn write_user_stats_file_v2(
     key: &[u8],
     word_count: &FxHashMap<String, u32>,
 ) -> Result<()> {
+    if key.len() != 32 {
+        bail!("encryption key must be 32 bytes, got {} bytes", key.len());
+    }
     let entries: Vec<(String, u32)> = word_count.iter().map(|(k, v)| (k.clone(), *v)).collect();
     let plaintext = bincode::serialize(&entries)?;
 
@@ -180,5 +186,49 @@ mod tests {
         write_user_stats_file_v2(&path, &key, &wc).unwrap();
         let result = read_user_stats_file_v2(&path, &wrong_key);
         assert!(result.is_err(), "Wrong key should fail");
+    }
+
+    #[test]
+    fn test_v2_empty_hashmap() {
+        let tmpfile = NamedTempFile::new().unwrap();
+        let path = tmpfile.path().to_str().unwrap().to_string();
+
+        let key = [0x42u8; 32];
+        let wc: FxHashMap<String, u32> = FxHashMap::default();
+
+        write_user_stats_file_v2(&path, &key, &wc).unwrap();
+        let result = read_user_stats_file_v2(&path, &key).unwrap();
+        assert!(result.is_empty(), "Empty hashmap should roundtrip as empty");
+    }
+
+    #[test]
+    fn test_v2_large_dataset() {
+        let tmpfile = NamedTempFile::new().unwrap();
+        let path = tmpfile.path().to_str().unwrap().to_string();
+
+        let key = [0x42u8; 32];
+        let mut wc: FxHashMap<String, u32> = FxHashMap::default();
+        for i in 0..10_000 {
+            wc.insert(format!("単語{}/たんご{}", i, i), i as u32);
+        }
+
+        write_user_stats_file_v2(&path, &key, &wc).unwrap();
+        let result = read_user_stats_file_v2(&path, &key).unwrap();
+
+        let result_map: FxHashMap<String, u32> = result.into_iter().collect();
+        assert_eq!(result_map.len(), 10_000);
+        assert_eq!(result_map, wc);
+    }
+
+    #[test]
+    fn test_v2_invalid_key_length() {
+        let tmpfile = NamedTempFile::new().unwrap();
+        let path = tmpfile.path().to_str().unwrap().to_string();
+
+        let short_key = [0x42u8; 16];
+        let wc: FxHashMap<String, u32> = FxHashMap::default();
+
+        let result = write_user_stats_file_v2(&path, &short_key, &wc);
+        assert!(result.is_err(), "Short key should be rejected");
     }
 }
