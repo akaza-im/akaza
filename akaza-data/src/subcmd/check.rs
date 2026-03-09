@@ -90,7 +90,7 @@ pub fn check(opts: CheckOptions) -> anyhow::Result<()> {
 
     if opts.use_user_data {
         info!("Enabled user data");
-        match UserData::load_from_default_path() {
+        match UserData::load_from_default_path(None) {
             Ok(ud) => {
                 builder.user_data(Arc::new(Mutex::new(ud)));
             }

@@ -2,9 +2,10 @@
 
 use std::ffi::{c_char, c_void, CStr};
 use std::io::Write;
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
-use std::{fs::OpenOptions, thread, time};
+use std::{fs, fs::OpenOptions, thread, time};
 
 use anyhow::Result;
 use clap::Parser;
@@ -84,8 +85,44 @@ unsafe extern "C" fn property_activate(
     context_ref.do_property_activate(engine, prop_name_str, prop_state);
 }
 
-fn load_user_data() -> Arc<Mutex<UserData>> {
-    match UserData::load_from_default_path() {
+/// 暗号化鍵を読み込む。なければ生成して保存する。
+fn load_or_create_encryption_key() -> Result<Vec<u8>> {
+    let basedir = xdg::BaseDirectories::with_prefix("akaza")?;
+    let key_path = basedir.place_data_file(Path::new("encryption.key"))?;
+
+    if key_path.exists() {
+        let key = fs::read(&key_path)?;
+        if key.len() == 32 {
+            info!("Loaded encryption key from {}", key_path.display());
+            return Ok(key);
+        }
+        warn!(
+            "Invalid encryption key size ({} bytes), regenerating",
+            key.len()
+        );
+    }
+
+    // 新しい鍵を生成
+    use rand::RngCore;
+    let mut key = vec![0u8; 32];
+    rand::thread_rng().fill_bytes(&mut key);
+
+    // 0600 で保存
+    use std::os::unix::fs::OpenOptionsExt;
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .mode(0o600)
+        .open(&key_path)?;
+    file.write_all(&key)?;
+    info!("Generated new encryption key at {}", key_path.display());
+
+    Ok(key)
+}
+
+fn load_user_data(key: Option<&[u8]>) -> Arc<Mutex<UserData>> {
+    match UserData::load_from_default_path(key) {
         Ok(user_data) => Arc::new(Mutex::new(user_data)),
         Err(err) => {
             error!("Cannot load user data: {}", err);
@@ -135,9 +172,20 @@ fn main() -> Result<()> {
 
     info!("Starting ibus-akaza(rust version)");
 
+    let encryption_key = match load_or_create_encryption_key() {
+        Ok(key) => Some(key),
+        Err(err) => {
+            warn!(
+                "Cannot load/create encryption key, user data will not be encrypted: {}",
+                err
+            );
+            None
+        }
+    };
+
     unsafe {
         let sys_time = SystemTime::now();
-        let user_data = load_user_data();
+        let user_data = load_user_data(encryption_key.as_deref());
         let config = Config::load()?;
         let akaza = BigramWordViterbiEngineBuilder::new(Config::load()?.engine)
             .user_data(user_data.clone())

@@ -16,6 +16,7 @@
   - [文節伸縮の仕様](internals/clause-extension-behavior.md)
   - [モデルファイルのメタデータ](internals/model-metadata.md)
   - [ユーザーデータ](internals/user-data.md)
+  - [ユーザーデータの保護](internals/data-protection.md)
   - [設計メモ・レポート](internals/notes/README.md)
     - [K-Best セグメンテーション](internals/notes/k-best-segmentation.md)
     - [リランキング](internals/notes/reranking.md)
