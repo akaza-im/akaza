@@ -15,6 +15,7 @@ use ibus_sys::engine::IBusEngine;
 use ibus_sys::glib::{gchar, guint};
 use libakaza::config::Config;
 use libakaza::engine::bigram_word_viterbi_engine::BigramWordViterbiEngineBuilder;
+use libakaza::user_side_data::encryption_key::load_or_create_default_encryption_key;
 use libakaza::user_side_data::user_data::UserData;
 
 use ibus_akaza_lib::context::AkazaContext;
@@ -84,8 +85,8 @@ unsafe extern "C" fn property_activate(
     context_ref.do_property_activate(engine, prop_name_str, prop_state);
 }
 
-fn load_user_data() -> Arc<Mutex<UserData>> {
-    match UserData::load_from_default_path() {
+fn load_user_data(key: Option<&[u8]>) -> Arc<Mutex<UserData>> {
+    match UserData::load_from_default_path(key) {
         Ok(user_data) => Arc::new(Mutex::new(user_data)),
         Err(err) => {
             error!("Cannot load user data: {}", err);
@@ -135,9 +136,20 @@ fn main() -> Result<()> {
 
     info!("Starting ibus-akaza(rust version)");
 
+    let encryption_key = match load_or_create_default_encryption_key() {
+        Ok(key) => Some(key),
+        Err(err) => {
+            warn!(
+                "Cannot load/create encryption key, user data will not be encrypted: {}",
+                err
+            );
+            None
+        }
+    };
+
     unsafe {
         let sys_time = SystemTime::now();
-        let user_data = load_user_data();
+        let user_data = load_user_data(encryption_key.as_deref());
         let config = Config::load()?;
         let akaza = BigramWordViterbiEngineBuilder::new(Config::load()?.engine)
             .user_data(user_data.clone())

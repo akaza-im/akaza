@@ -15,6 +15,7 @@ use libakaza::graph::graph_resolver::KBestPath;
 use libakaza::graph::reranking::ReRankingWeights;
 use libakaza::kana_kanji::base::KanaKanjiDict;
 use libakaza::lm::base::{SystemBigramLM, SystemUnigramLM};
+use libakaza::user_side_data::encryption_key::load_or_create_default_encryption_key;
 use libakaza::user_side_data::user_data::UserData;
 
 #[derive(Debug, Serialize)]
@@ -41,6 +42,7 @@ pub struct CheckOptions<'a> {
     pub yomi: Option<String>,
     pub expected: Option<String>,
     pub use_user_data: bool,
+    pub key_file: Option<String>,
     pub eucjp_dict: &'a [String],
     pub utf8_dict: &'a [String],
     pub model_dir: Option<&'a str>,
@@ -90,7 +92,24 @@ pub fn check(opts: CheckOptions) -> anyhow::Result<()> {
 
     if opts.use_user_data {
         info!("Enabled user data");
-        match UserData::load_from_default_path() {
+        let key: Option<Vec<u8>> = if let Some(ref path) = opts.key_file {
+            match std::fs::read(path) {
+                Ok(k) => Some(k),
+                Err(err) => {
+                    error!("Cannot read key file {}: {}", path, err);
+                    None
+                }
+            }
+        } else {
+            match load_or_create_default_encryption_key() {
+                Ok(k) => Some(k),
+                Err(err) => {
+                    info!("No encryption key available: {}", err);
+                    None
+                }
+            }
+        };
+        match UserData::load_from_default_path(key.as_deref()) {
             Ok(ud) => {
                 builder.user_data(Arc::new(Mutex::new(ud)));
             }

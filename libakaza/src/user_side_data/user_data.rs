@@ -15,7 +15,9 @@ use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
 use crate::user_side_data::bigram_user_stats::BiGramUserStats;
 use crate::user_side_data::skip_bigram_user_stats::SkipBigramUserStats;
 use crate::user_side_data::unigram_user_stats::UniGramUserStats;
-use crate::user_side_data::user_stats_utils::{read_user_stats_file, write_user_stats_file};
+use crate::user_side_data::user_stats_utils::{
+    read_user_stats_file, read_user_stats_file_v2, write_user_stats_file, write_user_stats_file_v2,
+};
 
 /**
  * ユーザー固有データ
@@ -37,13 +39,79 @@ pub struct UserData {
     skip_bigram_path: Option<String>,
     dict_path: Option<String>,
 
+    // v2 暗号化ファイルパス
+    unigram_v2_path: Option<String>,
+    bigram_v2_path: Option<String>,
+    skip_bigram_v2_path: Option<String>,
+
+    encryption_key: Option<Vec<u8>>,
+
     pub dict: FxHashMap<String, Vec<String>>,
 
     pub(crate) need_save: bool,
 }
 
+/// v1 または v2 からユーザー統計データを読み込むヘルパー。
+/// v2 ファイルが存在すれば v2 を優先し、なければ v1 にフォールバックする。
+fn load_user_stats(
+    v1_path: &str,
+    v2_path: &str,
+    key: Option<&[u8]>,
+    label: &str,
+) -> Vec<(String, u32)> {
+    // v2 ファイルがあり、鍵もあれば v2 を試す
+    if let Some(key) = key {
+        if Path::new(v2_path).exists() {
+            match read_user_stats_file_v2(v2_path, key) {
+                Ok(dat) => return dat,
+                Err(err) => {
+                    warn!("Cannot load v2 {} data from {}: {}", label, v2_path, err);
+                }
+            }
+        }
+    }
+    // v1 にフォールバック
+    match read_user_stats_file(&v1_path.to_string()) {
+        Ok(dat) => dat,
+        Err(err) => {
+            warn!("Cannot load {} data from {}: {}", label, v1_path, err);
+            Vec::new()
+        }
+    }
+}
+
+fn build_unigram_stats(dat: Vec<(String, u32)>) -> UniGramUserStats {
+    let unique_count = dat.len() as u32;
+    let total_count: u32 = dat.iter().map(|f| f.1).sum();
+    let mut word_count: FxHashMap<String, u32> = FxHashMap::default();
+    for (word, count) in dat {
+        word_count.insert(word, count);
+    }
+    UniGramUserStats::new(unique_count, total_count, word_count)
+}
+
+fn build_bigram_stats(dat: Vec<(String, u32)>) -> BiGramUserStats {
+    let unique_count = dat.len() as u32;
+    let total_count: u32 = dat.iter().map(|f| f.1).sum();
+    let mut words_count: FxHashMap<String, u32> = FxHashMap::default();
+    for (words, count) in dat {
+        words_count.insert(words, count);
+    }
+    BiGramUserStats::new(unique_count, total_count, words_count)
+}
+
+fn build_skip_bigram_stats(dat: Vec<(String, u32)>) -> SkipBigramUserStats {
+    let unique_count = dat.len() as u32;
+    let total_count: u32 = dat.iter().map(|f| f.1).sum();
+    let mut words_count: FxHashMap<String, u32> = FxHashMap::default();
+    for (words, count) in dat {
+        words_count.insert(words, count);
+    }
+    SkipBigramUserStats::new(unique_count, total_count, words_count)
+}
+
 impl UserData {
-    pub fn load_from_default_path() -> Result<Self> {
+    pub fn load_from_default_path(key: Option<&[u8]>) -> Result<Self> {
         let basedir = xdg::BaseDirectories::with_prefix("akaza")?;
         let unigram_path = basedir
             .place_data_file(Path::new("unigram.v1.txt"))?
@@ -65,6 +133,23 @@ impl UserData {
             .to_str()
             .unwrap()
             .to_string();
+
+        let unigram_v2_path = basedir
+            .place_data_file(Path::new("unigram.v2.bin"))?
+            .to_str()
+            .unwrap()
+            .to_string();
+        let bigram_v2_path = basedir
+            .place_data_file(Path::new("bigram.v2.bin"))?
+            .to_str()
+            .unwrap()
+            .to_string();
+        let skip_bigram_v2_path = basedir
+            .place_data_file(Path::new("skip_bigram.v2.bin"))?
+            .to_str()
+            .unwrap()
+            .to_string();
+
         info!(
             "Load user data from default path: unigram={}, bigram={}, skip_bigram={}",
             unigram_path, bigram_path, skip_bigram_path
@@ -74,75 +159,36 @@ impl UserData {
             &bigram_path,
             &skip_bigram_path,
             &dict_path,
+            &unigram_v2_path,
+            &bigram_v2_path,
+            &skip_bigram_v2_path,
+            key,
         ))
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn load(
-        unigram_path: &String,
-        bigram_path: &String,
-        skip_bigram_path: &String,
-        dict_path: &String,
+        unigram_path: &str,
+        bigram_path: &str,
+        skip_bigram_path: &str,
+        dict_path: &str,
+        unigram_v2_path: &str,
+        bigram_v2_path: &str,
+        skip_bigram_v2_path: &str,
+        key: Option<&[u8]>,
     ) -> Self {
         // ユーザーデータが読み込めないことは fatal エラーではない。
         // 初回起動時にはデータがないので。
-        // データがなければ初期所状態から始める
-        let unigram_user_stats = match read_user_stats_file(unigram_path) {
-            Ok(dat) => {
-                let unique_count = dat.len() as u32;
-                let total_count: u32 = dat.iter().map(|f| f.1).sum();
-                let mut word_count: FxHashMap<String, u32> = FxHashMap::default();
-                for (word, count) in dat {
-                    word_count.insert(word, count);
-                }
-                UniGramUserStats::new(unique_count, total_count, word_count)
-            }
-            Err(err) => {
-                warn!(
-                    "Cannot load user unigram data from {}: {}",
-                    unigram_path, err
-                );
+        // データがなければ初期状態から始める
+        let unigram_dat = load_user_stats(unigram_path, unigram_v2_path, key, "unigram");
+        let unigram_user_stats = build_unigram_stats(unigram_dat);
 
-                UniGramUserStats::new(0, 0, FxHashMap::default())
-            }
-        };
+        let bigram_dat = load_user_stats(bigram_path, bigram_v2_path, key, "bigram");
+        let bigram_user_stats = build_bigram_stats(bigram_dat);
 
-        // build bigram
-        let bigram_user_stats = match read_user_stats_file(bigram_path) {
-            Ok(dat) => {
-                let unique_count = dat.len() as u32;
-                let total_count: u32 = dat.iter().map(|f| f.1).sum();
-                let mut words_count: FxHashMap<String, u32> = FxHashMap::default();
-                for (words, count) in dat {
-                    words_count.insert(words, count);
-                }
-                BiGramUserStats::new(unique_count, total_count, words_count)
-            }
-            Err(err) => {
-                warn!("Cannot load user bigram data from {}: {}", bigram_path, err);
-                // ユーザーデータは初回起動時などにはないので、データがないものとして処理を続行する
-                BiGramUserStats::new(0, 0, FxHashMap::default())
-            }
-        };
-
-        // build skip-bigram
-        let skip_bigram_user_stats = match read_user_stats_file(skip_bigram_path) {
-            Ok(dat) => {
-                let unique_count = dat.len() as u32;
-                let total_count: u32 = dat.iter().map(|f| f.1).sum();
-                let mut words_count: FxHashMap<String, u32> = FxHashMap::default();
-                for (words, count) in dat {
-                    words_count.insert(words, count);
-                }
-                SkipBigramUserStats::new(unique_count, total_count, words_count)
-            }
-            Err(err) => {
-                warn!(
-                    "Cannot load user skip-bigram data from {}: {}",
-                    skip_bigram_path, err
-                );
-                SkipBigramUserStats::new(0, 0, FxHashMap::default())
-            }
-        };
+        let skip_bigram_dat =
+            load_user_stats(skip_bigram_path, skip_bigram_v2_path, key, "skip-bigram");
+        let skip_bigram_user_stats = build_skip_bigram_stats(skip_bigram_dat);
 
         let dict: FxHashMap<String, Vec<String>> = match read_skkdict(Path::new(dict_path), UTF_8) {
             Ok(d) => d.into_iter().collect(),
@@ -151,14 +197,6 @@ impl UserData {
                 Default::default()
             }
         };
-
-        // let kana_trie = match CedarwoodKanaTrie::load(kana_trie_path) {
-        //     Ok(trie) => trie,
-        //     Err(err) => {
-        //         warn!("Cannot load kana trie: {} {}", kana_trie_path, err);
-        //         CedarwoodKanaTrie::default()
-        //     }
-        // };
 
         // cedarwood トライを構築する。
         // キャッシュせずに動的に構築する方向性。
@@ -186,10 +224,14 @@ impl UserData {
             skip_bigram_user_stats,
             dict,
             kana_trie: Arc::new(Mutex::new(kana_trie)),
-            unigram_path: Some(unigram_path.clone()),
-            bigram_path: Some(bigram_path.clone()),
-            skip_bigram_path: Some(skip_bigram_path.clone()),
-            dict_path: Some(dict_path.clone()),
+            unigram_path: Some(unigram_path.to_string()),
+            bigram_path: Some(bigram_path.to_string()),
+            skip_bigram_path: Some(skip_bigram_path.to_string()),
+            dict_path: Some(dict_path.to_string()),
+            unigram_v2_path: Some(unigram_v2_path.to_string()),
+            bigram_v2_path: Some(bigram_v2_path.to_string()),
+            skip_bigram_v2_path: Some(skip_bigram_v2_path.to_string()),
+            encryption_key: key.map(|k| k.to_vec()),
             need_save: false,
         }
     }
@@ -237,15 +279,34 @@ impl UserData {
                 self.skip_bigram_path,
                 self.skip_bigram_user_stats.word_count.len(),
             );
-            if let Some(unigram_path) = &self.unigram_path {
-                write_user_stats_file(unigram_path, &self.unigram_user_stats.word_count)?;
+
+            if let Some(key) = &self.encryption_key {
+                // v2 暗号化形式で保存
+                if let Some(path) = &self.unigram_v2_path {
+                    write_user_stats_file_v2(path, key, &self.unigram_user_stats.word_count)?;
+                }
+                if let Some(path) = &self.bigram_v2_path {
+                    write_user_stats_file_v2(path, key, &self.bigram_user_stats.word_count)?;
+                }
+                if let Some(path) = &self.skip_bigram_v2_path {
+                    write_user_stats_file_v2(path, key, &self.skip_bigram_user_stats.word_count)?;
+                }
+            } else {
+                // v1 テキスト形式で保存（鍵なしの場合）
+                if let Some(unigram_path) = &self.unigram_path {
+                    write_user_stats_file(unigram_path, &self.unigram_user_stats.word_count)?;
+                }
+                if let Some(bigram_path) = &self.bigram_path {
+                    write_user_stats_file(bigram_path, &self.bigram_user_stats.word_count)?;
+                }
+                if let Some(skip_bigram_path) = &self.skip_bigram_path {
+                    write_user_stats_file(
+                        skip_bigram_path,
+                        &self.skip_bigram_user_stats.word_count,
+                    )?;
+                }
             }
-            if let Some(bigram_path) = &self.bigram_path {
-                write_user_stats_file(bigram_path, &self.bigram_user_stats.word_count)?;
-            }
-            if let Some(skip_bigram_path) = &self.skip_bigram_path {
-                write_user_stats_file(skip_bigram_path, &self.skip_bigram_user_stats.word_count)?;
-            }
+
             if let Some(dict_path) = &self.dict_path {
                 write_skk_dict(dict_path, vec![self.dict.clone().into_iter().collect()])?;
             }
@@ -388,5 +449,71 @@ mod tests {
         let generalized =
             user_data.get_unigram_cost(&WordNode::new(0, "516週間", "516しゅうかん", None, false));
         assert!(generalized.is_some());
+    }
+
+    #[test]
+    fn test_v1_to_v2_migration() {
+        use crate::user_side_data::user_stats_utils::write_user_stats_file;
+        use tempfile::TempDir;
+
+        let tmpdir = TempDir::new().unwrap();
+        let dir = tmpdir.path();
+
+        // v1 ファイルを作成
+        let unigram_v1 = dir.join("unigram.v1.txt").to_str().unwrap().to_string();
+        let bigram_v1 = dir.join("bigram.v1.txt").to_str().unwrap().to_string();
+        let skip_bigram_v1 = dir.join("skip_bigram.v1.txt").to_str().unwrap().to_string();
+        let dict_path = dir.join("SKK-JISYO.user").to_str().unwrap().to_string();
+
+        let unigram_v2 = dir.join("unigram.v2.bin").to_str().unwrap().to_string();
+        let bigram_v2 = dir.join("bigram.v2.bin").to_str().unwrap().to_string();
+        let skip_bigram_v2 = dir.join("skip_bigram.v2.bin").to_str().unwrap().to_string();
+
+        let mut wc: FxHashMap<String, u32> = FxHashMap::default();
+        wc.insert("渡し/わたし".to_string(), 3);
+        write_user_stats_file(&unigram_v1, &wc).unwrap();
+        write_user_stats_file(&bigram_v1, &FxHashMap::default()).unwrap();
+        write_user_stats_file(&skip_bigram_v1, &FxHashMap::default()).unwrap();
+
+        let key = [0x42u8; 32];
+
+        // v2 ファイルがないので v1 からロードされる
+        let mut user_data = UserData::load(
+            &unigram_v1,
+            &bigram_v1,
+            &skip_bigram_v1,
+            &dict_path,
+            &unigram_v2,
+            &bigram_v2,
+            &skip_bigram_v2,
+            Some(&key),
+        );
+
+        // 保存すると v2 形式で書き出される
+        user_data.need_save = true;
+        user_data.write_user_files().unwrap();
+
+        // v2 ファイルが作成されていること
+        assert!(
+            Path::new(&unigram_v2).exists(),
+            "v2 unigram file should exist"
+        );
+
+        // v2 から再読み込みできること
+        let user_data2 = UserData::load(
+            &unigram_v1,
+            &bigram_v1,
+            &skip_bigram_v1,
+            &dict_path,
+            &unigram_v2,
+            &bigram_v2,
+            &skip_bigram_v2,
+            Some(&key),
+        );
+        let cost = user_data2.get_unigram_cost(&WordNode::new(0, "渡し", "わたし", None, false));
+        assert!(
+            cost.is_some(),
+            "v2 から読み込んだデータでコストが取得できるべき"
+        );
     }
 }
