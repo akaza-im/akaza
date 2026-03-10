@@ -112,7 +112,7 @@ fn build_skip_bigram_stats(dat: Vec<(String, u32)>) -> SkipBigramUserStats {
 
 impl UserData {
     pub fn load_from_default_path(key: Option<&[u8]>) -> Result<Self> {
-        let basedir = xdg::BaseDirectories::with_prefix("akaza")?;
+        let basedir = crate::xdg_dirs::BaseDirectories::with_prefix("akaza")?;
         let unigram_path = basedir
             .place_data_file(Path::new("unigram.v1.txt"))?
             .to_str()

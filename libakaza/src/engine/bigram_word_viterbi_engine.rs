@@ -236,7 +236,8 @@ impl BigramWordViterbiEngineBuilder {
     }
 
     fn try_load(model_dir: &str, name: &str) -> Result<String> {
-        Ok(model_dir.to_string() + "/" + name)
+        let path = std::path::Path::new(model_dir).join(name);
+        Ok(path.to_string_lossy().to_string())
     }
 }
 

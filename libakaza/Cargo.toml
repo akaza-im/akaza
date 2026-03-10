@@ -16,7 +16,7 @@ tempfile = "3"
 anyhow = "1.0"
 half = "2.4"
 kelp = "0.6"
-xdg = "2.5"
+dirs = "5"
 encoding_rs = "0.8"
 cedarwood = "0.4"
 serde = { version = "1.0", features = ["derive"] }
@@ -27,5 +27,7 @@ cbc = { version = "0.1", features = ["alloc"] }
 bincode = "1"
 rand = "0.8"
 
-[build-dependencies]
+[target.'cfg(unix)'.dependencies]
+xdg = "2.5"
 
+[build-dependencies]

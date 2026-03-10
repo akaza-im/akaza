@@ -42,7 +42,7 @@ pub fn load_dicts_with_cache(
         .unwrap_or(0_u128);
 
     // cache file のパスを得る
-    let base_dirs = xdg::BaseDirectories::with_prefix("akaza")
+    let base_dirs = crate::xdg_dirs::BaseDirectories::with_prefix("akaza")
         .with_context(|| "xdg directory with 'akaza' prefix")?;
     base_dirs.create_cache_directory("")?;
     let cache_path = base_dirs
