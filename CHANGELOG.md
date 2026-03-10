@@ -1,5 +1,8 @@
 # Changelog
 
+## [v2026.310.2](https://github.com/akaza-im/akaza/compare/v2026.310.1...v2026.310.2) - 2026-03-10
+- 半角カタカナを変換候補に追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/538
+
 ## [v2026.310.1](https://github.com/akaza-im/akaza/compare/v2026.310.0...v2026.310.1) - 2026-03-10
 - feat: libakaza の Windows 対応 by @mattn in https://github.com/akaza-im/akaza/pull/535
 - Windows 対応のフォローアップ修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/537
