@@ -1,5 +1,9 @@
 # Changelog
 
+## [v2026.310.1](https://github.com/akaza-im/akaza/compare/v2026.310.0...v2026.310.1) - 2026-03-10
+- feat: libakaza の Windows 対応 by @mattn in https://github.com/akaza-im/akaza/pull/535
+- Windows 対応のフォローアップ修正 by @tokuhirom in https://github.com/akaza-im/akaza/pull/537
+
 ## [v2026.310.0](https://github.com/akaza-im/akaza/compare/v2026.303.0...v2026.310.0) - 2026-03-10
 - README: 言語リソースへの謝辞を追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/531
 - ユーザー統計データの AES256 CBC 暗号化を実装 by @tokuhirom in https://github.com/akaza-im/akaza/pull/534
