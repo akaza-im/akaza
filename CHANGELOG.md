@@ -1,5 +1,9 @@
 # Changelog
 
+## [v2026.310.0](https://github.com/akaza-im/akaza/compare/v2026.303.0...v2026.310.0) - 2026-03-10
+- README: 言語リソースへの謝辞を追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/531
+- ユーザー統計データの AES256 CBC 暗号化を実装 by @tokuhirom in https://github.com/akaza-im/akaza/pull/534
+
 ## [v2026.303.0](https://github.com/akaza-im/akaza/compare/v2026.228.0...v2026.303.0) - 2026-03-03
 - 「各項目」「各プロジェクト」の辞書複合語登録 by @tokuhirom in https://github.com/akaza-im/akaza/pull/527
 - LatticeGraph に unknown_bigram_cost フィールドを追加 + 辞書複合語登録 by @tokuhirom in https://github.com/akaza-im/akaza/pull/529
