@@ -15,7 +15,7 @@ use crate::numeric_counter::{
     parse_kana_numeric_prefix_before_counter, parse_numeric_prefix_surface, to_fullwidth_digits,
 };
 use crate::user_side_data::user_data::UserData;
-use kelp::{hira2kata, ConvOption};
+use kelp::{hira2kata, z2h, ConvOption};
 use log::trace;
 
 /// surface が数字+接尾辞の場合、LM lookup 用のキーを `<NUM>` 正規化する。
@@ -178,10 +178,9 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> GraphBuilder<U, B
                     }
                 }
                 // ひらがな候補をリストアップする
-                for surface in [
-                    segmented_yomi,
-                    hira2kata(segmented_yomi, ConvOption::default()).as_str(),
-                ] {
+                let katakana = hira2kata(segmented_yomi, ConvOption::default());
+                let half_katakana = z2h(katakana.as_str(), ConvOption::default());
+                for surface in [segmented_yomi, katakana.as_str(), half_katakana.as_str()] {
                     if seen.contains(surface) {
                         continue;
                     }
@@ -366,7 +365,12 @@ mod tests {
         let got_surfaces: Vec<String> = nodes.iter().map(|f| f.surface.to_string()).collect();
         assert_eq!(
             got_surfaces,
-            vec!["すし".to_string(), "スシ".to_string(), "🍣".to_string()]
+            vec![
+                "すし".to_string(),
+                "スシ".to_string(),
+                "ｽｼ".to_string(),
+                "🍣".to_string()
+            ]
         );
         Ok(())
     }
@@ -397,7 +401,10 @@ mod tests {
         );
         let nodes = got.node_list(3).unwrap();
         let got_surfaces: Vec<String> = nodes.iter().map(|f| f.surface.to_string()).collect();
-        assert_eq!(got_surfaces, vec!["す".to_string(), "ス".to_string()]);
+        assert_eq!(
+            got_surfaces,
+            vec!["す".to_string(), "ス".to_string(), "ｽ".to_string()]
+        );
         Ok(())
     }
 
@@ -430,7 +437,10 @@ mod tests {
         );
         let nodes = got.node_list(3).unwrap();
         let got_surfaces: Vec<String> = nodes.iter().map(|f| f.surface.to_string()).collect();
-        assert_eq!(got_surfaces, vec!["す".to_string(), "ス".to_string()]);
+        assert_eq!(
+            got_surfaces,
+            vec!["す".to_string(), "ス".to_string(), "ｽ".to_string()]
+        );
         Ok(())
     }
 
