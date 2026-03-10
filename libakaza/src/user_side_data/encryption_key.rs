@@ -60,7 +60,7 @@ pub fn load_or_create_encryption_key(key_path: &Path) -> Result<Vec<u8>> {
 
 /// デフォルトの鍵ファイルパスから暗号化鍵を読み込む。なければ生成する。
 pub fn load_or_create_default_encryption_key() -> Result<Vec<u8>> {
-    let basedir = xdg::BaseDirectories::with_prefix("akaza")?;
+    let basedir = crate::xdg_dirs::BaseDirectories::with_prefix("akaza")?;
     let key_path = basedir.place_data_file(Path::new("encryption.key"))?;
     load_or_create_encryption_key(&key_path)
 }

@@ -61,7 +61,7 @@ fn default_engine_config() -> EngineConfig {
 fn find_default_dicts() -> Vec<DictConfig> {
     let mut dicts: Vec<DictConfig> = Vec::new();
 
-    if let Ok(dir) = xdg::BaseDirectories::with_prefix("skk") {
+    if let Ok(dir) = crate::xdg_dirs::BaseDirectories::with_prefix("skk") {
         if let Some(file) = dir.find_data_files("SKK-JISYO.L").next() {
             dicts.push(DictConfig {
                 path: file.to_string_lossy().to_string(),
@@ -90,7 +90,7 @@ impl Config {
     }
 
     pub fn file_name() -> Result<PathBuf> {
-        let basedir = xdg::BaseDirectories::with_prefix("akaza")?;
+        let basedir = crate::xdg_dirs::BaseDirectories::with_prefix("akaza")?;
         Ok(basedir.get_config_file("config.yml"))
     }
 

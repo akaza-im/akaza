@@ -5,6 +5,7 @@ use rustc_hash::FxHashMap;
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
+#[cfg(unix)]
 use std::os::unix::fs::OpenOptionsExt;
 
 type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
@@ -37,12 +38,11 @@ pub(crate) fn read_user_stats_file(path: &String) -> Result<Vec<(String, u32)>> 
 }
 
 pub(crate) fn write_user_stats_file(path: &str, word_count: &FxHashMap<String, u32>) -> Result<()> {
-    let mut tmpfile = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .mode(0o600)
-        .open(path.to_string() + ".tmp")?;
+    let mut opts = OpenOptions::new();
+    opts.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    opts.mode(0o600);
+    let mut tmpfile = opts.open(path.to_string() + ".tmp")?;
 
     for (key, cnt) in word_count {
         tmpfile.write_all(key.as_bytes())?;
@@ -102,12 +102,11 @@ pub(crate) fn write_user_stats_file_v2(
         .encrypt_padded_vec_mut::<Pkcs7>(&plaintext);
 
     let tmp_path = path.to_owned() + ".tmp";
-    let mut tmpfile = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .mode(0o600)
-        .open(&tmp_path)?;
+    let mut opts = OpenOptions::new();
+    opts.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    opts.mode(0o600);
+    let mut tmpfile = opts.open(&tmp_path)?;
 
     tmpfile.write_all(V2_MAGIC)?;
     tmpfile.write_all(&iv)?;
