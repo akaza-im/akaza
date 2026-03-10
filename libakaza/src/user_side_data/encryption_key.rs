@@ -43,6 +43,7 @@ pub fn load_or_create_encryption_key(key_path: &Path) -> Result<Vec<u8>> {
             .open(key_path)?;
         file.write_all(&key)?;
     }
+    // TODO: Windows では ACL を設定して鍵ファイルを現在のユーザーのみに制限すべき
     #[cfg(not(unix))]
     {
         use std::io::Write;

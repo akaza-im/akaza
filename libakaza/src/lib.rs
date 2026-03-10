@@ -14,7 +14,7 @@ pub mod kansuji;
 pub mod keymap;
 pub mod lm;
 pub mod numeric_counter;
-pub mod resource;
+pub(crate) mod resource;
 pub mod romkan;
 pub mod search_result;
 pub mod user_side_data;
