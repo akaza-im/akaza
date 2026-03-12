@@ -1,4 +1,6 @@
 ---
+name: "標準キーマップ"
+description: "標準的なキーバインド設定"
 keys:
   # 入力モードの切り替え
   - states: [Composition, PreComposition, Conversion]

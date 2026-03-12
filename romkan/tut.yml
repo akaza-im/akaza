@@ -21,6 +21,8 @@
 # OTHER TORTUOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR 
 # PERFORMANCE OF THIS SOFTWARE. 
 ---
+name: "TUT-code"
+description: "TUT-code 二打鍵入力方式"
 mapping:
   "rk": "あ"
   "ri": "い"

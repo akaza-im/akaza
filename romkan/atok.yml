@@ -1,4 +1,6 @@
 ---
+name: "ATOK"
+description: "ATOK 互換のローマ字かな変換テーブル"
 extends: default
 mapping:
   dwu: どぅ
