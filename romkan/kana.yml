@@ -1,4 +1,6 @@
 ---
+name: "かな入力"
+description: "JIS かな配列による直接入力"
 mapping:
   # 1列目
   "1": "ぬ"
