@@ -1,5 +1,9 @@
 # Changelog
 
+## [v2026.312.0](https://github.com/akaza-im/akaza/compare/v2026.310.2...v2026.312.0) - 2026-03-12
+- Add la, li, lu, le, lo, ltsu, ltu, lya, lyu, lyo, lwa by @mattn in https://github.com/akaza-im/akaza/pull/540
+- romkan/keymap YAML に name/description を追加 by @mattn in https://github.com/akaza-im/akaza/pull/542
+
 ## [v2026.310.2](https://github.com/akaza-im/akaza/compare/v2026.310.1...v2026.310.2) - 2026-03-10
 - 半角カタカナを変換候補に追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/538
 
