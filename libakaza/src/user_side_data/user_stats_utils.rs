@@ -58,6 +58,14 @@ pub(crate) fn write_user_stats_file(path: &str, word_count: &FxHashMap<String, u
 /// Read v2 encrypted binary file.
 /// Format: [magic 4B: "AKZ\x01"][IV 16B][encrypted bincode(Vec<(String, u32)>)]
 pub(crate) fn read_user_stats_file_v2(path: &str, key: &[u8]) -> Result<Vec<(String, u32)>> {
+    let decrypted = read_v2_decrypted(path, key)?;
+    let result: Vec<(String, u32)> =
+        bincode::deserialize(&decrypted).context("Failed to deserialize v2 user stats")?;
+    Ok(result)
+}
+
+/// Common v2 encrypted read logic. Returns decrypted plaintext bytes.
+fn read_v2_decrypted(path: &str, key: &[u8]) -> Result<Vec<u8>> {
     if key.len() != 32 {
         bail!("encryption key must be 32 bytes, got {} bytes", key.len());
     }
@@ -76,9 +84,7 @@ pub(crate) fn read_user_stats_file_v2(path: &str, key: &[u8]) -> Result<Vec<(Str
         .decrypt_padded_vec_mut::<Pkcs7>(ciphertext)
         .map_err(|e| anyhow::anyhow!("AES decrypt error: {}", e))?;
 
-    let result: Vec<(String, u32)> =
-        bincode::deserialize(&decrypted).context("Failed to deserialize v2 user stats")?;
-    Ok(result)
+    Ok(decrypted)
 }
 
 /// Write v2 encrypted binary file.
@@ -94,12 +100,43 @@ pub(crate) fn write_user_stats_file_v2(
     let entries: Vec<(String, u32)> = word_count.iter().map(|(k, v)| (k.clone(), *v)).collect();
     let plaintext = bincode::serialize(&entries)?;
 
+    write_v2_encrypted(path, key, &plaintext)
+}
+
+/// Write v2 encrypted binary file for dict data.
+/// Format: [magic 4B: "AKZ\x01"][IV 16B][encrypted bincode(Vec<(String, Vec<String>)>)]
+pub(crate) fn write_user_dict_v2(
+    path: &str,
+    key: &[u8],
+    dict: &FxHashMap<String, Vec<String>>,
+) -> Result<()> {
+    if key.len() != 32 {
+        bail!("encryption key must be 32 bytes, got {} bytes", key.len());
+    }
+    let entries: Vec<(String, Vec<String>)> =
+        dict.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
+    let plaintext = bincode::serialize(&entries)?;
+
+    write_v2_encrypted(path, key, &plaintext)
+}
+
+/// Read v2 encrypted binary file for dict data.
+/// Format: [magic 4B: "AKZ\x01"][IV 16B][encrypted bincode(Vec<(String, Vec<String>)>)]
+pub(crate) fn read_user_dict_v2(path: &str, key: &[u8]) -> Result<FxHashMap<String, Vec<String>>> {
+    let decrypted = read_v2_decrypted(path, key)?;
+    let entries: Vec<(String, Vec<String>)> =
+        bincode::deserialize(&decrypted).context("Failed to deserialize v2 user dict")?;
+    Ok(entries.into_iter().collect())
+}
+
+/// Common v2 encrypted write logic.
+fn write_v2_encrypted(path: &str, key: &[u8], plaintext: &[u8]) -> Result<()> {
     let mut iv = [0u8; IV_LEN];
     rand::thread_rng().fill_bytes(&mut iv);
 
     let ciphertext = Aes256CbcEnc::new_from_slices(key, &iv)
         .map_err(|e| anyhow::anyhow!("AES init error: {}", e))?
-        .encrypt_padded_vec_mut::<Pkcs7>(&plaintext);
+        .encrypt_padded_vec_mut::<Pkcs7>(plaintext);
 
     let tmp_path = path.to_owned() + ".tmp";
     let mut opts = OpenOptions::new();
@@ -217,6 +254,39 @@ mod tests {
         let result_map: FxHashMap<String, u32> = result.into_iter().collect();
         assert_eq!(result_map.len(), 10_000);
         assert_eq!(result_map, wc);
+    }
+
+    #[test]
+    fn test_dict_v2_roundtrip() {
+        let tmpfile = NamedTempFile::new().unwrap();
+        let path = tmpfile.path().to_str().unwrap().to_string();
+
+        let key = [0x42u8; 32];
+        let mut dict: FxHashMap<String, Vec<String>> = FxHashMap::default();
+        dict.insert(
+            "ごかん".to_string(),
+            vec!["互換".to_string(), "五感".to_string()],
+        );
+        dict.insert("わたし".to_string(), vec!["渡し".to_string()]);
+
+        write_user_dict_v2(&path, &key, &dict).unwrap();
+        let result = read_user_dict_v2(&path, &key).unwrap();
+
+        assert_eq!(result, dict);
+    }
+
+    #[test]
+    fn test_dict_v2_empty() {
+        let tmpfile = NamedTempFile::new().unwrap();
+        let path = tmpfile.path().to_str().unwrap().to_string();
+
+        let key = [0x42u8; 32];
+        let dict: FxHashMap<String, Vec<String>> = FxHashMap::default();
+
+        write_user_dict_v2(&path, &key, &dict).unwrap();
+        let result = read_user_dict_v2(&path, &key).unwrap();
+
+        assert!(result.is_empty());
     }
 
     #[test]
