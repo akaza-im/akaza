@@ -3,7 +3,7 @@ use warnings FATAL => "all";
 use v5.10.0;
 use utf8;
 
-# romkan/azik.yml の生成スクリプト
+# romkan/azik.json の生成スクリプト
 
 binmode STDOUT, ":utf8";
 binmode STDERR, ":utf8";

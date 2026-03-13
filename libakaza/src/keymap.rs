@@ -93,12 +93,12 @@ pub enum KeyState {
 impl Keymap {
     pub fn load(keymap_path: &str) -> Result<HashMap<KeyPattern, String>> {
         info!("Load {}", keymap_path);
-        let got: Keymap = serde_yaml::from_reader(BufReader::new(
+        let got: Keymap = serde_json::from_reader(BufReader::new(
             File::open(keymap_path).with_context(|| keymap_path.to_string())?,
         ))?;
 
         if let Some(parent) = &got.extends {
-            let path = detect_resource_path("keymap", &format!("{parent}.yml"))?;
+            let path = detect_resource_path("keymap", &format!("{parent}.json"))?;
             let mut map = Keymap::load(&path)?;
 
             for (kp, opts) in &got.to_map()? {
@@ -139,7 +139,7 @@ mod tests {
     #[test]
     fn test_keymap() -> anyhow::Result<()> {
         let keymap: Keymap =
-            serde_yaml::from_reader(BufReader::new(File::open("../keymap/default.yml")?))?;
+            serde_json::from_reader(BufReader::new(File::open("../keymap/default.json")?))?;
         for kc in keymap.keys {
             println!("{kc:?}");
         }

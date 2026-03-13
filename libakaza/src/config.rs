@@ -42,11 +42,11 @@ pub struct Config {
 }
 
 fn default_romkan() -> String {
-    detect_resource_path("romkan", "default.yml").unwrap()
+    detect_resource_path("romkan", "default.json").unwrap()
 }
 
 fn default_keymap() -> String {
-    detect_resource_path("keymap", "default.yml").unwrap()
+    detect_resource_path("keymap", "default.json").unwrap()
 }
 
 fn default_engine_config() -> EngineConfig {
