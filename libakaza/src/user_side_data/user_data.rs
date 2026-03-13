@@ -16,7 +16,8 @@ use crate::user_side_data::bigram_user_stats::BiGramUserStats;
 use crate::user_side_data::skip_bigram_user_stats::SkipBigramUserStats;
 use crate::user_side_data::unigram_user_stats::UniGramUserStats;
 use crate::user_side_data::user_stats_utils::{
-    read_user_stats_file, read_user_stats_file_v2, write_user_stats_file, write_user_stats_file_v2,
+    read_user_dict_v2, read_user_stats_file, read_user_stats_file_v2, write_user_dict_v2,
+    write_user_stats_file, write_user_stats_file_v2,
 };
 
 /**
@@ -43,6 +44,7 @@ pub struct UserData {
     unigram_v2_path: Option<String>,
     bigram_v2_path: Option<String>,
     skip_bigram_v2_path: Option<String>,
+    dict_v2_path: Option<String>,
 
     encryption_key: Option<Vec<u8>>,
 
@@ -78,6 +80,51 @@ fn load_user_stats(
             Vec::new()
         }
     }
+}
+
+/// v2 → v1 (compound_dict.v1.txt) → 旧 SKK-JISYO.user の順でフォールバック
+fn load_user_dict(
+    dict_path: &str,
+    dict_v2_path: &str,
+    key: Option<&[u8]>,
+) -> FxHashMap<String, Vec<String>> {
+    // v2 暗号化ファイルを試す
+    if let Some(key) = key {
+        if Path::new(dict_v2_path).exists() {
+            match read_user_dict_v2(dict_v2_path, key) {
+                Ok(dict) => return dict,
+                Err(err) => {
+                    warn!("Cannot load v2 dict data from {}: {}", dict_v2_path, err);
+                }
+            }
+        }
+    }
+    // v1 (compound_dict.v1.txt) にフォールバック
+    if Path::new(dict_path).exists() {
+        match read_skkdict(Path::new(dict_path), UTF_8) {
+            Ok(d) => return d.into_iter().collect(),
+            Err(err) => {
+                warn!("Cannot load user dict: {:?} {:?}", dict_path, err);
+            }
+        }
+    }
+    // 旧 SKK-JISYO.user からのマイグレーション
+    if let Some(parent) = Path::new(dict_path).parent() {
+        let legacy_path = parent.join("SKK-JISYO.user");
+        if legacy_path.exists() {
+            info!(
+                "Migrating dict from legacy SKK-JISYO.user: {:?}",
+                legacy_path
+            );
+            match read_skkdict(&legacy_path, UTF_8) {
+                Ok(d) => return d.into_iter().collect(),
+                Err(err) => {
+                    warn!("Cannot load legacy user dict: {:?} {:?}", legacy_path, err);
+                }
+            }
+        }
+    }
+    Default::default()
 }
 
 fn build_unigram_stats(dat: Vec<(String, u32)>) -> UniGramUserStats {
@@ -129,7 +176,7 @@ impl UserData {
             .unwrap()
             .to_string();
         let dict_path = basedir
-            .place_data_file(Path::new("SKK-JISYO.user"))?
+            .place_data_file(Path::new("compound_dict.v1.txt"))?
             .to_str()
             .unwrap()
             .to_string();
@@ -149,6 +196,11 @@ impl UserData {
             .to_str()
             .unwrap()
             .to_string();
+        let dict_v2_path = basedir
+            .place_data_file(Path::new("compound_dict.v2.bin"))?
+            .to_str()
+            .unwrap()
+            .to_string();
 
         info!(
             "Load user data from default path: unigram={}, bigram={}, skip_bigram={}",
@@ -162,6 +214,7 @@ impl UserData {
             &unigram_v2_path,
             &bigram_v2_path,
             &skip_bigram_v2_path,
+            &dict_v2_path,
             key,
         ))
     }
@@ -175,6 +228,7 @@ impl UserData {
         unigram_v2_path: &str,
         bigram_v2_path: &str,
         skip_bigram_v2_path: &str,
+        dict_v2_path: &str,
         key: Option<&[u8]>,
     ) -> Self {
         // ユーザーデータが読み込めないことは fatal エラーではない。
@@ -190,13 +244,7 @@ impl UserData {
             load_user_stats(skip_bigram_path, skip_bigram_v2_path, key, "skip-bigram");
         let skip_bigram_user_stats = build_skip_bigram_stats(skip_bigram_dat);
 
-        let dict: FxHashMap<String, Vec<String>> = match read_skkdict(Path::new(dict_path), UTF_8) {
-            Ok(d) => d.into_iter().collect(),
-            Err(err) => {
-                warn!("Cannot load user dict: {:?} {:?}", dict_path, err);
-                Default::default()
-            }
-        };
+        let dict: FxHashMap<String, Vec<String>> = load_user_dict(dict_path, dict_v2_path, key);
 
         // cedarwood トライを構築する。
         // キャッシュせずに動的に構築する方向性。
@@ -231,6 +279,7 @@ impl UserData {
             unigram_v2_path: Some(unigram_v2_path.to_string()),
             bigram_v2_path: Some(bigram_v2_path.to_string()),
             skip_bigram_v2_path: Some(skip_bigram_v2_path.to_string()),
+            dict_v2_path: Some(dict_v2_path.to_string()),
             encryption_key: key.map(|k| k.to_vec()),
             need_save: false,
         }
@@ -307,7 +356,11 @@ impl UserData {
                 }
             }
 
-            if let Some(dict_path) = &self.dict_path {
+            if let Some(key) = &self.encryption_key {
+                if let Some(path) = &self.dict_v2_path {
+                    write_user_dict_v2(path, key, &self.dict)?;
+                }
+            } else if let Some(dict_path) = &self.dict_path {
                 write_skk_dict(dict_path, vec![self.dict.clone().into_iter().collect()])?;
             }
 
@@ -463,11 +516,20 @@ mod tests {
         let unigram_v1 = dir.join("unigram.v1.txt").to_str().unwrap().to_string();
         let bigram_v1 = dir.join("bigram.v1.txt").to_str().unwrap().to_string();
         let skip_bigram_v1 = dir.join("skip_bigram.v1.txt").to_str().unwrap().to_string();
-        let dict_path = dir.join("SKK-JISYO.user").to_str().unwrap().to_string();
+        let dict_path = dir
+            .join("compound_dict.v1.txt")
+            .to_str()
+            .unwrap()
+            .to_string();
 
         let unigram_v2 = dir.join("unigram.v2.bin").to_str().unwrap().to_string();
         let bigram_v2 = dir.join("bigram.v2.bin").to_str().unwrap().to_string();
         let skip_bigram_v2 = dir.join("skip_bigram.v2.bin").to_str().unwrap().to_string();
+        let dict_v2 = dir
+            .join("compound_dict.v2.bin")
+            .to_str()
+            .unwrap()
+            .to_string();
 
         let mut wc: FxHashMap<String, u32> = FxHashMap::default();
         wc.insert("渡し/わたし".to_string(), 3);
@@ -486,6 +548,7 @@ mod tests {
             &unigram_v2,
             &bigram_v2,
             &skip_bigram_v2,
+            &dict_v2,
             Some(&key),
         );
 
@@ -508,12 +571,142 @@ mod tests {
             &unigram_v2,
             &bigram_v2,
             &skip_bigram_v2,
+            &dict_v2,
             Some(&key),
         );
         let cost = user_data2.get_unigram_cost(&WordNode::new(0, "渡し", "わたし", None, false));
         assert!(
             cost.is_some(),
             "v2 から読み込んだデータでコストが取得できるべき"
+        );
+    }
+
+    #[test]
+    fn test_compound_dict_v2_roundtrip() {
+        use tempfile::TempDir;
+
+        let tmpdir = TempDir::new().unwrap();
+        let dir = tmpdir.path();
+
+        let unigram_v1 = dir.join("unigram.v1.txt").to_str().unwrap().to_string();
+        let bigram_v1 = dir.join("bigram.v1.txt").to_str().unwrap().to_string();
+        let skip_bigram_v1 = dir.join("skip_bigram.v1.txt").to_str().unwrap().to_string();
+        let dict_path = dir
+            .join("compound_dict.v1.txt")
+            .to_str()
+            .unwrap()
+            .to_string();
+        let unigram_v2 = dir.join("unigram.v2.bin").to_str().unwrap().to_string();
+        let bigram_v2 = dir.join("bigram.v2.bin").to_str().unwrap().to_string();
+        let skip_bigram_v2 = dir.join("skip_bigram.v2.bin").to_str().unwrap().to_string();
+        let dict_v2 = dir
+            .join("compound_dict.v2.bin")
+            .to_str()
+            .unwrap()
+            .to_string();
+
+        let key = [0x42u8; 32];
+
+        // compound_word を含むデータを記録して保存
+        let mut user_data = UserData::load(
+            &unigram_v1,
+            &bigram_v1,
+            &skip_bigram_v1,
+            &dict_path,
+            &unigram_v2,
+            &bigram_v2,
+            &skip_bigram_v2,
+            &dict_v2,
+            Some(&key),
+        );
+
+        // compound_word を直接追加
+        user_data
+            .dict
+            .entry("ごじょうほう".to_string())
+            .or_default()
+            .push("ご情報".to_string());
+        user_data.need_save = true;
+        user_data.write_user_files().unwrap();
+
+        // compound_dict.v2.bin が作成されていること
+        assert!(
+            Path::new(&dict_v2).exists(),
+            "compound_dict.v2.bin should exist"
+        );
+
+        // v2 から再読み込みして dict が復元されること
+        let user_data2 = UserData::load(
+            &unigram_v1,
+            &bigram_v1,
+            &skip_bigram_v1,
+            &dict_path,
+            &unigram_v2,
+            &bigram_v2,
+            &skip_bigram_v2,
+            &dict_v2,
+            Some(&key),
+        );
+        assert_eq!(
+            user_data2.dict.get("ごじょうほう"),
+            Some(&vec!["ご情報".to_string()]),
+            "compound_dict が v2 から正しく復元されるべき"
+        );
+    }
+
+    #[test]
+    fn test_legacy_skk_jisyo_user_migration() {
+        use crate::dict::skk::write::write_skk_dict;
+        use tempfile::TempDir;
+
+        let tmpdir = TempDir::new().unwrap();
+        let dir = tmpdir.path();
+
+        // 旧 SKK-JISYO.user にデータを書き込み
+        let legacy_path = dir.join("SKK-JISYO.user");
+        let mut legacy_dict: FxHashMap<String, Vec<String>> = FxHashMap::default();
+        legacy_dict.insert("ごじょうほう".to_string(), vec!["ご情報".to_string()]);
+        write_skk_dict(
+            legacy_path.to_str().unwrap(),
+            vec![legacy_dict.into_iter().collect()],
+        )
+        .unwrap();
+
+        // compound_dict.v1.txt は存在しない状態で load
+        let dict_path = dir
+            .join("compound_dict.v1.txt")
+            .to_str()
+            .unwrap()
+            .to_string();
+        let dict_v2 = dir
+            .join("compound_dict.v2.bin")
+            .to_str()
+            .unwrap()
+            .to_string();
+        let unigram_v1 = dir.join("unigram.v1.txt").to_str().unwrap().to_string();
+        let bigram_v1 = dir.join("bigram.v1.txt").to_str().unwrap().to_string();
+        let skip_bigram_v1 = dir.join("skip_bigram.v1.txt").to_str().unwrap().to_string();
+        let unigram_v2 = dir.join("unigram.v2.bin").to_str().unwrap().to_string();
+        let bigram_v2 = dir.join("bigram.v2.bin").to_str().unwrap().to_string();
+        let skip_bigram_v2 = dir.join("skip_bigram.v2.bin").to_str().unwrap().to_string();
+
+        let user_data = UserData::load(
+            &unigram_v1,
+            &bigram_v1,
+            &skip_bigram_v1,
+            &dict_path,
+            &unigram_v2,
+            &bigram_v2,
+            &skip_bigram_v2,
+            &dict_v2,
+            None,
+        );
+
+        // 旧 SKK-JISYO.user からマイグレーションされていること
+        assert_eq!(
+            user_data.dict.get("ごじょうほう"),
+            Some(&vec!["ご情報".to_string()]),
+            "旧 SKK-JISYO.user からマイグレーションされるべき"
         );
     }
 }
