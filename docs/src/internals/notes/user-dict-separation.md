@@ -45,6 +45,25 @@ akaza-dict (別プロセス):
   ※ ibus-akaza と排他制御なし
 ```
 
+## 変更後のデータフロー
+
+```
+起動時:
+  compound_dict.v2.bin → bincode + 復号 → UserData.dict (メモリ)
+  SKK-JISYO.user は UserData では読み込まない (変換エンジンが辞書として読む)
+
+変換確定時:
+  compound_word == true の候補 → UserData.dict に追加 (変更なし)
+
+3秒ごと:
+  UserData.dict → bincode + 暗号化 → compound_dict.v2.bin
+  ※ SKK-JISYO.user には触らない
+
+akaza-dict (別プロセス):
+  SKK-JISYO.user → 読み込み → GUI 編集 → 保存 → SKK-JISYO.user
+  ※ ibus-akaza の write_user_files と競合しなくなる
+```
+
 ## 実装方針
 
 ### compound_word 学習データをバイナリ形式に分離
