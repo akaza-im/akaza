@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2026.313.0](https://github.com/akaza-im/akaza/compare/v2026.312.0...v2026.313.0) - 2026-03-13
+- ユーザー辞書の自動学習データ分離: 課題整理と実装方針 by @tokuhirom in https://github.com/akaza-im/akaza/pull/544
+- romkan/keymap の設定ファイルを YAML から JSON に移行 by @tokuhirom in https://github.com/akaza-im/akaza/pull/543
+- compound_dict の自動学習データを SKK-JISYO.user から分離 by @tokuhirom in https://github.com/akaza-im/akaza/pull/546
+
 ## [v2026.312.0](https://github.com/akaza-im/akaza/compare/v2026.310.2...v2026.312.0) - 2026-03-12
 - Add la, li, lu, le, lo, ltsu, ltu, lya, lyu, lyo, lwa by @mattn in https://github.com/akaza-im/akaza/pull/540
 - romkan/keymap YAML に name/description を追加 by @mattn in https://github.com/akaza-im/akaza/pull/542
