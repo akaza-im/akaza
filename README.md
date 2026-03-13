@@ -342,9 +342,9 @@ GUI ツールを使用すると、キーマップの選択、SKK 辞書の追加
 
 Akaza は典型的には以下の順番で探します。
 
-1. `~/.local/share/akaza/keymap/{KEYMAP_NAME}.yml`
-2. `/usr/local/share/akaza/keymap/{KEYMAP_NAME}.yml`
-3. `/usr/share/akaza/keymap/{KEYMAP_NAME}.yml`
+1. `~/.local/share/akaza/keymap/{KEYMAP_NAME}.json`
+2. `/usr/local/share/akaza/keymap/{KEYMAP_NAME}.json`
+3. `/usr/share/akaza/keymap/{KEYMAP_NAME}.json`
 
 このパスは、[XDG ユーザーディレクトリ](https://wiki.archlinux.jp/index.php/XDG_%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA)
 の仕様に基づいています。
@@ -355,9 +355,9 @@ Akaza は Keymap を `XDG_DATA_HOME` と `XDG_DATA_DIRS` から探します。
 
 ローマ字かなマップも同様のパスから探します。
 
-1. `~/.local/share/akaza/romkan/{ROMKAN_NAME}.yml`
-2. `/usr/local/share/akaza/romkan/{ROMKAN_NAME}.yml`
-3. `/usr/share/akaza/romkan/{ROMKAN_NAME}.yml`
+1. `~/.local/share/akaza/romkan/{ROMKAN_NAME}.json`
+2. `/usr/local/share/akaza/romkan/{ROMKAN_NAME}.json`
+3. `/usr/share/akaza/romkan/{ROMKAN_NAME}.json`
 
 設定変更は `akaza-conf` の GUI で行うことを推奨します。
 

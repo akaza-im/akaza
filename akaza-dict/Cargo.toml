@@ -12,7 +12,6 @@ env_logger = "0.11"
 libakaza = { path = "../libakaza" }
 anyhow = "1.0"
 serde = "1.0"
-serde_yaml = "0.9"
 encoding_rs = "0.8"
 
 [[bin]]

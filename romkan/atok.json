@@ -1,0 +1,26 @@
+{
+  "name": "ATOK",
+  "description": "ATOK 互換のローマ字かな変換テーブル",
+  "extends": "default",
+  "mapping": {
+    "dwu": "どぅ",
+    "kwa": "くぁ",
+    "lka": "ヵ",
+    "lke": "ヶ",
+    "ltu": "っ",
+    "ltsu": "っ",
+    "lwa": "ゎ",
+    "tha": "てゃ",
+    "tsa": "つぁ",
+    "tsi": "つぃ",
+    "tse": "つぇ",
+    "tso": "つぉ",
+    "twu": "とぅ",
+    "wye": "ゑ",
+    "wyi": "ゐ",
+    "xye": "ぇ",
+    "yi": "い",
+    "zya": null,
+    "/": "・"
+  }
+}

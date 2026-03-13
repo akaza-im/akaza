@@ -19,7 +19,7 @@ pub fn build_core_pane(config: Arc<Mutex<Config>>) -> anyhow::Result<Grid> {
     grid.attach(
         &{
             let cbt = ComboBoxText::new();
-            let keymap = get_list("keymap", |f| f.to_string_lossy().ends_with(".yml"));
+            let keymap = get_list("keymap", |f| f.to_string_lossy().ends_with(".json"));
             for item in keymap {
                 cbt.append(Some(&item.path), &item.name);
             }
@@ -52,7 +52,7 @@ pub fn build_core_pane(config: Arc<Mutex<Config>>) -> anyhow::Result<Grid> {
     grid.attach(
         &{
             let cbt = ComboBoxText::new();
-            let romkan = get_list("romkan", |f| f.to_string_lossy().ends_with(".yml"));
+            let romkan = get_list("romkan", |f| f.to_string_lossy().ends_with(".json"));
             info!("romkan: {:?}", romkan);
             for item in romkan {
                 cbt.append(Some(&item.path), &item.name);
@@ -137,7 +137,7 @@ where
                 .to_str()
                 .unwrap()
                 .to_string()
-                .replace(".yml", ""),
+                .replace(".json", ""),
             path: f.to_string_lossy().to_string(),
         })
         .collect::<Vec<_>>()

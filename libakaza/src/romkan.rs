@@ -16,14 +16,14 @@ pub struct RomKanConfig {
 
 fn load_romkan_map(file_path: &str) -> anyhow::Result<HashMap<String, String>> {
     info!("Loading romkan map: {}", file_path);
-    let got: RomKanConfig = serde_yaml::from_reader(BufReader::new(
+    let got: RomKanConfig = serde_json::from_reader(BufReader::new(
         File::open(file_path).with_context(|| file_path.to_string())?,
     ))?;
 
     if let Some(parent) = got.extends {
         // 継承しているので親を読み込む。
         // 再帰的な処理になる。
-        let path = detect_resource_path("romkan", &format!("{parent}.yml"))?;
+        let path = detect_resource_path("romkan", &format!("{parent}.json"))?;
         let mut parent = load_romkan_map(&path)?;
 
         for (k, v) in got.mapping {
@@ -80,7 +80,7 @@ impl RomKanConverter {
     }
 
     pub fn default_mapping() -> anyhow::Result<RomKanConverter> {
-        Self::new(&detect_resource_path("romkan", "default.yml")?)
+        Self::new(&detect_resource_path("romkan", "default.json")?)
     }
 }
 
@@ -190,7 +190,7 @@ mod tests {
             .filter_level(LevelFilter::Info)
             .try_init();
 
-        let converter = RomKanConverter::new("../romkan/atok.yml")?;
+        let converter = RomKanConverter::new("../romkan/atok.json")?;
         assert_eq!(converter.to_hiragana("aiu"), "あいう");
         // zya が null で上書きされて消えてる
         assert_eq!(converter.to_hiragana("zya"), "zや");
@@ -205,7 +205,7 @@ mod tests {
             .filter_level(LevelFilter::Info)
             .try_init();
 
-        let converter = RomKanConverter::new("../romkan/azik.yml")?;
+        let converter = RomKanConverter::new("../romkan/azik.json")?;
         assert_eq!(converter.to_hiragana("dn"), "だん");
         Ok(())
     }
