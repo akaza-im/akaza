@@ -1,6 +1,6 @@
 [package]
 name = "ibus-akaza"
-version = "2026.313.0"
+version = "2026.318.0"
 edition = "2021"
 license = "MIT"
 
