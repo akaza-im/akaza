@@ -1,5 +1,8 @@
 # Changelog
 
+## [v2026.322.0](https://github.com/akaza-im/akaza/compare/v2026.313.0...v2026.322.0) - 2026-03-22
+- romkan: "she"/"sshe" ローマ字マッピングを追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/547
+
 ## [v2026.318.0](https://github.com/akaza-im/akaza/compare/v2026.313.0...v2026.318.0) - 2026-03-18
 - romkan: "she"/"sshe" ローマ字マッピングを追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/547
 
