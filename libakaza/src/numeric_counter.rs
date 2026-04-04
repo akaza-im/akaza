@@ -223,7 +223,7 @@ fn collect_counter_yomi_aliases() -> Vec<&'static str> {
     aliases
 }
 
-const KANA_THOUSANDS: [(&str, i64); 11] = [
+const KANA_THOUSANDS: [(&str, i64); 10] = [
     ("きゅうせん", 9000),
     ("はっせん", 8000),
     ("ななせん", 7000),
@@ -234,10 +234,9 @@ const KANA_THOUSANDS: [(&str, i64); 11] = [
     ("にせん", 2000),
     ("いっせん", 1000),
     ("せん", 1000),
-    ("しせん", 4000),
 ];
 
-const KANA_HUNDREDS: [(&str, i64); 20] = [
+const KANA_HUNDREDS: [(&str, i64); 19] = [
     ("きゅうひゃく", 900),
     ("きゅうひゃっ", 900),
     ("はっぴゃく", 800),
@@ -257,10 +256,9 @@ const KANA_HUNDREDS: [(&str, i64); 20] = [
     ("いっぴゃく", 100),
     ("ひゃく", 100),
     ("ひゃっ", 100),
-    ("しひゃく", 400),
 ];
 
-const KANA_TENS: [(&str, i64); 12] = [
+const KANA_TENS: [(&str, i64); 11] = [
     ("きゅうじゅう", 90),
     ("はちじゅう", 80),
     ("ななじゅう", 70),
@@ -272,21 +270,18 @@ const KANA_TENS: [(&str, i64); 12] = [
     ("いちじゅう", 10),
     ("じゅう", 10),
     ("じゅっ", 10),
-    ("しじゅう", 40),
 ];
 
-const KANA_ONES: [(&str, i64); 15] = [
+const KANA_ONES: [(&str, i64); 13] = [
     ("ぜろ", 0),
     ("れい", 0),
     ("きゅう", 9),
-    ("く", 9),
     ("はち", 8),
     ("なな", 7),
     ("しち", 7),
     ("ろく", 6),
     ("ご", 5),
     ("よん", 4),
-    ("し", 4),
     ("さん", 3),
     ("に", 2),
     ("いち", 1),
@@ -553,7 +548,7 @@ pub fn parse_numeric_exact_reading(s: &str) -> Option<i64> {
 
 /// 1文字かな数詞（に, し, ご, く）は助詞や一般語と衝突するため除外対象とする。
 /// 例: 「にほん」→「2+本」と誤解析するのを防ぐ。
-const AMBIGUOUS_SINGLE_CHAR_NUMERALS: &[&str] = &["に", "し", "ご", "く"];
+const AMBIGUOUS_SINGLE_CHAR_NUMERALS: &[&str] = &["に", "ご"];
 
 /// かな数詞パスでの助数詞マッチに使う最小文字数。
 /// 1文字助数詞（じ=時, ど=度, こ=個, わ=羽）は曖昧性が高すぎるため、
@@ -753,12 +748,12 @@ mod tests {
     fn test_kana_numeral_no_false_positive_on_common_words() {
         // 「にほん」は「日本」であり「2本」ではない
         assert_eq!(parse_kana_numeric_prefix_before_counter("にほん"), None);
-        // 「しまい」は「姉妹/終い」であり「4枚」ではない
-        assert_eq!(parse_kana_numeric_prefix_before_counter("しまい"), None);
         // 「ごけん」は「語研/ご件」と曖昧だが1文字数詞なのでブロック
         assert_eq!(parse_kana_numeric_prefix_before_counter("ごけん"), None);
-        // 「くにん」は「苦忍」等であり「9人」ではない
+
+        // 「く」「し」は KANA_ONES に含まれないため、そもそも数値として解釈されない
         assert_eq!(parse_kana_numeric_prefix_before_counter("くにん"), None);
+        assert_eq!(parse_kana_numeric_prefix_before_counter("しまい"), None);
 
         // 一方、2文字以上のかな数詞は正しく動作する
         assert!(parse_kana_numeric_prefix_before_counter("さんびき").is_some()); // 3匹
@@ -766,6 +761,63 @@ mod tests {
         assert!(parse_kana_numeric_prefix_before_counter("じゅっぷん").is_some()); // 10分
         assert!(parse_kana_numeric_prefix_before_counter("にせんえん").is_some());
         // 2000円
+    }
+
+    /// 「く」(9) と「し」(4) はかな数詞パーサーで数値として扱わない。
+    /// これらは固定熟語（くがつ, しがつ等）でのみ使われ、
+    /// 数の読みとしては「きゅう」「よん」が標準。
+    /// 「くちょう」→9兆、「しちょう」→4兆のような誤変換を防ぐ。
+    #[test]
+    fn test_ku_shi_not_treated_as_numbers() {
+        // 「く」「し」は parse_kana_number_exact で数値にならない
+        assert_eq!(parse_numeric_exact_reading("くちょう"), None); // 口調/区長であり9兆ではない
+        assert_eq!(parse_numeric_exact_reading("くおく"), None); // 9億ではない
+        assert_eq!(parse_numeric_exact_reading("くまん"), None); // 9万ではない
+        assert_eq!(parse_numeric_exact_reading("しちょう"), None); // 市長/視聴であり4兆ではない
+        assert_eq!(parse_numeric_exact_reading("しおく"), None); // 4億ではない
+        assert_eq!(parse_numeric_exact_reading("しまん"), None); // 4万ではない
+        assert_eq!(parse_numeric_exact_reading("しじゅう"), None); // 始終であり40ではない
+
+        // 「きゅう」「よん」は標準的な読みなので正しく動作する
+        assert_eq!(
+            parse_numeric_exact_reading("きゅうちょう"),
+            Some(9_000_000_000_000)
+        );
+        assert_eq!(parse_numeric_exact_reading("きゅうおく"), Some(900_000_000));
+        assert_eq!(parse_numeric_exact_reading("きゅうまん"), Some(90_000));
+        assert_eq!(
+            parse_numeric_exact_reading("よんちょう"),
+            Some(4_000_000_000_000)
+        );
+        assert_eq!(parse_numeric_exact_reading("よんおく"), Some(400_000_000));
+        assert_eq!(parse_numeric_exact_reading("よんまん"), Some(40_000));
+        assert_eq!(parse_numeric_exact_reading("よんじゅう"), Some(40));
+
+        // 「に」「ご」は標準的な読みなので引き続き動作する
+        assert_eq!(parse_numeric_exact_reading("にまん"), Some(20_000));
+        assert_eq!(parse_numeric_exact_reading("ごまん"), Some(50_000));
+        assert_eq!(parse_numeric_exact_reading("におく"), Some(200_000_000));
+        assert_eq!(parse_numeric_exact_reading("ごおく"), Some(500_000_000));
+    }
+
+    /// 「く」「し」を含む助数詞パターンが数字に変換されないことを検証する。
+    #[test]
+    fn test_ku_shi_before_counter_not_numeric() {
+        // 「くちょうえん」は「口調+円」等であり「9兆円」ではない
+        assert_eq!(
+            parse_kana_numeric_prefix_before_counter("くちょうえん"),
+            None
+        );
+        // 「しちょうえん」は「市長+円」等であり「4兆円」ではない
+        assert_eq!(
+            parse_kana_numeric_prefix_before_counter("しちょうえん"),
+            None
+        );
+
+        // 標準的な読みでは正しく動作する
+        assert!(parse_kana_numeric_prefix_before_counter("きゅうちょうえん").is_some()); // 9兆円
+        assert!(parse_kana_numeric_prefix_before_counter("よんちょうえん").is_some());
+        // 4兆円
     }
 
     /// 促音便を含むかな数詞+助数詞が正しくパースされることを検証する。
