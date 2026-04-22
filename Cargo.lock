@@ -35,7 +35,7 @@ dependencies = [
 
 [[package]]
 name = "akaza-conf"
-version = "2026.312.0"
+version = "2026.404.0"
 dependencies = [
  "anyhow",
  "env_logger",
@@ -49,7 +49,7 @@ dependencies = [
 
 [[package]]
 name = "akaza-data"
-version = "2026.312.0"
+version = "2026.404.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -75,7 +75,7 @@ dependencies = [
 
 [[package]]
 name = "akaza-dict"
-version = "2026.312.0"
+version = "2026.404.0"
 dependencies = [
  "anyhow",
  "encoding_rs",
@@ -1033,7 +1033,7 @@ dependencies = [
 
 [[package]]
 name = "ibus-akaza"
-version = "2026.312.0"
+version = "2026.404.0"
 dependencies = [
  "anyhow",
  "cc",
@@ -1054,7 +1054,7 @@ dependencies = [
 
 [[package]]
 name = "ibus-sys"
-version = "2026.312.0"
+version = "2026.404.0"
 dependencies = [
  "log",
 ]
@@ -1162,7 +1162,7 @@ checksum = "70048d97b51d107a6cf295d42210d298f0eb7d37f0518b88c816a74b8ce15f41"
 
 [[package]]
 name = "libakaza"
-version = "2026.312.0"
+version = "2026.404.0"
 dependencies = [
  "aes",
  "anyhow",
@@ -1434,9 +1434,9 @@ checksum = "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f"
 
 [[package]]
 name = "rand"
-version = "0.8.5"
+version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34af8d1a0e25924bc5b7c43c079c942339d8f0a8b57c39049bef581b46327404"
+checksum = "5ca0ecfa931c29007047d1bc58e623ab12e5590e8c7cc53200d5202b69266d8a"
 dependencies = [
  "libc",
  "rand_chacha",
