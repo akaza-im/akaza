@@ -14,6 +14,9 @@ pub struct WordNode {
     pub cost: f32,
     pub word_id_and_score: Option<(i32, f32)>,
     pub auto_generated: bool,
+    /// LM 参照用の `surface/yomi` キー。生成時に1度だけ構築してキャッシュする
+    /// （Viterbi DP の最内ループで毎回 alloc するのを避けるため）。
+    key: String,
 }
 
 impl Hash for WordNode {
@@ -37,11 +40,16 @@ impl PartialEq<Self> for WordNode {
 impl Eq for WordNode {}
 
 impl WordNode {
-    pub fn key(&self) -> String {
-        let mut buf = String::new();
-        buf += self.surface.as_str();
-        buf += "/";
-        buf += self.yomi.as_str();
+    /// LM 参照用の `surface/yomi` キー。生成時にキャッシュ済みの値を返す。
+    pub fn key(&self) -> &str {
+        &self.key
+    }
+
+    fn build_key(surface: &str, yomi: &str) -> String {
+        let mut buf = String::with_capacity(surface.len() + 1 + yomi.len());
+        buf.push_str(surface);
+        buf.push('/');
+        buf.push_str(yomi);
         buf
     }
 
@@ -53,6 +61,7 @@ impl WordNode {
             cost: 0_f32,
             word_id_and_score: None,
             auto_generated: true,
+            key: BOS_TOKEN_KEY.to_string(),
         }
     }
     pub(crate) fn create_eos(start_pos: i32) -> WordNode {
@@ -63,6 +72,7 @@ impl WordNode {
             cost: 0_f32,
             word_id_and_score: None,
             auto_generated: true,
+            key: EOS_TOKEN_KEY.to_string(),
         }
     }
     pub fn new(
@@ -84,6 +94,7 @@ impl WordNode {
             cost: 0_f32,
             word_id_and_score,
             auto_generated,
+            key: Self::build_key(surface, yomi),
         }
     }
 }
@@ -91,5 +102,31 @@ impl WordNode {
 impl Display for WordNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}/{}", self.surface, self.yomi)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_key_cached() {
+        let node = WordNode::new(0, "私", "わたし", None, false);
+        assert_eq!(node.key(), "私/わたし");
+        // 何度呼んでも同じ値（キャッシュ済み）
+        assert_eq!(node.key(), "私/わたし");
+    }
+
+    #[test]
+    fn test_key_bos_eos() {
+        assert_eq!(WordNode::create_bos().key(), BOS_TOKEN_KEY);
+        assert_eq!(WordNode::create_eos(3).key(), EOS_TOKEN_KEY);
+    }
+
+    #[test]
+    fn test_key_survives_clone() {
+        let node = WordNode::new(0, "天気", "てんき", None, false);
+        let cloned = node.clone();
+        assert_eq!(cloned.key(), "天気/てんき");
     }
 }

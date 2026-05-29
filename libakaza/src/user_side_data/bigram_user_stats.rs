@@ -35,6 +35,12 @@ impl BiGramUserStats {
      * システム言語モデルのコストよりも安くなるように調整してある。
      */
     pub(crate) fn get_cost(&self, key1: &str, key2: &str) -> Option<f32> {
+        // ユーザー統計が空なら、キー構築・数字正規化を行わず即座に None を返す。
+        // Viterbi DP のエッジ評価から呼ばれるため、空マップ時の無駄な alloc/パースを避ける。
+        if self.word_count.is_empty() {
+            return None;
+        }
+
         let mut key = String::with_capacity(key1.len() + 1 + key2.len());
         key.push_str(key1);
         key.push('\t');
