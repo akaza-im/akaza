@@ -55,6 +55,7 @@ fn default_engine_config() -> EngineConfig {
         dict_cache: true,
         model: default_model(),
         reranking_weights: ReRankingWeights::default(),
+        convert_k: default_convert_k(),
     }
 }
 
@@ -149,10 +150,20 @@ pub struct EngineConfig {
     /// リランキング重み（省略時はデフォルト値 = 従来と同じ挙動）
     #[serde(default)]
     pub reranking_weights: ReRankingWeights,
+
+    /// convert() で評価する k-best パス数。
+    /// 大きいほど候補パターンは増えるが変換が遅くなる（速度/品質のトレードオフ）。
+    /// 省略時は 10（従来と同じ挙動）。
+    #[serde(default = "default_convert_k")]
+    pub convert_k: usize,
 }
 
 fn default_dict_cache() -> bool {
     true
+}
+
+fn default_convert_k() -> usize {
+    10
 }
 
 fn default_model() -> String {
