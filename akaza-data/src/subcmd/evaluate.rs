@@ -134,6 +134,8 @@ pub fn evaluate(
         model: model_dir,
         dict_cache: false,
         reranking_weights,
+        // evaluate は convert_k_best を直接呼ぶため convert_k は未使用。既定値で埋める。
+        convert_k: 10,
     };
 
     // コーパスの全行を事前に読み込む

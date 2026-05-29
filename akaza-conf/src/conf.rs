@@ -69,6 +69,7 @@ fn connect_activate(app: &Application, config: Arc<Mutex<Config>>) -> Result<()>
                 dicts: config.engine.dicts.clone(),
                 dict_cache: true,
                 reranking_weights: config.engine.reranking_weights.clone(),
+                convert_k: config.engine.convert_k,
             },
         };
         info!("Saving config: {}", serde_yaml::to_string(&config).unwrap());

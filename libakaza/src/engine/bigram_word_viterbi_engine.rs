@@ -33,6 +33,8 @@ pub struct BigramWordViterbiEngine<U: SystemUnigramLM, B: SystemBigramLM, KD: Ka
     pub user_data: Arc<Mutex<UserData>>,
     reranking_weights: ReRankingWeights,
     skip_bigram_lm: Option<Rc<MarisaSystemSkipBigramLM>>,
+    /// convert() で評価する k-best パス数（config 由来）
+    convert_k: usize,
 }
 
 impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> Debug
@@ -59,8 +61,8 @@ impl<U: SystemUnigramLM, B: SystemBigramLM, KD: KanaKanjiDict> HenkanEngine
         force_ranges: Option<&[Range<usize>]>,
     ) -> Result<Vec<Vec<Candidate>>> {
         // リランキングを適用するため、k-best で複数パスを取得してリランキング
-        // k=10 で十分な候補パターンを取得し、リランキング後の最良パスを返す
-        let paths = self.convert_k_best(yomi, force_ranges, 10)?;
+        // k は config 由来（convert_k）。大きいほど候補は増えるが遅くなる
+        let paths = self.convert_k_best(yomi, force_ranges, self.convert_k)?;
         if let Some(best_path) = paths.first() {
             Ok(best_path.segments.clone())
         } else {
@@ -232,6 +234,7 @@ impl BigramWordViterbiEngineBuilder {
             user_data,
             reranking_weights,
             skip_bigram_lm,
+            convert_k: self.config.convert_k,
         })
     }
 
@@ -317,6 +320,7 @@ mod tests {
             user_data: Arc::new(Mutex::new(UserData::default())),
             reranking_weights: ReRankingWeights::default(),
             skip_bigram_lm: None,
+            convert_k: 10,
         };
 
         // convert を呼び出し（リランキング適用済み）
@@ -389,6 +393,7 @@ mod tests {
             user_data: Arc::new(Mutex::new(UserData::default())),
             reranking_weights: ReRankingWeights::default(),
             skip_bigram_lm: None,
+            convert_k: 10,
         };
 
         // to_lattice → resolve を呼び出し（リランキングなし）

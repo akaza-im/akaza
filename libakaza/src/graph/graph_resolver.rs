@@ -170,7 +170,8 @@ impl GraphResolver {
                     if let Some(prev_entries) = kbest_map.get(prev) {
                         for (rank, prev_entry) in prev_entries.iter().enumerate() {
                             // skip-bigram: 祖父ノード (prev_entry.prev_node) と現在ノード (node)
-                            let skip_cost = if !is_eos {
+                            // 重みが 0 のときは DP・rerank 双方への寄与が 0 なので trie lookup を省略する
+                            let skip_cost = if !is_eos && self.skip_bigram_weight != 0.0 {
                                 self.skip_bigram_cost(prev_entry.prev_node, node, &user_data)
                             } else {
                                 0.0
