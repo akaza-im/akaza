@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2026.530.0](https://github.com/akaza-im/akaza/compare/v2026.404.0...v2026.530.0) - 2026-05-30
+- Bump rand from 0.8.5 to 0.8.6 by @dependabot[bot] in https://github.com/akaza-im/akaza/pull/556
+- 変換の速度/品質トレードオフを config から調整可能にする by @tokuhirom in https://github.com/akaza-im/akaza/pull/558
+- 長文変換を高速化: skip-bigram コスト計算のボトルネック解消 by @tokuhirom in https://github.com/akaza-im/akaza/pull/560
+
 ## [v2026.404.0](https://github.com/akaza-im/akaza/compare/v2026.325.0...v2026.404.0) - 2026-04-04
 - 「とこう」の変換候補に「解こう」を追加 by @tokuhirom in https://github.com/akaza-im/akaza/pull/552
 - かな数詞パーサーから「く」(9)と「し」(4)の読みを削除 by @tokuhirom in https://github.com/akaza-im/akaza/pull/554
