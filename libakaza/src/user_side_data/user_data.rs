@@ -371,17 +371,16 @@ impl UserData {
     }
 
     pub fn get_unigram_cost(&self, node: &WordNode) -> Option<f32> {
-        self.unigram_user_stats.get_cost(&node.key())
+        self.unigram_user_stats.get_cost(node.key())
     }
 
     pub fn get_bigram_cost(&self, node1: &WordNode, node2: &WordNode) -> Option<f32> {
-        self.bigram_user_stats
-            .get_cost(node1.key().as_str(), node2.key().as_str())
+        self.bigram_user_stats.get_cost(node1.key(), node2.key())
     }
 
     pub fn get_skip_bigram_cost(&self, node1: &WordNode, node2: &WordNode) -> Option<f32> {
         self.skip_bigram_user_stats
-            .get_cost(node1.key().as_str(), node2.key().as_str())
+            .get_cost(node1.key(), node2.key())
     }
 }
 

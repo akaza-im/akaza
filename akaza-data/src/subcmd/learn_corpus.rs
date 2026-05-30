@@ -64,13 +64,13 @@ impl LearningService {
                 let corpuses = read_corpus_file(Path::new(fname))?;
                 for corpus in corpuses {
                     for node in corpus.nodes {
-                        if !unigram_map.contains_key(node.key().as_str()) {
+                        if !unigram_map.contains_key(node.key()) {
                             info!(
                                 "Insert missing element: {} max_id={}",
                                 node.key(),
                                 max_id + 1
                             );
-                            unigram_map.insert(node.key(), (max_id + 1, 1));
+                            unigram_map.insert(node.key().to_string(), (max_id + 1, 1));
                             max_id += 1;
                         }
                     }
@@ -188,11 +188,8 @@ impl LearningService {
             if !teacher.nodes.is_empty() {
                 for i in 0..teacher.nodes.len() {
                     let key = teacher.nodes[i].key();
-                    let (_, cost) = self
-                        .system_unigram_lm
-                        .find_cnt(&key.to_string())
-                        .unwrap_or((-1, 0_u32));
-                    self.system_unigram_lm.update(key.as_str(), cost - delta);
+                    let (_, cost) = self.system_unigram_lm.find_cnt(key).unwrap_or((-1, 0_u32));
+                    self.system_unigram_lm.update(key, cost - delta);
                 }
             }
 
@@ -201,10 +198,10 @@ impl LearningService {
                 for i in 1..teacher.nodes.len() {
                     let key1 = teacher.nodes[i - 1].key();
                     let key2 = teacher.nodes[i].key();
-                    let Some((word_id1, _)) = self.system_unigram_lm.find(key1.as_str()) else {
+                    let Some((word_id1, _)) = self.system_unigram_lm.find(key1) else {
                         continue;
                     };
-                    let Some((word_id2, _)) = self.system_unigram_lm.find(key2.as_str()) else {
+                    let Some((word_id2, _)) = self.system_unigram_lm.find(key2) else {
                         continue;
                     };
                     let v = self
@@ -225,10 +222,10 @@ impl LearningService {
                     for i in 2..teacher.nodes.len() {
                         let key1 = teacher.nodes[i - 2].key();
                         let key2 = teacher.nodes[i].key();
-                        let Some((word_id1, _)) = self.system_unigram_lm.find(key1.as_str()) else {
+                        let Some((word_id1, _)) = self.system_unigram_lm.find(key1) else {
                             continue;
                         };
-                        let Some((word_id2, _)) = self.system_unigram_lm.find(key2.as_str()) else {
+                        let Some((word_id2, _)) = self.system_unigram_lm.find(key2) else {
                             continue;
                         };
                         let v = skip_bigram_lm
@@ -248,7 +245,7 @@ impl LearningService {
                 // BOS → 最初の単語
                 if let Some((bos_id, _)) = self.system_unigram_lm.find(BOS_TOKEN_KEY) {
                     let first_key = teacher.nodes[0].key();
-                    if let Some((first_id, _)) = self.system_unigram_lm.find(first_key.as_str()) {
+                    if let Some((first_id, _)) = self.system_unigram_lm.find(first_key) {
                         let v = self
                             .system_bigram_lm
                             .get_edge_cnt(bos_id, first_id)
@@ -263,7 +260,7 @@ impl LearningService {
                 // 最後の単語 → EOS
                 if let Some((eos_id, _)) = self.system_unigram_lm.find(EOS_TOKEN_KEY) {
                     let last_key = teacher.nodes.last().unwrap().key();
-                    if let Some((last_id, _)) = self.system_unigram_lm.find(last_key.as_str()) {
+                    if let Some((last_id, _)) = self.system_unigram_lm.find(last_key) {
                         let v = self
                             .system_bigram_lm
                             .get_edge_cnt(last_id, eos_id)

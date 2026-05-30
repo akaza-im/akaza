@@ -30,6 +30,12 @@ impl SkipBigramUserStats {
 
     /// skip-bigram のエッジコストを計算する。
     pub(crate) fn get_cost(&self, key1: &str, key2: &str) -> Option<f32> {
+        // ユーザー統計が空なら、キー構築・数字正規化を行わず即座に None を返す。
+        // Viterbi DP の最内ループから呼ばれるため、空マップ時の無駄な alloc/パースを避ける。
+        if self.word_count.is_empty() {
+            return None;
+        }
+
         let mut key = String::with_capacity(key1.len() + 1 + key2.len());
         key.push_str(key1);
         key.push('\t');
@@ -131,5 +137,27 @@ mod tests {
         let mut stats = SkipBigramUserStats::default();
         stats.record_entries(&[]);
         assert_eq!(stats.total_words, 0);
+    }
+
+    #[test]
+    fn test_get_cost_empty_returns_none() {
+        // 空マップでは（数字キーであっても）即 None を返す。
+        let stats = SkipBigramUserStats::default();
+        assert_eq!(stats.get_cost("私/わたし", "本/ほん"), None);
+        assert_eq!(stats.get_cost("1日/1にち", "後/ご"), None);
+    }
+
+    #[test]
+    fn test_get_cost_hit_after_record() {
+        let mut stats = SkipBigramUserStats::default();
+        stats.record_entries(&[
+            Candidate::new("きょう", "今日", 0.0),
+            Candidate::new("は", "は", 0.0),
+            Candidate::new("いい", "良い", 0.0),
+        ]);
+        // 今日 → 良い の skip-bigram が記録されているのでコストが返る。
+        assert!(stats.get_cost("今日/きょう", "良い/いい").is_some());
+        // 未登録ペアは None。
+        assert_eq!(stats.get_cost("今日/きょう", "悪い/わるい"), None);
     }
 }

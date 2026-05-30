@@ -144,6 +144,13 @@ impl GraphResolver {
         // user_data のロックを一度だけ取得し、ループ中は保持する
         let user_data = lattice.lock_user_data();
 
+        // skip-bigram コストのメモ化キャッシュ。skip_cost は (祖父, 現ノード) のみに依存し、
+        // 現ノードは外側ループで固定なので、祖父ノードのポインタをキーにすればよい。
+        // 各ノードの処理開始時に clear する。
+        // k-best では1つの prev の k 本のパスが同じ祖父を共有することが多く、
+        // ここで String 構築・数字正規化・trie lookup の重複を排除できる。
+        let mut skip_cache: FxHashMap<usize, f32> = FxHashMap::default();
+
         // 前向きに動的計画法でたどる
         for i in 1..yomi.len() + 2 {
             let Some(nodes) = &lattice.node_list(i as i32) else {
@@ -162,6 +169,8 @@ impl GraphResolver {
 
                 // 各前ノードの k-best エントリそれぞれについて候補を生成
                 let is_eos = node.surface == "__EOS__";
+                let compute_skip = !is_eos && self.skip_bigram_weight != 0.0;
+                skip_cache.clear();
                 let mut entries: Vec<KBestEntry> = Vec::with_capacity(k * prev_nodes.len());
                 for prev in prev_nodes {
                     let (edge_cost, is_known_bigram) =
@@ -171,8 +180,11 @@ impl GraphResolver {
                         for (rank, prev_entry) in prev_entries.iter().enumerate() {
                             // skip-bigram: 祖父ノード (prev_entry.prev_node) と現在ノード (node)
                             // 重みが 0 のときは DP・rerank 双方への寄与が 0 なので trie lookup を省略する
-                            let skip_cost = if !is_eos && self.skip_bigram_weight != 0.0 {
-                                self.skip_bigram_cost(prev_entry.prev_node, node, &user_data)
+                            let skip_cost = if compute_skip {
+                                let gp_key = prev_entry.prev_node as *const WordNode as usize;
+                                *skip_cache.entry(gp_key).or_insert_with(|| {
+                                    self.skip_bigram_cost(prev_entry.prev_node, node, &user_data)
+                                })
                             } else {
                                 0.0
                             };
@@ -1128,6 +1140,83 @@ mod tests {
             .map(|c| c[0].surface.clone())
             .collect();
         assert_eq!(single_surfaces, kbest_surfaces);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_skip_bigram_cost_accumulated_with_memoization() -> anyhow::Result<()> {
+        // skip-bigram LM を有効にした状態で、best パスに (w_{i-2}, w_i) の
+        // skip-bigram コストが正しく蓄積されることを確認する。
+        // メモ化（祖父ノード単位のキャッシュ）を導入しても結果が変わらないことの回帰テスト。
+        use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
+        use crate::lm::system_skip_bigram::MarisaSystemSkipBigramLMBuilder;
+
+        let kana_trie =
+            CedarwoodKanaTrie::build(vec!["わ".to_string(), "た".to_string(), "し".to_string()]);
+        let segmenter = Segmenter::new(vec![Arc::new(Mutex::new(kana_trie))]);
+        let graph = segmenter.build("わたし", None);
+
+        let dict = HashMap::from([
+            ("わ".to_string(), vec!["和".to_string()]),
+            ("た".to_string(), vec!["田".to_string()]),
+            ("し".to_string(), vec!["詩".to_string()]),
+        ]);
+
+        let mut unigram_builder = MarisaSystemUnigramLMBuilder::default();
+        unigram_builder.add("和/わ", 1.0);
+        unigram_builder.add("田/た", 1.0);
+        unigram_builder.add("詩/し", 1.0);
+        unigram_builder.set_total_words(100);
+        unigram_builder.set_unique_words(50);
+        let system_unigram_lm = unigram_builder.build()?;
+
+        let unigram_map = system_unigram_lm.as_hash_map();
+        let wa_id = unigram_map.get("和/わ").unwrap().0;
+        let shi_id = unigram_map.get("詩/し").unwrap().0;
+
+        let system_bigram_lm = MarisaSystemBigramLMBuilder::default()
+            .set_default_edge_cost(1.0)
+            .build()?;
+
+        // skip-bigram: (和, 詩) = w_{i-2}, w_i に明示コストを与える。
+        let mut skip_builder = MarisaSystemSkipBigramLMBuilder::default();
+        skip_builder.add(wa_id, shi_id, 2.5);
+        skip_builder.set_default_skip_cost(9.0);
+        let skip_lm = skip_builder.build()?;
+
+        let graph_builder = GraphBuilder::new(
+            HashmapVecKanaKanjiDict::new(dict),
+            HashmapVecKanaKanjiDict::new(HashMap::new()),
+            Arc::new(Mutex::new(UserData::default())),
+            Rc::new(system_unigram_lm),
+            Rc::new(system_bigram_lm),
+        );
+        let lattice = graph_builder.construct("わたし", &graph);
+
+        let resolver = GraphResolver::new(Some(Rc::new(skip_lm)), 1.0);
+        let paths = resolver.resolve_k_best(&lattice, 5)?;
+
+        // 和/田/詩 (3トークン) のパスを探す。
+        let target = paths
+            .iter()
+            .find(|p| {
+                let s: Vec<String> = p
+                    .segments
+                    .iter()
+                    .filter_map(|seg| seg.first().map(|c| c.surface.clone()))
+                    .collect();
+                s == ["和", "田", "詩"]
+            })
+            .expect("和/田/詩 path should exist");
+
+        // skip ペアは (BOS, 田) と (和, 詩)。BOS は word_id 未設定なので 0.0。
+        // よって skip_bigram_cost ≈ skip(和, 詩) = 2.5（f16 丸め誤差を許容）。
+        assert!(
+            (target.skip_bigram_cost - 2.5).abs() < 0.05,
+            "expected skip_bigram_cost ~2.5, got {}",
+            target.skip_bigram_cost
+        );
 
         Ok(())
     }
