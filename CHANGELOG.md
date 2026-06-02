@@ -1,5 +1,8 @@
 # Changelog
 
+## [v2026.602.0](https://github.com/akaza-im/akaza/compare/v2026.530.0...v2026.602.0) - 2026-06-02
+- エンジン起動時間を 7s → 200ms に短縮 by @tokuhirom in https://github.com/akaza-im/akaza/pull/561
+
 ## [v2026.530.0](https://github.com/akaza-im/akaza/compare/v2026.404.0...v2026.530.0) - 2026-05-30
 - Bump rand from 0.8.5 to 0.8.6 by @dependabot[bot] in https://github.com/akaza-im/akaza/pull/556
 - 変換の速度/品質トレードオフを config から調整可能にする by @tokuhirom in https://github.com/akaza-im/akaza/pull/558
