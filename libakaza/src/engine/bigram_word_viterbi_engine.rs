@@ -17,7 +17,9 @@ use crate::graph::reranking::ReRankingWeights;
 use crate::graph::segmenter::Segmenter;
 use crate::kana_kanji::base::KanaKanjiDict;
 use crate::kana_kanji::marisa_kana_kanji_dict::MarisaKanaKanjiDict;
+use crate::kana_trie::base::KanaTrie;
 use crate::kana_trie::cedarwood_kana_trie::CedarwoodKanaTrie;
+use crate::kana_trie::marisa_kana_trie::MarisaKanaTrie;
 use crate::lm::base::{SystemBigramLM, SystemSkipBigramLM, SystemUnigramLM};
 use crate::lm::system_bigram::MarisaSystemBigramLM;
 use crate::lm::system_skip_bigram::MarisaSystemSkipBigramLM;
@@ -125,10 +127,17 @@ impl BigramWordViterbiEngineBuilder {
     > {
         let model_name = self.config.model.clone();
 
+        let t = std::time::Instant::now();
         let system_unigram_lm =
             MarisaSystemUnigramLM::load(Self::try_load(&model_name, "unigram.model")?.as_str())?;
+        info!("[startup] unigram.model loaded in {:?}", t.elapsed());
+
+        let t = std::time::Instant::now();
         let system_bigram_lm =
             MarisaSystemBigramLM::load(Self::try_load(&model_name, "bigram.model")?.as_str())?;
+        info!("[startup] bigram.model loaded in {:?}", t.elapsed());
+
+        let t = std::time::Instant::now();
         let skip_bigram_path = Self::try_load(&model_name, "skip_bigram.model")?;
         let skip_bigram_lm = match MarisaSystemSkipBigramLM::load(&skip_bigram_path) {
             Ok(lm) => {
@@ -143,6 +152,8 @@ impl BigramWordViterbiEngineBuilder {
                 None
             }
         };
+        info!("[startup] skip_bigram.model loaded in {:?}", t.elapsed());
+
         let system_dict = Self::try_load(&model_name, "SKK-JISYO.akaza")?;
 
         let user_data = if let Some(d) = &self.user_data {
@@ -151,6 +162,7 @@ impl BigramWordViterbiEngineBuilder {
             Arc::new(Mutex::new(UserData::default()))
         };
 
+        let t = std::time::Instant::now();
         let dict = {
             let mut dicts = self
                 .config
@@ -173,7 +185,9 @@ impl BigramWordViterbiEngineBuilder {
                 MarisaKanaKanjiDict::build(dict)?
             }
         };
+        info!("[startup] normal dict built in {:?}", t.elapsed());
 
+        let t = std::time::Instant::now();
         let single_term = {
             let dicts = self
                 .config
@@ -189,22 +203,60 @@ impl BigramWordViterbiEngineBuilder {
                 MarisaKanaKanjiDict::build(dict)?
             }
         };
+        info!("[startup] single_term dict built in {:?}", t.elapsed());
 
-        // 辞書を元に、トライを作成していく。
-        let mut kana_trie = CedarwoodKanaTrie::default();
-        for yomi in dict.yomis() {
-            assert!(!yomi.is_empty());
-            kana_trie.update(yomi.as_str());
-        }
-        for yomi in single_term.yomis() {
-            assert!(!yomi.is_empty());
-            kana_trie.update(yomi.as_str());
-        }
+        // 辞書を元に、共通接頭辞探索用の kana_trie を用意する。
+        //
+        // 過去は毎回 cedarwood に dict.yomis() 100 万件を update() で挿入していて、
+        // 起動時間の半分以上 (約 1 秒) を占めていた。kana_trie は dict と
+        // single_term の yomi 集合だけで決まる純粋データなので、marisa-trie
+        // にビルドして cache_name + ".kana.marisa" として永続化し、
+        // 次回以降は load (~ms) だけで済むようにする。
+        //
+        // 鮮度判定は dict_cache と同じソース(辞書ファイル)の mtime に従う。
+        // dict_cache_path より kana_trie cache が古ければ作り直す。
+        let t = std::time::Instant::now();
+        let kana_trie: Arc<Mutex<dyn KanaTrie>> = if self.config.dict_cache {
+            let kana_cache_path = Self::kana_trie_cache_path("kana_trie_cache.marisa")?;
+            let dict_cache_path = Self::kana_trie_cache_path("kana_kanji_cache.marisa")?;
+            let needs_rebuild = match (
+                std::fs::metadata(&kana_cache_path).and_then(|m| m.modified()),
+                std::fs::metadata(&dict_cache_path).and_then(|m| m.modified()),
+            ) {
+                (Ok(kana_mt), Ok(dict_mt)) => kana_mt < dict_mt,
+                _ => true,
+            };
+            if !needs_rebuild {
+                match MarisaKanaTrie::load(&kana_cache_path) {
+                    Ok(t) => Arc::new(Mutex::new(t)),
+                    Err(e) => {
+                        info!(
+                            "Failed to load kana_trie cache ({}): {} — rebuilding",
+                            kana_cache_path, e
+                        );
+                        Self::build_kana_trie_cache(&dict, &single_term, &kana_cache_path)?
+                    }
+                }
+            } else {
+                Self::build_kana_trie_cache(&dict, &single_term, &kana_cache_path)?
+            }
+        } else {
+            // cache 無効時は従来通り cedarwood をその場で構築
+            let mut cw = CedarwoodKanaTrie::default();
+            for yomi in dict.yomis() {
+                assert!(!yomi.is_empty());
+                cw.update(yomi.as_str());
+            }
+            for yomi in single_term.yomis() {
+                assert!(!yomi.is_empty());
+                cw.update(yomi.as_str());
+            }
+            Arc::new(Mutex::new(cw))
+        };
+        info!("[startup] kana_trie ready in {:?}", t.elapsed());
 
-        let segmenter = Segmenter::new(vec![
-            Arc::new(Mutex::new(kana_trie)),
-            user_data.lock().unwrap().kana_trie.clone(),
-        ]);
+        let segmenter =
+            Segmenter::new(vec![kana_trie, user_data.lock().unwrap().kana_trie.clone()]);
 
         let graph_builder: GraphBuilder<
             MarisaSystemUnigramLM,
@@ -241,6 +293,30 @@ impl BigramWordViterbiEngineBuilder {
     fn try_load(model_dir: &str, name: &str) -> Result<String> {
         let path = std::path::Path::new(model_dir).join(name);
         Ok(path.to_string_lossy().to_string())
+    }
+
+    /// `~/.cache/akaza/<name>` を返す（cache ディレクトリを作成）。
+    /// dict_cache と同じ XDG 規約に従う。
+    fn kana_trie_cache_path(name: &str) -> Result<String> {
+        let base_dirs = crate::xdg_dirs::BaseDirectories::with_prefix("akaza")
+            .map_err(|e| anyhow::anyhow!("xdg directory: {e}"))?;
+        base_dirs.create_cache_directory("")?;
+        Ok(base_dirs.get_cache_file(name).to_string_lossy().to_string())
+    }
+
+    /// dict + single_term の yomi 集合から MarisaKanaTrie を構築して `path` に保存する。
+    /// 結果を Arc<Mutex<dyn KanaTrie>> として返す。
+    fn build_kana_trie_cache(
+        dict: &MarisaKanaKanjiDict,
+        single_term: &MarisaKanaKanjiDict,
+        path: &str,
+    ) -> Result<Arc<Mutex<dyn KanaTrie>>> {
+        // dict.yomis() を 2 回回さないよう一旦集める。重複は marisa 側で吸収される
+        // が、push_back_str で alloc を抑えるため事前に確保しておく。
+        let mut keys: Vec<String> = dict.yomis();
+        keys.extend(single_term.yomis());
+        let trie = MarisaKanaTrie::build_and_save(keys, path)?;
+        Ok(Arc::new(Mutex::new(trie)))
     }
 }
 
