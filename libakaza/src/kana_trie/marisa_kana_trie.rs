@@ -7,12 +7,17 @@ use rsmarisa::{Agent, Keyset, Trie};
 
 use crate::kana_trie::base::KanaTrie;
 
-/// marisa-trie ベースの kana_trie。
+/// marisa-trie ベースの kana_trie（システム辞書向け read-only 実装）。
 ///
 /// 用途は `Segmenter` での共通接頭辞探索（読みのセグメント候補列挙）のみ。
 /// 起動時に毎回 cedarwood を 100 万件の `update()` で構築すると 1 秒前後かかるため、
 /// 同じ読み集合から marisa-trie を一度ビルドして cache file に保存し、
 /// 次回以降は load だけで済むようにしている。
+///
+/// なお `UserData::kana_trie` 側 (ユーザー学習用) には引き続き `CedarwoodKanaTrie`
+/// を使っている。marisa-trie は build 後 immutable なので、ユーザーが新語を学習
+/// するたびに動的に entry を追加していくユースケースには使えない。`UserData` の
+/// kana_trie が cedarwood である理由は `user_data.rs` のフィールドコメントを参照。
 pub struct MarisaKanaTrie {
     trie: Trie,
     /// 検索ごとに `Agent::new()` するアロケーションを避けるため再利用する。

@@ -26,9 +26,14 @@ use crate::user_side_data::user_stats_utils::{
 #[derive(Default)]
 pub struct UserData {
     /// 読み仮名のトライ。入力変換時に共通接頭辞検索するために使用。
-    // ここで MARISA ではなく Cedarwood を採用しているのは
-    // - FFI していると std::marker::Send を実装できなくてスレッドをまたいだ処理が困難になるから
-    // - 更新可能なトライ構造だから
+    // ここで marisa-trie ではなく Cedarwood を採用しているのは、ユーザーが
+    // 確定するたびに `update()` で新しい読みを追加していくユースケースだから。
+    // marisa-trie は build 後 immutable なので向かない。
+    //
+    // 過去には「FFI していると std::marker::Send を実装できなくてスレッドを
+    // またいだ処理が困難」という理由もあったが、rsmarisa (pure Rust 移植) は
+    // `Trie`/`Agent` ともに Send なのでこの懸念は解消済み。なお system 辞書側の
+    // read-only kana_trie は MarisaKanaTrie に置き換え済み (起動時間短縮)。
     pub(crate) kana_trie: Arc<Mutex<CedarwoodKanaTrie>>,
 
     unigram_user_stats: UniGramUserStats,
