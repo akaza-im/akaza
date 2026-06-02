@@ -302,6 +302,10 @@ struct BenchArgs {
     /// k-best のパス数
     #[arg(short, long, default_value_t = 5)]
     k: usize,
+    /// dict cache (~/.cache/akaza/) を使う。デフォルトはユーザー環境を汚さないため off。
+    /// 起動時間を計測するときは on にすること。
+    #[arg(long)]
+    dict_cache: bool,
 }
 
 /// ユニグラム辞書ファイルをダンプする
@@ -450,6 +454,7 @@ fn main() -> anyhow::Result<()> {
             model_dir: opt.model_dir.as_deref(),
             max_sentences: opt.max_sentences,
             k: opt.k,
+            dict_cache: opt.dict_cache,
         }),
         Commands::DumpUnigramDict(opt) => dump_unigram_dict(opt.dict.as_str()),
         Commands::DumpBigramDict(opt) => {

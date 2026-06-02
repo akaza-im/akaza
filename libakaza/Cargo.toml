@@ -7,7 +7,7 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rsmarisa = "0.4.0"
+rsmarisa = "0.4.2"
 chrono = "0.4"
 regex = "1"
 log = "0.4"

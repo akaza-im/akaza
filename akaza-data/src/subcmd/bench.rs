@@ -15,6 +15,7 @@ pub struct BenchOptions<'a> {
     pub utf8_dict: &'a [String],
     pub max_sentences: usize,
     pub k: usize,
+    pub dict_cache: bool,
 }
 
 /// インクリメンタル変換のベンチマークを実行する。
@@ -46,7 +47,7 @@ pub fn bench(opts: BenchOptions) -> anyhow::Result<()> {
         });
     }
 
-    config.engine.dict_cache = false;
+    config.engine.dict_cache = opts.dict_cache;
 
     // --- エンジン構築 ---
     let engine_t1 = Instant::now();
@@ -84,6 +85,22 @@ pub fn bench(opts: BenchOptions) -> anyhow::Result<()> {
     println!("Loaded {} sentences from corpus", sentences.len());
     println!("---");
 
+    // --- cold/warm latency 検証: 最長文を 5 回連続で変換して per-call を出す ---
+    if let Some(longest) = sentences.iter().max_by_key(|s| s.chars().count()) {
+        let chars: Vec<char> = longest.chars().collect();
+        let full: String = chars.iter().collect();
+        println!("Cold/warm probe — {} ({} chars) x5", longest, chars.len());
+        let mut pc: Vec<f64> = Vec::new();
+        for _ in 0..5 {
+            let t = Instant::now();
+            let _ = engine.convert_k_best(&full, None, opts.k)?;
+            pc.push(t.elapsed().as_micros() as f64 / 1000.0);
+        }
+        let pc_str: Vec<String> = pc.iter().map(|x| format!("{:.1}", x)).collect();
+        println!("  per-iter (ms): [{}]", pc_str.join(", "));
+        println!("---");
+    }
+
     // --- ベンチマーク実行 ---
     let mut all_durations_us: Vec<u64> = Vec::new();
 
@@ -117,6 +134,13 @@ pub fn bench(opts: BenchOptions) -> anyhow::Result<()> {
             num_chars,
             num_chars
         );
+        if i == 0 {
+            let per_call: Vec<String> = sentence_durations_us
+                .iter()
+                .map(|us| format!("{:.1}", *us as f64 / 1000.0))
+                .collect();
+            println!("          per-call (ms): [{}]", per_call.join(", "));
+        }
         println!(
             "          avg={:.1}ms, max={:.1}ms, total={:.1}ms",
             avg_us / 1000.0,

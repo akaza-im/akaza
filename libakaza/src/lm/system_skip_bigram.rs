@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 use std::fs::File;
-use std::io::{BufReader, BufWriter, Read as _, Write as _};
+use std::io::{BufWriter, Read as _, Write as _};
 
 use anyhow::{bail, Result};
 use half::f16;
@@ -172,15 +172,23 @@ impl MarisaSystemSkipBigramLM {
     }
 
     fn load_scores(path: &str) -> Result<Vec<f16>> {
-        let mut reader = BufReader::new(File::open(path)?);
+        // 旧実装は 2 バイトずつ read_exact + push する loop だった (system_bigram と同様)。
+        // skip_bigram は 30M entry あり、起動時間に大きく寄与していたため一括 read に変更。
+        let mut file = File::open(path)?;
         let mut buf4 = [0u8; 4];
-        reader.read_exact(&mut buf4)?;
+        file.read_exact(&mut buf4)?;
         let num_entries = u32::from_le_bytes(buf4) as usize;
-        let mut scores = Vec::with_capacity(num_entries);
-        let mut buf2 = [0u8; 2];
-        for _ in 0..num_entries {
-            reader.read_exact(&mut buf2)?;
-            scores.push(f16::from_le_bytes(buf2));
+
+        let mut scores: Vec<f16> = vec![f16::ZERO; num_entries];
+        // SAFETY: f16 は `#[repr(transparent)]` over u16 の Copy 型なので任意ビット列が
+        // 有効。ファイルフォーマットは LE 2 バイト/entry で、x86_64 はリトルエンディアン
+        // のため、underlying バイト列にそのまま read_exact できる。
+        let bytes_len = num_entries * std::mem::size_of::<f16>();
+        if bytes_len > 0 {
+            let bytes: &mut [u8] = unsafe {
+                std::slice::from_raw_parts_mut(scores.as_mut_ptr() as *mut u8, bytes_len)
+            };
+            file.read_exact(bytes)?;
         }
         Ok(scores)
     }

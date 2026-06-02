@@ -191,3 +191,136 @@ trie キーからスコア (f16) を除去し、スコアは `key_id` をイン�
 - 値の外部配列化による trie サイズ変化の実測
 - select 高速化の実効果
 - エントリ数削減（低頻度 bigram の枝刈り）の影響
+
+---
+
+# rsmarisa チューニング (2026-06-01)
+
+`akaza-data bench`（`anthy-corpus/corpus.3.txt`, 50文, k=5）と perf -F 997 で計測。
+ローカル rsmarisa を `[patch.crates-io] rsmarisa = { path = "../rsmarisa" }` で参照。
+
+## ベンチ結果（best of 3）
+
+| 指標 | baseline (rsmarisa 0.4.0) | 最適化後 |
+|---|---|---|
+| avg | 5.4–5.5 ms | 5.2–5.3 ms |
+| median | 3.5 ms | 3.3–3.5 ms |
+| p95 | 18.2–18.5 ms | 17.2–17.8 ms |
+| p99 | 30.1–30.4 ms | 29.2–29.7 ms |
+| max | 40.3–40.7 ms | 38.4–40.9 ms |
+
+おおむね 2–5% の改善。
+
+## perf self-time 内訳（cpu_core, 300文）
+
+| 関数 | baseline | 最適化後 | 差 |
+|---|---|---|---|
+| `LoudsTrie::find_child` | 16.37% | 14.53% | -1.84pp |
+| `LoudsTrie::match_` | 6.10% | 5.98% | -0.12pp |
+| `LoudsTrie::prefix_match_` | 2.52% | 2.31% | -0.21pp |
+| `BitVector::select0` | 2.67% | 2.11% | -0.56pp |
+| `LoudsTrie::predictive_search` | 1.97% | 1.90% | -0.07pp |
+| `LoudsTrie::restore_` | 1.63% | 1.69% | +0.06pp |
+| `BitVector::select1` | 1.38% | 1.02% | -0.36pp |
+| `BitVector::rank1` | 0.79% | 0.75% | -0.04pp |
+| **rsmarisa 合計** | **~33.4%** | **~30.3%** | **-3.1pp** |
+
+select0/select1 は PDEP 化が効いて約 20–26% 相対減。
+
+## 実施した最適化（rsmarisa 側）
+
+1. **PDEP ベースの `select_bit_u64`** — x86_64 で BMI2 を初回 `is_x86_feature_detected!`
+   で検出して以降キャッシュ。8 バイトのテーブルルックアップループ →
+   `_pdep_u64(1 << i, unit).trailing_zeros()` の 2-3 命令へ。
+2. **`assert!` → `debug_assert!`** — `BitVector::{get, rank0, rank1}`,
+   `State::{set_node_id, set_query_pos, set_history_pos}`, `LoudsTrie::{find_child,
+   predictive_find_child, match_, prefix_match_, restore_}` の冒頭境界チェック。
+   release ビルドの分岐数削減。
+3. **`Tail::match_tail` / `prefix_match` の Vec alloc 撤去** — それぞれ毎回
+   `agent.query().as_bytes().to_vec()` で 6 バイト程度の `Vec` を確保していた。
+   `Agent::query_bytes_and_state_mut()` の split-borrow ヘルパで `&[u8]` と
+   `&mut State` を同時に取れるようにし、ループ中の alloc/free を排除。
+4. **キャッシュエントリのローカルコピー** — `find_child` / `match_` /
+   `prefix_match_` / `restore_` / `predictive_find_child` の hot ループ内で
+   `self.cache[cache_id]` を 1 度ローカルにコピー（`Cache` は 12B Copy）。
+   `parent/child/extra/link/label` の連続アクセスでの再 indexing を抑える。
+
+いずれも結果は bit-exact（rsmarisa 全 323 ユニットテストが debug ビルドで pass、
+release ではプレ存在の `should_panic` テスト 3 件のみ失敗で、これは元から
+release で debug_assert が無効になることに依存していた既存のテストバグ）。
+
+## 残りのボトルネック
+
+- `find_child` の 14.5% は LOUDS の cache 照合 + 子ノード線形探索が支配的。
+  キャッシュサイズ（trie 構築時の `cache_level`）を上げると改善余地あり。
+- `resolve_k_best` 15.7%, quicksort 17%, sip::Hasher 2.2% は akaza 側 DP の
+  コスト。FxHashMap のはずなのに sip::Hasher が出ているのは要調査。
+- libc malloc/memmove で計 8% 前後。`resolve_k_best` の `Vec<KBestEntry>` 再確保
+  などが寄与している可能性。
+
+---
+
+# 起動時間短縮 (2026-06-01)
+
+`akaza-data bench --dict-cache` の `Engine built in Xms` 行で計測。
+
+## 起動時間の内訳
+
+| 段階 | 元 (warm) | cold | warm |
+|---|---|---|---|
+| unigram.model load | 7ms | 11ms | 7ms |
+| bigram.model + scores load | 154ms | 59〜64ms | 32ms |
+| skip_bigram.model + scores load | 254ms | 94〜104ms | 56ms |
+| dict load (cache hit) | 7ms | 12〜20ms | 6ms |
+| single_term | <1ms | <1ms | <1ms |
+| **kana_trie 構築** | **1069ms** | **3〜4ms** | **1.5〜1.7ms** |
+| **合計 (Engine built)** | **1490ms** | **188〜195ms** | **102〜104ms** |
+
+cold は `posix_fadvise(POSIX_FADV_DONTNEED)` で当該ファイルを page cache から
+追い出した状態。OS read のみで占められる下限値。
+
+## 実施した最適化
+
+### 1. `MarisaKanaTrie` の導入と cache 化（最大の効果）
+
+`CedarwoodKanaTrie` を毎起動 `dict.yomis()` (約 1M 件) + `single_term.yomis()`
+で `update()` していたのが起動時間の 70% 強を占めていた。同じ集合は変わらない
+データなので marisa-trie に build し `~/.cache/akaza/kana_trie_cache.marisa`
+として永続化、次回以降は `Trie::load` (約 2-4ms) で済むようにした。
+
+- 鮮度判定: `kana_trie_cache.marisa` の mtime が `kana_kanji_cache.marisa`
+  より古ければ再構築。dict 側 cache と同期する。
+- `dict_cache=false` のときは従来の cedarwood 経路にフォールバックし
+  cache ファイルを汚さない。
+- `KanaTrie` trait 実装で `Segmenter` への接続は変更不要。
+
+### 2. `.scores` ファイルの一括 read
+
+bigram (18M entry, 35MB) / skip_bigram (30M entry, 58MB) の `.scores` を
+2 バイトずつ `read_exact` + `push` する loop で読んでいた。`Vec<f16>` を
+1 回確保し、その underlying byte slice に対して 1 回の `read_exact` で埋める形
+に変更。`f16` (`#[repr(transparent)] u16`) と LE x86_64 の組み合わせで
+そのまま reinterpret 可能。
+
+### 3. bench へ `--dict-cache` フラグを追加
+
+bench は元々 `dict_cache=false` で動作していた（ユーザーの cache を汚さない）。
+起動時間を計測したいときだけ opt-in で有効化できるようにした。
+
+## 設計上のトレードオフ
+
+- **真の zero-copy mmap は採用しなかった**。rsmarisa の現在の `Trie::mmap()` は
+  mmap した領域から所有 Vec へ `copy_nonoverlapping` するので、純粋な
+  speed-up は load 経路をやや短縮する程度。一方 zero-copy 化には rsmarisa の
+  `Vector<T>` を「所有 / mmap 借用」の enum に作り変える必要があり、akaza 側で
+  目標 (500ms 以下) を満たすには A・B で十分だったため見送り。
+- **scores の `unsafe` は LE プラットフォーム前提**。BE arch をサポートする
+  必要が出たら portable な `chunks_exact + from_le_bytes` 経路に切り替える。
+
+## 残りの最適化余地
+
+- skip_bigram model+scores の load を std::thread で並列化すると 150-200ms 削れる
+  はず（今 cold で 100ms 強なので、`Engine built` を 100ms 切る目処）。
+- skip_bigram_weight=0 のときに skip_bigram の load 自体をスキップする
+  (lazy load)。convert 側で重み 0 のフォールバックは既に skip-bigram cost を
+  0 で扱う実装になっているため、`skip_bigram_lm: None` で動かせるはず。

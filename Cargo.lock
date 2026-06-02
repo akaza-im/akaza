@@ -35,7 +35,7 @@ dependencies = [
 
 [[package]]
 name = "akaza-conf"
-version = "2026.404.0"
+version = "2026.530.0"
 dependencies = [
  "anyhow",
  "env_logger",
@@ -49,7 +49,7 @@ dependencies = [
 
 [[package]]
 name = "akaza-data"
-version = "2026.404.0"
+version = "2026.530.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -75,7 +75,7 @@ dependencies = [
 
 [[package]]
 name = "akaza-dict"
-version = "2026.404.0"
+version = "2026.530.0"
 dependencies = [
  "anyhow",
  "encoding_rs",
@@ -1033,7 +1033,7 @@ dependencies = [
 
 [[package]]
 name = "ibus-akaza"
-version = "2026.404.0"
+version = "2026.530.0"
 dependencies = [
  "anyhow",
  "cc",
@@ -1054,7 +1054,7 @@ dependencies = [
 
 [[package]]
 name = "ibus-sys"
-version = "2026.404.0"
+version = "2026.530.0"
 dependencies = [
  "log",
 ]
@@ -1162,7 +1162,7 @@ checksum = "70048d97b51d107a6cf295d42210d298f0eb7d37f0518b88c816a74b8ce15f41"
 
 [[package]]
 name = "libakaza"
-version = "2026.404.0"
+version = "2026.530.0"
 dependencies = [
  "aes",
  "anyhow",
@@ -1551,9 +1551,9 @@ checksum = "a96887878f22d7bad8a3b6dc5b7440e0ada9a245242924394987b21cf2210a4c"
 
 [[package]]
 name = "rsmarisa"
-version = "0.4.0"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbb8faa8d19e79a31e62e7856e16cd5c2d8ba71629910ce3ba1db287f968954d"
+checksum = "a7490d7079b13206bb94e7973473580585d466038ed3b1b8ccd06f88eb5bba69"
 dependencies = [
  "clap",
  "memmap2",
