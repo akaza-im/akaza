@@ -5,9 +5,9 @@ use std::rc::Rc;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use anyhow::{bail, Context};
-use log::{debug, error, trace};
 #[cfg(test)]
 use log::info;
+use log::{debug, error, trace};
 
 use crate::graph::candidate::Candidate;
 use crate::graph::lattice_graph::LatticeGraph;
