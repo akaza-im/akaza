@@ -1,4 +1,4 @@
-use log::info;
+use log::debug;
 use std::ops::Range;
 
 use crate::graph::candidate::Candidate;
@@ -22,13 +22,13 @@ pub fn extend_right(clauses: &[Vec<Candidate>], current_clause: usize) -> Vec<Ra
         return Vec::new();
     }
     // 一番右の文節が選択されていたらなにもできない。
-    info!(
+    debug!(
         "Keep current? current={:?} len={}",
         current_clause,
         clauses.len()
     );
     if current_clause == clauses.len() - 1 {
-        info!("Keep current");
+        debug!("Keep current");
         return keep_current(clauses);
     }
 

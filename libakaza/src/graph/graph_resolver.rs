@@ -5,7 +5,9 @@ use std::rc::Rc;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use anyhow::{bail, Context};
-use log::{error, info, trace};
+use log::{debug, error, trace};
+#[cfg(test)]
+use log::info;
 
 use crate::graph::candidate::Candidate;
 use crate::graph::lattice_graph::LatticeGraph;
@@ -466,7 +468,7 @@ impl GraphResolver {
     ) {
         if depth > 4 {
             // depth が深過ぎたら諦める。
-            info!(
+            debug!(
                 "collect_splited_results: too deep: node_yomi={:?}, cur_surface={:?}",
                 node_yomi, cur_surface
             );

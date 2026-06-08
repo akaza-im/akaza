@@ -3,7 +3,7 @@ use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
-use log::{error, info, trace};
+use log::{debug, error, trace};
 
 use crate::graph::word_node::WordNode;
 use crate::lm::base::{SystemBigramLM, SystemUnigramLM};
@@ -136,7 +136,7 @@ impl<U: SystemUnigramLM, B: SystemBigramLM> LatticeGraph<U, B> {
         user_data: &UserData,
     ) -> f32 {
         if let Some(user_cost) = user_data.get_unigram_cost(node) {
-            info!("Use user's node score: {:?}", node);
+            debug!("Use user's node score: {:?}", node);
             // use user's score. if it's exists.
             return user_cost;
         }
