@@ -6,7 +6,7 @@ use std::time::SystemTime;
 use anyhow::Context;
 use anyhow::Result;
 use encoding_rs::{EUC_JP, UTF_8};
-use log::{error, info};
+use log::{debug, error, info};
 
 use crate::config::{DictConfig, DictEncoding, DictType};
 use crate::dict::merge_dict::merge_dict;
@@ -33,7 +33,7 @@ pub fn load_dicts_with_cache(
         .iter()
         .map(|it| try_get_mtime(&it.path).unwrap_or(0_u128))
         .collect::<Vec<_>>();
-    info!("mtimes: {:?}", p);
+    debug!("mtimes: {:?}", p);
 
     let max_dict_mtime = dict_configs
         .iter()
@@ -53,7 +53,7 @@ pub fn load_dicts_with_cache(
 
     // 現在の Config をシリアライズする。
     let config_serialized = serde_yaml::to_string(dict_configs)?;
-    info!("SERIALIZED: {:?}", config_serialized);
+    debug!("SERIALIZED: {:?}", config_serialized);
 
     if cache_mtime >= max_dict_mtime {
         match MarisaKanaKanjiDict::load(cache_path.as_str()) {
@@ -62,7 +62,7 @@ pub fn load_dicts_with_cache(
                 if dict_serialized == config_serialized {
                     // キャッシュファイルを書いた時の設定と同じかどうかを確認する
                     // 設定が違う場合は、キャッシュを作り直す必要がある。
-                    info!("Cache is fresh! {:?} => {}", dict_configs, cache_path);
+                    debug!("Cache is fresh! {:?} => {}", dict_configs, cache_path);
                     return Ok(dict);
                 } else {
                     info!(
